@@ -18,14 +18,14 @@ if [ "$USING_C11_STANDARD" == "yes" ]
 then
 
 ARMADILLO_VERSION='armadillo-4.000.0'
-sed -i '.backups' 's/CCXXFLAGS=-std=c++0x/CCXXFLAGS =-std=c++11/g' PROMETHEUS++_MPI/makefile
-sed -i '.backups' 's/\/\/ arma_rng::set_seed_random();/arma_rng::set_seed_random();/g' PROMETHEUS++_MPI/src/initialize.cpp
+sed -i '.backups' 's/CCXXFLAGS=-std=c++0x/CCXXFLAGS =-std=c++11/g' PROMETHEUS++/makefile
+sed -i '.backups' 's/\/\/ arma_rng::set_seed_random();/arma_rng::set_seed_random();/g' PROMETHEUS++/src/initialize.cpp
 
 else
 
 ARMADILLO_VERSION='armadillo-3.900.6'
-sed -i '.backups' 's/CCXXFLAGS=-std=c++11/CCXXFLAGS=-std=c++0x/g' PROMETHEUS++_MPI/makefile
-sed -i '.backups' 's/arma_rng::set_seed_random();/\/\/ arma_rng::set_seed_random();/g' PROMETHEUS++_MPI/src/initialize.cpp
+sed -i '.backups' 's/CCXXFLAGS=-std=c++11/CCXXFLAGS=-std=c++0x/g' PROMETHEUS++/makefile
+sed -i '.backups' 's/arma_rng::set_seed_random();/\/\/ arma_rng::set_seed_random();/g' PROMETHEUS++/src/initialize.cpp
 
 fi
 
@@ -62,12 +62,12 @@ cd $HDF5_VERSION
 
 make
 
-if [ $? -eq 0 ] ; then
-make check
-else
-echo 'HDF5 installation error: There was an error while doing "make"'
-exit
-fi
+#if [ $? -eq 0 ] ; then
+#make check
+#else
+#echo 'HDF5 installation error: There was an error while doing "make"'
+#exit
+#fi
 
 if [ $? -eq 0 ] ; then
 make install prefix=$PREFIX

@@ -56,4 +56,5 @@ Please report any problem/bug using the "Issues" section on the left panel.
 
 # Running PROMETHEUS++ #
 
-mpirun -np (even number of MPI processes) bin/PROMETHEUS++ (folder that will contain outputs folder) (name of outputs folder)
+export OMP_NUM_THREADS=(number of open MP threads per MPI process)
+mpirun -np (even number of MPI processes) bin/PROMETHEUS++ /path/to/input/folder/ (ID of input file [optional])

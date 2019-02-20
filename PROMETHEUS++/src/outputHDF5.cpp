@@ -36,7 +36,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 
 		Exception::dontPrint();
 
-		// Create a new file using the default property lists. 
+		// Create a new file using the default property lists.
 		H5File *outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
 
 		H5std_string numOfDomains( "numOfDomains" );
@@ -60,8 +60,8 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		//Geometry of the mesh
 		Group *group_geo = new Group( outputFile->createGroup( "/geometry" ) );
 
-		H5std_string cellDim( "[DX DY DZ]" );
-		H5std_string numCell( "[NX NY NZ]" );
+		H5std_string cellDim( "finiteDiferences" );
+		H5std_string numCell( "numberOfCells" );
 
 #ifdef HDF5_DOUBLE
 		CPP_TYPE cd[3] = {mesh->DX,mesh->DY,mesh->DZ};
@@ -84,7 +84,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		delete dataset_nc;
 
 		//Saving the x-axis coordinates
-		H5std_string xAxis( "x-axis");
+		H5std_string xAxis( "xAxis");
 		CPP_TYPE  xaxis[mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS];
 		for(int ii=0;ii<mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;ii++){
 #ifdef HDF5_DOUBLE
@@ -98,7 +98,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		DataSet *dataset_xaxis = new DataSet(group_geo->createDataSet( xAxis, HDF_TYPE, *dataspace_xaxis ));
 		dataset_xaxis->write( xaxis, HDF_TYPE );
 		delete dataspace_xaxis;
-		delete dataset_xaxis;	
+		delete dataset_xaxis;
 
 		delete group_geo;
 		//Geometry of the mesh
@@ -167,7 +167,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 			delete dataspace_dn;
 			delete dataset_dn;
 
-			H5std_string supPartProp( "superParticlesProperties [NCP NSP NSPOUT]" );
+			H5std_string supPartProp( "superParticlesProperties" );
 			CPP_TYPE spp[3] = {(CPP_TYPE)IONS->at(ii).NCP, (CPP_TYPE)IONS->at(ii).NSP, (CPP_TYPE)IONS->at(ii).nSupPartOutput};
 		   	hsize_t dims_spp[1] = {3};
 			DataSpace *dataspace_spp = new DataSpace(1, dims_spp);
@@ -176,7 +176,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 			delete dataspace_spp;
 			delete dataset_spp;
 
-			H5std_string temperature( "Temperature [par perp]" );
+			H5std_string temperature( "T" );
 #ifdef HDF5_DOUBLE
 			CPP_TYPE T[2] = {IONS->at(ii).BGP.Tpar, IONS->at(ii).BGP.Tper};
 #elif defined HDF5_FLOAT
@@ -189,7 +189,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 			delete dataspace_T;
 			delete dataset_T;
 
-			H5std_string ionProp( "ionProperties [M Q Z nu]" );
+			H5std_string ionProp( "ionProperties" );
 #ifdef HDF5_DOUBLE
 			CPP_TYPE ip[4] = {IONS->at(ii).M, IONS->at(ii).Q, IONS->at(ii).Z, IONS->at(ii).colFreq};
 #elif defined HDF5_FLOAT
@@ -791,4 +791,3 @@ void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> *
 
 
 }
-

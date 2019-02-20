@@ -9,7 +9,7 @@ filtersPerIteration	1
 filtersPerIterationIonsVariables	2
 TVF	0.5
 checkSmoothParameter	500
-timeIterations	40000
+timeIterations	1000
 transient	0
 loadFields	0
 saveVariablesEach	100
@@ -27,7 +27,7 @@ backgroundTemperature	1.1605E7
 backgroundBField	2.1
 theta	0
 phi	0
-NX	1024
+NX	128
 NY	1
 NZ	1
 DrL	1.0

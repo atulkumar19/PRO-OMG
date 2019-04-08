@@ -102,18 +102,11 @@ class PIC{
 	void EMF_TSC_3D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cube * emf,mat * F);
 
 
-	void ve_1D(const inputParameters * params,const characteristicScales * CS,const vector<ionSpecies> * IONS,const vector<ionSpecies> * IONS_U,vfield_vec * U,vec * n);
+	void aiv_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT);
 
-	void ve_2D(const inputParameters * params,const characteristicScales * CS,const vector<ionSpecies> * IONS,const vector<ionSpecies> * IONS_U,vfield_mat * U,mat * n);
+	void aiv_2D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT);
 
-	void ve_3D(const inputParameters * params,const characteristicScales * CS,const vector<ionSpecies> * IONS,const vector<ionSpecies> * IONS_U,vfield_cube * U,cube * n);
-
-
-	void aiv_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,vector<ionSpecies> * IONS_U,const double DT);
-
-	void aiv_2D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,vector<ionSpecies> * IONS_U,const double DT);
-
-	void aiv_3D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,vector<ionSpecies> * IONS_U,const double DT);
+	void aiv_3D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT);
 
 
 	void aip_1D(const inputParameters * params,const meshGeometry * mesh,vector<ionSpecies> * IONS,const double DT);
@@ -128,7 +121,7 @@ class PIC{
 
 	void ionVariables(vector<ionSpecies> * IONS,vector<ionSpecies> * copyIONS,const int flag);
 
-	void advanceIonsVelocity(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,vector<ionSpecies> * IONS_U,const double DT);
+	void advanceIonsVelocity(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT);
 
 	void advanceIonsPosition(const inputParameters * params,const meshGeometry * mesh,vector<ionSpecies> * IONS,const double DT);
 

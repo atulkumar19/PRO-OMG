@@ -31,7 +31,7 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * fiel
 	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,5,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,5,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
 	field->Z(fIndex+1) = recvBuf;
 
-	
+
 	MPI_Barrier(params->mpi.mpi_topo);
 }
 
@@ -179,11 +179,11 @@ void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,
 	//y-component
 //	EB->B.Y.subvec(1,NX-2) = ( EB->E.Z.subvec(2,NX-1) - EB->E.Z.subvec(1,NX-2) )/mesh->DX;
 	EB->B.Y.subvec(iIndex,fIndex) = ( EB->E.Z.subvec(iIndex+1,fIndex+1) - EB->E.Z.subvec(iIndex,fIndex) )/mesh->DX;
-	
+
 	//z-component
 //	EB->B.Z.subvec(1,NX-2) = - ( EB->E.Y.subvec(2,NX-1) - EB->E.Y.subvec(1,NX-2) )/mesh->DX;
 	EB->B.Z.subvec(iIndex,fIndex) = - ( EB->E.Y.subvec(iIndex+1,fIndex+1) - EB->E.Y.subvec(iIndex,fIndex) )/mesh->DX;
-	
+
 }
 
 void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
@@ -205,29 +205,29 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
 
 
-		K1 = *EB;//The value of the emf at the time level (N)
-		advanceEField(params,mesh,&K1,IONS,CS);//E1 (using B^(N))
+		K1 = *EB;//The value of the emf at the time level (N-1/2)
+		advanceEField(params,mesh,&K1,IONS,CS);//E1 (using B^(N-1/2))
 		curlE(params,mesh,&K1);//K1
 
-		K2.B.X = EB->B.X;//B^(N) + 0.5*dt*K1
+		K2.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K1
 		K2.B.Y = EB->B.Y + (0.5*dt)*K1.B.Y;
 		K2.B.Z = EB->B.Z + (0.5*dt)*K1.B.Z;
 		K2.E = EB->E;
-		advanceEField(params,mesh,&K2,IONS,CS);//E2 (using B^(N) + 0.5*dt*K1)
+		advanceEField(params,mesh,&K2,IONS,CS);//E2 (using B^(N-1/2) + 0.5*dt*K1)
 		curlE(params,mesh,&K2);//K2
-	
-		K3.B.X = EB->B.X;//B^(N) + 0.5*dt*K2
+
+		K3.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K2
 		K3.B.Y = EB->B.Y + (0.5*dt)*K2.B.Y;
 		K3.B.Z = EB->B.Z + (0.5*dt)*K2.B.Z;
 		K3.E = EB->E;
-		advanceEField(params,mesh,&K3,IONS,CS);//E3 (using B^(N) + 0.5*dt*K2)
+		advanceEField(params,mesh,&K3,IONS,CS);//E3 (using B^(N-1/2) + 0.5*dt*K2)
 		curlE(params,mesh,&K3);//K3
 
-		K4.B.X = EB->B.X;//B^(N) + dt*K2
+		K4.B.X = EB->B.X;//B^(N-1/2) + dt*K2
 		K4.B.Y = EB->B.Y + dt*K3.B.Y;
 		K4.B.Z = EB->B.Z + dt*K3.B.Z;
 		K4.E = EB->E;
-		advanceEField(params,mesh,&K4,IONS,CS);//E4 (using B^(N) + dt*K3)
+		advanceEField(params,mesh,&K4,IONS,CS);//E4 (using B^(N-1/2) + dt*K3)
 		curlE(params,mesh,&K4);//K4
 
 		EB->B += (dt/6)*( K1.B + 2*K2.B + 2*K3.B + K4.B );
@@ -268,7 +268,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
-	
+
 	//Definitions
 	int dim(params->meshDim(0) + 2); //dimension of temporal vectors taking into account ghost cells.
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
@@ -287,10 +287,10 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 		forwardPBC_1D(&IONS->at(ii).nv.X);
 		forwardPBC_1D(&IONS->at(ii).nv.Y);
 		forwardPBC_1D(&IONS->at(ii).nv.Z);
-		
+
 		n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex-1,fIndex+1) \
 			+ IONS->at(ii).Z*(CS->length*CS->density)*IONS->at(ii).BGP.BG_n;
-			
+
 		//sum_k[ Z_k*n_k*u_k ]
 		U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1) \
 			+ IONS->at(ii).Z*(CS->length*CS->density)*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UX;
@@ -307,7 +307,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 	n /= n_ch;//Normalized density
 
 	//Definitions
-	
+
 	vfield_vec curlB(dim-2);
 
 	EB->E.fill(0);
@@ -422,7 +422,7 @@ void EMF_SOLVER::aef_2D(const inputParameters * params,const meshGeometry * mesh
 #ifdef THREED
 void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,characteristicScales * CS){
 
-	//Definitions	
+	//Definitions
 	int NX(EB->E.X.n_rows),NY(EB->E.X.n_cols),NZ(EB->E.X.n_slices);
 
 	double MU(0); //dimensionless permeability.
@@ -437,7 +437,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	vfield_cube U;//Ion's flow velocity of the specific population under study (already dimensionless).
 	U.zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Flow velocity along the x-direction
-	
+
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//sum_k[ Z_k*n_k*u_k ]
 			U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UX;
 			U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UY;
@@ -453,7 +453,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	n = n/n_ch;//Normalized density
 
 	//Definitions
-	
+
 	forwardPBC_3D(&EB->B.X);
 	forwardPBC_3D(&EB->B.Y);
 	forwardPBC_3D(&EB->B.Z);
@@ -532,7 +532,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	curlB.Z.fill(0);
 	curlB.X.fill(0);
-	
+
 
 	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - 0.5*( U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Z.subcube(1,2,1,NX-2,NY-1,NZ-2) ) % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3)) );
 
@@ -569,7 +569,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	curlB.Z.fill(0);
 	curlB.X.fill(0);
-	
+
 
 	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - 0.5*( U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.X.subcube(1,1,2,NX-2,NY-2,NZ-1) ) % ( 0.5*(EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2)) );
 
@@ -625,7 +625,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
-	
+
 	//Definitions
 	int dim(params->meshDim(0) + 2); //dimension of temporal vectors taking into account ghost cells.
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
@@ -734,7 +734,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	}else{//Here we use the velocity extrapolation V^(N+1) = 1.5*V^(N+1/2) - 0.5*V^(N-1/2)
 		U = 1.5*newU - 0.5*oldU;
 	}
-	
+
 	vfield_vec curlB;
 	curlB.zeros(dim-2);
 
@@ -851,7 +851,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 #ifdef THREED
 void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,characteristicScales * CS,const int BAE){
 
-	//Definitions	
+	//Definitions
 	int NX(EB->E.X.n_rows),NY(EB->E.X.n_cols),NZ(EB->E.X.n_slices);
 
 	double MU(0); //dimensionless permeability.
@@ -865,7 +865,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	vfield_cube newU;//Ion's flow velocity of the specific population under study (already dimensionless).
 	newU.zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);
-	
+
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//sum_k[ Z_k*n_k*u_k ]
 		newU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + newIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UX;
 		newU.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + newIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UY;
@@ -907,15 +907,15 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	if(BAE == 1){
 
 		for(int ii=0;ii<IONS_BAE->size();ii++){
-			if(IONS_BAE->at(ii).SPECIES != 0){//If the ions are not tracers then...	
+			if(IONS_BAE->at(ii).SPECIES != 0){//If the ions are not tracers then...
 				n_BAE += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).n + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n;
 			}
 		}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 		U_BAE.fill(0);
-	
+
 		for(int ii=0;ii<IONS_BAE->size();ii++){//sum_k[ Z_k*n_k*u_k ]
-			if(IONS_BAE->at(ii).SPECIES != 0){//If the ions are not tracers then...	
+			if(IONS_BAE->at(ii).SPECIES != 0){//If the ions are not tracers then...
 				U_BAE.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
 				U_BAE.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
 				U_BAE.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
@@ -948,7 +948,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 		cout << "There is,at least,one NaN in U.Z\n";
 	}
 */
-	
+
 	forwardPBC_3D(&EB->B.X);
 	forwardPBC_3D(&EB->B.Y);
 	forwardPBC_3D(&EB->B.Z);
@@ -1027,7 +1027,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	curlB.Z.fill(0);
 	curlB.X.fill(0);
-	
+
 
 	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - 0.5*( U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Z.subcube(1,2,1,NX-2,NY-1,NZ-2) ) % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3)) );
 
@@ -1064,7 +1064,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	curlB.Z.fill(0);
 	curlB.X.fill(0);
-	
+
 
 	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - 0.5*( U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.X.subcube(1,1,2,NX-2,NY-2,NZ-1) ) % ( 0.5*(EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2)) );
 
@@ -1096,4 +1096,3 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 }
 #endif
-

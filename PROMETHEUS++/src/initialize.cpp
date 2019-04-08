@@ -88,6 +88,10 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 		string mkdir_outputs_dir_HDF5 = mkdir_outputs_dir + "/HDF5";
 		sys = mkdir_outputs_dir_HDF5.c_str();
 		rsys = system(sys);
+
+		string mkdir_outputs_dir_diagnostics = mkdir_outputs_dir + "/diagnostics";
+		sys = mkdir_outputs_dir_diagnostics.c_str();
+		rsys = system(sys);
 	}
 
 	params->quietStart = parametersMap["quietStart"];

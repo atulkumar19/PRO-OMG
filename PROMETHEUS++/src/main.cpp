@@ -59,11 +59,11 @@ int main(int argc,char* argv[]){
 
 	EMF_SOLVER fields; // Initializing the emf class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
-	GENERAL_FUNCTIONS genFun; 
+	GENERAL_FUNCTIONS genFun;
 
 	ionsDynamics.advanceIonsPosition(&params,&mesh,&IONS,0); // Initialization of the particles' density and meshNode.
 
-	ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,&IONS,0);
+	ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,0);
 
 	fields.advanceEField(&params,&mesh,&EB,&IONS,&CS);
 
@@ -79,37 +79,27 @@ int main(int argc,char* argv[]){
 
 	vector<ionSpecies> IONS_BAE;  //  Bashford-Adams extrapolation term.
 
-	vector<ionSpecies> IONS_U_ODD,IONS_U_EVEN; // Variable to use the velocity extrapolation when adding the resistive term to ions.
-	ionsDynamics.ionVariables(&IONS,&IONS_U_EVEN,1); // Initializing object
-	ionsDynamics.ionVariables(&IONS,&IONS_U_ODD,1); // Initializing object
-
 	t1 = MPI::Wtime();
 
-	for(int tt=0;tt<params.timeIterations;tt++){ // Time iterations.	
-		vector<ionSpecies> tmpIONS,IONS_VE;
-		ionsDynamics.ionVariables(&IONS,&tmpIONS,0); // The ion density at the time level n^(N) is stored in tmpIONS.
-		ionsDynamics.ionVariables(&IONS,&IONS_VE,1); // The ion flow velocity at the time level nv^(N-1/2) is stored in tmpIONS.
+	for(int tt=0;tt<params.timeIterations;tt++){ // Time iterations.
+		vector<ionSpecies> auxIONS;
+		vector<ionSpecies> IONS_VE;
+
+		ionsDynamics.ionVariables(&IONS,&auxIONS,0); // The ion density of IONS is copied into auxIONS
+		ionsDynamics.ionVariables(&IONS,&IONS_VE,1); // The ion flow velocity at the time level nv^(N-1/2) is stored in auxIONS.
 
 		if(tt == 0){
 			genFun.checkStability(&params,&mesh,&CS,&IONS);
-			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,&IONS,params.DT/2); // Initial condition time level V^(1/2)
-			ionsDynamics.ionVariables(&IONS,&IONS_U_EVEN,3); // The bulk velocity at EVEN time iterations.
-			ionsDynamics.ionVariables(&IONS,&IONS_U_ODD,3); // The bulk velocity at ODD time iterations.
+			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,params.DT/2); // Initial condition time level V^(1/2)
 		}else{
-			if( fmod((double)(tt),2) == 0 ){ // If tt is even
-				ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,&IONS_U_EVEN,params.DT); // Advance ions' velocity V^(N+1/2).
-				ionsDynamics.ionVariables(&IONS,&IONS_U_EVEN,3);
-			}else{ // If tt is odd
-				ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,&IONS_U_ODD,params.DT); // Advance ions' velocity V^(N+1/2).
-				ionsDynamics.ionVariables(&IONS,&IONS_U_ODD,3);
-			}
+			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,params.DT); // Advance ions' velocity V^(N+1/2).
 		}
 
 		ionsDynamics.advanceIonsPosition(&params,&mesh,&IONS,params.DT); // Advance ions' position in time to level X^(N+1).
 
-		ionsDynamics.ionVariables(&IONS,&tmpIONS,2); // The ion density and flow velocity at time level n^(N+1/2) is stored in tmpIONS.
+		ionsDynamics.ionVariables(&IONS,&auxIONS,2); // Bulk ion variables computed at (N+1/2) and saved to auxIONS
 
-		fields.advanceBField(&params,&mesh,&EB,&tmpIONS,&CS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+		fields.advanceBField(&params,&mesh,&EB,&auxIONS,&CS); // Use Faraday's law to advance the magnetic field to level B^(N+1/2).
 
 		if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
 			 // Using the Bashford-Adams extrapolation.
@@ -121,11 +111,11 @@ int main(int argc,char* argv[]){
 
 		totalTime += params.DT*CS.time;
 
-		if(fmod((double)(tt + 1),params.saveVariablesEach) == 0){		
-			tmpIONS = IONS; // Ions position at level X^(N+1) and ions' velocity at level V^(N+1/2)
+		if(fmod((double)(tt + 1),params.saveVariablesEach) == 0){
+			auxIONS = IONS; // Ions position at level X^(N+1) and ions' velocity at level V^(N+1/2)
 			// The ions' velocity is advanced in time in order to obtain V^(N+1)
-			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&tmpIONS,&tmpIONS,params.DT/2);
-			hdfObj.saveOutputs(&params,&tmpIONS,&IONS,&EB,&CS,it+1,totalTime);
+			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&auxIONS,params.DT/2);
+			hdfObj.saveOutputs(&params,&auxIONS,&IONS,&EB,&CS,it+1,totalTime);
 			it++;
 		}
 
@@ -135,7 +125,7 @@ int main(int argc,char* argv[]){
 
 		IONS_BAE = IONS_VE; // Ions variables at time level (N-3/2) for tt>=2
 
-//		genFun.checkEnergy(&params,&mesh,&CS,&IONS,&EB,tt);			
+//		genFun.checkEnergy(&params,&mesh,&CS,&IONS,&EB,tt);
 		if(tt==100){
 			t2 = MPI::Wtime();
 			cout << "The time elapsed is: " << t2-t1 <<'\n';
@@ -144,7 +134,7 @@ int main(int argc,char* argv[]){
 
 	/**************** All the quantities above are dimensionless ****************/
 	genFun.saveDiagnosticsVariables(&params);
-	
+
 	MPI_Finalize();
 
 	return(0);

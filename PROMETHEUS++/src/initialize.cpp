@@ -4,22 +4,22 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
 	string tmpName;
 	float tmpValue;
 	fstream fileParameters;
-    
+
 	std::map<string,float> listOfParameters;
 	fileParameters.open(inputFile->data(),ifstream::in);
-    
+
     	if (!fileParameters){
       		cerr << "ERROR: The input file couldn't be opened.\n";
         	exit(1);
     	}
-    
+
     	while ( fileParameters >> tmpName >> tmpValue ){
           	listOfParameters[ tmpName ] = tmpValue;
     	}
-    
-    	fileParameters.close(); 
-    
-    	return listOfParameters;     
+
+    	fileParameters.close();
+
+    	return listOfParameters;
 }
 
 map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
@@ -28,25 +28,27 @@ map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
 	fstream fileParameters;
 
 	cout << inputFile;
-    
+
 	std::map<string,float> listOfParameters;
 	fileParameters.open(inputFile ,ifstream::in);
-    
+
     	if (!fileParameters){
       		cerr << "ERROR: The input file couldn't be opened.\n";
         	exit(1);
     	}
-    
+
     	while ( fileParameters >> tmpName >> tmpValue ){
           	listOfParameters[ tmpName ] = tmpValue;
     	}
-    
-    	fileParameters.close(); 
-    
-    	return listOfParameters;     
+
+    	fileParameters.close();
+
+    	return listOfParameters;
 }
 
 INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
+	std::map<string,float> parametersMap;
+
 	MPI_Comm_size(MPI_COMM_WORLD,&params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
 
@@ -59,40 +61,34 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	//Initialize to zero the variables of the class
 	INITIALIZE::ionSkinDepth = 0.0;
-	INITIALIZE::LarmorRadius = 0.0;	
+	INITIALIZE::LarmorRadius = 0.0;
 
 	params->PATH = argv[1];
 
 	params->argc = argc;
 	params->argv = argv;
 
-	std::map<string,float> parametersMap;
 	if(params->argc > 2){
 		string argv(params->argv[2]);
 		string name = "inputFiles/input_file_" + argv + ".input";
 		parametersMap = loadParameters(&name);
 
 		params->PATH += "/" + argv;
-
-		if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-		    string mkdir_outputs_dir = "mkdir " + params->PATH;
-		    const char * sys = mkdir_outputs_dir.c_str();
-		    int rsys = system(sys);
-
-		    string mkdir_outputs_dir_HDF5 = mkdir_outputs_dir + "/HDF5";
-		    sys = mkdir_outputs_dir_HDF5.c_str();
-		    rsys = system(sys);
-
-		    string mkdir_outputs_dir_diagnostics = mkdir_outputs_dir + "/diagnostics";
-		    sys = mkdir_outputs_dir_diagnostics.c_str();
-		    rsys = system(sys);
-		}
 	}else{
 		parametersMap = loadParameters("inputFiles/input_file.input");
 		params->PATH += "/outputFiles";
 	}
 
-	params->outputFormat = arma::raw_binary;
+	// Create HDF5 folders if they don't exist
+	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+		string mkdir_outputs_dir = "mkdir " + params->PATH;
+		const char * sys = mkdir_outputs_dir.c_str();
+		int rsys = system(sys);
+
+		string mkdir_outputs_dir_HDF5 = mkdir_outputs_dir + "/HDF5";
+		sys = mkdir_outputs_dir_HDF5.c_str();
+		rsys = system(sys);
+	}
 
 	params->quietStart = parametersMap["quietStart"];
 
@@ -119,7 +115,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	params->timeIterations = (int)parametersMap["timeIterations"];
 
 	params->transient = (unsigned int)parametersMap["transient"];
-	
+
 	params->numberOfIonSpecies = (int)parametersMap["numberOfIonSpecies"];
 
 	params->numberOfTracerSpecies = (int)parametersMap["numberOfTracerSpecies"];
@@ -212,7 +208,7 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 
 	#ifdef THREED
 	mesh->dim(0) = params->meshDim(0);
-	mesh->dim(1) = params->meshDim(1);		
+	mesh->dim(1) = params->meshDim(1);
 	mesh->dim(2) = params->meshDim(2);
 	#endif
 
@@ -298,11 +294,11 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 	}else{
 		parametersMap = loadParameters("inputFiles/ions_properties.ion");
 	}
-	
+
 	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
-		string name;	
+		string name;
 		ionSpecies ions;
 		stringstream ss;
 
@@ -468,7 +464,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
 			IONS->at(ii).position.col(0) = \
 			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).position.col(0));
-		}    
+		}
 	}else if(params->quietStart == 1){
 		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
 			IONS->at(ii).position.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
@@ -517,4 +513,3 @@ void INITIALIZE::initializeFields(const inputParameters * params,const meshGeome
 	ofs << "Status: The electromagnetic fields were initialized without problems...\n";
 	ofs.close();
 }
-

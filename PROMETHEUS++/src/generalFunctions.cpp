@@ -1,11 +1,11 @@
 #include "generalFunctions.h"
 
 void GENERAL_FUNCTIONS::bCastTimestep(inputParameters * params, int logicVariable){
-
 	int changeTimestep;
-
 	double * timeSteps;
 	int * logic;
+	double ststep;//smallest timestep
+
 	logic = (int*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(int));
 
 	MPI_Allgather(&logicVariable, 1, MPI_INT, logic, 1, MPI_INT, params->mpi.mpi_topo);
@@ -18,8 +18,7 @@ void GENERAL_FUNCTIONS::bCastTimestep(inputParameters * params, int logicVariabl
 	}
 
 	if(changeTimestep == 1){
-		double ststep;//smallest timestep
-		timeSteps = (double*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(double));	
+		timeSteps = (double*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(double));
 		MPI_Allgather(&params->DT, 1, MPI_DOUBLE, timeSteps, 1, MPI_DOUBLE, params->mpi.mpi_topo);
 
 		ststep = *timeSteps;
@@ -54,7 +53,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	double CourantNumber(0);
 	double vx(0),vy(0),vz(0);
 	double aux(0);
-	
+
 	#ifdef ONED
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
@@ -105,7 +104,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 
 	aux = vx/mesh->DX + vy/mesh->DY + vz/mesh->DZ;
 	#endif
-	
+
 	CourantNumber = params->DT*aux;
 
 	//Reduce and broadcast timestep if the Courant number exceeds the number Cmax.
@@ -116,7 +115,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	}
 
 	bCastTimestep(params, logicVariable);
-	
+
 }
 
 void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, emf * EB, int IT){
@@ -250,10 +249,10 @@ void GENERAL_FUNCTIONS::saveDiagnosticsVariables(inputParameters * params){
 	params->em->ionsEnergy.save(name,raw_ascii);
 
 	name = path + "electricFieldEnergy.dat";
-	params->em->E_fieldEnergy.save(name,raw_ascii);	
+	params->em->E_fieldEnergy.save(name,raw_ascii);
 
 	name = path + "magneticFieldEnergy.dat";
-	params->em->B_fieldEnergy.save(name,raw_ascii);	
+	params->em->B_fieldEnergy.save(name,raw_ascii);
 
 	name = path + "totalEnergy.dat";
 	params->em->totalEnergy.save(name,raw_ascii);

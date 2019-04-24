@@ -48,9 +48,9 @@ struct energyMonitor{
 
 };
 
-typedef ionSpeciesParams ionSpecies; 
+typedef ionSpeciesParams ionSpecies;
 
-typedef electromagneticFields emf; 
+typedef electromagneticFields emf;
 
 struct meshGeometry{
 	vfield_vec nodes;
@@ -72,7 +72,7 @@ struct backgroundParameters{
 
 	//Angle between the z-axis and the background magnetic field.
 	double theta;
-	//Angle between the z-axis and the propagation vector.	
+	//Angle between the z-axis and the propagation vector.
 	double phi;
 };
 
@@ -104,19 +104,17 @@ struct inputParameters{
 
 	//Mesh geometry
 	arma::uvec meshDim; //number of nodes in each direction. meshDim(0) = # of nodes along the x axis.
-	
+
 	//ions properties
 	int numberOfIonSpecies;
 	int numberOfTracerSpecies;
 
-	double simulatedDensityFraction;//Its value is in [0,1]
 	double totalDensity;
 
 	backgroundParameters BGP;
 
 	int filtersPerIteration;
 	int filtersPerIterationIonsVariables;
-	double TVF;//Threshold value for the energy conservation
 	int checkSmoothParameter;
 
 	double DrL;

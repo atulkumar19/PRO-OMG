@@ -4,14 +4,14 @@ function ST = postprocessSimulation(path)
 
 close all
 
-kB = 1.38E-23; % Boltzmann constant
-mu0 = (4E-7)*pi; % Magnetic permeability of vacuum
-ep0 = 8.854E-12; % Electric permittivity of vacuum
-c=2.9979E8; % Speed of light
-amu = 1.660539E-27; % Atomic mass unit in kg
+ST.kB = 1.38E-23; % Boltzmann constant
+ST.mu0 = (4E-7)*pi; % Magnetic permeability of vacuum
+ST.ep0 = 8.854E-12; % Electric permittivity of vacuum
+ST.c=2.9979E8; % Speed of light
+ST.amu = 1.660539E-27; % Atomic mass unit in kg
 
-qe = 1.602176E-19; % Electron charge
-me = 9.109383E-31; % Electron mass
+ST.qe = 1.602176E-19; % Electron charge
+ST.me = 9.109383E-31; % Electron mass
 
 ST.path = path;
 
@@ -19,7 +19,9 @@ ST.params = loadSimulationParameters(ST);
 
 ST.data = loadData(ST);
 
-FourierAnalysis(ST,'E');
+% FourierAnalysis(ST,'E');
+
+EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -116,6 +118,23 @@ end
 end
 
 function FourierAnalysis(ST,EMF)
+% Plasma parameters
+qi = ST.params.ions.species_1.ionProperties(2);
+mi = ST.params.ions.species_1.ionProperties(1);
+Bo = sqrt(dot(ST.params.Bo,ST.params.Bo));
+
+wci = qi*Bo/mi; % Ion cyclotron frequency
+wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
+
+ni = ST.params.ions.numberDensity;
+wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
+
+% Lower hybrid frequency
+wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );
+wlh = wlh/wci;
+
+disp(['Lower hybrid frequency: ' num2str(wlh)]);
+
 NT = ST.params.numOutputFiles; % Number of snapshots
 ND = ST.params.numOfDomains; % Number of domains
 NXPD = ST.params.geometry.numberOfCells(1); % Number of cells per domain
@@ -138,10 +157,16 @@ Df = 1.0/(DT*double(NT));
 fmax = 1.0/(2.0*double(DT)); % Nyquist theorem
 fAxis = 0:Df:fmax-Df;
 
+wAxis = 2*pi*fAxis/wci;
+
+
 DX = mean(diff(ST.params.geometry.xAxis));
 Dk = 1.0/(DX*double(NXTD));
 kmax = 1.0/(2.0*DX);
 kAxis = 0:Dk:kmax-Dk;
+kAxis = 2.0*pi*kAxis;
+
+xAxis = ST.c*kAxis/wpi;
 
 kSpace = zeros(NT,NXTD);
 for ii=1:NT
@@ -156,9 +181,47 @@ end
 A = fourierSpace.*conj(fourierSpace);
 
 figure
-imagesc(kAxis,fAxis,log10(A(1:NT/2,1:NXTD/2)));
+imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NXTD/2)));
+hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--');hold off;
 axis xy; colormap(jet); colorbar
-xlabel('$k$ ($m^-1$)', 'Interpreter', 'latex')
-ylabel('$f$ (Hz)', 'Interpreter', 'latex')
+xlabel('$ck/\omega_p$', 'Interpreter', 'latex')
+ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+
+end
+
+function EnergyDiagnostic(ST)
+% Diagnostic to monitor energy transfer/conservation
+NT = ST.params.numOutputFiles;
+NSPP = ST.params.ions.numberOfIonSpecies;
+ND = ST.params.numOfDomains;
+
+% First we calculate the kinetic energy of the simulated ions
+Ei = zeros(NSPP,NT);
+EB = zeros(3,NT);
+EB = zeros(3,NT);
+
+for ss=1:NSPP
+    mi = ST.params.ions.(['species_' num2str(ss)]).ionProperties(1);
+    NSP = ST.params.ions.(['species_' num2str(ss)]).superParticlesProperties(3);
+    
+    for ii=1:NT
+        aux_x = 0;
+        aux_y = 0;
+        aux_z = 0;
+        
+        for dd=1:ND
+            aux_x = aux_x + sum(ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vx.^2);
+            aux_y = aux_y + sum(ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vy.^2);
+            aux_z = aux_z + sum(ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vz.^2);
+        end
+        
+        aux_x = aux_x/NSP;
+        aux_y = aux_y/NSP;
+        aux_z = aux_z/NSP;
+        
+        
+        Ei(ss,ii) = 0.5*mi*(aux_x + aux_y + aux_z);
+    end
+end
 
 end

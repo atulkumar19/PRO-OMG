@@ -1,5 +1,5 @@
-/*All the variables MUST be expresed using the SI units (mks). The charge and 
-temperature the units are Coulombs (C) and Kelvins (K). The 
+/*All the variables MUST be expresed using the SI units (mks). The charge and
+temperature the units are Coulombs (C) and Kelvins (K). The
 */
 
 #include "units.h"
@@ -28,23 +28,15 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		ofs << "\tThe number of super-particles for the species " << ii + 1 << " is: " << IONS->at(ii).NSP << "\n";
 		ofs << "\tThe number of particles per cell of the species " << ii + 1 << " is: " << IONS->at(ii).NPC << "\n";
 		ofs << "\tThe number of charged particles per super-particle of the species " << ii+1 << " is: " << IONS->at(ii).NCP << "\n";
-		double n(0);
-		n = IONS->at(ii).BGP.Dn*params->simulatedDensityFraction*params->totalDensity;
-		ofs << "\tThe background density of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.BG_n << " m^{-3}\n";
-		ofs << "\tThe simulated density of the species " << ii + 1 << " is: " << n << " m^{-3}\n";
-		ofs << "\tThe background velocity (V_x) of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.BG_UX << " m/s\n";
-		ofs << "\tThe background velocity (V_y) of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.BG_UY << " m/s\n";
-		ofs << "\tThe background velocity (V_z) of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.BG_UZ << " m/s\n";
+		ofs << "\tThe simulated density of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.Dn*params->totalDensity << " m^{-3}\n";
 		ofs << "\tThe parallel temperature of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.Tpar << " K\n";
 		ofs << "\tThe perpendicular temperature of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.Tper << " K\n";
 		ofs << "\tThe parallel thermal velocity of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.V_Tpar << " m/s\n";
 		ofs << "\tThe perpendicular thermal velocity of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.V_Tper << " m/s\n";
 		IONS->at(ii).BGP.Wc = IONS->at(ii).Q*averageB/IONS->at(ii).M;
 		ofs << "\tThe cyclotron frequency of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.Wc << " Hz\n";
-		double totalDensity(0);
-		totalDensity = n + IONS->at(ii).BGP.BG_n;
-		IONS->at(ii).BGP.Wpi = sqrt( totalDensity*IONS->at(ii).Q*IONS->at(ii).Q/(F_EPSILON*IONS->at(ii).M) );//Check the definition of the plasma freq for each species!
-		ofs << "\tThe ion plasma frequency of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.Wpi << " Hz\n";	
+		IONS->at(ii).BGP.Wpi = sqrt( IONS->at(ii).BGP.Dn*params->totalDensity*IONS->at(ii).Q*IONS->at(ii).Q/(F_EPSILON*IONS->at(ii).M) );//Check the definition of the plasma freq for each species!
+		ofs << "\tThe ion plasma frequency of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.Wpi << " Hz\n";
 		ofs << "\tThe gyroperiod of the species " << ii + 1 << " is: " << scientific << 2.0*M_PI/IONS->at(ii).BGP.Wc << " s\n";
 		IONS->at(ii).BGP.LarmorRadius = IONS->at(ii).BGP.V_Tper/IONS->at(ii).BGP.Wc;
 		ofs << "\tThe average Larmor radius of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.LarmorRadius << " m\n";
@@ -56,7 +48,7 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		if(IONS->at(ii).SPECIES != 0){
 			ionSpecies++;
 			ionMass += IONS->at(ii).M;
-	
+
 			#ifdef ONED
 				vec V = abs(IONS->at(ii).velocity.col(0));
 				if( max(V) > ion_vmax )
@@ -82,7 +74,7 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 
 	ionMass /=  ionSpecies;
 	V_T = sqrt(2.0*F_KB*params->BGP.backgroundTemperature/ionMass);//Background thermal velocity
-	
+
 	params->backgroundTc = (2.0*M_PI/ionCyclotronFrequency);//Minimum ion gyroperiod.
 
 	if(params->BGP.theta == 0){
@@ -96,13 +88,13 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 
 		if(params->DTc*params->backgroundTc > DT){
 			ofs << '\n';
-			ofs << "\tTimestep following CFL_ions criterium (DT/Tc): " << DT/params->backgroundTc << '\n'; 
+			ofs << "\tTimestep following CFL_ions criterium (DT/Tc): " << DT/params->backgroundTc << '\n';
 			ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
 			ofs << "\t Checking stability each: " << params->rateOfChecking << " iterations\n";
 		}else{
 			DT = params->DTc*params->backgroundTc;
 			ofs << '\n';
-			ofs << "\tTimestep given by the user \n"; 
+			ofs << "\tTimestep given by the user \n";
 			ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
 			ofs << "\tChecking stability each: " << params->rateOfChecking << " iterations\n";
 		}
@@ -114,7 +106,7 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		B = params->BGP.backgroundBField;
 //		A = params->DrL*sqrt(2*F_KB*params->BGP.backgroundTemperature*params->totalDensity/F_EPSILON)/(M_PI*F_C*B);
 		A = (mesh->DX*IONS->at(0).BGP.Wpi)/(M_PI*F_C);//Ion skin depth is calculated using the background ions.
-		
+
 		#ifdef ONED
 		CFL_w = 0.5*A*A/2.0;
 		#endif
@@ -135,12 +127,12 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 			if(CFL_w < params->DTc){
 				DT = CFL_w*params->backgroundTc;
 				ofs << '\n';
-				ofs << "\tTimestep following CFL_wh criterium (DT/Tc): " << CFL_w << '\n'; 
-				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";	
+				ofs << "\tTimestep following CFL_wh criterium (DT/Tc): " << CFL_w << '\n';
+				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
 			}else{
 				DT = params->DTc*params->backgroundTc;
 				ofs << '\n';
-				ofs << "\tTimestep given by the user  (DT/Tc): " << params->DTc << '\n'; 
+				ofs << "\tTimestep given by the user  (DT/Tc): " << params->DTc << '\n';
 				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
 			}
 		}else{
@@ -149,18 +141,18 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 			DT = CFL_ions*params->backgroundTc;
 			if(params->DTc*params->backgroundTc > DT){
 				ofs << '\n';
-				ofs << "\tTimestep following CFL_ions criterium (DT/Tc): " << CFL_ions << '\n'; 
+				ofs << "\tTimestep following CFL_ions criterium (DT/Tc): " << CFL_ions << '\n';
 				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
 				ofs << "\t Checking stability each: " << params->rateOfChecking << " iterations\n";
 			}else{
 				DT = params->DTc*params->backgroundTc;
 				ofs << '\n';
-				ofs << "\tTimestep given by the user \n"; 
+				ofs << "\tTimestep given by the user \n";
 				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
 				ofs << "\tChecking stability each: " << params->rateOfChecking << " iterations\n";
 			}
 		}
-	}		 
+	}
 	ofs.close();
 	return(DT);
 }
@@ -214,7 +206,7 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	ofs << "\tThe characteristic pressure is: " << scientific << CS->pressure << " Pa\n";
 	ofs << "\tThe characteristic temperature is: " << scientific << CS->temperature << " K\n";
 
-	ofs << "Status: Characteristic scales defined.\n";	
+	ofs << "Status: Characteristic scales defined.\n";
 
 	ofs.close();
 }
@@ -231,7 +223,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
 	//Normalizing the parameters.
-	
+
 	//Normalizing the mesh.
 	mesh->nodes.X = mesh->nodes.X/CS->length;
 	mesh->nodes.Y = mesh->nodes.Y/CS->length;
@@ -245,10 +237,6 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 	for(int ii=0;ii<IONS->size();ii++){//Iterations over the ion species.
 		IONS->at(ii).Q /= CS->charge;
 		IONS->at(ii).M /= CS->mass;
-		IONS->at(ii).BGP.BG_n /= CS->density;
-		IONS->at(ii).BGP.BG_UX /= CS->velocity;
-		IONS->at(ii).BGP.BG_UY /= CS->velocity;
-		IONS->at(ii).BGP.BG_UZ /= CS->velocity;
 		IONS->at(ii).BGP.Tpar /= CS->temperature;
 		IONS->at(ii).BGP.Tper /= CS->temperature;
 		IONS->at(ii).BGP.LarmorRadius /= CS->length;
@@ -282,7 +270,7 @@ void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params,vector<i
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
 		defineCharacteristicScales(params,IONS,CS);
 	}
-	
+
 	MPI_MAIN mpi_class;
 
 	mpi_class.broadcastCharacteristicScales(params,CS);

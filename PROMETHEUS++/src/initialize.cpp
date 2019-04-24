@@ -112,8 +112,6 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->filtersPerIterationIonsVariables = (int)parametersMap["filtersPerIterationIonsVariables"];
 
-	params->TVF = parametersMap["TVF"];
-
 	params->checkSmoothParameter = (int)parametersMap["checkSmoothParameter"];
 
 	params->timeIterations = (int)parametersMap["timeIterations"];
@@ -135,8 +133,6 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	params->shuffleModes = (unsigned int)parametersMap["shuffleModes"];
 
 	params->fracMagEnerInj = parametersMap["fracMagEnerInj"];
-
-	params->simulatedDensityFraction = parametersMap["simulatedDensityFraction"];
 
 	params->totalDensity = parametersMap["totalDensity"];
 
@@ -249,7 +245,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	#ifdef ONED
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->simulatedDensityFraction*params->totalDensity/IONS->at(ii).NSP;
+		IONS->at(ii).BGP.Dn*params->totalDensity/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = (mesh->DX*(double)mesh->dim(0))*chargeDensityPerCell;
 	}
@@ -258,7 +254,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	#ifdef TWOD
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->simulatedDensityFraction*params->totalDensity/IONS->at(ii).NSP;
+		IONS->at(ii).BGP.Dn*params->totalDensity/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = (mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1))*chargeDensityPerCell;
 	}
@@ -267,7 +263,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	#ifdef THREED
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->simulatedDensityFraction*params->totalDensity/IONS->at(ii).NSP;
+		IONS->at(ii).BGP.Dn*params->totalDensity/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = \
 		(mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1)*mesh->DZ*(double)mesh->dim(0))*chargeDensityPerCell;
@@ -364,9 +360,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			ions.M = F_U*parametersMap[name]; //parametersMap[name] times the atomic mass unit.
 		}
 
-		//Definition of the background ion density for each species
-		ions.BGP.BG_n = ions.BGP.Dn*(1.0 - params->simulatedDensityFraction)*params->totalDensity;
-
 		//Definition of the initial total number of superparticles for each species
 		ions.NSP = ceil(ions.NPC*params->meshDim(0));
 
@@ -385,10 +378,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 					QUIETSTART qs(params,&ions);
 					qs.maxwellianVelocityDistribution(params,&ions,"z");
 				}
-
-				ions.BGP.BG_UX = 0.0;
-				ions.BGP.BG_UY = 0.0;
-				ions.BGP.BG_UZ = 0.0;
 			}
 
 			if(ii == 1){//Alpha-particles
@@ -401,10 +390,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 	                QUIETSTART qs(params,&ions);
 	                qs.ringLikeVelocityDistribution(params,&ions,"z");
 	            }
-
-				ions.BGP.BG_UX = 0.0;
-				ions.BGP.BG_UY = 0.0;
-				ions.BGP.BG_UZ = 0.0;
 			}
 
 			if(ii == 2){//Tracer ions
@@ -438,7 +423,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 	//The ion skin depth is calculated using the set of values of species No 1, which is assumed to be the backgroud population.
 	INITIALIZE::ionSkinDepth =\
-	sqrt(IONS->at(0).M/(F_MU*(IONS->at(0).BGP.Dn*params->simulatedDensityFraction*params->totalDensity)))/IONS->at(0).Q;
+	sqrt(IONS->at(0).M/(F_MU*(IONS->at(0).BGP.Dn*params->totalDensity)))/IONS->at(0).Q;
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iteration over ion species
 		double rL;

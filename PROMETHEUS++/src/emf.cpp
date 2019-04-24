@@ -288,16 +288,12 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 		forwardPBC_1D(&IONS->at(ii).nv.Y);
 		forwardPBC_1D(&IONS->at(ii).nv.Z);
 
-		n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex-1,fIndex+1) \
-			+ IONS->at(ii).Z*(CS->length*CS->density)*IONS->at(ii).BGP.BG_n;
+		n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 		//sum_k[ Z_k*n_k*u_k ]
-		U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1) \
-			+ IONS->at(ii).Z*(CS->length*CS->density)*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UX;
-		U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1) \
-			+ IONS->at(ii).Z*(CS->length*CS->density)*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UY;
-		U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1) \
-			+ IONS->at(ii).Z*(CS->length*CS->density)*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UZ;
+		U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+		U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+		U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 	U.X /= n;
@@ -431,7 +427,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	cube n = zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Density n = ne = sum_k[ Z_k*n_k ]
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
-			n += IONS->at(ii).Z*IONS->at(ii).n + IONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS->at(ii).BGP.BG_n;
+			n += IONS->at(ii).Z*IONS->at(ii).n;
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 
@@ -439,9 +435,9 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	U.zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Flow velocity along the x-direction
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//sum_k[ Z_k*n_k*u_k ]
-			U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UX;
-			U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UY;
-			U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS->at(ii).BGP.BG_n*IONS->at(ii).BGP.BG_UZ;
+			U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2);
+			U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2);
+			U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS->at(ii).Z*IONS->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2);
 	}//The density still have units here.
 
 	U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = U.X.subcube(1,1,1,NX-2,NY-2,NZ-2)/n.subcube(1,1,1,NX-2,NY-2,NZ-2);
@@ -645,16 +641,12 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 			forwardPBC_1D(&newIONS->at(ii).nv.Y);
 			forwardPBC_1D(&newIONS->at(ii).nv.Z);
 
-			nNew += newIONS->at(ii).Z*newIONS->at(ii).n.subvec(iIndex-1,fIndex+1) \
-					+ newIONS->at(ii).Z*(CS->length*CS->density)*newIONS->at(ii).BGP.BG_n;
+			nNew += newIONS->at(ii).Z*newIONS->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 			//sum_k[ Z_k*n_k*u_k ]
-			newU.X += newIONS->at(ii).Z*newIONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1) \
-					+ newIONS->at(ii).Z*(CS->length*CS->density)*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UX;
-			newU.Y += newIONS->at(ii).Z*newIONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1) \
-					+ newIONS->at(ii).Z*(CS->length*CS->density)*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UY;
-			newU.Z += newIONS->at(ii).Z*newIONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1) \
-					+ newIONS->at(ii).Z*(CS->length*CS->density)*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UZ;
+			newU.X += newIONS->at(ii).Z*newIONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+			newU.Y += newIONS->at(ii).Z*newIONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+			newU.Z += newIONS->at(ii).Z*newIONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 	newU.X /= nNew;
@@ -674,16 +666,12 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 		forwardPBC_1D(&oldIONS->at(ii).nv.Z);
 
 
-		nOld += oldIONS->at(ii).Z*oldIONS->at(ii).n.subvec(iIndex-1,fIndex+1) \
-				+ oldIONS->at(ii).Z*(CS->length*CS->density)*oldIONS->at(ii).BGP.BG_n;
+		nOld += oldIONS->at(ii).Z*oldIONS->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 		//sum_k[ Z_k*n_k*u_k ]
-		oldU.X += oldIONS->at(ii).Z*oldIONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1) \
-				+ oldIONS->at(ii).Z*(CS->length*CS->density)*oldIONS->at(ii).BGP.BG_n*oldIONS->at(ii).BGP.BG_UX;
-		oldU.Y += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1) \
-				+ oldIONS->at(ii).Z*(CS->length*CS->density)*oldIONS->at(ii).BGP.BG_n*oldIONS->at(ii).BGP.BG_UY;
-		oldU.Z += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1) \
-				+ oldIONS->at(ii).Z*(CS->length*CS->density)*oldIONS->at(ii).BGP.BG_n*oldIONS->at(ii).BGP.BG_UZ;
+		oldU.X += oldIONS->at(ii).Z*oldIONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+		oldU.Y += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+		oldU.Z += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 	oldU.X /= nOld;
@@ -705,16 +693,12 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 			forwardPBC_1D(&IONS_BAE->at(ii).nv.Y);
 			forwardPBC_1D(&IONS_BAE->at(ii).nv.Z);
 
-			n_BAE += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).n.subvec(iIndex-1,fIndex+1) \
-					+ IONS_BAE->at(ii).Z*(CS->length*CS->density)*IONS_BAE->at(ii).BGP.BG_n;
+			n_BAE += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 			//sum_k[ Z_k*n_k*u_k ]
-			U_BAE.X += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.X.subvec(iIndex-1,fIndex+1) \
-					+ IONS_BAE->at(ii).Z*(CS->length*CS->density)*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
-			U_BAE.Y += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Y.subvec(iIndex-1,fIndex+1) \
-					+ IONS_BAE->at(ii).Z*(CS->length*CS->density)*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UY;
-			U_BAE.Z += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Z.subvec(iIndex-1,fIndex+1) \
-					+ IONS_BAE->at(ii).Z*(CS->length*CS->density)*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UZ;
+			U_BAE.X += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+			U_BAE.Y += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+			U_BAE.Z += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 		}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 		U_BAE.X /= n_BAE;
@@ -860,16 +844,16 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	cube nNew = zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Density n = ne = sum_k[ Z_k*n_k ]
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
-		nNew += newIONS->at(ii).Z*newIONS->at(ii).n + (CS->length*CS->length*CS->length)*CS->density*newIONS->at(ii).BGP.BG_n;
+		nNew += newIONS->at(ii).Z*newIONS->at(ii).n;
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 	vfield_cube newU;//Ion's flow velocity of the specific population under study (already dimensionless).
 	newU.zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//sum_k[ Z_k*n_k*u_k ]
-		newU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + newIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UX;
-		newU.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + newIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UY;
-		newU.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + newIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*newIONS->at(ii).BGP.BG_n*newIONS->at(ii).BGP.BG_UZ;
+		newU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2);
+		newU.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2);
+		newU.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += newIONS->at(ii).Z*newIONS->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 	newU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = newU.X.subcube(1,1,1,NX-2,NY-2,NZ-2)/nNew.subcube(1,1,1,NX-2,NY-2,NZ-2);
@@ -882,16 +866,16 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	cube nOld = zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Density n = ne = sum_k[ Z_k*n_k ]
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
-		nOld += oldIONS->at(ii).Z*oldIONS->at(ii).n + oldIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*oldIONS->at(ii).BGP.BG_n;
+		nOld += oldIONS->at(ii).Z*oldIONS->at(ii).n;
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 
 	vfield_cube oldU;//Ion's flow velocity of the specific population under study (already dimensionless).
 	oldU.zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//sum_k[ Z_k*n_k*u_k ]
-		oldU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += oldIONS->at(ii).Z*oldIONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + oldIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*oldIONS->at(ii).BGP.BG_n*oldIONS->at(ii).BGP.BG_UX;
-		oldU.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + oldIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*oldIONS->at(ii).BGP.BG_n*oldIONS->at(ii).BGP.BG_UX;
-		oldU.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + oldIONS->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*oldIONS->at(ii).BGP.BG_n*oldIONS->at(ii).BGP.BG_UX;
+		oldU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += oldIONS->at(ii).Z*oldIONS->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2);
+		oldU.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2);
+		oldU.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
 	oldU.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = oldU.X.subcube(1,1,1,NX-2,NY-2,NZ-2)/nOld.subcube(1,1,1,NX-2,NY-2,NZ-2);
@@ -908,7 +892,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 		for(int ii=0;ii<IONS_BAE->size();ii++){
 			if(IONS_BAE->at(ii).SPECIES != 0){//If the ions are not tracers then...
-				n_BAE += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).n + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n;
+				n_BAE += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).n;
 			}
 		}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
@@ -916,9 +900,9 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 		for(int ii=0;ii<IONS_BAE->size();ii++){//sum_k[ Z_k*n_k*u_k ]
 			if(IONS_BAE->at(ii).SPECIES != 0){//If the ions are not tracers then...
-				U_BAE.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
-				U_BAE.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
-				U_BAE.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + IONS_BAE->at(ii).Z*(CS->length*CS->length*CS->length)*CS->density*IONS_BAE->at(ii).BGP.BG_n*IONS_BAE->at(ii).BGP.BG_UX;
+				U_BAE.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.X.subcube(1,1,1,NX-2,NY-2,NZ-2);
+				U_BAE.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Y.subcube(1,1,1,NX-2,NY-2,NZ-2);
+				U_BAE.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Z.subcube(1,1,1,NX-2,NY-2,NZ-2);
 			}
 		}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 

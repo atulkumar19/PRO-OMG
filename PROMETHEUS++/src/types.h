@@ -88,7 +88,7 @@ public:
 
 	vfield_cube(){};
 	vfield_cube(unsigned int N, unsigned int M, unsigned int P) : X(N,M,P), Y(N,M,P), Z(N,M,P) {}
-	
+
 	vfield_cube operator + (vfield_cube R);
 	vfield_cube operator += (vfield_cube R);
 	vfield_cube operator - (vfield_cube R);
@@ -99,7 +99,7 @@ public:
 	vfield_cube operator / (double s);
 	vfield_cube operator / (vfield_cube R);
 	vfield_cube operator /= (double s);
-	vfield_cube operator /= (vfield_cube R);	
+	vfield_cube operator /= (vfield_cube R);
 
 	void fill(double value);
 	void ones(unsigned int N, unsigned int M, unsigned int P);
@@ -110,8 +110,8 @@ public:
 class oneDimensional::electromagneticFields : public vfield_vec{
 
 public:
-	vfield_vec E; 
-	vfield_vec B; 
+	vfield_vec E;
+	vfield_vec B;
 
 	electromagneticFields(){};
 	electromagneticFields(unsigned int N) : E(N), B(N){}
@@ -125,12 +125,6 @@ class oneDimensional::ionSpeciesParams : public vfield_vec{
 
 struct ionsBGP{
 	double Dn;
-
-	double BG_n;
-
-	double BG_UX;
-	double BG_UY;
-	double BG_UZ;
 
 	double Tpar;//Parallel temperature.
 	double Tper;//Perpendicular temperature.
@@ -175,8 +169,8 @@ public:
 class twoDimensional::electromagneticFields : public vfield_mat{
 
 public:
-	vfield_mat E; 
-	vfield_mat B; 
+	vfield_mat E;
+	vfield_mat B;
 
 	electromagneticFields(){};
 	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M){}
@@ -187,8 +181,8 @@ public:
 class threeDimensional::electromagneticFields : public vfield_cube{
 
 public:
-	vfield_cube E; 
-	vfield_cube B; 
+	vfield_cube E;
+	vfield_cube B;
 
 	electromagneticFields(){};
 	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P){}

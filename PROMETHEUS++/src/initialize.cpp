@@ -9,8 +9,8 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
 	fileParameters.open(inputFile->data(),ifstream::in);
 
     	if (!fileParameters){
-      		cerr << "ERROR: The input file couldn't be opened.\n";
-        	exit(1);
+      		cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
+        	MPI_Abort(MPI_COMM_WORLD,-123);
     	}
 
     	while ( fileParameters >> tmpName >> tmpValue ){
@@ -27,14 +27,12 @@ map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
 	float tmpValue;
 	fstream fileParameters;
 
-	cout << inputFile;
-
 	std::map<string,float> listOfParameters;
 	fileParameters.open(inputFile ,ifstream::in);
 
     	if (!fileParameters){
-      		cerr << "ERROR: The input file couldn't be opened.\n";
-        	exit(1);
+      		cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
+        	MPI_Abort(MPI_COMM_WORLD,-123);
     	}
 
     	while ( fileParameters >> tmpName >> tmpValue ){
@@ -53,10 +51,11 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
 
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS,2.0 ) > 0.0 ){
-		if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-			cout << "WARNING: The number of MPI processes must be an even number. Terminating simulation!";
+		if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+			cout << "PRO++ ERROR: The number of MPI processes must be an even number.\n";
+		}
 
-		MPI_Abort(MPI_COMM_WORLD,-1);
+		MPI_Abort(MPI_COMM_WORLD,-123);
 	}
 
 	//Initialize to zero the variables of the class
@@ -76,7 +75,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 		params->PATH += "/" + argv;
 	}else{
 		parametersMap = loadParameters("inputFiles/input_file.input");
-		params->PATH += "/outputFiles";
+		params->PATH += "/";
 	}
 
 	// Create HDF5 folders if they don't exist
@@ -170,26 +169,21 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
-	string tmpString = params->PATH + "/loadMeshGeometry_D" + domainNumber.str() + ".txt";
-	char *fileName = new char[tmpString.length()+1];
-	std::strcpy(fileName,tmpString.c_str());
-	std::ofstream ofs(fileName,std::ofstream::out);
-	delete[] fileName;
-
-	ofs << "Status: Loading the grid.\n";
-
-	ofs << "\tThe mesh will be set up using internal parameters.\n";
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
 
 	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
 		mesh->DX = params->DrL*INITIALIZE::LarmorRadius;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
-		ofs << "\tUsing Larmor radius as parameter.\n";
+		if(params->mpi.rank_cart == 0)
+			cout << "Using LARMOR RADIUS to set up simulation grid.\n";
 	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
 		mesh->DX = params->dp*INITIALIZE::ionSkinDepth;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
-		ofs << "\tUsing ion skin depth as parameter.\n";
+		if(params->mpi.rank_cart == 0)
+			cout << "Using ION SKIN DEPTH to set up simulation grid.\n";
 	}
 
 	mesh->dim.set_size(3);
@@ -227,13 +221,12 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 		mesh->nodes.Z(ii) = (double)ii*mesh->DZ; //
 	}
 
-	ofs << "\tThe domain dimension along the x-axis is: " << mesh->nodes.X(mesh->dim(0)-1) + mesh->DX << " m\n";
-	ofs << "\tThe domain dimension along the y-axis is: " << mesh->nodes.Y(mesh->dim(1)-1) + mesh->DY << " m\n";
-	ofs << "\tThe domain dimension along the z-axis is: " << mesh->nodes.Z(mesh->dim(2)-1) + mesh->DZ << " m\n";
-
-	ofs << "Status: Grid loaded.\n";
-
-	ofs.close();
+	if(params->mpi.rank_cart == 0){
+		cout << "Size of simulation domain along the x-axis: " << mesh->nodes.X(mesh->dim(0)-1) + mesh->DX << " m\n";
+		cout << "Size of simulation domain along the y-axis: " << mesh->nodes.Y(mesh->dim(1)-1) + mesh->DY << " m\n";
+		cout << "Size of simulation domain along the z-axis: " << mesh->nodes.Z(mesh->dim(2)-1) + mesh->DZ << " m\n";
+		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *\n\n";
+	}
 }
 
 
@@ -276,15 +269,12 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
-	string tmpString = params->PATH + "/loadIons_D" + domainNumber.str() + ".txt";
-	char *fileName = new char[tmpString.length()+1];
-	std::strcpy(fileName,tmpString.c_str());
-	std::ofstream ofs(fileName,std::ofstream::out);
-	delete[] fileName;
+	if(params->mpi.rank_cart == 0){
+		cout << "* * * * * * * * * * * * INITIALIZING IONS * * * * * * * * * * * * * * * * * *\n";
+		cout << "Number of ion species: " << params->numberOfIonSpecies << "\n";
+		cout << "Number of tracer species: " << params->numberOfTracerSpecies << "\n";
+	}
 
-	ofs <<"Status: Loading ions...\n";
-	ofs << "\tThe simulation includes " << params->numberOfIonSpecies << " ion species.\n";
-	ofs << "\tThe simulation includes " << params->numberOfTracerSpecies << " tracer species.\n";
 
 	std::map<string,float> parametersMap;
 	if(params->argc > 2){
@@ -329,7 +319,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		name.clear();
 
 		if(ions.SPECIES == 0){//Tracers
-			ofs << "\tThe species No " << ii + 1 << " are tracers.\n";
 			//The number of charged particles per super-particle (NCP) is defined in
 			name = "NCP" + ss.str();
 			ions.NCP = parametersMap[name];
@@ -340,33 +329,49 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			name.clear();
 			name = "M" + ss.str();
 			ions.M = F_U*parametersMap[name]; //parametersMap[name] times the proton mass.
+
+			if(params->mpi.rank_cart == 0)
+				cout << "Species No "  << ii + 1 << " are tracers\n";
 		}else if(ions.SPECIES == 1){ //Electrons
-			ofs << "\tThe species No " << ii + 1 << " are electrons.\n";
 			ions.Q = -F_E;
 //			ions.Z = ? //What to do in this case?! Modify later.
 			ions.M = F_ME;
+
+			if(params->mpi.rank_cart == 0)
+				cout << "Species No "  << ii + 1 << " are electrons\n";
 		}else if(ions.SPECIES == 2){ //Protons
-			ofs << "\tThe species No " << ii + 1 << " are protons.\n";
 			ions.Z = 1.0;
 			ions.Q = F_E;
 			ions.M = F_MP;
+
+			if(params->mpi.rank_cart == 0)
+				cout << "Species No "  << ii + 1 << " are protons\n";
 		}else{
-			ofs << "\tThe species No " << ii + 1 << " is not in the database.\n";
 			name = "Z" + ss.str();
 			ions.Z = parametersMap[name]; //parametersMap[name] = Atomic number.
 			ions.Q = F_E*ions.Z;
 			name.clear();
 			name = "M" + ss.str();
 			ions.M = F_U*parametersMap[name]; //parametersMap[name] times the atomic mass unit.
+
+			if(params->mpi.rank_cart == 0){
+				cout << "Species No "  << ii + 1 << " are ions with the following parameters:\n";
+				cout << "Ion atomic number: " << ions.Z << "\n";
+				cout << "Ion mass: " << ions.M << " u\n";
+			}
 		}
 
 		//Definition of the initial total number of superparticles for each species
 		ions.NSP = ceil(ions.NPC*params->meshDim(0));
 
+		if(params->mpi.rank_cart == 0)
+			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << ions.NSP << '\n';
+
 		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 
 		if(params->restart == 1){
-			ofs << "\t Status: Restarting the simulation: loading ions' properties.\n";
+			if(params->mpi.rank_cart == 0)
+				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
 			MPI_Abort(MPI_COMM_WORLD,-1);
 		}else{
 			if(ii == 0){ //Background ions (Protons)
@@ -395,8 +400,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			if(ii == 2){//Tracer ions
 				// Do something
 			}
-
-			ofs << "\t The number of superparticles of the species " << ii + 1 << " is: " << ions.NSP << '\n';
 		}
 
 		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
@@ -407,14 +410,15 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 		//Checking the integrity of the initial condition
 		if((int)ions.velocity.n_elem != (int)(3*ions.NSP)){
-			ofs << "ERROR: loading ions' velocity of species: "<< ii + 1 << '\n';
-			ofs << "\tThe velocity array contains a number of elements that it should not have.\n";
-			exit(1);
+			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
+			MPI_Abort(MPI_COMM_WORLD,-123);
+		 	// The velocity array contains a number of elements that it should not have
+
 		}
 		if((int)ions.position.n_elem != (int)(3*ions.NSP)){
-			ofs << "ERROR: loading ions' position of species: "<< ii + 1 << '\n';
-			ofs << "\tThe position array contains a number of elements that it should not have.\n";
-			exit(1);
+			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
+			MPI_Abort(MPI_COMM_WORLD,-123);
+			// The position array contains a number of elements that it should not have
 		}
 		//Checking integrity of the initial condition
 
@@ -435,12 +439,14 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		}else if(rL < INITIALIZE::LarmorRadius){
 			INITIALIZE::LarmorRadius = rL;
 		}
-
-		ofs<<"\tThe Larmor radius of species "<< ii+1 <<" is: "<< rL << " m\n";
+		if(params->mpi.rank_cart == 0)
+			cout <<"Larmor radius of species " << ii+1 << ": "<< rL << " m\n";
 	}//Iteration over ion species
 
-	ofs<<"\tThe Larmor radius is: "<< INITIALIZE::LarmorRadius <<" m\n";
-	ofs<<"\tThe ion skin depth is: "<< INITIALIZE::ionSkinDepth <<" m\n";
+	if(params->mpi.rank_cart == 0){
+		cout <<"Larmor radius used in simulation " << INITIALIZE::LarmorRadius <<" m\n";
+		cout <<"Ion skin depth used in simulation " << INITIALIZE::ionSkinDepth <<" m\n";
+	}
 
 	double HX;
 	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
@@ -459,46 +465,42 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			IONS->at(ii).position.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
 		}
 	}
-	ofs<<"Status: The ions were loaded successfully...\n";
 
-	ofs.close();
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * IONS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
 
 	MPI_Barrier(MPI_COMM_WORLD);
 }
+
 
 void INITIALIZE::initializeFields(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
-	string tmpString = params->PATH + "/initializeEMF_D" + domainNumber.str() + ".txt";
-	char *fileName = new char[tmpString.length()+1];
-	std::strcpy(fileName,tmpString.c_str());
-	std::ofstream ofs(fileName,std::ofstream::out);
-	delete[] fileName;
-
-	ofs << "Status: Initializing electromagnetic fields...\n";
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *\n";
 
 	if(params->loadFields==1){//The electromagnetic fields are loaded from external files.
-		ofs << "\tLoading the initial condition for the electromagnetic fields from external files.\n";
+		if(params->mpi.rank_cart == 0)
+			cout << "Loading external electromagnetic fields\n";
+		MPI_Abort(MPI_COMM_WORLD,-123);
 	}else{//The electromagnetic fields are being initialized in the runtime.
-		ofs << "\tInitializing the electromagnetic fields in the runtime.\n";
-		ofs << "\tThe component of B along the x-axis is: " \
-			<< sin(params->BGP.theta*M_PI/180)*params->BGP.backgroundBField <<'\n';
-		if(params->BGP.theta == 90.0)
-			ofs << "\tThe component of B along the z-axis is: " << 0.0 <<'\n';
-		else
-			ofs << "\tThe component of B along the z-axis is: " \
-				<< cos(params->BGP.theta*M_PI/180.0)*params->BGP.backgroundBField <<'\n';
-
-
 		int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
 		EB->zeros(dim + 2);//We include the ghost mesh points (+2) in the initialization
 
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y
 		EB->B.Z.fill(params->BGP.Bz);//z
+
+		if(params->mpi.rank_cart == 0){
+			cout << "Initializing electromagnetic fields within simulation\n";
+			cout << "Magnetic field component along simulation domain (x-axis): " << scientific << params->BGP.Bx << fixed << " T\n";
+			cout << "Magnetic field component perpendicular to simulation domain (y-axis): " << scientific << params->BGP.By << fixed << " T\n";
+			cout << "Magnetic field component perpendicular to simulation domain (z-axis): " << scientific << params->BGP.Bz << fixed << " T\n";
+		}
 	}
-	ofs << "Status: The electromagnetic fields were initialized without problems...\n";
-	ofs.close();
+
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
 }

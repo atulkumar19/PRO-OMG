@@ -93,8 +93,8 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
     ions->position = zeros<mat>(ions->NSP,3);
     ions->velocity = zeros<mat>(ions->NSP,3);
 
-	ions->BGP.V_Tper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
-	ions->BGP.V_Tpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
+	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
+	ions->BGP.VTpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
 
     // Initialising positions
     vec b2fr = zeros(ions->NSP);
@@ -115,27 +115,27 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
 
 	if(parDirection.compare("x") == 0){
 
-		ions->velocity.col(1) = ions->BGP.V_Tper*sqrt( -log( R ) ) % cos(b3fr);
-		ions->velocity.col(2) = ions->BGP.V_Tper*sqrt( -log( R ) ) % sin(b3fr);
+		ions->velocity.col(1) = ions->BGP.VTper*sqrt( -log( R ) ) % cos(b3fr);
+		ions->velocity.col(2) = ions->BGP.VTper*sqrt( -log( R ) ) % sin(b3fr);
 
         srand(time(NULL));
         double randPhase( (int)(rand()%100)/100.0);
         randPhase *= 2.0*M_PI;
 
-//		ions->velocity.col(0) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
-		ions->velocity.col(0) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(b3fr);
+//		ions->velocity.col(0) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
+		ions->velocity.col(0) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr);
 
 	}else if(parDirection.compare("z") == 0){
 
-		ions->velocity.col(0) = ions->BGP.V_Tper*sqrt( -log( R ) ) % cos(b3fr);
-		ions->velocity.col(1) = ions->BGP.V_Tper*sqrt( -log( R ) ) % sin(b3fr);
+		ions->velocity.col(0) = ions->BGP.VTper*sqrt( -log( R ) ) % cos(b3fr);
+		ions->velocity.col(1) = ions->BGP.VTper*sqrt( -log( R ) ) % sin(b3fr);
 
         srand(time(NULL));
         double randPhase( (int)(rand()%100)/100.0);
         randPhase *= 2.0*M_PI;
 
-//		ions->velocity.col(2) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
-		ions->velocity.col(2) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(b3fr);
+//		ions->velocity.col(2) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
+		ions->velocity.col(2) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr);
 
 	}else if(parDirection.compare("xz") == 0){//To be modified.
 
@@ -151,8 +151,8 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
     ions->position = zeros<mat>(ions->NSP,3);
     ions->velocity = zeros<mat>(ions->NSP,3);
 
-	ions->BGP.V_Tper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
-	ions->BGP.V_Tpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
+	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
+	ions->BGP.VTpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
 
     // Initialising positions
     vec b2fr = zeros(ions->NSP);
@@ -179,26 +179,26 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
 
 	if(parDirection.compare("x") == 0){
 
-		ions->velocity.col(1) = ions->BGP.V_Tper*cos(phi);
-		ions->velocity.col(2) = ions->BGP.V_Tper*sin(phi);
+		ions->velocity.col(1) = ions->BGP.VTper*cos(phi);
+		ions->velocity.col(2) = ions->BGP.VTper*sin(phi);
 
         srand(time(NULL));
         double randPhase( (int)(rand()%100)/100.0);
         randPhase *= 2.0*M_PI;
 
-//		ions->velocity.col(0) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
-		ions->velocity.col(0) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(phi);
+//		ions->velocity.col(0) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
+		ions->velocity.col(0) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(phi);
 
 	}else if(parDirection.compare("z") == 0){
 
-		ions->velocity.col(0) = ions->BGP.V_Tper*cos(phi);
-		ions->velocity.col(1) = ions->BGP.V_Tper*sin(phi);
+		ions->velocity.col(0) = ions->BGP.VTper*cos(phi);
+		ions->velocity.col(1) = ions->BGP.VTper*sin(phi);
 
 		arma_rng::set_seed_random();
 		tmp = randu<vec>(ions->NSP*params->mpi.NUMBER_MPI_DOMAINS);
 		phi = 2*M_PI*tmp.subvec(iInd,fInd);
 
-		ions->velocity.col(2) = ions->BGP.V_Tpar*sqrt( -log( R ) ) % sin(phi);
+		ions->velocity.col(2) = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(phi);
 
 	}else if(parDirection.compare("xz") == 0){//To be modified.
 

@@ -8,10 +8,10 @@ smoothingParameter	4E-4
 filtersPerIteration	1
 filtersPerIterationIonsVariables	2
 checkSmoothParameter	500
-timeIterations	1000
+timeIterations	10000
 transient	0
 loadFields	0
-saveVariablesEach	100
+saveVariablesEach	20
 numberOfIonSpecies	2
 numberOfTracerSpecies	0
 loadModes	0

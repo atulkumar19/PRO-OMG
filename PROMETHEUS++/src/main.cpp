@@ -20,28 +20,34 @@ using namespace std;
 using namespace arma;
 
 int main(int argc,char* argv[]){
-
 	MPI_Init(&argc,&argv);
 	MPI_MAIN mpi_main;
 
-	inputParameters params; // Input parameters for the simulation.
+	inputParameters params; 		// Input parameters for the simulation.
+	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	vector<ionSpecies> IONS_BAE;  	// Bashford-Adams extrapolation term.
+	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
+	int outputIterator(0);			//
+	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
+	emf EB; 						// Derived type with variables of electromagnetic fields.
+	double currentTime(0); 			// Current time in simulation.
+	double t1;						//
+	double t2;						// 
+
+
 	INITIALIZE init(&params,argc,argv);
 
 	mpi_main.createMPITopology(&params);
 
-	vector<ionSpecies> IONS; // Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	init.loadIons(&params,&IONS);
 
-	characteristicScales CS;
 	UNITS units;
 	units.defineCharacteristicScalesAndBcast(&params,&IONS,&CS);
 
-	meshGeometry mesh; // Geometry of the mesh (still with units).
 	init.loadMeshGeometry(&params,&CS,&mesh);
 
 	init.calculateSuperParticleNumberDensity(&params,&CS,&mesh,&IONS); // Calculation of IONS[ii].NCP for each species
 
-	emf EB; //Electric and magnetic fields.
 	init.initializeFields(&params,&mesh,&EB,&IONS);
 
 	HDF hdfObj(&params,&mesh,&IONS); // Outputs in HDF5 format
@@ -70,12 +76,6 @@ int main(int argc,char* argv[]){
 	alfvenPerturbations.addPerturbations(&params,&IONS,&EB);
 
 	hdfObj.saveOutputs(&params,&IONS,&IONS,&EB,&CS,0,0);
-
-	double totalTime(0); // In seconds when it has units.
-	int it(0);
-	double t1,t2;
-
-	vector<ionSpecies> IONS_BAE;  //  Bashford-Adams extrapolation term.
 
 	t1 = MPI::Wtime();
 
@@ -107,14 +107,14 @@ int main(int argc,char* argv[]){
 			fields.advanceEFieldWithVelocityExtrapolation(&params,&mesh,&EB,&IONS_BAE,&IONS_VE,&IONS,&CS,0);
 		}
 
-		totalTime += params.DT*CS.time;
+		currentTime += params.DT*CS.time;
 
 		if(fmod((double)(tt + 1),params.saveVariablesEach) == 0){
 			auxIONS = IONS; // Ions position at level X^(N+1) and ions' velocity at level V^(N+1/2)
 			// The ions' velocity is advanced in time in order to obtain V^(N+1)
 			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&auxIONS,params.DT/2);
-			hdfObj.saveOutputs(&params,&auxIONS,&IONS,&EB,&CS,it+1,totalTime);
-			it++;
+			hdfObj.saveOutputs(&params,&auxIONS,&IONS,&EB,&CS,outputIterator+1,currentTime);
+			outputIterator++;
 		}
 
 		if( (params.checkStability == 1) && fmod((double)(tt+1),params.rateOfChecking) == 0 ){
@@ -126,14 +126,12 @@ int main(int argc,char* argv[]){
 //		genFun.checkEnergy(&params,&mesh,&CS,&IONS,&EB,tt);
 		if(tt==100){
 			t2 = MPI::Wtime();
-			cout << "The time elapsed is: " << t2-t1 <<'\n';
+			if(params.mpi.rank_cart == 0){
+				cout << "ESTIMATED TIME OF COMPLETION: " << (double)params.timeIterations*(t2-t1)/6000.0 <<" minutes\n";
+			}
 		}
 	} // Time iterations.
-/*
-	MPI_Barrier(params.mpi.mpi_topo);
-	cout << "MPI rank: " << params.mpi.rank_cart << " ALL OK!\n";
-	MPI_Abort(params.mpi.mpi_topo,-10);
-*/
+
 	/**************** All the quantities above are dimensionless ****************/
 	genFun.saveDiagnosticsVariables(&params);
 

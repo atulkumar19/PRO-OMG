@@ -128,8 +128,8 @@ struct ionsBGP{
 	double Tpar;//Parallel temperature.
 	double Tper;//Perpendicular temperature.
 	double LarmorRadius;//Larmor radius.
-	double V_Tper;//Thermal velocity.
-	double V_Tpar;//Thermal velocity.
+	double VTper;//Thermal velocity.
+	double VTpar;//Thermal velocity.
 	double Wc;//Average cyclotron frequency.
 	double Wpi;//ion plasma frequency.
 };

@@ -4,41 +4,44 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 #include "units.h"
 
 double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB){
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
-	string tmpString = params->PATH + "/ionParameters.txt";
-	char *fileName = new char[tmpString.length()+1];
-	std::strcpy(fileName,tmpString.c_str());
-	std::ofstream ofs(fileName,std::ofstream::out);
-	delete[] fileName;
-
-	double DT(0), averageB(0);
+	double DT(0);
+	double averageB(0);
+	double ionCyclotronFrequency(0);
+	double ion_vmax(0);
+	double ionMass(0);
+	double VT(0);
+	double CFL_ions(0);
+	int ionSpecies(0);
 
 	averageB = params->BGP.backgroundBField;
-	ofs << "\tThe average magnetic field is: " << scientific << averageB << " T\n";
-
-	double ionCyclotronFrequency(0);
-	double ion_vmax(0), ionSpecies(0), ionMass(0), V_T(0), CFL_ions(0);
+	if(params->mpi.rank_cart == 0)
+		cout << "Mean magnetic field in simulation domain: " << scientific << averageB << " T\n";
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species
-
-		ofs << "\n \tPROPERTIES OF THE ION SPECIES No. " << ii + 1 << '\n';
-		ofs << "\tThe charge of the species " << ii+1 << " is: " << IONS->at(ii).Q << " C\n";//Revisar las cuentas con el factor NCP
-		ofs << "\tThe mass of the species " << ii+1 << " is: " << IONS->at(ii).M << " kg\n";
-		ofs << "\tThe number of super-particles for the species " << ii + 1 << " is: " << IONS->at(ii).NSP << "\n";
-		ofs << "\tThe number of particles per cell of the species " << ii + 1 << " is: " << IONS->at(ii).NPC << "\n";
-		ofs << "\tThe number of charged particles per super-particle of the species " << ii+1 << " is: " << IONS->at(ii).NCP << "\n";
-		ofs << "\tThe simulated density of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.Dn*params->totalDensity << " m^{-3}\n";
-		ofs << "\tThe parallel temperature of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.Tpar << " K\n";
-		ofs << "\tThe perpendicular temperature of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.Tper << " K\n";
-		ofs << "\tThe parallel thermal velocity of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.V_Tpar << " m/s\n";
-		ofs << "\tThe perpendicular thermal velocity of the species " << ii + 1 << " is: " << IONS->at(ii).BGP.V_Tper << " m/s\n";
 		IONS->at(ii).BGP.Wc = IONS->at(ii).Q*averageB/IONS->at(ii).M;
-		ofs << "\tThe cyclotron frequency of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.Wc << " Hz\n";
 		IONS->at(ii).BGP.Wpi = sqrt( IONS->at(ii).BGP.Dn*params->totalDensity*IONS->at(ii).Q*IONS->at(ii).Q/(F_EPSILON*IONS->at(ii).M) );//Check the definition of the plasma freq for each species!
-		ofs << "\tThe ion plasma frequency of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.Wpi << " Hz\n";
-		ofs << "\tThe gyroperiod of the species " << ii + 1 << " is: " << scientific << 2.0*M_PI/IONS->at(ii).BGP.Wc << " s\n";
-		IONS->at(ii).BGP.LarmorRadius = IONS->at(ii).BGP.V_Tper/IONS->at(ii).BGP.Wc;
-		ofs << "\tThe average Larmor radius of the species " << ii + 1 << " is: " << scientific << IONS->at(ii).BGP.LarmorRadius << " m\n";
+		IONS->at(ii).BGP.LarmorRadius = IONS->at(ii).BGP.VTper/IONS->at(ii).BGP.Wc;
+
+		if(params->mpi.rank_cart == 0){
+			cout << "PROPERTIES OF ION SPECIES No. " << ii + 1 << '\n';
+			cout << "+ Charge: " << scientific << IONS->at(ii).Q << fixed << " C\n";//Revisar las cuentas con el factor NCP
+			cout << "+ Mass: " << scientific << IONS->at(ii).M << fixed << " kg\n";
+			cout << "+ Super-particles: " << IONS->at(ii).NSP << "\n";
+			cout << "+ Particles per cell: " << IONS->at(ii).NPC << "\n";
+			cout << "+ Charged particles per super-particle: " << scientific << IONS->at(ii).NCP << fixed << "\n";
+			cout << "+ Density: " << scientific << IONS->at(ii).BGP.Dn*params->totalDensity << fixed << " m^{-3}\n";
+			cout << "+ Parallel temperature: " << scientific << F_KB*IONS->at(ii).BGP.Tpar/F_E << fixed << " eV\n";
+			cout << "+ Perpendicular temperature: " << scientific << F_KB*IONS->at(ii).BGP.Tper/F_E << fixed << " eV\n";
+			cout << "+ Parallel thermal velocity: " << scientific << IONS->at(ii).BGP.VTpar << fixed << " m/s\n";
+			cout << "+ Perpendicular thermal velocity: " << scientific << IONS->at(ii).BGP.VTper << fixed << " m/s\n";
+			cout << "+ Cyclotron frequency: " << scientific << IONS->at(ii).BGP.Wc << fixed << " Hz\n";
+			cout << "+ Plasma frequency: " << scientific << IONS->at(ii).BGP.Wpi << fixed << " Hz\n";
+			cout << "+ Gyroperiod: " << scientific << 2.0*M_PI/IONS->at(ii).BGP.Wc << fixed << " s\n";
+			cout << "+ Larmor radius: " << scientific << IONS->at(ii).BGP.LarmorRadius << fixed << " m\n\n";
+		}
 
 		//We don't take into account the tracers dynamics of course!
 		if(IONS->at(ii).BGP.Wc > ionCyclotronFrequency && (IONS->at(ii).SPECIES != 0))
@@ -71,13 +74,13 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 
 	}//Iterations over the ion species
 
-	ionMass /=  ionSpecies;
-	V_T = sqrt(2.0*F_KB*params->BGP.backgroundTemperature/ionMass);//Background thermal velocity
+	ionMass /=  (double)ionSpecies;
+	VT = sqrt(2.0*F_KB*params->BGP.backgroundTemperature/ionMass);//Background thermal velocity
 
 	params->backgroundTc = (2.0*M_PI/ionCyclotronFrequency);//Minimum ion gyroperiod.
 
 	if(params->BGP.theta == 0){
-//		CFL_ions = 0.5*(params->DrL*V_T/ion_vmax)/(2*M_PI*sqrt((double)params->dimension));
+//		CFL_ions = 0.5*(params->DrL*VT/ion_vmax)/(2*M_PI*sqrt((double)params->dimension));
 //		DT = CFL_ions*params->backgroundTc;
 
 		params->checkStability = 1;
@@ -86,18 +89,13 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		DT = 0.5*Cmax*mesh->DX/ion_vmax;
 
 		if(params->DTc*params->backgroundTc > DT){
-			ofs << '\n';
-			ofs << "\tTimestep following CFL_ions criterium (DT/Tc): " << DT/params->backgroundTc << '\n';
-			ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
-			ofs << "\t Checking stability each: " << params->rateOfChecking << " iterations\n";
+			if(params->mpi.rank_cart == 0)
+				cout << "Time step defined by Courant–Friedrichs–Lewy condition for ions: " << scientific << DT << fixed << " s\n";
 		}else{
 			DT = params->DTc*params->backgroundTc;
-			ofs << '\n';
-			ofs << "\tTimestep given by the user \n";
-			ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
-			ofs << "\tChecking stability each: " << params->rateOfChecking << " iterations\n";
+			if(params->mpi.rank_cart == 0)
+				cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 		}
-
 	}else{
 		//Here we calculate the timestep following the CFL condition for the reltative high-frequency whistler waves.
 		double CFL_w(0), A(0), B(0);//DT = CFL_w*Tc;
@@ -125,34 +123,35 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 			params->rateOfChecking = 100;
 			if(CFL_w < params->DTc){
 				DT = CFL_w*params->backgroundTc;
-				ofs << '\n';
-				ofs << "\tTimestep following CFL_wh criterium (DT/Tc): " << CFL_w << '\n';
-				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
+				if(params->mpi.rank_cart == 0)
+					cout << "Time step defined by Courant–Friedrichs–Lewy condition for whistler waves: " << scientific << DT << fixed << " s\n";
 			}else{
 				DT = params->DTc*params->backgroundTc;
-				ofs << '\n';
-				ofs << "\tTimestep given by the user  (DT/Tc): " << params->DTc << '\n';
-				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
+				if(params->mpi.rank_cart == 0)
+					cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 			}
 		}else{
 			params->checkStability = 1;
 			params->rateOfChecking = 10;
 			DT = CFL_ions*params->backgroundTc;
+
 			if(params->DTc*params->backgroundTc > DT){
-				ofs << '\n';
-				ofs << "\tTimestep following CFL_ions criterium (DT/Tc): " << CFL_ions << '\n';
-				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
-				ofs << "\t Checking stability each: " << params->rateOfChecking << " iterations\n";
+				if(params->mpi.rank_cart == 0)
+					cout << "Time step defined by Courant–Friedrichs–Lewy condition for ions: " << scientific << DT << fixed << " s\n";
 			}else{
 				DT = params->DTc*params->backgroundTc;
-				ofs << '\n';
-				ofs << "\tTimestep given by the user \n";
-				ofs << "\tSaving variables each : " << params->saveVariablesEach << " iterations\n";
-				ofs << "\tChecking stability each: " << params->rateOfChecking << " iterations\n";
+				if(params->mpi.rank_cart == 0)
+					cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 			}
 		}
 	}
-	ofs.close();
+
+
+	if(params->mpi.rank_cart == 0){
+		cout << "Cadence for saving outputs: " << params->saveVariablesEach << "\n";
+		cout << "Cadence for checking stability: " << params->rateOfChecking << "\n";
+		cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *\n\n";
+	}
 	return(DT);
 }
 
@@ -162,13 +161,8 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
 
-	string tmpString = params->PATH + "/characteristicScales.txt";
-	char *fileName = new char[tmpString.length()+1];
-	std::strcpy(fileName,tmpString.c_str());
-	std::ofstream ofs(fileName,std::ofstream::out);
-	delete[] fileName;
-
-	ofs << "Status: Defining the characteristic scales of the simulation.\n";
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *\n";
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species.
 		CS->mass += IONS->at(ii).M;
@@ -192,21 +186,21 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 
 	CS->pressure = CS->mass*CS->density*CS->velocity*CS->velocity;
 
-	ofs << "\tThe average mass of the ions is: " << scientific << CS->mass << " kg\n";
-	ofs << "\tThe average charge of the ions is: " << scientific << CS->charge << " C\n";
-	ofs << "\tThe characteristic density is: " << scientific << CS->density << " m^(-3)\n";
-	ofs << "\tThe characteristic time is: " << scientific << CS->time << " s\n";
-	ofs << "\tThe plasma frequency is: " << scientific << plasmaFrequency << " s\n";
-	ofs << "\tThe characteristic velocity is: " << scientific << CS->velocity << " m/s\n";
-	ofs << "\tThe characteristic length is: " << scientific << CS->length << " m\n";
-	ofs << "\tThe characteristic electric field intensity is: " << scientific << CS->eField << " N/C\n";
-	ofs << "\tThe characteristic magnetic field intensity is: " << scientific << CS->bField << " T\n";
-	ofs << "\tThe characteristic pressure is: " << scientific << CS->pressure << " Pa\n";
-	ofs << "\tThe characteristic temperature is: " << scientific << CS->temperature << " K\n";
-
-	ofs << "Status: Characteristic scales defined.\n";
-
-	ofs.close();
+	if(params->mpi.rank_cart == 0){
+		cout << "Average mass: " << scientific << CS->mass << " kg\n";
+		cout << "Average charge: " << scientific << CS->charge << " C\n";
+		cout << "Density: " << scientific << CS->density << " m^(-3)\n";
+		cout << "Time: " << scientific << CS->time << " s\n";
+		cout << "Plasma frequency: " << scientific << plasmaFrequency << " s\n";
+		cout << "Velocity: " << scientific << CS->velocity << " m/s\n";
+		cout << "Length: " << scientific << CS->length << " m\n";
+		cout << "Electric field intensity: " << scientific << CS->eField << " V/m\n";
+		cout << "Magnetic field intensity: " << scientific << CS->bField << " T\n";
+		cout << "Pressure: " << scientific << CS->pressure << " Pa\n";
+		cout << "Temperature: " << scientific << CS->temperature << " K\n";
+		cout << fixed;
+		cout << "* * * * * * * * * * * * CHARACTERISTIC SCALES IN SIMULATION DEFINED  * * * * * * * * * * * * * * * * * *\n\n";
+	}
 }
 
 
@@ -242,8 +236,8 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 		IONS->at(ii).BGP.Tpar /= CS->temperature;
 		IONS->at(ii).BGP.Tper /= CS->temperature;
 		IONS->at(ii).BGP.LarmorRadius /= CS->length;
-		IONS->at(ii).BGP.V_Tpar /= CS->velocity;
-		IONS->at(ii).BGP.V_Tper /= CS->velocity;
+		IONS->at(ii).BGP.VTpar /= CS->velocity;
+		IONS->at(ii).BGP.VTper /= CS->velocity;
 		IONS->at(ii).BGP.Wc *= CS->time;
 		IONS->at(ii).BGP.Wpi *= CS->time;//IMPORTANT: Not normalized before!!
 		IONS->at(ii).position = IONS->at(ii).position/CS->length;

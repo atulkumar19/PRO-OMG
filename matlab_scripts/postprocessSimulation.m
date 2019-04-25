@@ -21,7 +21,7 @@ ST.data = loadData(ST);
 
 FourierAnalysis(ST,'E');
 
-EnergyDiagnostic(ST);
+% EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -179,14 +179,15 @@ for ii=1:NXTD
 end
 
 A = fourierSpace.*conj(fourierSpace);
+z = linspace(0,max([max(xAxis), max(wAxis)]),10);
 
 figure
 imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NXTD/2)));
-hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--');hold off;
+hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
 axis xy; colormap(jet); colorbar
+axis([0 max(xAxis) 0 max(wAxis)])
 xlabel('$ck/\omega_p$', 'Interpreter', 'latex')
 ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-
 end
 
 function EnergyDiagnostic(ST)

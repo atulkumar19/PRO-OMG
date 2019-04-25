@@ -15,7 +15,6 @@ void PIC::MPI_BcastDensity(const inputParameters * params,ionSpecies * ions){
 	}
 
 	MPI_Barrier(params->mpi.mpi_topo);
-
 }
 
 
@@ -56,7 +55,6 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params,ionSpecies * ions
 	}
 
 	MPI_Barrier(params->mpi.mpi_topo);
-
 }
 
 
@@ -83,7 +81,6 @@ void PIC::MPI_AllgatherField(const inputParameters * params,vfield_vec * field){
 	sendBuf = field->Z.subvec(iIndex,fIndex);
 	MPI_Allgather(sendBuf.memptr(),1,chunk.type,recvBuf.memptr(),1,chunk.type,params->mpi.mpi_topo);
 	field->Z.subvec(1,params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
-
 }
 
 
@@ -103,6 +100,7 @@ void PIC::smooth_TOS(vec * v,double as){
 	//Step 2: Averaged weighted variable estimation.
 	v->subvec(1,NX-2) = (1-as)*v->subvec(1,NX-2) + as*b.subvec(2,N-3);
 }
+
 
 void PIC::smooth_TOS(vfield_vec * vf,double as){
 
@@ -137,13 +135,12 @@ void PIC::smooth_TOS(vfield_vec * vf,double as){
 
 	//Step 2: Averaged weighted variable estimation.
 	vf->Z.subvec(1,NX-2) = (1-as)*vf->Z.subvec(1,NX-2) + as*b.subvec(2,N-3);
-
 }
+
 
 void PIC::smooth_TOS(vfield_mat * vf,double as){
 
 }
-
 
 
 void PIC::smooth_TSC(vec * v,double as){
@@ -161,8 +158,8 @@ void PIC::smooth_TSC(vec * v,double as){
 
 	//Step 2: Averaged weighted variable estimation.
 	v->subvec(1,NX-2) = (1-as)*v->subvec(1,NX-2) + as*b.subvec(1,NX-2);
-
 }
+
 
 void PIC::smooth_TSC(vfield_vec * vf,double as){
 
@@ -198,8 +195,8 @@ void PIC::smooth_TSC(vfield_vec * vf,double as){
 
 	//Step 2: Averaged weighted vector field estimation.
 	vf->Z.subvec(1,NX-2) = (1-as)*vf->Z.subvec(1,NX-2) + as*b.subvec(1,NX-2);
-
 }
+
 
 void PIC::smooth_TSC(vfield_mat * vf,double as){
 
@@ -221,8 +218,8 @@ void PIC::smooth(vec * v,double as){
 
 	//Step 2: Averaged weighted variable estimation.
 	v->subvec(1,NX-2) = (1-as)*v->subvec(1,NX-2) + as*b.subvec(1,NX-2);
-
 }
+
 
 void PIC::smooth(vfield_vec * vf,double as){
 
@@ -258,8 +255,8 @@ void PIC::smooth(vfield_vec * vf,double as){
 
 	//Step 2: Averaged weighted vector field estimation.
 	vf->Z.subvec(1,NX-2) = (1-as)*vf->Z.subvec(1,NX-2) + as*b.subvec(1,NX-2);
-
 }
+
 
 void PIC::smooth(vfield_mat * vf,double as){
 
@@ -469,6 +466,7 @@ void PIC::assingCell_TSC(const inputParameters * params,const meshGeometry * mes
     #endif
 }
 
+
 void PIC::assingCell(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions,int dim){
 
 	switch (dim){
@@ -524,7 +522,6 @@ void PIC::crossProduct(const mat * A,const mat * B,mat * AxB){
 	AxB->col(0) = A->col(1)%B->col(2) - A->col(2)%B->col(1);//(AxB)_x
 	AxB->col(1) = A->col(2)%B->col(0) - A->col(0)%B->col(2);//(AxB)_y
 	AxB->col(2) = A->col(0)%B->col(1) - A->col(1)%B->col(0);//(AxB)_z
-
 }
 
 
@@ -710,10 +707,9 @@ void PIC::eivTSC_2D(const inputParameters * params,const meshGeometry * mesh,ion
 }
 #endif
 
+
 #ifdef THREED
 void PIC::eivTSC_3D(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions){
-
-
 
 }
 #endif
@@ -780,7 +776,6 @@ void PIC::extrapolateIonVelocity(const inputParameters * params,const meshGeomet
 				#endif
 				}
 	}
-
 }
 
 
@@ -838,6 +833,7 @@ void PIC::eidTOS_1D(const inputParameters * params,const meshGeometry * mesh,ion
 }
 #endif
 
+
 #ifdef ONED
 void PIC::eidTSC_1D(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions){
 
@@ -893,6 +889,7 @@ void PIC::eidTSC_2D(const inputParameters * params,const meshGeometry * mesh,ion
 
 }
 #endif
+
 
 #ifdef THREED
 void PIC::eidTSC_3D(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions){
@@ -1066,7 +1063,6 @@ void PIC::EMF_TOS_1D(const inputParameters * params,const ionSpecies * ions,vfie
 			(*F)(ii,2) += ions->wxrr(ii)*EMF->Z(ix+2);
 		}
 	}//End of the parallel region
-
 }
 #endif
 
@@ -1122,12 +1118,13 @@ void PIC::EMF_TSC_1D(const inputParameters * params,const ionSpecies * ions,vfie
 }
 #endif
 
+
 #ifdef TWOD
 void PIC::EMF_TSC_2D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cube * emf,mat * F){
 
-
 }
 #endif
+
 
 #ifdef THREED
 void PIC::EMF_TSC_3D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cube * emf,mat * F){
@@ -1180,7 +1177,6 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cu
 		(*F)(ii,2) += w8*emf->Z(ix+1,iy+1,iz+1);//(i+1,j+1,k+1)
 
 	}//Iterating over the particles
-
 }
 #endif
 
@@ -1366,11 +1362,13 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 }
 #endif
 
+
 #ifdef TWOD
 void PIC::aiv_2D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 }
 #endif
+
 
 #ifdef THREED
 void PIC::aiv_3D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
@@ -1461,7 +1459,6 @@ void PIC::aiv_3D(const inputParameters * params,const characteristicScales * CS,
 		extrapolateIonVelocity(params,mesh,&IONS->at(ii));
 
 	}//structure to iterate over all the ion species.
-
 }
 #endif
 
@@ -1552,8 +1549,8 @@ void PIC::aip_1D(const inputParameters * params,const meshGeometry * mesh,vector
 		}
 
 	}//structure to iterate over all the ion species.
-
 }
+
 
 void PIC::aip_2D(const inputParameters * params,const meshGeometry * mesh,vector<ionSpecies> * IONS,const double DT){
 
@@ -1583,8 +1580,8 @@ void PIC::aip_2D(const inputParameters * params,const meshGeometry * mesh,vector
 		extrapolateIonDensity(params,mesh,&IONS->at(ii));//Once the ions have been pushed, we extrapolate the density at the node grids.
 
 	}//structure to iterate over all the ion species.
-
 }
+
 
 void PIC::aip_3D(const inputParameters * params,const meshGeometry * mesh,vector<ionSpecies> * IONS,const double DT){
 
@@ -1653,7 +1650,6 @@ void PIC::aip_3D(const inputParameters * params,const meshGeometry * mesh,vector
 		extrapolateIonDensity(params,mesh,&IONS->at(ii));//Once the ions have been pushed, we extrapolate the density at the node grids.
 
 	}//structure to iterate over all the ion species.
-
 }
 
 
@@ -1742,7 +1738,6 @@ void PIC::ionVariables(vector<ionSpecies> * IONS,vector<ionSpecies> * copyIONS,c
 			exit(1);
 		}
  	}
-
 }
 
 void PIC::advanceIonsVelocity(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
@@ -1760,7 +1755,6 @@ void PIC::advanceIonsVelocity(const inputParameters * params,const characteristi
 	#ifdef THREED
 		aiv_3D(params,CS,mesh,EB,IONS,DT);
 	#endif
-
 }
 
 void PIC::advanceIonsPosition(const inputParameters * params,const meshGeometry * mesh,vector<ionSpecies> * IONS,const double DT){
@@ -1778,5 +1772,4 @@ void PIC::advanceIonsPosition(const inputParameters * params,const meshGeometry 
 	#ifdef THREED
 		aip_3D(params,mesh,IONS,DT);
 	#endif
-
 }

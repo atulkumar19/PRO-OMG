@@ -19,7 +19,7 @@ ST.params = loadSimulationParameters(ST);
 
 ST.data = loadData(ST);
 
-% FourierAnalysis(ST,'E');
+FourierAnalysis(ST,'E');
 
 EnergyDiagnostic(ST);
 end

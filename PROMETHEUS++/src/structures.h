@@ -3,15 +3,15 @@
 
 #include <vector>
 #include <string>
-#include<omp.h>
-
 #include "armadillo"
 #include "types.h"
 
+#include<omp.h>
 #include "mpi.h"
 
 using namespace oneDimensional;//This namespace is used in the overloaded functions for the different structures in types.h
 
+// Physical constants
 #define F_E 1.602176E-19//Electron charge in C (absolute value)
 #define F_ME 9.109382E-31//Electron mass in kg
 #define F_MP 1.672621E-27//Proton mass in kg
@@ -20,6 +20,9 @@ using namespace oneDimensional;//This namespace is used in the overloaded functi
 #define F_EPSILON 8.854E-12 //Vacuum permittivity in C^2/(N*m^2)
 #define F_C 299792458.0 //Light speed in m/s
 #define F_MU (4*M_PI)*1E-7 //Vacuum permeability in N/A^2
+extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
+extern double F_E_DS; // Dimensionless vacuum permittivity
+extern double F_MU_DS; // Dimensionless vacuum permittivity
 
 
 struct mpiStruct{
@@ -28,6 +31,7 @@ struct mpiStruct{
 	MPI_Comm mpi_topo;
 	int rank_cart, lRank, rRank;
 };
+
 
 struct energyMonitor{
 	int it;
@@ -48,9 +52,12 @@ struct energyMonitor{
 
 };
 
+
 typedef ionSpeciesParams ionSpecies;
 
+
 typedef electromagneticFields emf;
+
 
 struct meshGeometry{
 	vfield_vec nodes;
@@ -61,6 +68,7 @@ struct meshGeometry{
 	double DY;
 	double DZ;
 };
+
 
 struct backgroundParameters{
 
@@ -135,6 +143,7 @@ struct inputParameters{
 	mpiStruct mpi;
 };
 
+
 struct characteristicScales{
 	double time;
 	double velocity;
@@ -159,8 +168,5 @@ struct characteristicScales{
 		pressure = 0.0;
 	}
 };
-
-
-
 
 #endif

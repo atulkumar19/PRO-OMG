@@ -117,7 +117,6 @@ public:
 	electromagneticFields(unsigned int N) : E(N), B(N){}
 	void zeros(unsigned int N);
 	void fill(double A);
-
 };
 
 
@@ -133,7 +132,6 @@ struct ionsBGP{
 	double V_Tpar;//Thermal velocity.
 	double Wc;//Average cyclotron frequency.
 	double Wpi;//ion plasma frequency.
-
 };
 
 public:
@@ -175,7 +173,6 @@ public:
 	electromagneticFields(){};
 	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M){}
 	void zeros(unsigned int N, unsigned int M);
-
 };
 
 class threeDimensional::electromagneticFields : public vfield_cube{

@@ -1,6 +1,6 @@
 #Makefile
-
 UNAME:=$(shell uname)
+
 
 SRC=src
 OBJ=obj
@@ -18,7 +18,7 @@ ifeq ($(UNAME), Darwin)
 	INCLUDE_HDF5 = -I$(HDF_INSTALL)/include
 	INCLUDES =	-I../arma_libs/usr/include	-I../arma_libs/usr/lib
 	EXTLIB = -L$(HDF_INSTALL)/lib
-	LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a 
+	LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
 	LIB_FLAGS =	-L../arma_libs/usr/lib
 	LIB	=	-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo -lgfortran
 	OMP_LIB_FLAGS =	-lgomp
@@ -36,13 +36,14 @@ ifeq ($(UNAME), Linux)
 	INCLUDE_HDF5	=	-I$(HDF_INSTALL)/include
 	INCLUDES =	-I../arma_libs/usr/include	-I../arma_libs/usr/lib	-I../arma_libs/usr/lib64
 	EXTLIB	= -L$(HDF_INSTALL)/lib
-	LIBSHDF	= $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a 	
+	LIBSHDF	= $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
 	LIB_FLAGS =	-L../arma_libs/usr/lib -L../arma_libs/usr/lib64
 	LIB	=	-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo
 	OMP_LIB_FLAGS =	-lgomp
 endif
 
-BINARIES = $(addprefix $(OBJ)/,main.o	\
+BINARIES = $(addprefix $(OBJ)/,structures.o\
+main.o	\
 PIC.o	\
 initialize.o	\
 units.o	\
@@ -66,10 +67,8 @@ $(BIN)/PROMETHEUS++: $(BINARIES)
 
 
 info:
-#	@echo	"Compiling the code for MacOS"
-	@echo	$(UNAME)
-	@echo	"COMPILING..."
+	@echo	"COMPILING IN: "$(UNAME)
 
 clean:
-	@echo	"CLEANING COMPILATION..."
-	rm -f $(BIN)/PROMETHEUS++	$(OBJ)/*.o
+	@echo	"CLEANING PREVIOUS COMPILATION"
+	rm -f $(BIN)/PROMETHEUS++	$(OBJ)/*.o	$(SRC)/*~

@@ -1,12 +1,7 @@
 #!/bin/bash
-
 make clean
 
-rm src/*~
-clear
-
 make info
-## make -B -j4
 make -j4
 
 #install_name_tool -change libarmadillo.4.dylib ../arma_libs/usr/lib/libarmadillo.4.dylib bin/PROMETHEUS++

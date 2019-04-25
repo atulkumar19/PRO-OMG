@@ -1,7 +1,6 @@
 /*All the variables MUST be expresed using the SI units (mks). The charge and
 temperature the units are Coulombs (C) and Kelvins (K). The
 */
-
 #include "units.h"
 
 double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB){
@@ -193,7 +192,6 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 
 	CS->pressure = CS->mass*CS->density*CS->velocity*CS->velocity;
 
-
 	ofs << "\tThe average mass of the ions is: " << scientific << CS->mass << " kg\n";
 	ofs << "\tThe average charge of the ions is: " << scientific << CS->charge << " C\n";
 	ofs << "\tThe characteristic density is: " << scientific << CS->density << " m^(-3)\n";
@@ -211,7 +209,11 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	ofs.close();
 }
 
+
 void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB,const characteristicScales * CS){
+	// Normalizing physical constants
+	F_E_DS /= CS->charge; // Dimensionless electron charge
+	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; // Dimensionless vacuum permittivity
 
 	//Normalizing the parameters.
 	params->DT /= CS->time;
@@ -255,7 +257,6 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 	EB->B /= CS->bField;
 
 	//Normalizing the electromagnetic fields.
-
 }
 
 
@@ -264,6 +265,7 @@ void UNITS::normalizeVariables(inputParameters * params,meshGeometry * mesh,vect
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }
+
 
 void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
 
@@ -274,5 +276,4 @@ void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params,vector<i
 	MPI_MAIN mpi_class;
 
 	mpi_class.broadcastCharacteristicScales(params,CS);
-
 }

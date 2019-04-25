@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <armadillo>
-#include <omp.h>
 #include <cmath>
-
 #include <ctime>
 
 #include "structures.h"
@@ -13,9 +11,9 @@
 #include "units.h"
 #include "generalFunctions.h"
 #include "outputHDF5.h"
-
 #include "alfvenic.h"
 
+#include <omp.h>
 #include "mpi_main.h"
 
 using namespace std;
@@ -131,7 +129,11 @@ int main(int argc,char* argv[]){
 			cout << "The time elapsed is: " << t2-t1 <<'\n';
 		}
 	} // Time iterations.
-
+/*
+	MPI_Barrier(params.mpi.mpi_topo);
+	cout << "MPI rank: " << params.mpi.rank_cart << " ALL OK!\n";
+	MPI_Abort(params.mpi.mpi_topo,-10);
+*/
 	/**************** All the quantities above are dimensionless ****************/
 	genFun.saveDiagnosticsVariables(&params);
 

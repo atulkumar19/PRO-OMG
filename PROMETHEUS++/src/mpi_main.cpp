@@ -70,9 +70,9 @@ void MPI_MAIN::createMPITopology(inputParameters * params){
 		MPI_Cart_shift(params->mpi.mpi_topo,0,1,&src,&params->mpi.rRank);
 		src = params->mpi.rank_cart;
 		MPI_Cart_shift(params->mpi.mpi_topo,0,-1,&src,&params->mpi.lRank);
-//		cout << "Coordinate and rank " << params->mpi.MPI_DOMAIN_NUMBER << '\t' \
-//		<< params->mpi.rank_cart << " coordinate " << coord << " left & right " \
-//		<< params->mpi.lRank << '\t' << params->mpi.rRank << '\n';
+/*		cout << "Coordinate and rank " << params->mpi.MPI_DOMAIN_NUMBER << '\t' \
+		<< params->mpi.rank_cart << " coordinate " << coord << " left & right " \
+		<< params->mpi.lRank << '\t' << params->mpi.rRank << '\n';
+*/
 	}
-
 }

@@ -73,9 +73,11 @@ void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_vec * vf,doubl
 	b.fill(0);
 }
 
+
 void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_mat * vf,double as){
 
 }
+
 
 void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
@@ -112,6 +114,7 @@ void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_vec * vf,doubl
 	//Step 2: Averaged weighted vector field estimation.
 	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,dim-2);
 }
+
 
 void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_mat * vf,double as){
 
@@ -159,12 +162,13 @@ void EMF_SOLVER::smooth(const inputParameters * params,vfield_mat * vf,double as
 
 }
 
+
 void EMF_SOLVER::equilibrium(const inputParameters * params,vector<ionSpecies> * IONS,emf * EB,characteristicScales * CS){
 
 }
 
-void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,emf * EB){//This function calculates -culr(EB->E)
 
+void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,emf * EB){//This function calculates -culr(EB->E)
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -183,21 +187,20 @@ void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,
 	//z-component
 //	EB->B.Z.subvec(1,NX-2) = - ( EB->E.Y.subvec(2,NX-1) - EB->E.Y.subvec(1,NX-2) )/mesh->DX;
 	EB->B.Z.subvec(iIndex,fIndex) = - ( EB->E.Y.subvec(iIndex+1,fIndex+1) - EB->E.Y.subvec(iIndex,fIndex) )/mesh->DX;
-
 }
+
 
 void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
 
 }
 
-void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
 
+void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
 
 }
 
 
 void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,characteristicScales * CS){
-
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
@@ -263,6 +266,7 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 	MPI_passGhosts(params,&EB->B);
 }
 
+
 #ifdef ONED
 void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,characteristicScales * CS){
 
@@ -274,8 +278,6 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
-	double MU = F_MU*( CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass );//dimensionless permeability.
-	double e0(F_E/CS->charge);//dimensionless electron charge.
 	double n_ch = CS->length*CS->density;//Dimensionless characteristic density.
 
 	vec n = zeros(dim);//Density n = ne = sum_k[ Z_k*n_k ]
@@ -317,14 +319,14 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 //	MPI_Barrier(params->mpi.mpi_topo);
 //	cout << "Message from process\t" << params->mpi.rank_cart << '\t' << EB->E.X.n_elem << '\t' << EB->E.Y.n_elem << '\n';
 
-	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex) )/( MU*e0*( 0.5*( n.subvec(1,dim-2)+ n.subvec(2,dim-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,dim-2)+ n.subvec(2,dim-1) ) ) );
 
 
 	curlB.Z = 0.5*( (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX );//curl(B)z(i)
 
 	curlB.Z += 0.5*( (EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex,fIndex))/mesh->DX );//curl(B)z(i+1)
 
-	EB->E.X.subvec(iIndex,fIndex) += - ( curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( MU*e0*( 0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - ( curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) ) );
 
 
 	curlB.fill(0);
@@ -334,7 +336,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,dim-2) + U.Z.subvec(2,dim-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.backgroundTemperature/e0)*( (n.subvec(2,dim-1) - n.subvec(1,dim-2))/mesh->DX )/(0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subvec(2,dim-1) - n.subvec(1,dim-2))/mesh->DX )/(0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) );
 
 
 	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
@@ -345,7 +347,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 	//y-component
 
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(MU*e0*n.subvec(1,dim-2));
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,dim-2));
 
 	EB->E.Y.subvec(iIndex,fIndex) += - U.Z.subvec(1,dim-2) % EB->B.X.subvec(iIndex,fIndex);
 
@@ -355,7 +357,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 	//z-component
 
 
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(MU*e0*n.subvec(1,dim-2));
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,dim-2));
 
 	EB->E.Z.subvec(iIndex,fIndex) += - U.X.subvec(1,dim-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
 
@@ -409,21 +411,19 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 }
 #endif
 
+
 #ifdef TWOD
 void EMF_SOLVER::aef_2D(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,characteristicScales * CS){
 
 }
 #endif
 
+
 #ifdef THREED
 void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,characteristicScales * CS){
 
 	//Definitions
 	int NX(EB->E.X.n_rows),NY(EB->E.X.n_cols),NZ(EB->E.X.n_slices);
-
-	double MU(0); //dimensionless permeability.
-	MU = F_MU*( CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass );
-	double e0(F_E/CS->charge);//dimensionless electron charge.
 
 	cube n = zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Density n = ne = sum_k[ Z_k*n_k ]
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
@@ -475,7 +475,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	curlB.Y += 0.25*( (EB->B.X.subcube(2,0,1,NX-1,NY-3,NZ-2) - EB->B.X.subcube(2,0,0,NX-1,NY-3,NZ-3))/mesh->DZ - (EB->B.Z.subcube(2,0,1,NX-1,NY-3,NZ-2) - EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DX );//curl(B)y(i+1,j-1,k)
 
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = ( curlB.Y % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2) ) ) )/( MU*e0*( 0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = ( curlB.Y % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2) ) ) )/( F_MU_DS*F_E_DS*( 0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
 
 
 	curlB.Z = 0.25*( (EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DX - (EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DY );//curl(B)z(i,j,k)
@@ -487,7 +487,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	curlB.Z += 0.25*( (EB->B.Y.subcube(2,1,0,NX-1,NY-2,NZ-3) - EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DX - (EB->B.X.subcube(2,1,0,NX-1,NY-2,NZ-3) - EB->B.X.subcube(2,0,0,NX-1,NY-3,NZ-3))/mesh->DY );//curl(B)z(i+1,j,k-1)
 
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - ( curlB.Z % ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) ) )/( MU*e0*( 0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - ( curlB.Z % ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) ) )/( F_MU_DS*F_E_DS*( 0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
 
 
 	curlB.Y.fill(0);
@@ -498,7 +498,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Z.subcube(2,1,1,NX-1,NY-2,NZ-2) )% ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) );
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/e0)*( (n.subcube(2,1,1,NX-1,NY-2,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subcube(2,1,1,NX-1,NY-2,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
 
 	//y-component
 
@@ -511,7 +511,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	curlB.Z += 0.25*( (EB->B.Y.subcube(1,2,0,NX-2,NY-1,NZ-3) - EB->B.Y.subcube(0,2,0,NX-3,NY-1,NZ-3))/mesh->DX - (EB->B.X.subcube(1,2,0,NX-2,NY-1,NZ-3) - EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DY );//curl(B)z(i,j+1,k-1)
 
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.Z % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3)) )/(MU*e0*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.Z % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3)) )/(F_MU_DS*F_E_DS*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
 
 
 	curlB.X = 0.25*( (EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DY - (EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DZ );//curl(B)x(i,j,k)
@@ -523,7 +523,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	curlB.X += 0.25*( (EB->B.Z.subcube(0,2,1,NX-3,NY-1,NZ-2) - EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DY - (EB->B.Y.subcube(0,2,1,NX-3,NY-1,NZ-2) - EB->B.Y.subcube(0,2,0,NX-3,NY-1,NZ-3))/mesh->DZ );//curl(B)x(i-1,j+1,k)
 
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.X % ( 0.5*(EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(MU*e0*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.X % ( 0.5*(EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(F_MU_DS*F_E_DS*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
 
 
 	curlB.Z.fill(0);
@@ -534,7 +534,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.X.subcube(1,2,1,NX-2,NY-1,NZ-2) ) % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2) ) );
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/e0)*( (n.subcube(1,2,1,NX-2,NY-1,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subcube(1,2,1,NX-2,NY-1,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
 
 
 	//z-component
@@ -548,7 +548,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	curlB.X += 0.25*( (EB->B.Z.subcube(0,1,2,NX-3,NY-2,NZ-1) - EB->B.Z.subcube(0,0,2,NX-3,NY-3,NZ-1))/mesh->DY - (EB->B.Y.subcube(0,1,2,NX-3,NY-2,NZ-1) - EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DZ );//curl(B)x(i-1,j,k+1)
 
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.X % ( 0.5*(EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(MU*e0*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.X % ( 0.5*(EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(F_MU_DS*F_E_DS*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
 
 
 	curlB.Y = 0.25*( (EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DZ - (EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DX );//curl(B)y(i,j,k)
@@ -560,7 +560,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 	curlB.Y += 0.25*( (EB->B.X.subcube(1,0,2,NX-2,NY-3,NZ-1) - EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DZ - (EB->B.Z.subcube(1,0,2,NX-2,NY-3,NZ-1) - EB->B.Z.subcube(0,0,2,NX-3,NY-3,NZ-1))/mesh->DX );//curl(B)y(i,j-1,k+1)
 
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.Y % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2)) )/(MU*e0*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.Y % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2)) )/(F_MU_DS*F_E_DS*( 0.5*(n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
 
 
 	curlB.Z.fill(0);
@@ -571,7 +571,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Y.subcube(1,1,2,NX-2,NY-2,NZ-1) ) % ( 0.5*( EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2) ) );
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/e0)*( (n.subcube(1,1,2,NX-2,NY-2,NZ-1) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subcube(1,1,2,NX-2,NY-2,NZ-1) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
 
 
 	if(!EB->E.X.is_finite()){
@@ -598,6 +598,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 }
 #endif
 
+
 void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,characteristicScales * CS){
 
 	//The ions' density and flow velocities are stored in the integer nodes,we'll use mean values of these quantities in order to calculate the electric field in the staggered grid.
@@ -616,6 +617,7 @@ void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry
 
 }
 
+
 #ifdef ONED
 void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,characteristicScales * CS,const int BAE){
 
@@ -627,8 +629,6 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
-	double MU = F_MU*( CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass );//dimensionless permeability.
-	double e0(F_E/CS->charge);//dimensionless electron charge.
 	double n_ch = CS->length*CS->density;//Dimensionless characteristic density.
 
 	vec nNew = zeros(dim);//Density n = ne = sum_k[ Z_k*n_k ]
@@ -731,7 +731,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Y += 0.5*( - (EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex,fIndex))/mesh->DX );//curl(B)y(i+1)
 
 
-	EB->E.X.subvec(iIndex,fIndex)  = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex)  )/( MU*e0*( 0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex)  = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex)  )/( F_MU_DS*F_E_DS*( 0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) ) );
 
 
 	curlB.Z = 0.5*( (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX );//curl(B)z(i)
@@ -739,7 +739,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Z += 0.5*( (EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex,fIndex))/mesh->DX );//curl(B)z(i+1)
 
 
-	EB->E.X.subvec(iIndex,fIndex) += - ( curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( MU*e0*( 0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - ( curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) ) );
 
 
 	curlB.fill(0);
@@ -749,7 +749,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,dim-2) + U.Z.subvec(2,dim-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.backgroundTemperature/e0)*( (nNew.subvec(2,dim-1) \
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subvec(2,dim-1) \
 									- nNew.subvec(1,dim-2))/mesh->DX )/(0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) );
 
 
@@ -761,7 +761,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	//y-component
 
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(MU*e0*nNew.subvec(1,dim-2));
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*nNew.subvec(1,dim-2));
 
 	EB->E.Y.subvec(iIndex,fIndex) += - U.Z.subvec(1,dim-2) % EB->B.X.subvec(iIndex,fIndex);
 
@@ -771,7 +771,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	//z-component
 
 
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(MU*e0*nNew.subvec(1,dim-2));
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*nNew.subvec(1,dim-2));
 
 	EB->E.Z.subvec(iIndex,fIndex) += - U.X.subvec(1,dim-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
 
@@ -826,21 +826,19 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 }
 #endif
 
+
 #ifdef TWOD
 void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,characteristicScales * CS,const int BAE){
 
 }
 #endif
 
+
 #ifdef THREED
 void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,characteristicScales * CS,const int BAE){
 
 	//Definitions
 	int NX(EB->E.X.n_rows),NY(EB->E.X.n_cols),NZ(EB->E.X.n_slices);
-
-	double MU(0); //dimensionless permeability.
-	MU = F_MU*( CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass );
-	double e0(F_E/CS->charge);//dimensionless electron charge.
 
 	cube nNew = zeros(mesh->dim(0)+2,mesh->dim(1)+2,mesh->dim(2)+2);//Density n = ne = sum_k[ Z_k*n_k ]
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
@@ -958,7 +956,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Y += 0.25*( (EB->B.X.subcube(2,0,1,NX-1,NY-3,NZ-2) - EB->B.X.subcube(2,0,0,NX-1,NY-3,NZ-3))/mesh->DZ - (EB->B.Z.subcube(2,0,1,NX-1,NY-3,NZ-2) - EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DX );//curl(B)y(i+1,j-1,k)
 
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = ( curlB.Y % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2) ) ) )/( MU*e0*( 0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = ( curlB.Y % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2) ) ) )/( F_MU_DS*F_E_DS*( 0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
 
 
 	curlB.Z = 0.25*( (EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DX - (EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DY );//curl(B)z(i,j,k)
@@ -970,7 +968,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Z += 0.25*( (EB->B.Y.subcube(2,1,0,NX-1,NY-2,NZ-3) - EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DX - (EB->B.X.subcube(2,1,0,NX-1,NY-2,NZ-3) - EB->B.X.subcube(2,0,0,NX-1,NY-3,NZ-3))/mesh->DY );//curl(B)z(i+1,j,k-1)
 
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - ( curlB.Z % ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) ) )/( MU*e0*( 0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - ( curlB.Z % ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) ) )/( F_MU_DS*F_E_DS*( 0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) ) );
 
 
 	curlB.Y.fill(0);
@@ -981,7 +979,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Z.subcube(2,1,1,NX-1,NY-2,NZ-2) )% ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) );
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/e0)*( (nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
 
 	//y-component
 
@@ -994,7 +992,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Z += 0.25*( (EB->B.Y.subcube(1,2,0,NX-2,NY-1,NZ-3) - EB->B.Y.subcube(0,2,0,NX-3,NY-1,NZ-3))/mesh->DX - (EB->B.X.subcube(1,2,0,NX-2,NY-1,NZ-3) - EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DY );//curl(B)z(i,j+1,k-1)
 
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.Z % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3)) )/(MU*e0*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.Z % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3)) )/(F_MU_DS*F_E_DS*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
 
 
 	curlB.X = 0.25*( (EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DY - (EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DZ );//curl(B)x(i,j,k)
@@ -1006,7 +1004,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.X += 0.25*( (EB->B.Z.subcube(0,2,1,NX-3,NY-1,NZ-2) - EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DY - (EB->B.Y.subcube(0,2,1,NX-3,NY-1,NZ-2) - EB->B.Y.subcube(0,2,0,NX-3,NY-1,NZ-3))/mesh->DZ );//curl(B)x(i-1,j+1,k)
 
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.X % ( 0.5*(EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(MU*e0*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.X % ( 0.5*(EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(F_MU_DS*F_E_DS*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2)) ));
 
 
 	curlB.Z.fill(0);
@@ -1017,7 +1015,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.X.subcube(1,2,1,NX-2,NY-1,NZ-2) ) % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2) ) );
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/e0)*( (nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
 
 
 	//z-component
@@ -1031,7 +1029,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.X += 0.25*( (EB->B.Z.subcube(0,1,2,NX-3,NY-2,NZ-1) - EB->B.Z.subcube(0,0,2,NX-3,NY-3,NZ-1))/mesh->DY - (EB->B.Y.subcube(0,1,2,NX-3,NY-2,NZ-1) - EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DZ );//curl(B)x(i-1,j,k+1)
 
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.X % ( 0.5*(EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(MU*e0*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) =  curlB.X % ( 0.5*(EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2)) )/(F_MU_DS*F_E_DS*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
 
 
 	curlB.Y = 0.25*( (EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3))/mesh->DZ - (EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) - EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2))/mesh->DX );//curl(B)y(i,j,k)
@@ -1043,7 +1041,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Y += 0.25*( (EB->B.X.subcube(1,0,2,NX-2,NY-3,NZ-1) - EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2))/mesh->DZ - (EB->B.Z.subcube(1,0,2,NX-2,NY-3,NZ-1) - EB->B.Z.subcube(0,0,2,NX-3,NY-3,NZ-1))/mesh->DX );//curl(B)y(i,j-1,k+1)
 
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.Y % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2)) )/(MU*e0*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - curlB.Y % ( 0.5*(EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2)) )/(F_MU_DS*F_E_DS*( 0.5*(nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1)) ));
 
 
 	curlB.Z.fill(0);
@@ -1054,7 +1052,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Y.subcube(1,1,2,NX-2,NY-2,NZ-1) ) % ( 0.5*( EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2) ) );
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/e0)*( (nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
 
 
 	if(!EB->E.X.is_finite()){
@@ -1077,6 +1075,5 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	restoreCube(&EB->B.X);
 	restoreCube(&EB->B.Y);
 	restoreCube(&EB->B.Z);
-
 }
 #endif

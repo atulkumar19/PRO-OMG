@@ -1317,32 +1317,32 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 
 		switch (params->weightingScheme){
 			case(0):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth_TOS(&IONS->at(ii).nv, params->smoothingParameter);
 					break;
 					}
 			case(1):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth_TSC(&IONS->at(ii).nv,params->smoothingParameter);
 					break;
 					}
 			case(2):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).nv, params->smoothingParameter);
 					break;
 					}
 			case(3):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).nv, params->smoothingParameter);
 					break;
 					}
 			case(4):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).nv,params->smoothingParameter);
 					break;
 					}
 			default:{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth_TSC(&IONS->at(ii).nv,params->smoothingParameter);
 					}
 		}
@@ -1518,32 +1518,32 @@ void PIC::aip_1D(const inputParameters * params,const meshGeometry * mesh,vector
 
 		switch (params->weightingScheme){
 			case(0):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth_TOS(&IONS->at(ii).n,params->smoothingParameter);
 					break;
 					}
 			case(1):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth_TSC(&IONS->at(ii).n,params->smoothingParameter);
 					break;
 					}
 			case(2):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).n,params->smoothingParameter);
 					break;
 					}
 			case(3):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).n,params->smoothingParameter);
 					break;
 					}
 			case(4):{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).n,params->smoothingParameter);
 					break;
 					}
 			default:{
-					for(int jj=0;jj<params->filtersPerIterationIonsVariables;jj++)
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
 						smooth(&IONS->at(ii).n,params->smoothingParameter);
 					}
 		}

@@ -336,7 +336,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,dim-2) + U.Z.subvec(2,dim-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subvec(2,dim-1) - n.subvec(1,dim-2))/mesh->DX )/(0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,dim-1) - n.subvec(1,dim-2))/mesh->DX )/(0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) );
 
 
 	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
@@ -498,7 +498,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Z.subcube(2,1,1,NX-1,NY-2,NZ-2) )% ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) );
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subcube(2,1,1,NX-1,NY-2,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.Te/F_E_DS)*( (n.subcube(2,1,1,NX-1,NY-2,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
 
 	//y-component
 
@@ -534,7 +534,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.X.subcube(1,2,1,NX-2,NY-1,NZ-2) ) % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2) ) );
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subcube(1,2,1,NX-2,NY-1,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.Te/F_E_DS)*( (n.subcube(1,2,1,NX-2,NY-1,NZ-2) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
 
 
 	//z-component
@@ -571,7 +571,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 
 	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Y.subcube(1,1,2,NX-2,NY-2,NZ-1) ) % ( 0.5*( EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2) ) );
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (n.subcube(1,1,2,NX-2,NY-2,NZ-1) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.Te/F_E_DS)*( (n.subcube(1,1,2,NX-2,NY-2,NZ-1) - n.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( n.subcube(1,1,1,NX-2,NY-2,NZ-2) + n.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
 
 
 	if(!EB->E.X.is_finite()){
@@ -749,7 +749,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,dim-2) + U.Z.subvec(2,dim-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subvec(2,dim-1) \
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (nNew.subvec(2,dim-1) \
 									- nNew.subvec(1,dim-2))/mesh->DX )/(0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) );
 
 
@@ -979,7 +979,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Z.subcube(2,1,1,NX-1,NY-2,NZ-2) )% ( 0.5*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) ) );
 
-	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
+	EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.Te/F_E_DS)*( (nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DX )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(2,1,1,NX-1,NY-2,NZ-2) ) );
 
 	//y-component
 
@@ -1015,7 +1015,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.X.subcube(1,2,1,NX-2,NY-1,NZ-2) ) % ( 0.5*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2) ) );
 
-	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
+	EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.Te/F_E_DS)*( (nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DY )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,2,1,NX-2,NY-1,NZ-2) ) );
 
 
 	//z-component
@@ -1052,7 +1052,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += 0.5*( U.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + U.Y.subcube(1,1,2,NX-2,NY-2,NZ-1) ) % ( 0.5*( EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2) ) );
 
-	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.backgroundTemperature/F_E_DS)*( (nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
+	EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) += - (params->BGP.Te/F_E_DS)*( (nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) - nNew.subcube(1,1,1,NX-2,NY-2,NZ-2))/mesh->DZ )/(0.5*( nNew.subcube(1,1,1,NX-2,NY-2,NZ-2) + nNew.subcube(1,1,2,NX-2,NY-2,NZ-1) ) );
 
 
 	if(!EB->E.X.is_finite()){

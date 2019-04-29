@@ -4,7 +4,7 @@ ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,emf 
 
 	if(params->numberOfAlfvenicModes > 0){
 		if(params->loadModes == 0){
-			generateModes(params,mesh,EB,IONS);	
+			generateModes(params,mesh,EB,IONS);
 		}else{
 			loadModes(params,mesh,EB,IONS);
 		}
@@ -55,7 +55,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 	Aw.wavenumber = Aw.kappa(I);
 	Aw.angularFreq = Aw.omega(I);
 	Aw.amp = 1/Aw.angularFreq;
-	Aw.amp = params->BGP.backgroundBField*sqrt( params->fracMagEnerInj*Aw.amp/sum(Aw.amp) );
+	Aw.amp = params->BGP.Bo*sqrt( params->fracMagEnerInj*Aw.amp/sum(Aw.amp) );
 
 
 	if(params->mpi.rank_cart == 0)
@@ -79,15 +79,15 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 			for(int jj=0;jj<params->numberOfAlfvenicModes;jj++){
 				double phVel = Aw.angularFreq(jj)/Aw.wavenumber(jj);
 				u_amp(jj,0) = 0;
-				u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
-				u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
+				u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
+				u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
 			}
 		}else if(ii==1){//Alpha-particles
 			for(int jj=0;jj<params->numberOfAlfvenicModes;jj++){
 				double phVel = Aw.angularFreq(jj)/Aw.wavenumber(jj);
 				u_amp(jj,0) = 0;
-				u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
-				u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
+				u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
+				u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
 			}
 		}
 		Aw.Uo.push_back(u_amp);
@@ -150,7 +150,7 @@ void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mes
 		Aw.dB.zeros(Aw.dB.X.n_elem);
 
 		for(int ii=0;ii<spectra.n_rows;ii++){//Here the staggered grid is not taken into account.
-			Aw.amp(ii) *= sqrt(params->fracMagEnerInj)*params->BGP.backgroundBField/sc;
+			Aw.amp(ii) *= sqrt(params->fracMagEnerInj)*params->BGP.Bo/sc;
 
 			double Bx(Aw.amp(ii)*cos(PHI)),By(Aw.amp(ii)),Bz(Aw.amp(ii)*sin(PHI));
 			double Cx, Cy;
@@ -169,16 +169,16 @@ void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mes
 				for(int jj=0;jj<spectra.n_rows;jj++){
 					double phVel = Aw.angularFreq(jj)/Aw.wavenumber(jj);
 					u_amp(jj,0) = 0;
-					u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
-					u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
+					u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
+					u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wcp);
 				}
 				//				u_amp.save("U_protons.dat",raw_ascii);
 			}else if(ii==1){//Alpha-particles
 				for(int jj=0;jj<spectra.n_rows;jj++){
 					double phVel = Aw.angularFreq(jj)/Aw.wavenumber(jj);
 					u_amp(jj,0) = 0;
-					u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
-					u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.backgroundBField)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
+					u_amp(jj,1) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
+					u_amp(jj,2) = -(Aw.amp(jj)/params->BGP.Bo)*phVel/(1-Aw.angularFreq(jj)/PP.wca);
 				}
 				//				u_amp.save("U_alphas.dat",raw_ascii);
 			}
@@ -197,7 +197,7 @@ void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mes
 void ALFVENIC::dispertionRelation(const plasmaParams *PP){
 	vec w = linspace<vec>(0,0.999*PP->wca,1000);
 	vec k;
-	
+
 	k = (w/A_C) % sqrt( 1 - PP->wpe*PP->wpe/(w%(w+PP->wce)) - PP->wpp*PP->wpp/(w%(w-PP->wcp)) - PP->wpa*PP->wpa/(w%(w-PP->wca)) );
 
 	w.save("freq.dat",raw_ascii);
@@ -234,7 +234,7 @@ double ALFVENIC::brentRoots(const plasmaParams *PP,double x1,double x2,double k,
 		cout << "Root not bracketed.\n";
 		exit(1);
 	}
-	
+
 	for(int it=0;it<ITMAX;it++){
 		if( (fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0) ){
 			c = a;
@@ -257,7 +257,7 @@ double ALFVENIC::brentRoots(const plasmaParams *PP,double x1,double x2,double k,
 //		cout << "f(b) = " << fb << " b = "<< b << '\n';
 		if(abs(xm) < tol || abs(fb) < nearZero)
 			return(b);
-		
+
 		if( abs(e) > tol  && abs(fa) > abs(fb) ){
 			S = fb/fa;
 			if(abs(a - c) < nearZero){
@@ -293,7 +293,7 @@ double ALFVENIC::brentRoots(const plasmaParams *PP,double x1,double x2,double k,
 		if(abs(d) > tol){
 			b += d;
 		}else{
-			if (xm > 0) 
+			if (xm > 0)
 				b += fabs(tol);
 		    else
 				b -= fabs(tol);
@@ -301,7 +301,7 @@ double ALFVENIC::brentRoots(const plasmaParams *PP,double x1,double x2,double k,
 		fb = function(PP,b,k);
 
 //		cout << "f(b) = " << fb << " b = "<< b << '\n';
-//		cout << "Iteration " << it << '\n';			
+//		cout << "Iteration " << it << '\n';
 	}
 //	cout << "Number of iterations exceeded\n";
 	exit(1);
@@ -322,7 +322,7 @@ void ALFVENIC::normalize(const characteristicScales * CS){
 
 void ALFVENIC::addMagneticPerturbations(emf * EB){
 	unsigned int NX(EB->B.X.n_elem);
-	
+
 	EB->B.X.subvec(1,NX-2) += Aw.dB.X;
 	EB->B.Y.subvec(1,NX-2) += Aw.dB.Y;
 	EB->B.Z.subvec(1,NX-2) += Aw.dB.Z;

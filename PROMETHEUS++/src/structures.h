@@ -71,9 +71,8 @@ struct meshGeometry{
 
 
 struct backgroundParameters{
-
-	double backgroundTemperature;
-	double backgroundBField;
+	double Te;
+	double Bo;
 	double Bx;
 	double By;
 	double Bz;
@@ -117,12 +116,12 @@ struct inputParameters{
 	int numberOfIonSpecies;
 	int numberOfTracerSpecies;
 
-	double totalDensity;
+	double ne;
 
 	backgroundParameters BGP;
 
-	int filtersPerIteration;
-	int filtersPerIterationIonsVariables;
+	int filtersPerIterationFields;
+	int filtersPerIterationIons;
 	int checkSmoothParameter;
 
 	double DrL;

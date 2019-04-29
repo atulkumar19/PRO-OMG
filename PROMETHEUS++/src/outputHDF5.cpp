@@ -110,9 +110,9 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		//Electron temperature
 		H5std_string electronTemperature( "Te" );
 #ifdef HDF5_DOUBLE
-		CPP_TYPE Te[1] = {params->BGP.backgroundTemperature};
+		CPP_TYPE Te[1] = {params->BGP.Te};
 #elif defined HDF5_FLOAT
-		CPP_TYPE Te[1] = {(float)params->BGP.backgroundTemperature};
+		CPP_TYPE Te[1] = {(float)params->BGP.Te};
 #endif
 	   	hsize_t dims_Te[1] = {1};
 		DataSpace *dataspace_Te = new DataSpace(1, dims_Te);
@@ -135,9 +135,9 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		delete dataset_nis;
 
 #ifdef HDF5_DOUBLE
-		CPP_TYPE nd[1] = {params->totalDensity};
+		CPP_TYPE nd[1] = {params->ne};
 #elif defined HDF5_FLOAT
-		CPP_TYPE nd[1] = {(float)params->totalDensity};
+		CPP_TYPE nd[1] = {(float)params->ne};
 #endif
 	   	hsize_t dims_nd[1] = {1};
 		DataSpace *dataspace_nd = new DataSpace(1, dims_nd);

@@ -16,13 +16,13 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 	double CFL_ions(0);
 	int ionSpecies(0);
 
-	averageB = params->BGP.backgroundBField;
+	averageB = params->BGP.Bo;
 	if(params->mpi.rank_cart == 0)
 		cout << "Mean magnetic field in simulation domain: " << scientific << averageB << " T\n";
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species
 		IONS->at(ii).BGP.Wc = IONS->at(ii).Q*averageB/IONS->at(ii).M;
-		IONS->at(ii).BGP.Wpi = sqrt( IONS->at(ii).BGP.Dn*params->totalDensity*IONS->at(ii).Q*IONS->at(ii).Q/(F_EPSILON*IONS->at(ii).M) );//Check the definition of the plasma freq for each species!
+		IONS->at(ii).BGP.Wpi = sqrt( IONS->at(ii).BGP.Dn*params->ne*IONS->at(ii).Q*IONS->at(ii).Q/(F_EPSILON*IONS->at(ii).M) );//Check the definition of the plasma freq for each species!
 		IONS->at(ii).BGP.LarmorRadius = IONS->at(ii).BGP.VTper/IONS->at(ii).BGP.Wc;
 
 		if(params->mpi.rank_cart == 0){
@@ -32,7 +32,7 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 			cout << "+ Super-particles: " << IONS->at(ii).NSP << "\n";
 			cout << "+ Particles per cell: " << IONS->at(ii).NPC << "\n";
 			cout << "+ Charged particles per super-particle: " << scientific << IONS->at(ii).NCP << fixed << "\n";
-			cout << "+ Density: " << scientific << IONS->at(ii).BGP.Dn*params->totalDensity << fixed << " m^{-3}\n";
+			cout << "+ Density: " << scientific << IONS->at(ii).BGP.Dn*params->ne << fixed << " m^{-3}\n";
 			cout << "+ Parallel temperature: " << scientific << F_KB*IONS->at(ii).BGP.Tpar/F_E << fixed << " eV\n";
 			cout << "+ Perpendicular temperature: " << scientific << F_KB*IONS->at(ii).BGP.Tper/F_E << fixed << " eV\n";
 			cout << "+ Parallel thermal velocity: " << scientific << IONS->at(ii).BGP.VTpar << fixed << " m/s\n";
@@ -75,7 +75,7 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 	}//Iterations over the ion species
 
 	ionMass /=  (double)ionSpecies;
-	VT = sqrt(2.0*F_KB*params->BGP.backgroundTemperature/ionMass);//Background thermal velocity
+	VT = sqrt(2.0*F_KB*params->BGP.Te/ionMass);//Background thermal velocity
 
 	params->backgroundTc = (2.0*M_PI/ionCyclotronFrequency);//Minimum ion gyroperiod.
 
@@ -100,8 +100,8 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		//Here we calculate the timestep following the CFL condition for the reltative high-frequency whistler waves.
 		double CFL_w(0), A(0), B(0);//DT = CFL_w*Tc;
 
-		B = params->BGP.backgroundBField;
-//		A = params->DrL*sqrt(2*F_KB*params->BGP.backgroundTemperature*params->totalDensity/F_EPSILON)/(M_PI*F_C*B);
+		B = params->BGP.Bo;
+//		A = params->DrL*sqrt(2*F_KB*params->BGP.Te*params->ne/F_EPSILON)/(M_PI*F_C*B);
 		A = (mesh->DX*IONS->at(0).BGP.Wpi)/(M_PI*F_C);//Ion skin depth is calculated using the background ions.
 
 		#ifdef ONED
@@ -171,7 +171,7 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 
 	CS->mass /= params->numberOfIonSpecies;
 	CS->charge /= params->numberOfIonSpecies;
-	CS->density = params->totalDensity;
+	CS->density = params->ne;
 
 	double plasmaFrequency(0);//Background ion-plasma frequency.
 	plasmaFrequency = sqrt( CS->density*CS->charge*CS->charge/(CS->mass*F_EPSILON) );
@@ -212,9 +212,9 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 	//Normalizing the parameters.
 	params->DT /= CS->time;
 //	params->BGP.backgroundDensity /= CS->density;
-	params->totalDensity /= CS->density;
-	params->BGP.backgroundTemperature /= CS->temperature;
-	params->BGP.backgroundBField /= CS->bField;
+	params->ne /= CS->density;
+	params->BGP.Te /= CS->temperature;
+	params->BGP.Bo /= CS->bField;
 	params->BGP.Bx /= CS->bField;
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;

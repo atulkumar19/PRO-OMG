@@ -50,11 +50,11 @@ class ALFVENIC{
 		double VA;
 		double dp;
 		plasmaParams(const inputParameters * params,vector<ionSpecies> * IONS){
-			np = (1/1E6)*IONS->at(0).BGP.Dn*params->totalDensity;//1/cm^3
-			na = (1/1E6)*IONS->at(1).BGP.Dn*params->totalDensity;//1/cm^3
+			np = (1/1E6)*IONS->at(0).BGP.Dn*params->ne;//1/cm^3
+			na = (1/1E6)*IONS->at(1).BGP.Dn*params->ne;//1/cm^3
 			ne = np + A_Za*na;
 
-			B = (1E4)*params->BGP.backgroundBField;//in gauss
+			B = (1E4)*params->BGP.Bo;//in gauss
 
 			wca = A_qa*B/(A_ma*A_C);
 			wcp = A_qp*B/(A_mp*A_C);

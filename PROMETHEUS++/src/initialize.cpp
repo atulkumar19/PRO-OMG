@@ -1,47 +1,48 @@
 #include "initialize.h"
 
 map<string,float> INITIALIZE::loadParameters(string * inputFile){
-	string tmpName;
-	float tmpValue;
-	fstream fileParameters;
+	string key;
+	float value;
+	fstream reader;
+	std::map<string,float> readMap;
 
-	std::map<string,float> listOfParameters;
-	fileParameters.open(inputFile->data(),ifstream::in);
 
-    	if (!fileParameters){
-      		cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
-        	MPI_Abort(MPI_COMM_WORLD,-123);
-    	}
+	reader.open(inputFile->data(),ifstream::in);
 
-    	while ( fileParameters >> tmpName >> tmpValue ){
-          	listOfParameters[ tmpName ] = tmpValue;
-    	}
+    if (!reader){
+    	cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
+    	MPI_Abort(MPI_COMM_WORLD,-123);
+    }
 
-    	fileParameters.close();
+    while ( reader >> key >> value ){
+      	readMap[ key ] = value;
+    }
 
-    	return listOfParameters;
+    reader.close();
+
+    return readMap;
 }
 
 map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
-	string tmpName;
-	float tmpValue;
-	fstream fileParameters;
+	string key;
+	float value;
+	fstream reader;
+	std::map<string,float> readMap;
 
-	std::map<string,float> listOfParameters;
-	fileParameters.open(inputFile ,ifstream::in);
+	reader.open(inputFile ,ifstream::in);
 
-    	if (!fileParameters){
+    	if (!reader){
       		cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
         	MPI_Abort(MPI_COMM_WORLD,-123);
     	}
 
-    	while ( fileParameters >> tmpName >> tmpValue ){
-          	listOfParameters[ tmpName ] = tmpValue;
+    	while ( reader >> key >> value ){
+          	readMap[ key ] = value;
     	}
 
-    	fileParameters.close();
+    	reader.close();
 
-    	return listOfParameters;
+    	return readMap;
 }
 
 INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
@@ -107,9 +108,9 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->numberOfRKIterations = (int)parametersMap["numberOfRKIterations"];
 
-	params->filtersPerIteration = (int)parametersMap["filtersPerIteration"];
+	params->filtersPerIterationFields = (int)parametersMap["filtersPerIterationFields"];
 
-	params->filtersPerIterationIonsVariables = (int)parametersMap["filtersPerIterationIonsVariables"];
+	params->filtersPerIterationIons = (int)parametersMap["filtersPerIterationIons"];
 
 	params->checkSmoothParameter = (int)parametersMap["checkSmoothParameter"];
 
@@ -133,7 +134,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->fracMagEnerInj = parametersMap["fracMagEnerInj"];
 
-	params->totalDensity = parametersMap["totalDensity"];
+	params->ne = parametersMap["ne"];
 
 	params->loadFields = (int)parametersMap["loadFields"];
 
@@ -150,17 +151,17 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->dp = parametersMap["dp"];
 
-	params->BGP.backgroundTemperature = parametersMap["backgroundTemperature"];
+	params->BGP.Te = parametersMap["Te"];
 
 	params->BGP.theta = parametersMap["theta"];
 
 	params->BGP.phi = parametersMap["phi"];
 
-	params->BGP.backgroundBField = parametersMap["backgroundBField"];
+	params->BGP.Bo = parametersMap["Bo"];
 
-	params->BGP.Bx = params->BGP.backgroundBField*sin(params->BGP.theta*M_PI/180.0);
+	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0);
 	params->BGP.By = 0.0;
-	params->BGP.Bz = params->BGP.backgroundBField*cos(params->BGP.theta*M_PI/180.0);
+	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
 }
 
 
@@ -238,7 +239,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	#ifdef ONED
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->totalDensity/IONS->at(ii).NSP;
+		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = (mesh->DX*(double)mesh->dim(0))*chargeDensityPerCell;
 	}
@@ -247,7 +248,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	#ifdef TWOD
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->totalDensity/IONS->at(ii).NSP;
+		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = (mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1))*chargeDensityPerCell;
 	}
@@ -256,7 +257,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	#ifdef THREED
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->totalDensity/IONS->at(ii).NSP;
+		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = \
 		(mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1)*mesh->DZ*(double)mesh->dim(0))*chargeDensityPerCell;
@@ -357,7 +358,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			if(params->mpi.rank_cart == 0){
 				cout << "Species No "  << ii + 1 << " are ions with the following parameters:\n";
 				cout << "Ion atomic number: " << ions.Z << "\n";
-				cout << "Ion mass: " << ions.M << " u\n";
+				cout << "Ion mass: " << ions.M << " kg\n";
 			}
 		}
 
@@ -427,12 +428,12 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 	//The ion skin depth is calculated using the set of values of species No 1, which is assumed to be the backgroud population.
 	INITIALIZE::ionSkinDepth =\
-	sqrt(IONS->at(0).M/(F_MU*(IONS->at(0).BGP.Dn*params->totalDensity)))/IONS->at(0).Q;
+	sqrt(IONS->at(0).M/(F_MU*(IONS->at(0).BGP.Dn*params->ne)))/IONS->at(0).Q;
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iteration over ion species
 		double rL;
 
-		rL = sqrt( 2.0*F_KB*IONS->at(ii).BGP.Tper*IONS->at(ii).M )/( IONS->at(ii).Q*params->BGP.backgroundBField );
+		rL = sqrt( 2.0*F_KB*IONS->at(ii).BGP.Tper*IONS->at(ii).M )/( IONS->at(ii).Q*params->BGP.Bo );
 
 		if(ii == 0){
 			INITIALIZE::LarmorRadius = rL;

@@ -19,9 +19,11 @@ ST.params = loadSimulationParameters(ST);
 
 ST.data = loadData(ST);
 
-FourierAnalysis(ST,'E');
+ST.time = loadTimeVector(ST);
 
-% EnergyDiagnostic(ST);
+% FourierAnalysis(ST,'E');
+
+EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -117,6 +119,15 @@ end
 
 end
 
+function time = loadTimeVector(ST)
+time = zeros(1,ST.params.numOutputFiles);
+
+for ii=1:ST.params.numOutputFiles
+    time(ii) = ST.data.(['D0_O' num2str(ii)]).time;
+end
+
+end
+
 function FourierAnalysis(ST,EMF)
 % Plasma parameters
 qi = ST.params.ions.species_1.ionProperties(2);
@@ -195,34 +206,146 @@ function EnergyDiagnostic(ST)
 NT = ST.params.numOutputFiles;
 NSPP = ST.params.ions.numberOfIonSpecies;
 ND = ST.params.numOfDomains;
+DX = ST.params.geometry.finiteDiferences(1);
 
 % First we calculate the kinetic energy of the simulated ions
 Ei = zeros(NSPP,NT);
-EB = zeros(3,NT);
-EB = zeros(3,NT);
+ilabels = {};
 
 for ss=1:NSPP
     mi = ST.params.ions.(['species_' num2str(ss)]).ionProperties(1);
+    NCP = ST.params.ions.(['species_' num2str(ss)]).superParticlesProperties(1);
     NSP = ST.params.ions.(['species_' num2str(ss)]).superParticlesProperties(3);
     
-    for ii=1:NT
-        aux_x = 0;
-        aux_y = 0;
-        aux_z = 0;
-        
+    for ii=1:NT        
         for dd=1:ND
-            aux_x = aux_x + sum(ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vx.^2);
-            aux_y = aux_y + sum(ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vy.^2);
-            aux_z = aux_z + sum(ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vz.^2);
+            vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vx;
+            vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vy;
+            vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vz;
+            
+            Ei(ss,ii) = Ei(ss,ii) + sum(vx.^2 + vy.^2 + vz.^2);
         end
         
-        aux_x = aux_x/NSP;
-        aux_y = aux_y/NSP;
-        aux_z = aux_z/NSP;
+        Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/DX;
+    end
+    
+    ilabels{ss} = ['Species ' num2str(ss)];
+end
+ilabels{NSPP + 1} = 'Total';
+
+
+% Energy of electromagnetic fields
+EBy = zeros(1,NT);
+EBz = zeros(1,NT);
+
+EEx = zeros(1,NT);
+EEy = zeros(1,NT);
+EEz = zeros(1,NT);
+
+for ii=1:NT
+    for dd=1:ND      
+        By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.B.By;
+        Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.B.Bz;
         
+        EBy(ii) = EBy(ii) + sum(By.^2);
+        EBz(ii) = EBz(ii) + sum(Bz.^2);
         
-        Ei(ss,ii) = 0.5*mi*(aux_x + aux_y + aux_z);
+        Ex = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.E.Ex;
+        Ey = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.E.Ey;
+        Ez = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.E.Ez;
+        
+        EEx(ii) = EEx(ii) + sum(Ex.^2);
+        EEy(ii) = EEy(ii) + sum(Ey.^2);
+        EEz(ii) = EEz(ii) + sum(Ez.^2);
     end
 end
+
+EBy = 0.5*EBy/ST.mu0;
+EBz = 0.5*EBz/ST.mu0;
+EB = EBy + EBz;
+
+EEx = 0.5*ST.ep0*EEx;
+EEy = 0.5*ST.ep0*EEy;
+EEz = 0.5*ST.ep0*EEz;
+EE = EEx + EEy + EEz;
+
+ET = sum(Ei,1) + EE + EB;
+
+% Relative change in total energy
+ET = 100.0*(ET - ET(1))/ET(1);
+
+% Change in kinetic energy w.r.t. initial condition
+Ei = Ei - Ei(:,1);
+
+% Change in magnetic energy w.r.t. initial condition
+EBy = EBy - EBy(1);
+EBz = EBz - EBz(1);
+EB = EB - EB(1);
+
+% Change in electric energy w.r.t. initial condition
+EEx = EEx - EEx(1);
+EEy = EEy - EEy(1);
+EEz = EEz - EEz(1);
+EE = EE - EE(1);
+
+% Figures to show energy conservation
+fig = figure('name','Energy conservation');
+for ss=1:NSPP
+    figure(fig)
+    subplot(5,1,1)
+    hold on;
+    plot(ST.time, Ei(ss,:), '--')
+    hold off
+    box on; grid on;
+    xlim([min(ST.time) max(ST.time)])
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
+end
+
+figure(fig)
+subplot(5,1,1)
+hold on;
+plot(ST.time, sum(Ei,1))
+hold off
+box on; grid on;
+xlim([min(ST.time) max(ST.time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
+legend(ilabels,'interpreter','latex')
+
+figure(fig);
+subplot(5,1,2)
+plot(ST.time, EBy, 'b-.', ST.time, EBz, 'c-.', ST.time, EB, 'k-')
+box on; grid on;
+xlim([min(ST.time) max(ST.time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_B$ (J/m$^3$)','interpreter','latex')
+legend({'$B_y$', '$B_z$', '$B$'},'interpreter','latex')
+
+figure(fig);
+subplot(5,1,3)
+plot(ST.time, EEx, 'r--', ST.time, EEy, 'b--', ST.time, EEz, 'c--', ST.time, EE, 'k-')
+box on; grid on;
+xlim([min(ST.time) max(ST.time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_E$ (J/m$^3$)','interpreter','latex')
+legend({'$E_x$', '$E_y$', '$E_z$', '$E$'},'interpreter','latex')
+
+figure(fig);
+subplot(5,1,4)
+plot(ST.time, sum(Ei,1),'r', ST.time, EB, 'b-', ST.time, EE, 'k')
+box on; grid on;
+xlim([min(ST.time) max(ST.time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}$ (J/m$^3$)','interpreter','latex')
+legend({'$K_i$', '$B$', '$E$'},'interpreter','latex')
+
+figure(fig);
+subplot(5,1,5)
+plot(ST.time, ET)
+box on; grid on;
+xlim([min(ST.time) max(ST.time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_T$ (\%)','interpreter','latex')
 
 end

@@ -8,7 +8,7 @@ smoothingParameter          4E-4
 filtersPerIterationFields   1
 filtersPerIterationIons     2
 checkSmoothParameter        500
-timeIterations              10000
+timeIterations              5000
 transient                   0
 loadFields                  0
 saveVariablesEach           20

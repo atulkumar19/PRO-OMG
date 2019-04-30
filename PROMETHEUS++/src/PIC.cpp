@@ -542,77 +542,77 @@ void PIC::eivTOS_1D(const inputParameters * params,const meshGeometry * mesh,ion
 		for(ii=0;ii<NSP;ii++){
 			int ix = ions->meshNode(ii) + 1;
 			if(ix == (NC-2)){//For the particles on the right side boundary.
-				nv.X(NC-4) += ions->wxll(ii)*ions->velocity(ii,0);
-				nv.X(NC-3) += ions->wxl(ii)*ions->velocity(ii,0);
-				nv.X(NC-2) += ions->wxc(ii)*ions->velocity(ii,0);
-				nv.X(NC-1) += ions->wxr(ii)*ions->velocity(ii,0);
-				nv.X(0) += ions->wxrr(ii)*ions->velocity(ii,0);
+				nv.X(NC-4) += ions->wxll(ii)*ions->V(ii,0);
+				nv.X(NC-3) += ions->wxl(ii)*ions->V(ii,0);
+				nv.X(NC-2) += ions->wxc(ii)*ions->V(ii,0);
+				nv.X(NC-1) += ions->wxr(ii)*ions->V(ii,0);
+				nv.X(0) += ions->wxrr(ii)*ions->V(ii,0);
 
-				nv.Y(NC-4) += ions->wxll(ii)*ions->velocity(ii,1);
-				nv.Y(NC-3) += ions->wxl(ii)*ions->velocity(ii,1);
-				nv.Y(NC-2) += ions->wxc(ii)*ions->velocity(ii,1);
-				nv.Y(NC-1) += ions->wxr(ii)*ions->velocity(ii,1);
-				nv.Y(0) += ions->wxrr(ii)*ions->velocity(ii,1);
+				nv.Y(NC-4) += ions->wxll(ii)*ions->V(ii,1);
+				nv.Y(NC-3) += ions->wxl(ii)*ions->V(ii,1);
+				nv.Y(NC-2) += ions->wxc(ii)*ions->V(ii,1);
+				nv.Y(NC-1) += ions->wxr(ii)*ions->V(ii,1);
+				nv.Y(0) += ions->wxrr(ii)*ions->V(ii,1);
 
-				nv.Z(NC-4) += ions->wxll(ii)*ions->velocity(ii,2);
-				nv.Z(NC-3) += ions->wxl(ii)*ions->velocity(ii,2);
-				nv.Z(NC-2) += ions->wxc(ii)*ions->velocity(ii,2);
-				nv.Z(NC-1) += ions->wxr(ii)*ions->velocity(ii,2);
-				nv.Z(0) += ions->wxrr(ii)*ions->velocity(ii,2);
+				nv.Z(NC-4) += ions->wxll(ii)*ions->V(ii,2);
+				nv.Z(NC-3) += ions->wxl(ii)*ions->V(ii,2);
+				nv.Z(NC-2) += ions->wxc(ii)*ions->V(ii,2);
+				nv.Z(NC-1) += ions->wxr(ii)*ions->V(ii,2);
+				nv.Z(0) += ions->wxrr(ii)*ions->V(ii,2);
 			}else if(ix == (NC-1)){//For the particles on the right side boundary.
-				nv.X(NC-3) += ions->wxll(ii)*ions->velocity(ii,0);
-				nv.X(NC-2) += ions->wxl(ii)*ions->velocity(ii,0);
-				nv.X(NC-1) += ions->wxc(ii)*ions->velocity(ii,0);
-				nv.X(2) += ions->wxr(ii)*ions->velocity(ii,0);
-				nv.X(3) += ions->wxrr(ii)*ions->velocity(ii,0);
+				nv.X(NC-3) += ions->wxll(ii)*ions->V(ii,0);
+				nv.X(NC-2) += ions->wxl(ii)*ions->V(ii,0);
+				nv.X(NC-1) += ions->wxc(ii)*ions->V(ii,0);
+				nv.X(2) += ions->wxr(ii)*ions->V(ii,0);
+				nv.X(3) += ions->wxrr(ii)*ions->V(ii,0);
 
-				nv.Y(NC-3) += ions->wxll(ii)*ions->velocity(ii,1);
-				nv.Y(NC-2) += ions->wxl(ii)*ions->velocity(ii,1);
-				nv.Y(NC-1) += ions->wxc(ii)*ions->velocity(ii,1);
-				nv.Y(2) += ions->wxr(ii)*ions->velocity(ii,1);
-				nv.Y(3) += ions->wxrr(ii)*ions->velocity(ii,1);
+				nv.Y(NC-3) += ions->wxll(ii)*ions->V(ii,1);
+				nv.Y(NC-2) += ions->wxl(ii)*ions->V(ii,1);
+				nv.Y(NC-1) += ions->wxc(ii)*ions->V(ii,1);
+				nv.Y(2) += ions->wxr(ii)*ions->V(ii,1);
+				nv.Y(3) += ions->wxrr(ii)*ions->V(ii,1);
 
-				nv.Z(NC-3) += ions->wxll(ii)*ions->velocity(ii,2);
-				nv.Z(NC-2) += ions->wxl(ii)*ions->velocity(ii,2);
-				nv.Z(NC-1) += ions->wxc(ii)*ions->velocity(ii,2);
-				nv.Z(2) += ions->wxr(ii)*ions->velocity(ii,2);
-				nv.Z(3) += ions->wxrr(ii)*ions->velocity(ii,2);
+				nv.Z(NC-3) += ions->wxll(ii)*ions->V(ii,2);
+				nv.Z(NC-2) += ions->wxl(ii)*ions->V(ii,2);
+				nv.Z(NC-1) += ions->wxc(ii)*ions->V(ii,2);
+				nv.Z(2) += ions->wxr(ii)*ions->V(ii,2);
+				nv.Z(3) += ions->wxrr(ii)*ions->V(ii,2);
 			}else if(ix == 1){
-				nv.X(NC-1) += ions->wxll(ii)*ions->velocity(ii,0);
-				nv.X(0) += ions->wxl(ii)*ions->velocity(ii,0);
-				nv.X(ix) += ions->wxc(ii)*ions->velocity(ii,0);
-				nv.X(ix+1) += ions->wxr(ii)*ions->velocity(ii,0);
-				nv.X(ix+2) += ions->wxrr(ii)*ions->velocity(ii,0);
+				nv.X(NC-1) += ions->wxll(ii)*ions->V(ii,0);
+				nv.X(0) += ions->wxl(ii)*ions->V(ii,0);
+				nv.X(ix) += ions->wxc(ii)*ions->V(ii,0);
+				nv.X(ix+1) += ions->wxr(ii)*ions->V(ii,0);
+				nv.X(ix+2) += ions->wxrr(ii)*ions->V(ii,0);
 
-				nv.Y(NC-1) += ions->wxll(ii)*ions->velocity(ii,1);
-				nv.Y(0) += ions->wxl(ii)*ions->velocity(ii,1);
-				nv.Y(ix) += ions->wxc(ii)*ions->velocity(ii,1);
-				nv.Y(ix+1) += ions->wxr(ii)*ions->velocity(ii,1);
-				nv.Y(ix+2) += ions->wxrr(ii)*ions->velocity(ii,1);
+				nv.Y(NC-1) += ions->wxll(ii)*ions->V(ii,1);
+				nv.Y(0) += ions->wxl(ii)*ions->V(ii,1);
+				nv.Y(ix) += ions->wxc(ii)*ions->V(ii,1);
+				nv.Y(ix+1) += ions->wxr(ii)*ions->V(ii,1);
+				nv.Y(ix+2) += ions->wxrr(ii)*ions->V(ii,1);
 
-				nv.Z(NC-1) += ions->wxll(ii)*ions->velocity(ii,2);
-				nv.Z(0) += ions->wxl(ii)*ions->velocity(ii,2);
-				nv.Z(ix) += ions->wxc(ii)*ions->velocity(ii,2);
-				nv.Z(ix+1) += ions->wxr(ii)*ions->velocity(ii,2);
-				nv.Z(ix+2) += ions->wxrr(ii)*ions->velocity(ii,2);
+				nv.Z(NC-1) += ions->wxll(ii)*ions->V(ii,2);
+				nv.Z(0) += ions->wxl(ii)*ions->V(ii,2);
+				nv.Z(ix) += ions->wxc(ii)*ions->V(ii,2);
+				nv.Z(ix+1) += ions->wxr(ii)*ions->V(ii,2);
+				nv.Z(ix+2) += ions->wxrr(ii)*ions->V(ii,2);
 			}else{
-				nv.X(ix-2) += ions->wxll(ii)*ions->velocity(ii,0);
-				nv.X(ix-1) += ions->wxl(ii)*ions->velocity(ii,0);
-				nv.X(ix) += ions->wxc(ii)*ions->velocity(ii,0);
-				nv.X(ix+1) += ions->wxr(ii)*ions->velocity(ii,0);
-				nv.X(ix+2) += ions->wxrr(ii)*ions->velocity(ii,0);
+				nv.X(ix-2) += ions->wxll(ii)*ions->V(ii,0);
+				nv.X(ix-1) += ions->wxl(ii)*ions->V(ii,0);
+				nv.X(ix) += ions->wxc(ii)*ions->V(ii,0);
+				nv.X(ix+1) += ions->wxr(ii)*ions->V(ii,0);
+				nv.X(ix+2) += ions->wxrr(ii)*ions->V(ii,0);
 
-				nv.Y(ix-2) += ions->wxll(ii)*ions->velocity(ii,1);
-				nv.Y(ix-1) += ions->wxl(ii)*ions->velocity(ii,1);
-				nv.Y(ix) += ions->wxc(ii)*ions->velocity(ii,1);
-				nv.Y(ix+1) += ions->wxr(ii)*ions->velocity(ii,1);
-				nv.Y(ix+2) += ions->wxrr(ii)*ions->velocity(ii,1);
+				nv.Y(ix-2) += ions->wxll(ii)*ions->V(ii,1);
+				nv.Y(ix-1) += ions->wxl(ii)*ions->V(ii,1);
+				nv.Y(ix) += ions->wxc(ii)*ions->V(ii,1);
+				nv.Y(ix+1) += ions->wxr(ii)*ions->V(ii,1);
+				nv.Y(ix+2) += ions->wxrr(ii)*ions->V(ii,1);
 
-				nv.Z(ix-2) += ions->wxll(ii)*ions->velocity(ii,2);
-				nv.Z(ix-1) += ions->wxl(ii)*ions->velocity(ii,2);
-				nv.Z(ix) += ions->wxc(ii)*ions->velocity(ii,2);
-				nv.Z(ix+1) += ions->wxr(ii)*ions->velocity(ii,2);
-				nv.Z(ix+2) += ions->wxrr(ii)*ions->velocity(ii,2);
+				nv.Z(ix-2) += ions->wxll(ii)*ions->V(ii,2);
+				nv.Z(ix-1) += ions->wxl(ii)*ions->V(ii,2);
+				nv.Z(ix) += ions->wxc(ii)*ions->V(ii,2);
+				nv.Z(ix+1) += ions->wxr(ii)*ions->V(ii,2);
+				nv.Z(ix+2) += ions->wxrr(ii)*ions->V(ii,2);
 			}
 		}
 
@@ -658,29 +658,29 @@ void PIC::eivTSC_1D(const inputParameters * params,const meshGeometry * mesh,ion
 		for(ii=0;ii<NSP;ii++){
 			int ix = ions->meshNode(ii) + 1;
 			if(ix == (NC-1)){//For the particles on the right side boundary.
-				nv.X(NC-2) += ions->wxl(ii)*ions->velocity(ii,0);
-				nv.X(NC-1) += ions->wxc(ii)*ions->velocity(ii,0);
-				nv.X(2) += ions->wxr(ii)*ions->velocity(ii,0);
+				nv.X(NC-2) += ions->wxl(ii)*ions->V(ii,0);
+				nv.X(NC-1) += ions->wxc(ii)*ions->V(ii,0);
+				nv.X(2) += ions->wxr(ii)*ions->V(ii,0);
 
-				nv.Y(NC-2) += ions->wxl(ii)*ions->velocity(ii,1);
-				nv.Y(NC-1) += ions->wxc(ii)*ions->velocity(ii,1);
-				nv.Y(2) += ions->wxr(ii)*ions->velocity(ii,1);
+				nv.Y(NC-2) += ions->wxl(ii)*ions->V(ii,1);
+				nv.Y(NC-1) += ions->wxc(ii)*ions->V(ii,1);
+				nv.Y(2) += ions->wxr(ii)*ions->V(ii,1);
 
-				nv.Z(NC-2) += ions->wxl(ii)*ions->velocity(ii,2);
-				nv.Z(NC-1) += ions->wxc(ii)*ions->velocity(ii,2);
-				nv.Z(2) += ions->wxr(ii)*ions->velocity(ii,2);
+				nv.Z(NC-2) += ions->wxl(ii)*ions->V(ii,2);
+				nv.Z(NC-1) += ions->wxc(ii)*ions->V(ii,2);
+				nv.Z(2) += ions->wxr(ii)*ions->V(ii,2);
 			}else if(ix != (NC-1)){
-				nv.X(ix-1) += ions->wxl(ii)*ions->velocity(ii,0);
-				nv.X(ix) += ions->wxc(ii)*ions->velocity(ii,0);
-				nv.X(ix+1) += ions->wxr(ii)*ions->velocity(ii,0);
+				nv.X(ix-1) += ions->wxl(ii)*ions->V(ii,0);
+				nv.X(ix) += ions->wxc(ii)*ions->V(ii,0);
+				nv.X(ix+1) += ions->wxr(ii)*ions->V(ii,0);
 
-				nv.Y(ix-1) += ions->wxl(ii)*ions->velocity(ii,1);
-				nv.Y(ix) += ions->wxc(ii)*ions->velocity(ii,1);
-				nv.Y(ix+1) += ions->wxr(ii)*ions->velocity(ii,1);
+				nv.Y(ix-1) += ions->wxl(ii)*ions->V(ii,1);
+				nv.Y(ix) += ions->wxc(ii)*ions->V(ii,1);
+				nv.Y(ix+1) += ions->wxr(ii)*ions->V(ii,1);
 
-				nv.Z(ix-1) += ions->wxl(ii)*ions->velocity(ii,2);
-				nv.Z(ix) += ions->wxc(ii)*ions->velocity(ii,2);
-				nv.Z(ix+1) += ions->wxr(ii)*ions->velocity(ii,2);
+				nv.Z(ix-1) += ions->wxl(ii)*ions->V(ii,2);
+				nv.Z(ix) += ions->wxc(ii)*ions->V(ii,2);
+				nv.Z(ix+1) += ions->wxr(ii)*ions->V(ii,2);
 			}
 		}
 
@@ -1265,14 +1265,14 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 			#pragma omp section
 			BB = sum(Bp % Bp,1);//B\dotB evaluated at each particle position.
 			#pragma omp section
-			VB = sum(IONS->at(ii).velocity.submat(0,0,IONS->at(ii).NSP-1,2) % Bp,1);//V\dotB
+			VB = sum(IONS->at(ii).V.submat(0,0,IONS->at(ii).NSP-1,2) % Bp,1);//V\dotB
 			#pragma omp section
 			EB = sum(Ep % Bp,1);//E\dotB
 			#pragma omp section
 			crossProduct(&Ep,&Bp,&ExB);//E\times B
 			#pragma omp section
 			{
-			mat TMP = IONS->at(ii).velocity.submat(0,0,IONS->at(ii).NSP-1,2);
+			mat TMP = IONS->at(ii).V.submat(0,0,IONS->at(ii).NSP-1,2);
 			crossProduct(&TMP,&Bp,&VxB);//V\times B
 			}
 		}//end of the parallel region
@@ -1288,26 +1288,26 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 		{
 			#pragma omp for
 			for(ip=0;ip<NSP;ip++){
-				IONS->at(ii).velocity(ip,0) = C1(ip)*IONS->at(ii).velocity(ip,0);
-				IONS->at(ii).velocity(ip,0) += C2(ip)*( Ep(ip,0) + VxB(ip,0) );
-				IONS->at(ii).velocity(ip,0) += C3(ip)*( ExB(ip,0) + VB(ip)*Bp(ip,0) );
-				IONS->at(ii).velocity(ip,0) += C4(ip)*( EB(ip)*Bp(ip,0) );
+				IONS->at(ii).V(ip,0) = C1(ip)*IONS->at(ii).V(ip,0);
+				IONS->at(ii).V(ip,0) += C2(ip)*( Ep(ip,0) + VxB(ip,0) );
+				IONS->at(ii).V(ip,0) += C3(ip)*( ExB(ip,0) + VB(ip)*Bp(ip,0) );
+				IONS->at(ii).V(ip,0) += C4(ip)*( EB(ip)*Bp(ip,0) );
 			}
 
 			#pragma omp for
 			for(ip=0;ip<NSP;ip++){
-				IONS->at(ii).velocity(ip,1) = C1(ip)*IONS->at(ii).velocity(ip,1);
-				IONS->at(ii).velocity(ip,1) += C2(ip)*( Ep(ip,1) + VxB(ip,1) );
-				IONS->at(ii).velocity(ip,1) += C3(ip)*( ExB(ip,1) + VB(ip)*Bp(ip,1) );
-				IONS->at(ii).velocity(ip,1) += C4(ip)*( EB(ip)*Bp(ip,1) );
+				IONS->at(ii).V(ip,1) = C1(ip)*IONS->at(ii).V(ip,1);
+				IONS->at(ii).V(ip,1) += C2(ip)*( Ep(ip,1) + VxB(ip,1) );
+				IONS->at(ii).V(ip,1) += C3(ip)*( ExB(ip,1) + VB(ip)*Bp(ip,1) );
+				IONS->at(ii).V(ip,1) += C4(ip)*( EB(ip)*Bp(ip,1) );
 			}
 
 			#pragma omp for
 			for(ip=0;ip<NSP;ip++){
-				IONS->at(ii).velocity(ip,2) = C1(ip)*IONS->at(ii).velocity(ip,2);
-				IONS->at(ii).velocity(ip,2) += C2(ip)*( Ep(ip,2) + VxB(ip,2) );
-				IONS->at(ii).velocity(ip,2) += C3(ip)*( ExB(ip,2) + VB(ip)*Bp(ip,2) );
-				IONS->at(ii).velocity(ip,2) += C4(ip)*( EB(ip)*Bp(ip,2) );
+				IONS->at(ii).V(ip,2) = C1(ip)*IONS->at(ii).V(ip,2);
+				IONS->at(ii).V(ip,2) += C2(ip)*( Ep(ip,2) + VxB(ip,2) );
+				IONS->at(ii).V(ip,2) += C3(ip)*( ExB(ip,2) + VB(ip)*Bp(ip,2) );
+				IONS->at(ii).V(ip,2) += C4(ip)*( EB(ip)*Bp(ip,2) );
 			}
 		}//End of the parallel region
 
@@ -1426,35 +1426,35 @@ void PIC::aiv_3D(const inputParameters * params,const characteristicScales * CS,
 
 
 		//Once the electrostatic and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
+		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' V. (Q*NCP/M*NCP=Q/M)
 		vec C1, C2, C3, C4, BB, VB, EB;
 		mat ExB, VxB;
 
 		BB = sum(Bp % Bp,1);//B\dotB evaluated at each particle position.
-		VB = sum(IONS->at(ii).velocity % Bp,1);//V\dotB
+		VB = sum(IONS->at(ii).V % Bp,1);//V\dotB
 		EB = sum(Ep % Bp,1);//E\dotB
 		crossProduct(&Ep,&Bp,&ExB);//E\times B
-		crossProduct(&IONS->at(ii).velocity,&Bp,&VxB);//V\times B
+		crossProduct(&IONS->at(ii).V,&Bp,&VxB);//V\times B
 
 		C1 = ( 1 - pow(A,2)*BB/4 )/( 1 + pow(A,2)*BB/4 );
 		C2 = A/( 1 + pow(A,2)*BB/4 );
 		C3 = (pow(A,2)/2)/( 1 + pow(A,2)*BB/4 );
 		C4 = (pow(A,3)/4)/( 1 + pow(A,2)*BB/4 );
 
-		IONS->at(ii).velocity.col(0) = C1 % IONS->at(ii).velocity.col(0);
-		IONS->at(ii).velocity.col(0) += C2 % ( Ep.col(0) + VxB.col(0) );
-		IONS->at(ii).velocity.col(0) += C3 % ( ExB.col(0) + VB % Bp.col(0) );
-		IONS->at(ii).velocity.col(0) += C4 % ( EB % Bp.col(0) );
+		IONS->at(ii).V.col(0) = C1 % IONS->at(ii).V.col(0);
+		IONS->at(ii).V.col(0) += C2 % ( Ep.col(0) + VxB.col(0) );
+		IONS->at(ii).V.col(0) += C3 % ( ExB.col(0) + VB % Bp.col(0) );
+		IONS->at(ii).V.col(0) += C4 % ( EB % Bp.col(0) );
 
-		IONS->at(ii).velocity.col(1) = C1 % IONS->at(ii).velocity.col(1);
-		IONS->at(ii).velocity.col(1) += C2 % ( Ep.col(1) + VxB.col(1) );
-		IONS->at(ii).velocity.col(1) += C3 % ( ExB.col(1) + VB % Bp.col(1) );
-		IONS->at(ii).velocity.col(1) += C4 % ( EB % Bp.col(1) );
+		IONS->at(ii).V.col(1) = C1 % IONS->at(ii).V.col(1);
+		IONS->at(ii).V.col(1) += C2 % ( Ep.col(1) + VxB.col(1) );
+		IONS->at(ii).V.col(1) += C3 % ( ExB.col(1) + VB % Bp.col(1) );
+		IONS->at(ii).V.col(1) += C4 % ( EB % Bp.col(1) );
 
-		IONS->at(ii).velocity.col(2) = C1 % IONS->at(ii).velocity.col(2);
-		IONS->at(ii).velocity.col(2) += C2 % ( Ep.col(2) + VxB.col(2) );
-		IONS->at(ii).velocity.col(2) += C3 % ( ExB.col(2) + VB % Bp.col(2) );
-		IONS->at(ii).velocity.col(2) += C4 % ( EB % Bp.col(2) );
+		IONS->at(ii).V.col(2) = C1 % IONS->at(ii).V.col(2);
+		IONS->at(ii).V.col(2) += C2 % ( Ep.col(2) + VxB.col(2) );
+		IONS->at(ii).V.col(2) += C3 % ( ExB.col(2) + VB % Bp.col(2) );
+		IONS->at(ii).V.col(2) += C4 % ( EB % Bp.col(2) );
 
 		extrapolateIonVelocity(params,mesh,&IONS->at(ii));
 
@@ -1477,7 +1477,7 @@ void PIC::aip_1D(const inputParameters * params,const meshGeometry * mesh,vector
 		{
 			#pragma omp for
 			for(ip=0;ip<NSP;ip++){
-				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).velocity(ip,0);
+				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
 
                 IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0),lx);//x
 
@@ -1562,8 +1562,8 @@ void PIC::aip_2D(const inputParameters * params,const meshGeometry * mesh,vector
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
-		IONS->at(ii).X.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
+		IONS->at(ii).X.col(1) += DT*IONS->at(ii).V.col(1);//y-component
 
 		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
 			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
@@ -1594,18 +1594,18 @@ void PIC::aip_3D(const inputParameters * params,const meshGeometry * mesh,vector
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 		#ifdef THREED
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
-		IONS->at(ii).X.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
-		IONS->at(ii).X.col(2) += DT*IONS->at(ii).velocity.col(2);//z-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
+		IONS->at(ii).X.col(1) += DT*IONS->at(ii).V.col(1);//y-component
+		IONS->at(ii).X.col(2) += DT*IONS->at(ii).V.col(2);//z-component
 		#endif
 
 		#ifdef TWOD
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
-		IONS->at(ii).X.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
+		IONS->at(ii).X.col(1) += DT*IONS->at(ii).V.col(1);//y-component
 		#endif
 
 		#ifdef ONED
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
 		#endif
 
 

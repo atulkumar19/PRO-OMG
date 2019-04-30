@@ -150,7 +150,9 @@ public:
 	ionsBGP BGP;
 
 	arma::mat X; //ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat velocity; //ions velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat V; //ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat P; //ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::vec g; //ions' relativistic gamma factor.
 	arma::vec meshNode; //Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
 
 	//These weights are used in the charge extrapolation and the force interpolation

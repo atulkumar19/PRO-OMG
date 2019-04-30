@@ -318,12 +318,12 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 
 			delete group_position;
 
-			Group *group_velocity = new Group( group_ionSpecies->createGroup( "velocity" ) );
+			Group *group_velocity = new Group( group_ionSpecies->createGroup( "V" ) );
 
 			H5std_string xvelocity( "vx" );
 
 			CPP_TYPE *xvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).velocity(span(0,IONS->at(ii).nSupPartOutput - 1),0));
+			VAUX = CS->velocity*(tmpIONS->at(ii).V(span(0,IONS->at(ii).nSupPartOutput - 1),0));
 #ifdef HDF5_DOUBLE
 			xvel = VAUX.memptr();
 #elif defined HDF5_FLOAT
@@ -340,7 +340,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string yvelocity( "vy" );
 
 			CPP_TYPE *yvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).velocity(span(0,IONS->at(ii).nSupPartOutput - 1),1));
+			VAUX = CS->velocity*(tmpIONS->at(ii).V(span(0,IONS->at(ii).nSupPartOutput - 1),1));
 #ifdef HDF5_DOUBLE
 			yvel = VAUX.memptr();
 #elif defined HDF5_FLOAT
@@ -357,7 +357,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string zvelocity( "vz" );
 
 			CPP_TYPE *zvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).velocity(span(0,IONS->at(ii).nSupPartOutput - 1),2));
+			VAUX = CS->velocity*(tmpIONS->at(ii).V(span(0,IONS->at(ii).nSupPartOutput - 1),2));
 #ifdef HDF5_DOUBLE
 			zvel = VAUX.memptr();
 #elif defined HDF5_FLOAT

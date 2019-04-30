@@ -339,9 +339,9 @@ void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<io
 			Cx = (2/Aw.L)*sin( 0.5*Aw.wavenumber(jj)*Aw.L )*cos( 0.5*(Aw.wavenumber(jj)*Aw.L + 2*Aw.phase(jj)) );
 			Cy = (2/Aw.L)*sin( 0.5*Aw.wavenumber(jj)*Aw.L )*sin( 0.5*(Aw.wavenumber(jj)*Aw.L + 2*Aw.phase(jj)) );
 
-			IONS->at(ii).velocity.col(0) += -vx*( sin( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).X.col(0));
-			IONS->at(ii).velocity.col(1) += vy*( cos( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) + Cy*IONS->at(ii).X.col(0) );
-			IONS->at(ii).velocity.col(2) += vz*( sin( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).X.col(0) );
+			IONS->at(ii).V.col(0) += -vx*( sin( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).X.col(0));
+			IONS->at(ii).V.col(1) += vy*( cos( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) + Cy*IONS->at(ii).X.col(0) );
+			IONS->at(ii).V.col(2) += vz*( sin( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).X.col(0) );
 
 
 		}

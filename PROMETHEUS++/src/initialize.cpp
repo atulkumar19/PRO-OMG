@@ -410,7 +410,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		ions.meshNode.zeros(ions.NSP);
 
 		//Checking the integrity of the initial condition
-		if((int)ions.velocity.n_elem != (int)(3*ions.NSP)){
+		if((int)ions.V.n_elem != (int)(3*ions.NSP)){
 			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
 			MPI_Abort(MPI_COMM_WORLD,-123);
 		 	// The velocity array contains a number of elements that it should not have

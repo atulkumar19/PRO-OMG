@@ -52,21 +52,21 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 			ionMass += IONS->at(ii).M;
 
 			#ifdef ONED
-				vec V = abs(IONS->at(ii).velocity.col(0));
+				vec V = abs(IONS->at(ii).V.col(0));
 				if( max(V) > ion_vmax )
 					ion_vmax = max(V);
 			#endif
 
 			#ifdef TWOD
 				vec V = zeros(IONS->at(ii).NSP);
-				V = sqrt( IONS->at(ii).velocity.col(0) % IONS->at(ii).velocity.col(0) + IONS->at(ii).velocity.col(1) % IONS->at(ii).velocity.col(1) );
+				V = sqrt( IONS->at(ii).V.col(0) % IONS->at(ii).V.col(0) + IONS->at(ii).V.col(1) % IONS->at(ii).V.col(1) );
 				if( max(V) > ion_vmax )
 					ion_vmax = max(V);
 			#endif
 
 			#ifdef THREED
 				vec V = zeros(IONS->at(ii).NSP);
-				V = sqrt( IONS->at(ii).velocity.col(0) % IONS->at(ii).velocity.col(0) + IONS->at(ii).velocity.col(1) % IONS->at(ii).velocity.col(1) + IONS->at(ii).velocity.col(2) % IONS->at(ii).velocity.col(2));
+				V = sqrt( IONS->at(ii).V.col(0) % IONS->at(ii).V.col(0) + IONS->at(ii).V.col(1) % IONS->at(ii).V.col(1) + IONS->at(ii).V.col(2) % IONS->at(ii).V.col(2));
 				if( max(V) > ion_vmax )
 					ion_vmax = max(V);
 			#endif
@@ -241,7 +241,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 		IONS->at(ii).BGP.Wc *= CS->time;
 		IONS->at(ii).BGP.Wpi *= CS->time;//IMPORTANT: Not normalized before!!
 		IONS->at(ii).X = IONS->at(ii).X/CS->length;
-		IONS->at(ii).velocity = IONS->at(ii).velocity/CS->velocity;
+		IONS->at(ii).V = IONS->at(ii).V/CS->velocity;
 	}//Iterations over the ion species.
 	//Normalizing ions' properties.
 

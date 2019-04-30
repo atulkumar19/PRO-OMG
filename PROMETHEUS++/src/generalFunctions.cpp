@@ -58,7 +58,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0);
-			vec tmp = IONS->at(ii).velocity.col(0);
+			vec tmp = IONS->at(ii).V.col(0);
 			vxTmp = abs(tmp.max());
 			vx = (vxTmp > vx) ? vxTmp : vx;
 		}
@@ -71,11 +71,11 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0), vyTmp(0);
-			vec tmp = IONS->at(ii).velocity.col(0);
+			vec tmp = IONS->at(ii).V.col(0);
 			vxTmp = abs(tmp.max());
 			vx = (vxTmp > vx) ? vxTmp : vx;
 			tmp.reset();
-			tmp = IONS->at(ii).velocity.col(1);
+			tmp = IONS->at(ii).V.col(1);
 			vyTmp = abs(tmp.max());
 			vy = (vyTmp > vy) ? vyTmp : vy;
 		}
@@ -88,15 +88,15 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0), vyTmp(0), vzTmp(0);
-			vec tmp = IONS->at(ii).velocity.col(0);
+			vec tmp = IONS->at(ii).V.col(0);
 			vxTmp = abs(tmp.max());
 			vx = (vxTmp > vx) ? vxTmp : vx;
 			tmp.reset();
-			tmp = IONS->at(ii).velocity.col(1);
+			tmp = IONS->at(ii).V.col(1);
 			vyTmp = abs(tmp.max());
 			vy = (vyTmp > vy) ? vyTmp : vy;
 			tmp.reset();
-			tmp = IONS->at(ii).velocity.col(2);
+			tmp = IONS->at(ii).V.col(2);
 			vzTmp = abs(tmp.max());
 			vz = (vzTmp > vz) ? vzTmp : vz;
 		}
@@ -128,9 +128,9 @@ void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh
 			double tmpEnergy(0);
 			#pragma omp for
 			for(jj=0;jj<NSP;jj++){
-				tmpEnergy += IONS->at(ii).velocity(jj,0)*IONS->at(ii).velocity(jj,0) //
-							+ IONS->at(ii).velocity(jj,1)*IONS->at(ii).velocity(jj,1) //
-							+ IONS->at(ii).velocity(jj,2)*IONS->at(ii).velocity(jj,2);
+				tmpEnergy += IONS->at(ii).V(jj,0)*IONS->at(ii).V(jj,0) //
+							+ IONS->at(ii).V(jj,1)*IONS->at(ii).V(jj,1) //
+							+ IONS->at(ii).V(jj,2)*IONS->at(ii).V(jj,2);
 			}
 			tmpEnergy *= 0.5*IONS->at(ii).M*IONS->at(ii).NCP;
 			tmpEnergy *= CS->mass*CS->velocity*CS->velocity;//Convert to SI units.

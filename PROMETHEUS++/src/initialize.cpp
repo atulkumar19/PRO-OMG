@@ -416,7 +416,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		 	// The velocity array contains a number of elements that it should not have
 
 		}
-		if((int)ions.position.n_elem != (int)(3*ions.NSP)){
+		if((int)ions.X.n_elem != (int)(3*ions.NSP)){
 			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
 			MPI_Abort(MPI_COMM_WORLD,-123);
 			// The position array contains a number of elements that it should not have
@@ -458,12 +458,12 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 	if(params->quietStart == 0){
 		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).position.col(0) = \
-			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).position.col(0));
+			IONS->at(ii).X.col(0) = \
+			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
 		}
 	}else if(params->quietStart == 1){
 		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).position.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+			IONS->at(ii).X.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
 		}
 	}
 

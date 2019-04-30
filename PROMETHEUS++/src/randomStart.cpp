@@ -35,7 +35,7 @@ void RANDOMSTART::beamVelocityDistribution(const inputParameters * params, ionSp
 void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions,\
 					const string parDirection){
 
-	ions->position = randu<mat>(ions->NSP,3);
+	ions->X = randu<mat>(ions->NSP,3);
 
 	ions->velocity = zeros(ions->NSP,3);
 
@@ -84,7 +84,7 @@ void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, i
 void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions, \
 					const string parDirection){
 
-	ions->position = randu<mat>(ions->NSP,3);
+	ions->X = randu<mat>(ions->NSP,3);
 
 	ions->velocity = zeros(ions->NSP,3);
 
@@ -138,7 +138,7 @@ void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params,
 }
 
 void RANDOMSTART::shellVelocityDistribution(const inputParameters * params, ionSpecies * ions){
-	ions->position = randu<mat>(ions->NSP,3);
+	ions->X = randu<mat>(ions->NSP,3);
 
 	ions->velocity = zeros(ions->NSP,3);
 

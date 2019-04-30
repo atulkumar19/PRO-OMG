@@ -294,7 +294,7 @@ void PIC::assingCell_TOS(const inputParameters * params,const meshGeometry * mes
 			{
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++)
-					ions->meshNode(ii) = floor((ions->position(ii,0) + 0.5*mesh->DX)/mesh->DX);
+					ions->meshNode(ii) = floor((ions->X(ii,0) + 0.5*mesh->DX)/mesh->DX);
 
 				#pragma omp single
 				{
@@ -309,9 +309,9 @@ void PIC::assingCell_TOS(const inputParameters * params,const meshGeometry * mes
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
 					if(ions->meshNode(ii) != NC){
-						X(ii) = ions->position(ii,0) - mesh->nodes.X(ions->meshNode(ii));
+						X(ii) = ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii));
 					}else{
-						X(ii) =  ions->position(ii,0) - (mesh->nodes.X(NC-1) + mesh->DX);
+						X(ii) =  ions->X(ii,0) - (mesh->nodes.X(NC-1) + mesh->DX);
 					}
 				}
 
@@ -391,7 +391,7 @@ void PIC::assingCell_TSC(const inputParameters * params,const meshGeometry * mes
 			{
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++)
-					ions->meshNode(ii,0) = floor((ions->position(ii,0) + 0.5*mesh->DX)/mesh->DX);
+					ions->meshNode(ii,0) = floor((ions->X(ii,0) + 0.5*mesh->DX)/mesh->DX);
 
 				NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
 
@@ -406,9 +406,9 @@ void PIC::assingCell_TSC(const inputParameters * params,const meshGeometry * mes
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
 					if(ions->meshNode(ii,0) != NC){
-						X(ii) = ions->position(ii,0) - mesh->nodes.X(ions->meshNode(ii,0));
+						X(ii) = ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii,0));
 					}else{
-						X(ii) = ions->position(ii,0) - (mesh->nodes.X(NC-1) + mesh->DX);
+						X(ii) = ions->X(ii,0) - (mesh->nodes.X(NC-1) + mesh->DX);
 					}
 				}
 
@@ -438,14 +438,14 @@ void PIC::assingCell_TSC(const inputParameters * params,const meshGeometry * mes
 			break;
 		}
 		case(2):{
-			ions->meshNode.col(0) = floor((ions->position.col(0) + 0.5*mesh->DX)/mesh->DX);
-			ions->meshNode.col(1) = floor((ions->position.col(1) + 0.5*mesh->DX)/mesh->DX);
+			ions->meshNode.col(0) = floor((ions->X.col(0) + 0.5*mesh->DX)/mesh->DX);
+			ions->meshNode.col(1) = floor((ions->X.col(1) + 0.5*mesh->DX)/mesh->DX);
 			break;
 		}
 		case(3):{
-			ions->meshNode.col(0) = floor((ions->position.col(0) + 0.5*mesh->DX)/mesh->DX);
-			ions->meshNode.col(1) = floor((ions->position.col(1) + 0.5*mesh->DX)/mesh->DX);
-			ions->meshNode.col(2) = floor((ions->position.col(2) + 0.5*mesh->DX)/mesh->DX);
+			ions->meshNode.col(0) = floor((ions->X.col(0) + 0.5*mesh->DX)/mesh->DX);
+			ions->meshNode.col(1) = floor((ions->X.col(1) + 0.5*mesh->DX)/mesh->DX);
+			ions->meshNode.col(2) = floor((ions->X.col(2) + 0.5*mesh->DX)/mesh->DX);
 			break;
 		}
 		default:{
@@ -474,10 +474,10 @@ void PIC::assingCell(const inputParameters * params,const meshGeometry * mesh,io
 			/*Periodic boundary condition*/
 			double aux(0);
 			for(int ii=0;ii<ions->NSP;ii++){
-				aux = floor(ions->position(ii,0)/mesh->DX);
+				aux = floor(ions->X(ii,0)/mesh->DX);
 				if(aux == mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS){
 					ions->meshNode(ii) = 0;
-					ions->position(ii) = 0;
+					ions->X(ii) = 0;
 				}else{
 					ions->meshNode(ii) = aux;
 				}
@@ -1135,9 +1135,9 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cu
 		double w1(0), w2(0), w3(0), w4(0), w5(0), w6(0), w7(0), w8(0);
 		int ix(ions->meshNode(ii,0)+1),iy(ions->meshNode(ii,1)+1),iz(ions->meshNode(ii,2)+1);
 
-		wx = 1 - (ions->position(ii,0) - mesh->nodes.X(ions->meshNode(ii,0)))/mesh->DX;//
-		wy = 1 - (ions->position(ii,1) - mesh->nodes.Y(ions->meshNode(ii,1)))/mesh->DY;//
-		wz = 1 - (ions->position(ii,2) - mesh->nodes.Z(ions->meshNode(ii,2)))/mesh->DZ;//
+		wx = 1 - (ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii,0)))/mesh->DX;//
+		wy = 1 - (ions->X(ii,1) - mesh->nodes.Y(ions->meshNode(ii,1)))/mesh->DY;//
+		wz = 1 - (ions->X(ii,2) - mesh->nodes.Z(ions->meshNode(ii,2)))/mesh->DZ;//
 
 		wx = (wx<0) ? 0 : wx;
 		wy = (wy<0) ? 0 : wy;
@@ -1477,12 +1477,12 @@ void PIC::aip_1D(const inputParameters * params,const meshGeometry * mesh,vector
 		{
 			#pragma omp for
 			for(ip=0;ip<NSP;ip++){
-				IONS->at(ii).position(ip,0) += DT*IONS->at(ii).velocity(ip,0);
+				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).velocity(ip,0);
 
-                IONS->at(ii).position(ip,0) = fmod(IONS->at(ii).position(ip,0),lx);//x
+                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0),lx);//x
 
-                if(IONS->at(ii).position(ip,0) < 0)
-        			IONS->at(ii).position(ip,0) += lx;
+                if(IONS->at(ii).X(ip,0) < 0)
+        			IONS->at(ii).X(ip,0) += lx;
 			}
 		}//End of the parallel region
 
@@ -1562,17 +1562,17 @@ void PIC::aip_2D(const inputParameters * params,const meshGeometry * mesh,vector
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 
-		IONS->at(ii).position.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
-		IONS->at(ii).position.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
+		IONS->at(ii).X.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
 
 		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).position(jj,0) = fmod(IONS->at(ii).position(jj,0),lx);//x
-			if(IONS->at(ii).position(jj,0) < 0)
-				IONS->at(ii).position(jj,0) += lx;
+			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
+			if(IONS->at(ii).X(jj,0) < 0)
+				IONS->at(ii).X(jj,0) += lx;
 
-			IONS->at(ii).position(jj,1) = fmod(IONS->at(ii).position(jj,1),ly);//y
-			if(IONS->at(ii).position(jj,1) < 0)
-				IONS->at(ii).position(jj,1) += ly;
+			IONS->at(ii).X(jj,1) = fmod(IONS->at(ii).X(jj,1),ly);//y
+			if(IONS->at(ii).X(jj,1) < 0)
+				IONS->at(ii).X(jj,1) += ly;
 		}//Periodic boundary condition for the ions
 
 		assingCell_TSC(params,mesh,&IONS->at(ii),2);
@@ -1594,54 +1594,54 @@ void PIC::aip_3D(const inputParameters * params,const meshGeometry * mesh,vector
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 		#ifdef THREED
-		IONS->at(ii).position.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
-		IONS->at(ii).position.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
-		IONS->at(ii).position.col(2) += DT*IONS->at(ii).velocity.col(2);//z-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
+		IONS->at(ii).X.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
+		IONS->at(ii).X.col(2) += DT*IONS->at(ii).velocity.col(2);//z-component
 		#endif
 
 		#ifdef TWOD
-		IONS->at(ii).position.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
-		IONS->at(ii).position.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
+		IONS->at(ii).X.col(1) += DT*IONS->at(ii).velocity.col(1);//y-component
 		#endif
 
 		#ifdef ONED
-		IONS->at(ii).position.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
+		IONS->at(ii).X.col(0) += DT*IONS->at(ii).velocity.col(0);//x-component
 		#endif
 
 
 		#ifdef THREED
 		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).position(jj,0) = fmod(IONS->at(ii).position(jj,0),lx);//x
-			if(IONS->at(ii).position(jj,0) < 0)
-				IONS->at(ii).position(jj,0) += lx;
+			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
+			if(IONS->at(ii).X(jj,0) < 0)
+				IONS->at(ii).X(jj,0) += lx;
 
-			IONS->at(ii).position(jj,1) = fmod(IONS->at(ii).position(jj,1),ly);//y
-			if(IONS->at(ii).position(jj,1) < 0)
-				IONS->at(ii).position(jj,1) += ly;
+			IONS->at(ii).X(jj,1) = fmod(IONS->at(ii).X(jj,1),ly);//y
+			if(IONS->at(ii).X(jj,1) < 0)
+				IONS->at(ii).X(jj,1) += ly;
 
-			IONS->at(ii).position(jj,2) = fmod(IONS->at(ii).position(jj,2),lz);//z
-			if(IONS->at(ii).position(jj,2) < 0)
-				IONS->at(ii).position(jj,2) += lz;
+			IONS->at(ii).X(jj,2) = fmod(IONS->at(ii).X(jj,2),lz);//z
+			if(IONS->at(ii).X(jj,2) < 0)
+				IONS->at(ii).X(jj,2) += lz;
 		}//Periodic boundary condition for the ions
 		#endif
 
 		#ifdef TWOD
 		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).position(jj,0) = fmod(IONS->at(ii).position(jj,0),lx);//x
-			if(IONS->at(ii).position(jj,0) < 0)
-				IONS->at(ii).position(jj,0) += lx;
+			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
+			if(IONS->at(ii).X(jj,0) < 0)
+				IONS->at(ii).X(jj,0) += lx;
 
-			IONS->at(ii).position(jj,1) = fmod(IONS->at(ii).position(jj,1),ly);//y
-			if(IONS->at(ii).position(jj,1) < 0)
-				IONS->at(ii).position(jj,1) += ly;
+			IONS->at(ii).X(jj,1) = fmod(IONS->at(ii).X(jj,1),ly);//y
+			if(IONS->at(ii).X(jj,1) < 0)
+				IONS->at(ii).X(jj,1) += ly;
 		}//Periodic boundary condition for the ions
 		#endif
 
 		#ifdef ONED
 		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).position(jj,0) = fmod(IONS->at(ii).position(jj,0),lx);//x
-			if(IONS->at(ii).position(jj,0) < 0)
-				IONS->at(ii).position(jj,0) += lx;
+			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
+			if(IONS->at(ii).X(jj,0) < 0)
+				IONS->at(ii).X(jj,0) += lx;
 		}//Periodic boundary condition for the ions
 		#endif
 

@@ -240,7 +240,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 		IONS->at(ii).BGP.VTper /= CS->velocity;
 		IONS->at(ii).BGP.Wc *= CS->time;
 		IONS->at(ii).BGP.Wpi *= CS->time;//IMPORTANT: Not normalized before!!
-		IONS->at(ii).position = IONS->at(ii).position/CS->length;
+		IONS->at(ii).X = IONS->at(ii).X/CS->length;
 		IONS->at(ii).velocity = IONS->at(ii).velocity/CS->velocity;
 	}//Iterations over the ion species.
 	//Normalizing ions' properties.

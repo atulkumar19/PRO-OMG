@@ -32,7 +32,7 @@ int main(int argc,char* argv[]){
 	emf EB; 						// Derived type with variables of electromagnetic fields.
 	double currentTime(0); 			// Current time in simulation.
 	double t1;						//
-	double t2;						// 
+	double t2;						//
 
 
 	INITIALIZE init(&params,argc,argv);
@@ -69,9 +69,9 @@ int main(int argc,char* argv[]){
 
 	ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,0);
 
-	fields.advanceEField(&params,&mesh,&EB,&IONS,&CS);
+	// fields.advanceEField(&params,&mesh,&EB,&IONS,&CS);
 
-	fields.advanceBField(&params,&mesh,&EB,&IONS,&CS);
+	// fields.advanceBField(&params,&mesh,&EB,&IONS,&CS);
 
 	alfvenPerturbations.addPerturbations(&params,&IONS,&EB);
 

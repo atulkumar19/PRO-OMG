@@ -149,7 +149,7 @@ public:
 
 	ionsBGP BGP;
 
-	arma::mat position; //ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat X; //ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat velocity; //ions velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec meshNode; //Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
 

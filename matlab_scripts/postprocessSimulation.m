@@ -1,5 +1,5 @@
 function ST = postprocessSimulation(path)
-% Example: ST = postprocessSimulation('../PROMETHEUS++/outputFiles/warm_plasma/HDF5/')
+% Example: ST = postprocessSimulation('../PROMETHEUS++/outputFiles/HDF5/')
 % Physical constants
 
 close all
@@ -21,7 +21,7 @@ ST.data = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-% FourierAnalysis(ST,'E');
+FourierAnalysis(ST,'B','z');
 
 EnergyDiagnostic(ST);
 end
@@ -128,7 +128,15 @@ end
 
 end
 
-function FourierAnalysis(ST,EMF)
+function FourierAnalysis(ST,field,component)
+if strcmp(component,'x')
+    component_num = 1;
+elseif strcmp(component,'y')
+    component_num = 2;
+elseif strcmp(component,'z')
+    component_num = 3;
+end
+
 % Plasma parameters
 qi = ST.params.ions.species_1.ionProperties(2);
 mi = ST.params.ions.species_1.ionProperties(1);
@@ -158,8 +166,13 @@ F = zeros(NT,NXTD);
 for ii=1:NT
     time(ii) = ST.data.(['D0_O' num2str(ii-1)]).time;
     for dd=1:ND
-        F(ii,(dd-1)*NXPD + 1:dd*NXPD) = ...
-            ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.(EMF).([EMF 'y']);
+        if strcmp(field,'B')
+            F(ii,(dd-1)*NXPD + 1:dd*NXPD) = ...
+                ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.(field).([field component]) - ST.params.Bo(component_num);
+        else
+            F(ii,(dd-1)*NXPD + 1:dd*NXPD) = ...
+            ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.(field).([field component]);
+        end
     end
 end
 
@@ -219,9 +232,9 @@ for ss=1:NSPP
     
     for ii=1:NT        
         for dd=1:ND
-            vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vx;
-            vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vy;
-            vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).velocity.vz;
+            vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).V.vx;
+            vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).V.vy;
+            vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).V.vz;
             
             Ei(ss,ii) = Ei(ss,ii) + sum(vx.^2 + vy.^2 + vz.^2);
         end

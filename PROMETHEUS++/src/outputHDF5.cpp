@@ -292,7 +292,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			Group *group_ionSpecies = new Group( group_ions->createGroup( name ) );
 			name.clear();
 
-			Group *group_position = new Group( group_ionSpecies->createGroup( "position" ) );
+			Group *group_position = new Group( group_ionSpecies->createGroup( "X" ) );
 
 			vec VAUX;
 #ifdef HDF5_FLOAT
@@ -302,7 +302,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string xposition( "x" );
 
 			CPP_TYPE *xpos;
-			VAUX = CS->length*( IONS->at(ii).position(span(0,IONS->at(ii).nSupPartOutput - 1),0) );
+			VAUX = CS->length*( IONS->at(ii).X(span(0,IONS->at(ii).nSupPartOutput - 1),0) );
 #ifdef HDF5_DOUBLE
 			xpos = VAUX.memptr();
 #elif defined HDF5_FLOAT

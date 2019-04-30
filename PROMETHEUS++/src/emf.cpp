@@ -168,7 +168,7 @@ void EMF_SOLVER::equilibrium(const inputParameters * params,vector<ionSpecies> *
 }
 
 
-void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,emf * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,emf * EB){//This function calculates -culr(EB->E)
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -190,12 +190,12 @@ void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,
 }
 
 
-void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
+void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
 
 }
 
 
-void EMF_SOLVER::curlE(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
 
 }
 
@@ -210,28 +210,28 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 
 		K1 = *EB;//The value of the emf at the time level (N-1/2)
 		advanceEField(params,mesh,&K1,IONS,CS);//E1 (using B^(N-1/2))
-		curlE(params,mesh,&K1);//K1
+		FaradaysLaw(params,mesh,&K1);//K1
 
 		K2.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K1
 		K2.B.Y = EB->B.Y + (0.5*dt)*K1.B.Y;
 		K2.B.Z = EB->B.Z + (0.5*dt)*K1.B.Z;
 		K2.E = EB->E;
 		advanceEField(params,mesh,&K2,IONS,CS);//E2 (using B^(N-1/2) + 0.5*dt*K1)
-		curlE(params,mesh,&K2);//K2
+		FaradaysLaw(params,mesh,&K2);//K2
 
 		K3.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K2
 		K3.B.Y = EB->B.Y + (0.5*dt)*K2.B.Y;
 		K3.B.Z = EB->B.Z + (0.5*dt)*K2.B.Z;
 		K3.E = EB->E;
 		advanceEField(params,mesh,&K3,IONS,CS);//E3 (using B^(N-1/2) + 0.5*dt*K2)
-		curlE(params,mesh,&K3);//K3
+		FaradaysLaw(params,mesh,&K3);//K3
 
 		K4.B.X = EB->B.X;//B^(N-1/2) + dt*K2
 		K4.B.Y = EB->B.Y + dt*K3.B.Y;
 		K4.B.Z = EB->B.Z + dt*K3.B.Z;
 		K4.E = EB->E;
 		advanceEField(params,mesh,&K4,IONS,CS);//E4 (using B^(N-1/2) + dt*K3)
-		curlE(params,mesh,&K4);//K4
+		FaradaysLaw(params,mesh,&K4);//K4
 
 		EB->B += (dt/6)*( K1.B + 2*K2.B + 2*K3.B + K4.B );
 

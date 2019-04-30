@@ -21,14 +21,14 @@ class EMF_SOLVER{
 	void MPI_passGhosts(const inputParameters * params,vfield_vec * field);
 
 	double dt;//Time step for the RK4 function
-    
+
 	emf AUX, K1, K2, K3, K4;
 
-	void curlE(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB);
+	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB);
 
-	void curlE(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB);
+	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB);
 
-	void curlE(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB);
+	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB);
 
 
 	void aef_1D(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,characteristicScales * CS);

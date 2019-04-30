@@ -90,7 +90,7 @@ void QUIETSTART::bit_reversedFractions_base3(const inputParameters * params, ion
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions,\
 				const string parDirection){
-    ions->position = zeros<mat>(ions->NSP,3);
+    ions->X = zeros<mat>(ions->NSP,3);
     ions->velocity = zeros<mat>(ions->NSP,3);
 
 	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
@@ -100,7 +100,7 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
     vec b2fr = zeros(ions->NSP);
     bit_reversedFractions_base2(params, ions, &b2fr);
 
-    ions->position.col(0) = b2fr;
+    ions->X.col(0) = b2fr;
 
     // Initialising gyro-angle
 
@@ -148,7 +148,7 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions,\
 					const string parDirection){
-    ions->position = zeros<mat>(ions->NSP,3);
+    ions->X = zeros<mat>(ions->NSP,3);
     ions->velocity = zeros<mat>(ions->NSP,3);
 
 	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
@@ -158,7 +158,7 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
     vec b2fr = zeros(ions->NSP);
     bit_reversedFractions_base2(params, ions, &b2fr);
 
-    ions->position.col(0) = b2fr;
+    ions->X.col(0) = b2fr;
 
     // Initialising gyro-angle
 

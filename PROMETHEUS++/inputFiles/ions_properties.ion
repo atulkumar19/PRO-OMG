@@ -1,5 +1,5 @@
 SPECIES1                    3
-NPC1                        1000
+NPC1                        2000
 Tper1                       1.1605E7
 Tpar1                       1.1605E7
 Dn1                         0.998003992015968
@@ -10,7 +10,7 @@ replenishPercentage1        0
 newParticlesPerIteration1   0
 pctSupPartOutput1           100
 SPECIES2                    3
-NPC2                        1000
+NPC2                        2000
 Tper2                       4.0635E10
 Tpar2                       0
 Dn2                         9.998000399920017E-5

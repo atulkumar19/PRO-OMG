@@ -391,7 +391,8 @@ void PIC::assingCell_TSC(const inputParameters * params,const meshGeometry * mes
 			{
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++)
-					ions->meshNode(ii,0) = floor((ions->X(ii,0) + 0.5*mesh->DX)/mesh->DX);
+					//ions->meshNode(ii,0) = floor((ions->X(ii,0) + 0.5*mesh->DX)/mesh->DX);
+					ions->meshNode(ii) = floor((ions->X(ii,0) + 0.5*mesh->DX)/mesh->DX);
 
 				NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
 
@@ -405,8 +406,10 @@ void PIC::assingCell_TSC(const inputParameters * params,const meshGeometry * mes
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
-					if(ions->meshNode(ii,0) != NC){
-						X(ii) = ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii,0));
+					//if(ions->meshNode(ii,0) != NC){
+					if(ions->meshNode(ii) != NC){
+						//X(ii) = ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii,0));
+						X(ii) = ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii));
 					}else{
 						X(ii) = ions->X(ii,0) - (mesh->nodes.X(NC-1) + mesh->DX);
 					}
@@ -1182,7 +1185,207 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cu
 
 
 #ifdef ONED
-void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+void PIC::aiv_Vay_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+
+
+	MPI_AllgatherField(params,&EB->E);
+	MPI_AllgatherField(params,&EB->B);
+
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	forwardPBC_1D(&EB->E.X);
+	forwardPBC_1D(&EB->E.Y);
+	forwardPBC_1D(&EB->E.Z);
+
+	forwardPBC_1D(&EB->B.X);
+	forwardPBC_1D(&EB->B.Y);
+	forwardPBC_1D(&EB->B.Z);
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+	int NX(EB->E.X.n_elem);
+
+	emf emf_nodes;
+	emf_nodes.zeros(NX);
+
+	emf_nodes.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
+	emf_nodes.E.Y.subvec(1,NX-2) = EB->E.Y.subvec(1,NX-2);
+	emf_nodes.E.Z.subvec(1,NX-2) = EB->E.Z.subvec(1,NX-2);
+
+	emf_nodes.B.X.subvec(1,NX-2) = EB->B.X.subvec(1,NX-2);
+	emf_nodes.B.Y.subvec(1,NX-2) = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) );
+	emf_nodes.B.Z.subvec(1,NX-2) = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) );
+
+	forwardPBC_1D(&emf_nodes.E.X);
+	forwardPBC_1D(&emf_nodes.E.Y);
+	forwardPBC_1D(&emf_nodes.E.Z);
+
+	forwardPBC_1D(&emf_nodes.B.X);
+	forwardPBC_1D(&emf_nodes.B.Y);
+	forwardPBC_1D(&emf_nodes.B.Z);
+
+	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
+
+		mat Ep = zeros(IONS->at(ii).NSP,3);
+		mat Bp = zeros(IONS->at(ii).NSP,3);
+
+		switch (params->weightingScheme){
+			case(0):{
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			case(1):{
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			case(2):{
+					exit(0);
+					break;
+					}
+			case(3):{
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			case(4):{
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			default:{
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					}
+		}
+
+		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
+		int NSP(IONS->at(ii).NSP);
+		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
+		vec gp(IONS->at(ii).NSP);
+		vec sigma(IONS->at(ii).NSP);
+		vec us(IONS->at(ii).NSP);
+		vec s(IONS->at(ii).NSP);
+		mat U(IONS->at(ii).NSP,3);
+		mat VxB(IONS->at(ii).NSP,3);
+		mat tau(IONS->at(ii).NSP,3);
+		mat up(IONS->at(ii).NSP,3);
+		mat t(IONS->at(ii).NSP,3);
+		mat upxt(IONS->at(ii).NSP,3);
+
+		crossProduct(&IONS->at(ii).V,&Bp,&VxB);//VxB
+
+		#pragma omp parallel shared(IONS,U,gp,sigma,us,s,VxB,tau,up,t,upxt) firstprivate(A,NSP)
+		{
+			#pragma omp for
+			for(int ip=0;ip<NSP;ip++){
+				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  sum(IONS->at(ii).V.row(ip) % IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
+				U.row(ip) = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+
+				U.row(ip) += 0.5*A*(Ep.row(ip) + VxB.row(ip)); // U_hs = U_L + 0.5*a*(E + cross(V,B)); % Half step for velocity
+				tau.row(ip) = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+				up.row(ip) = U.row(ip) + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+				gp(ip) = sqrt(1.0 + sum(up.row(ip) % up.row(ip))); // gammap = sqrt(1 + up*up');
+				sigma(ip) = gp(ip)*gp(ip) - sum(tau.row(ip) % tau.row(ip)); // sigma = gammap^2 - tau*tau';
+				us(ip) = sum(up.row(ip) % tau.row(ip)); // us = up*tau'; % variable 'u^*' in paper
+				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( sum(tau.row(ip) % tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+				t.row(ip) = tau.row(ip)/IONS->at(ii).g(ip); 			// t = tau/gamma;
+				s(ip) = 1.0/( 1.0 + sum(t.row(ip) % t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
+			}
+
+			#pragma omp critical
+			crossProduct(&up,&t,&upxt);
+
+			#pragma omp for
+			for(int ip=0;ip<NSP;ip++){
+				U.row(ip) = s(ip)*( up.row(ip) + sum(up.row(ip) % t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up,t));
+				IONS->at(ii).V.row(ip) = U.row(ip)/IONS->at(ii).g(ip);	// V = U_L/gamma;
+			}
+		} // End of parallel region
+
+/**
+		IONS->g = 1.0/sqrt( 1.0 -  sum(IONS->at(ii).V % IONS->at(ii).V,1)/(F_C_DS*F_C_DS) );
+
+		U = IONS->at(ii).V;
+		U.each_col() %= g;
+
+		crossProduct(&IONS->at(ii).V,&Bp,&VxB);//V\times B
+
+		U += 0.5*A*(Ep + VxB); // U_hs = U_L + 0.5*a*(E + cross(V,B)); % Half step for velocity
+		tau = 0.5*A*Bp; // tau = 0.5*q*dt*B/m;
+		up = U + 0.5*A*Ep; // up = U_hs + 0.5*a*E;
+		gp = sqrt(1.0 + sum(up % up,1)); // gammap = sqrt(1 + up*up');
+		sigma = gp % gp - sum(tau % tau,1); // sigma = gammap^2 - tau*tau';
+		us = sum(up % tau, 1); // us = up*tau'; % variable 'u^*' in paper
+		g = sqrt(0.5)*sqrt( sigma + sqrt( sigma % sigma + 4.0*(sum(tau % tau,1) + us % us) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+		t = tau; 			// t = tau/gamma;
+		t.each_col() /= g; 	// t = tau/gamma;
+		s = 1.0/( 1.0 + sum(t % t,1) ); // s = 1/(1 + t*t'); % variable 's' in paper
+
+		crossProduct(&up,&t,&upxt);
+
+		U.col(0) = s % (up.col(0) + sum(up % t,1) % t.col(0) + upxt.col(0)); 	// U_L = s*(up + (up*t')*t + cross(up,t));
+		U.col(1) = s % (up.col(1) + sum(up % t,1) % t.col(1) + upxt.col(1)); 	// U_L = s*(up + (up*t')*t + cross(up,t));
+		U.col(2) = s % (up.col(2) + sum(up % t,1) % t.col(2) + upxt.col(2)); 	// U_L = s*(up + (up*t')*t + cross(up,t));
+
+		//IONS->at(ii).g = g;
+		IONS->at(ii).V = U;				// V = U_L/gamma;
+		IONS->at(ii).V.each_col() /= g; // V = U_L/gamma;
+**/
+
+		extrapolateIonVelocity(params,mesh,&IONS->at(ii));
+
+		MPI_BcastBulkVelocity(params,&IONS->at(ii));
+
+		switch (params->weightingScheme){
+			case(0):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TOS(&IONS->at(ii).nv, params->smoothingParameter);
+					break;
+					}
+			case(1):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TSC(&IONS->at(ii).nv,params->smoothingParameter);
+					break;
+					}
+			case(2):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ii).nv, params->smoothingParameter);
+					break;
+					}
+			case(3):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ii).nv, params->smoothingParameter);
+					break;
+					}
+			case(4):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ii).nv,params->smoothingParameter);
+					break;
+					}
+			default:{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TSC(&IONS->at(ii).nv,params->smoothingParameter);
+					}
+		}
+
+	}//structure to iterate over all the ion species.
+
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	restoreVector(&EB->E.X);
+	restoreVector(&EB->E.Y);
+	restoreVector(&EB->E.Z);
+
+	restoreVector(&EB->B.X);
+	restoreVector(&EB->B.Y);
+	restoreVector(&EB->B.Z);
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+}
+#endif
+
+
+#ifdef ONED
+void PIC::aiv_Boris_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 
 	MPI_AllgatherField(params,&EB->E);
@@ -1265,16 +1468,13 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 			#pragma omp section
 			BB = sum(Bp % Bp,1);//B\dotB evaluated at each particle position.
 			#pragma omp section
-			VB = sum(IONS->at(ii).V.submat(0,0,IONS->at(ii).NSP-1,2) % Bp,1);//V\dotB
+			VB = sum(IONS->at(ii).V % Bp,1);//V\dotB
 			#pragma omp section
 			EB = sum(Ep % Bp,1);//E\dotB
 			#pragma omp section
 			crossProduct(&Ep,&Bp,&ExB);//E\times B
 			#pragma omp section
-			{
-			mat TMP = IONS->at(ii).V.submat(0,0,IONS->at(ii).NSP-1,2);
-			crossProduct(&TMP,&Bp,&VxB);//V\times B
-			}
+			crossProduct(&IONS->at(ii).V,&Bp,&VxB);//V\times B
 		}//end of the parallel region
 
 		C1 = ( 1.0 - (A*A)*BB/4.0 )/( 1.0 + (A*A)*BB/4.0 );
@@ -1282,12 +1482,11 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 		C3 = ((A*A)/2.0)/( 1.0 + (A*A)*BB/4.0 );
 		C4 = ((A*A)/4.0)/( 1.0 + (A*A)*BB/4.0 );
 
-		int ip;
 		int NSP(IONS->at(ii).NSP);
-		#pragma omp parallel shared(IONS,BB,VB,EB,ExB,VxB,Ep,Bp,C1,C2,C3,C4,NSP) private(ip)
+		#pragma omp parallel shared(IONS,BB,VB,EB,ExB,VxB,Ep,Bp,C1,C2,C3,C4) firstprivate(NSP)
 		{
 			#pragma omp for
-			for(ip=0;ip<NSP;ip++){
+			for(int ip=0;ip<NSP;ip++){
 				IONS->at(ii).V(ip,0) = C1(ip)*IONS->at(ii).V(ip,0);
 				IONS->at(ii).V(ip,0) += C2(ip)*( Ep(ip,0) + VxB(ip,0) );
 				IONS->at(ii).V(ip,0) += C3(ip)*( ExB(ip,0) + VB(ip)*Bp(ip,0) );
@@ -1295,7 +1494,7 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 			}
 
 			#pragma omp for
-			for(ip=0;ip<NSP;ip++){
+			for(int ip=0;ip<NSP;ip++){
 				IONS->at(ii).V(ip,1) = C1(ip)*IONS->at(ii).V(ip,1);
 				IONS->at(ii).V(ip,1) += C2(ip)*( Ep(ip,1) + VxB(ip,1) );
 				IONS->at(ii).V(ip,1) += C3(ip)*( ExB(ip,1) + VB(ip)*Bp(ip,1) );
@@ -1303,7 +1502,7 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 			}
 
 			#pragma omp for
-			for(ip=0;ip<NSP;ip++){
+			for(int ip=0;ip<NSP;ip++){
 				IONS->at(ii).V(ip,2) = C1(ip)*IONS->at(ii).V(ip,2);
 				IONS->at(ii).V(ip,2) += C2(ip)*( Ep(ip,2) + VxB(ip,2) );
 				IONS->at(ii).V(ip,2) += C3(ip)*( ExB(ip,2) + VB(ip)*Bp(ip,2) );
@@ -1364,14 +1563,14 @@ void PIC::aiv_1D(const inputParameters * params,const characteristicScales * CS,
 
 
 #ifdef TWOD
-void PIC::aiv_2D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+void PIC::aiv_Boris_2D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::aiv_3D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+void PIC::aiv_Boris_3D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	forwardPBC_3D(&EB->E.X);
@@ -1470,13 +1669,11 @@ void PIC::aip_1D(const inputParameters * params,const meshGeometry * mesh,vector
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
-		int ip;
 		int NSP(IONS->at(ii).NSP);
-
-		#pragma omp parallel shared(IONS) private(ip) firstprivate(DT,lx,NSP)
+		#pragma omp parallel shared(IONS) firstprivate(DT,lx,NSP)
 		{
 			#pragma omp for
-			for(ip=0;ip<NSP;ip++){
+			for(int ip=0;ip<NSP;ip++){
 				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
 
                 IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0),lx);//x
@@ -1745,15 +1942,16 @@ void PIC::advanceIonsVelocity(const inputParameters * params,const characteristi
 	//cout << "Status: Advancing the ions' velocity...\n";
 
 	#ifdef ONED
-		aiv_1D(params,CS,mesh,EB,IONS,DT);
+		//aiv_Boris_1D(params,CS,mesh,EB,IONS,DT);
+		aiv_Vay_1D(params,CS,mesh,EB,IONS,DT);
 	#endif
 
 	#ifdef TWOD
-		aiv_2D(params,CS,mesh,EB,IONS,DT);
+		aiv_Boris_2D(params,CS,mesh,EB,IONS,DT);
 	#endif
 
 	#ifdef THREED
-		aiv_3D(params,CS,mesh,EB,IONS,DT);
+		aiv_Boris_3D(params,CS,mesh,EB,IONS,DT);
 	#endif
 }
 

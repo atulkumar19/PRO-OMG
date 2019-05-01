@@ -109,9 +109,8 @@ for ff=1:ST.params.numOfDomains
                         end
                     end
                 end
+                
             end
-            
-            
         end
         
     end

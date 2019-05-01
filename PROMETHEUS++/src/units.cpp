@@ -208,6 +208,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; // Dimensionless vacuum permittivity
+	F_C_DS /= CS->velocity; // Dimensionless speed of light
 
 	//Normalizing the parameters.
 	params->DT /= CS->time;

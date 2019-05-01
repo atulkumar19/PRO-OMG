@@ -364,10 +364,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 		//Definition of the initial total number of superparticles for each species
 		ions.NSP = ceil(ions.NPC*params->meshDim(0));
-
-		if(params->mpi.rank_cart == 0)
-			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << ions.NSP << '\n';
-
 		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 
 		if(params->restart == 1){
@@ -404,10 +400,19 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		}
 
 		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
 		ions.n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
+		// Setting size and value to zero of arrays for ions' variables
+		if(params->mpi.rank_cart == 0)
+			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << ions.NSP << '\n';
+
+		ions.P.zeros(ions.NSP,3);
+		ions.g.zeros(ions.NSP);
+
 		ions.meshNode.zeros(ions.NSP);
+		ions.wxc.zeros(ions.NSP);
+		ions.wxl.zeros(ions.NSP);
+		ions.wxr.zeros(ions.NSP);
 
 		//Checking the integrity of the initial condition
 		if((int)ions.V.n_elem != (int)(3*ions.NSP)){

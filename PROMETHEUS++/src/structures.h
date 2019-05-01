@@ -23,6 +23,7 @@ using namespace oneDimensional;//This namespace is used in the overloaded functi
 extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
 extern double F_E_DS; // Dimensionless vacuum permittivity
 extern double F_MU_DS; // Dimensionless vacuum permittivity
+extern double F_C_DS; // Dimensionless vacuum permittivity
 
 
 struct mpiStruct{

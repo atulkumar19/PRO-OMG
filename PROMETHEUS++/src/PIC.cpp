@@ -1278,18 +1278,18 @@ void PIC::aiv_Vay_1D(const inputParameters * params,const characteristicScales *
 		{
 			#pragma omp for
 			for(int ip=0;ip<NSP;ip++){
-				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  sum(IONS->at(ii).V.row(ip) % IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
+				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip),IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
 				U.row(ip) = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
 				U.row(ip) += 0.5*A*(Ep.row(ip) + VxB.row(ip)); // U_hs = U_L + 0.5*a*(E + cross(V,B)); % Half step for velocity
 				tau.row(ip) = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
 				up.row(ip) = U.row(ip) + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-				gp(ip) = sqrt(1.0 + sum(up.row(ip) % up.row(ip))); // gammap = sqrt(1 + up*up');
-				sigma(ip) = gp(ip)*gp(ip) - sum(tau.row(ip) % tau.row(ip)); // sigma = gammap^2 - tau*tau';
-				us(ip) = sum(up.row(ip) % tau.row(ip)); // us = up*tau'; % variable 'u^*' in paper
-				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( sum(tau.row(ip) % tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+				gp(ip) = sqrt( 1.0 + dot(up.row(ip),up.row(ip))/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+				sigma(ip) = gp(ip)*gp(ip) - dot(tau.row(ip),tau.row(ip)); // sigma = gammap^2 - tau*tau';
+				us(ip) = dot(up.row(ip),tau.row(ip))/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( dot(tau.row(ip),tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
 				t.row(ip) = tau.row(ip)/IONS->at(ii).g(ip); 			// t = tau/gamma;
-				s(ip) = 1.0/( 1.0 + sum(t.row(ip) % t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
+				s(ip) = 1.0/( 1.0 + dot(t.row(ip),t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
 			}
 
 			#pragma omp critical
@@ -1297,7 +1297,7 @@ void PIC::aiv_Vay_1D(const inputParameters * params,const characteristicScales *
 
 			#pragma omp for
 			for(int ip=0;ip<NSP;ip++){
-				U.row(ip) = s(ip)*( up.row(ip) + sum(up.row(ip) % t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up,t));
+				U.row(ip) = s(ip)*( up.row(ip) + dot(up.row(ip),t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up,t));
 				IONS->at(ii).V.row(ip) = U.row(ip)/IONS->at(ii).g(ip);	// V = U_L/gamma;
 			}
 		} // End of parallel region

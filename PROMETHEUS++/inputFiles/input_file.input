@@ -11,7 +11,7 @@ checkSmoothParameter        500
 timeIterations              10000
 transient                   0
 loadFields                  0
-saveVariablesEach           20
+saveVariablesEach           30
 numberOfIonSpecies          2
 numberOfTracerSpecies       0
 loadModes                   0

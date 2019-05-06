@@ -148,6 +148,7 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 
 
 	if(params->mpi.rank_cart == 0){
+		cout << "Time steps in simulation: " << params->timeIterations << "\n";
 		cout << "Cadence for saving outputs: " << params->saveVariablesEach << "\n";
 		cout << "Cadence for checking stability: " << params->rateOfChecking << "\n";
 		cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *\n\n";

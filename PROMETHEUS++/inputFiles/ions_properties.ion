@@ -1,7 +1,7 @@
 SPECIES1                    3
 NPC1                        2000
-Tper1                       1.1605E7
-Tpar1                       1.1605E7
+Tper1                       1.0E3
+Tpar1                       1.0E3
 Dn1                         0.998003992015968
 Z1                          1
 M1                          2.014101
@@ -11,7 +11,7 @@ newParticlesPerIteration1   0
 pctSupPartOutput1           100
 SPECIES2                    3
 NPC2                        2000
-Tper2                       4.0635E10
+Tper2                       3.5E6
 Tpar2                       0
 Dn2                         9.998000399920017E-5
 Z2                          2

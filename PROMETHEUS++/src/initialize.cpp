@@ -151,7 +151,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->dp = parametersMap["dp"];
 
-	params->BGP.Te = parametersMap["Te"];
+	params->BGP.Te = parametersMap["Te"]*F_E/F_KB; // Te in eV in input file
 
 	params->BGP.theta = parametersMap["theta"];
 
@@ -304,11 +304,11 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		name.clear();
 
 		name = "Tper" + ss.str();
-		ions.BGP.Tper = parametersMap[name];
+		ions.BGP.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
 		name.clear();
 
 		name = "Tpar" + ss.str();
-		ions.BGP.Tpar = parametersMap[name];
+		ions.BGP.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
 		name.clear();
 
 		name = "Dn" + ss.str();

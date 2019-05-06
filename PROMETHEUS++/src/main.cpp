@@ -69,10 +69,6 @@ int main(int argc,char* argv[]){
 
 	ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,0);
 
-	// fields.advanceEField(&params,&mesh,&EB,&IONS,&CS);
-
-	// fields.advanceBField(&params,&mesh,&EB,&IONS,&CS);
-
 	alfvenPerturbations.addPerturbations(&params,&IONS,&EB);
 
 	hdfObj.saveOutputs(&params,&IONS,&IONS,&EB,&CS,0,0);

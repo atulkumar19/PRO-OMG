@@ -21,7 +21,7 @@ numberOfAlfvenicModes       0
 maxAngle                    360
 fracMagEnerInj              0.0625
 ne                          1E19
-Te                          1.1605E7
+Te                          1.0E3
 Bo                          2.1
 theta                       0
 phi                         0

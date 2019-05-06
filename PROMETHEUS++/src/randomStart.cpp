@@ -32,6 +32,7 @@ void RANDOMSTART::beamVelocityDistribution(const inputParameters * params, ionSp
 	}
 }
 
+
 void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions,\
 					const string parDirection){
 
@@ -79,6 +80,7 @@ void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, i
 		exit(0);
 	}
 }
+
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions, \
@@ -136,6 +138,7 @@ void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params,
 		exit(0);
 	}
 }
+
 
 void RANDOMSTART::shellVelocityDistribution(const inputParameters * params, ionSpecies * ions){
 	ions->X = randu<mat>(ions->NSP,3);

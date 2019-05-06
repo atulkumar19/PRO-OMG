@@ -23,6 +23,7 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
     return readMap;
 }
 
+
 map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
 	string key;
 	float value;
@@ -44,6 +45,7 @@ map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
 
     	return readMap;
 }
+
 
 INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	std::map<string,float> parametersMap;
@@ -94,6 +96,8 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 		rsys = system(sys);
 	}
 
+	params->particleIntegrator = (int)parametersMap["particleIntegrator"];
+
 	params->quietStart = parametersMap["quietStart"];
 
 	params->DTc = parametersMap["DTc"];
@@ -114,7 +118,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->checkSmoothParameter = (int)parametersMap["checkSmoothParameter"];
 
-	params->timeIterations = (int)parametersMap["timeIterations"];
+	params->simulationTime = parametersMap["simulationTime"];
 
 	params->transient = (unsigned int)parametersMap["transient"];
 
@@ -138,7 +142,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->loadFields = (int)parametersMap["loadFields"];
 
-	params->saveVariablesEach = parametersMap["saveVariablesEach"];
+	params->outputCadence = parametersMap["outputCadence"];
 
 	params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
 
@@ -264,6 +268,7 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 	}
 	#endif
 }
+
 
 void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 

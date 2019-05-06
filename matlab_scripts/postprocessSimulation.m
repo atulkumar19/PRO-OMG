@@ -17,7 +17,7 @@ ST.path = path;
 
 ST.params = loadSimulationParameters(ST);
 
-ST.data = loadData(ST);
+ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
@@ -59,18 +59,22 @@ for ii=1:numel(info.Groups)
 end
 end
 
-function data = loadData(ST)
-data = struct;
+function ST = loadData(ST)
+ST.data = struct;
+
+numberOfOutputs = [];
 
 for ff=1:ST.params.numOfDomains
     info = h5info([ST.path ['file_D' num2str(ff-1) '.h5']]);
+    
+    numberOfOutputs(ff)= numel(info.Groups);
     
     for ii=1:numel(info.Groups)       
         groupName = strsplit(info.Groups(ii).Name,'/');
         
         for jj=1:numel(info.Groups(ii).Datasets)
             datasetName = info.Groups(ii).Datasets(jj).Name;
-            data.(['D' num2str(ff-1) '_O' groupName{end}]).(datasetName) = ...
+            ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(datasetName) = ...
                 h5read(info.Filename, ['/' groupName{end} '/' datasetName]);
         end
         
@@ -80,7 +84,7 @@ for ff=1:ST.params.numOfDomains
                 
                 for kk=1:numel(info.Groups(ii).Groups(jj).Datasets)
                     datasetName = info.Groups(ii).Groups(jj).Datasets(kk).Name;
-                    data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(datasetName) = ...
+                    ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(datasetName) = ...
                         h5read(info.Filename, [info.Groups(ii).Groups(jj).Name '/' datasetName]);
                 end
                 
@@ -91,7 +95,7 @@ for ff=1:ST.params.numOfDomains
                         for ll=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Datasets)
                             datasetName = info.Groups(ii).Groups(jj).Groups(kk).Datasets(ll).Name;
                             
-                            data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(datasetName) = ...
+                            ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(datasetName) = ...
                                 h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Name '/' datasetName]);
                         end
                         
@@ -102,7 +106,7 @@ for ff=1:ST.params.numOfDomains
                                 for mm=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets)
                                     datasetName = info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets(mm).Name;
                                     
-                                    data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(subSubSubGroupName{end}).(datasetName) = ...
+                                    ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(subSubSubGroupName{end}).(datasetName) = ...
                                         h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Name '/' datasetName]);
                                 end
                             end
@@ -116,13 +120,14 @@ for ff=1:ST.params.numOfDomains
     end
 end
 
+ST.numberOfOutputs = min(numberOfOutputs);
 end
 
 function time = loadTimeVector(ST)
-time = zeros(1,ST.params.numOutputFiles);
+time = zeros(1,ST.numberOfOutputs);
 
-for ii=1:ST.params.numOutputFiles
-    time(ii) = ST.data.(['D0_O' num2str(ii)]).time;
+for ii=1:ST.numberOfOutputs
+    time(ii) = ST.data.(['D0_O' num2str(ii-1)]).time;
 end
 
 end
@@ -153,7 +158,7 @@ wlh = wlh/wci;
 
 disp(['Lower hybrid frequency: ' num2str(wlh)]);
 
-NT = ST.params.numOutputFiles; % Number of snapshots
+NT = int32(ST.numberOfOutputs); % Number of snapshots
 ND = ST.params.numOfDomains; % Number of domains
 NXPD = ST.params.geometry.numberOfCells(1); % Number of cells per domain
 NXTD = ND*NXPD; % Number of cells in the whole domain
@@ -215,7 +220,7 @@ end
 
 function EnergyDiagnostic(ST)
 % Diagnostic to monitor energy transfer/conservation
-NT = ST.params.numOutputFiles;
+NT = ST.numberOfOutputs;
 NSPP = ST.params.ions.numberOfIonSpecies;
 ND = ST.params.numOfDomains;
 DX = ST.params.geometry.finiteDiferences(1);
@@ -231,9 +236,9 @@ for ss=1:NSPP
     
     for ii=1:NT        
         for dd=1:ND
-            vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).V.vx;
-            vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).V.vy;
-            vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).ions.(['species_' num2str(ss)]).V.vz;
+            vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['species_' num2str(ss)]).V.vx;
+            vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['species_' num2str(ss)]).V.vy;
+            vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['species_' num2str(ss)]).V.vz;
             
             Ei(ss,ii) = Ei(ss,ii) + sum(vx.^2 + vy.^2 + vz.^2);
         end
@@ -256,15 +261,15 @@ EEz = zeros(1,NT);
 
 for ii=1:NT
     for dd=1:ND      
-        By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.B.By;
-        Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.B.Bz;
+        By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.B.By;
+        Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.B.Bz;
         
         EBy(ii) = EBy(ii) + sum(By.^2);
         EBz(ii) = EBz(ii) + sum(Bz.^2);
         
-        Ex = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.E.Ex;
-        Ey = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.E.Ey;
-        Ez = ST.data.(['D' num2str(dd-1) '_O' num2str(ii)]).emf.E.Ez;
+        Ex = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.E.Ex;
+        Ey = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.E.Ey;
+        Ez = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).emf.E.Ez;
         
         EEx(ii) = EEx(ii) + sum(Ex.^2);
         EEy(ii) = EEy(ii) + sum(Ey.^2);

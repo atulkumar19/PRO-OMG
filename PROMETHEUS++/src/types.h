@@ -10,18 +10,20 @@ namespace oneDimensional{
 	class ionSpeciesParams;
 }
 
+
 namespace twoDimensional{
 	class electromagneticFields;
 }
+
 
 namespace threeDimensional{
 	class electromagneticFields;
 }
 
+
 class vfield_vec{
 
 public:
-
 	arma::vec X;
 	arma::vec Y;
 	arma::vec Z;
@@ -48,11 +50,9 @@ public:
 };
 
 
-
 class vfield_mat{
 
 public:
-
 	arma::mat X;
 	arma::mat Y;
 	arma::mat Z;
@@ -81,7 +81,6 @@ public:
 class vfield_cube{
 
 public:
-
 	arma::cube X;
 	arma::cube Y;
 	arma::cube Z;
@@ -132,6 +131,8 @@ struct ionsBGP{
 	double VTpar;//Thermal velocity.
 	double Wc;//Average cyclotron frequency.
 	double Wpi;//ion plasma frequency.
+
+	double mu; // Magnetic moment.
 };
 
 public:
@@ -166,6 +167,7 @@ public:
 	vfield_vec nv; //fluid velocity times ion density in the mesh
 };
 
+
 class twoDimensional::electromagneticFields : public vfield_mat{
 
 public:
@@ -176,6 +178,7 @@ public:
 	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M){}
 	void zeros(unsigned int N, unsigned int M);
 };
+
 
 class threeDimensional::electromagneticFields : public vfield_cube{
 

@@ -54,6 +54,8 @@ int main(int argc,char* argv[]){
 
 	ALFVENIC alfvenPerturbations(&params,&mesh,&EB,&IONS); // Include Alfvenic perturbations in the initial condition
 
+	units.defineTimeStep(&params,&mesh,&IONS,&EB);
+
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
 	units.normalizeVariables(&params,&mesh,&IONS,&EB,&CS);
 
@@ -105,7 +107,7 @@ int main(int argc,char* argv[]){
 
 		currentTime += params.DT*CS.time;
 
-		if(fmod((double)(tt + 1),params.saveVariablesEach) == 0){
+		if(fmod((double)(tt + 1),params.outputCadenceIterations) == 0){
 			auxIONS = IONS; // Ions position at level X^(N+1) and ions' velocity at level V^(N+1/2)
 			// The ions' velocity is advanced in time in order to obtain V^(N+1)
 			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&auxIONS,params.DT/2);

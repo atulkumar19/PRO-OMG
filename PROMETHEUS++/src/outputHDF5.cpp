@@ -48,15 +48,6 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		delete dataspace_nod;
 		delete dataset_nod;
 
-		H5std_string numOutputFiles( "numOutputFiles" );
-		int nof[1] = {(int)floor(params->timeIterations/params->saveVariablesEach)};
-	   	hsize_t dims_nof[1] = {1};
-		DataSpace *dataspace_nof = new DataSpace(1, dims_nof);
-		DataSet *dataset_nof = new DataSet(outputFile->createDataSet( numOutputFiles, PredType::NATIVE_INT, *dataspace_nof ));
-		dataset_nof->write( nof, PredType::NATIVE_INT);
-		delete dataspace_nof;
-		delete dataset_nof;
-
 		//Geometry of the mesh
 		Group *group_geo = new Group( outputFile->createGroup( "/geometry" ) );
 

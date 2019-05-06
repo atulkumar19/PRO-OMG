@@ -29,11 +29,11 @@ class UNITS{
 
 	void dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB,const characteristicScales * CS);
 
-	double defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB);
-
 public:
 
 	UNITS(){};
+
+	void defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB);
 
 	void defineCharacteristicScales(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS);
 

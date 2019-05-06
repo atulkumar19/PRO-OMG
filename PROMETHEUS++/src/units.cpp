@@ -3,13 +3,13 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 */
 #include "units.h"
 
-double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB){
+void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB){
 	if(params->mpi.rank_cart == 0)
 		cout << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
 	double DT(0);
 	double averageB(0);
-	double ionCyclotronFrequency(0);
+	double higherIonCyclotronFrequency(0);
 	double ion_vmax(0);
 	double ionMass(0);
 	double VT(0);
@@ -44,8 +44,8 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		}
 
 		//We don't take into account the tracers dynamics of course!
-		if(IONS->at(ii).BGP.Wc > ionCyclotronFrequency && (IONS->at(ii).SPECIES != 0))
-			ionCyclotronFrequency = IONS->at(ii).BGP.Wc;
+		if(IONS->at(ii).BGP.Wc > higherIonCyclotronFrequency && (IONS->at(ii).SPECIES != 0))
+			higherIonCyclotronFrequency = IONS->at(ii).BGP.Wc;
 
 		if(IONS->at(ii).SPECIES != 0){
 			ionSpecies++;
@@ -77,22 +77,22 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 	ionMass /=  (double)ionSpecies;
 	VT = sqrt(2.0*F_KB*params->BGP.Te/ionMass);//Background thermal velocity
 
-	params->backgroundTc = (2.0*M_PI/ionCyclotronFrequency);//Minimum ion gyroperiod.
+	params->shorterIonGyroperiod = (2.0*M_PI/higherIonCyclotronFrequency); // Shorter ion gyroperiod.
 
 	if(params->BGP.theta == 0){
 //		CFL_ions = 0.5*(params->DrL*VT/ion_vmax)/(2*M_PI*sqrt((double)params->dimension));
-//		DT = CFL_ions*params->backgroundTc;
+//		DT = CFL_ions*params->shorterIonGyroperiod;
 
 		params->checkStability = 1;
 		params->rateOfChecking = 5;
 
 		DT = 0.5*Cmax*mesh->DX/ion_vmax;
 
-		if(params->DTc*params->backgroundTc > DT){
+		if(params->DTc*params->shorterIonGyroperiod > DT){
 			if(params->mpi.rank_cart == 0)
 				cout << "Time step defined by Courant–Friedrichs–Lewy condition for ions: " << scientific << DT << fixed << " s\n";
 		}else{
-			DT = params->DTc*params->backgroundTc;
+			DT = params->DTc*params->shorterIonGyroperiod;
 			if(params->mpi.rank_cart == 0)
 				cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 		}
@@ -116,30 +116,30 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 		CFL_w = 0.5*A*A/(2.0*sqrt(3.0));
 		#endif
 
-		CFL_ions = (0.5*Cmax*mesh->DX/ion_vmax)/params->backgroundTc;
+		CFL_ions = (0.5*Cmax*mesh->DX/ion_vmax)/params->shorterIonGyroperiod;
 
 		if(CFL_w < CFL_ions){
 			params->checkStability = 1;
 			params->rateOfChecking = 100;
 			if(CFL_w < params->DTc){
-				DT = CFL_w*params->backgroundTc;
+				DT = CFL_w*params->shorterIonGyroperiod;
 				if(params->mpi.rank_cart == 0)
 					cout << "Time step defined by Courant–Friedrichs–Lewy condition for whistler waves: " << scientific << DT << fixed << " s\n";
 			}else{
-				DT = params->DTc*params->backgroundTc;
+				DT = params->DTc*params->shorterIonGyroperiod;
 				if(params->mpi.rank_cart == 0)
 					cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 			}
 		}else{
 			params->checkStability = 1;
 			params->rateOfChecking = 10;
-			DT = CFL_ions*params->backgroundTc;
+			DT = CFL_ions*params->shorterIonGyroperiod;
 
-			if(params->DTc*params->backgroundTc > DT){
+			if(params->DTc*params->shorterIonGyroperiod > DT){
 				if(params->mpi.rank_cart == 0)
 					cout << "Time step defined by Courant–Friedrichs–Lewy condition for ions: " << scientific << DT << fixed << " s\n";
 			}else{
-				DT = params->DTc*params->backgroundTc;
+				DT = params->DTc*params->shorterIonGyroperiod;
 				if(params->mpi.rank_cart == 0)
 					cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 			}
@@ -147,13 +147,20 @@ double UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector
 	}
 
 
+	params->DT = DT;
+
+	// Using the shorter gyro-period in the simulation we calculate the number of time steps so that:
+	// params->simulationTime = params->DT*params->timeIterations/params->shorterIonGyroperiod
+	params->timeIterations = (int)ceil( params->simulationTime*params->shorterIonGyroperiod/params->DT);
+
+	params->outputCadenceIterations = (int)ceil( params->outputCadence*params->shorterIonGyroperiod/params->DT);
+
 	if(params->mpi.rank_cart == 0){
 		cout << "Time steps in simulation: " << params->timeIterations << "\n";
-		cout << "Cadence for saving outputs: " << params->saveVariablesEach << "\n";
+		cout << "Cadence for saving outputs: " << params->outputCadenceIterations << "\n";
 		cout << "Cadence for checking stability: " << params->rateOfChecking << "\n";
 		cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *\n\n";
 	}
-	return(DT);
 }
 
 
@@ -174,14 +181,14 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	CS->charge /= params->numberOfIonSpecies;
 	CS->density = params->ne;
 
-	double plasmaFrequency(0);//Background ion-plasma frequency.
-	plasmaFrequency = sqrt( CS->density*CS->charge*CS->charge/(CS->mass*F_EPSILON) );
+	double characteristicPlasmaFrequency(0);//Background ion-plasma frequency.
+	characteristicPlasmaFrequency = sqrt( CS->density*CS->charge*CS->charge/(CS->mass*F_EPSILON) );
 
-	CS->time = 1/plasmaFrequency;
+	CS->time = 1/characteristicPlasmaFrequency;
 	CS->velocity = F_C;
-	CS->length = CS->velocity/plasmaFrequency;
-	CS->eField = ( plasmaFrequency*CS->mass*CS->velocity )/CS->charge;
-	CS->bField = ( plasmaFrequency*CS->mass )/CS->charge;
+	CS->length = CS->velocity/characteristicPlasmaFrequency;
+	CS->eField = ( characteristicPlasmaFrequency*CS->mass*CS->velocity )/CS->charge;
+	CS->bField = ( characteristicPlasmaFrequency*CS->mass )/CS->charge;
 	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB;
 
 
@@ -192,7 +199,7 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 		cout << "Average charge: " << scientific << CS->charge << " C\n";
 		cout << "Density: " << scientific << CS->density << " m^(-3)\n";
 		cout << "Time: " << scientific << CS->time << " s\n";
-		cout << "Plasma frequency: " << scientific << plasmaFrequency << " s\n";
+		cout << "Plasma frequency: " << scientific << characteristicPlasmaFrequency << " s\n";
 		cout << "Velocity: " << scientific << CS->velocity << " m/s\n";
 		cout << "Length: " << scientific << CS->length << " m\n";
 		cout << "Electric field intensity: " << scientific << CS->eField << " V/m\n";
@@ -257,7 +264,6 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 
 
 void UNITS::normalizeVariables(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB,const characteristicScales * CS){
-	params->DT = defineTimeStep(params,mesh,IONS,EB);//Defining the proper time step in order to resolve the ion gyromotion.
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }

@@ -12,6 +12,7 @@ QUIETSTART::QUIETSTART(const inputParameters * params, ionSpecies * ions){
     }
 }
 
+
 double QUIETSTART::recalculateNumberSuperParticles(const inputParameters * params, ionSpecies *ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
@@ -20,6 +21,7 @@ double QUIETSTART::recalculateNumberSuperParticles(const inputParameters * param
 
 	ions->nSupPartOutput = floor( (ions->pctSupPartOutput/100.0)*ions->NSP );
 }
+
 
 vector<int> QUIETSTART::dec2bin(int dec){
     vector<int> bin;
@@ -30,6 +32,7 @@ vector<int> QUIETSTART::dec2bin(int dec){
     return(bin);
 }
 
+
 vector<int> QUIETSTART::dec2b3(int dec){
     vector<int> b3;
     while(dec != 0){
@@ -38,6 +41,7 @@ vector<int> QUIETSTART::dec2b3(int dec){
     }
     return(b3);
 }
+
 
 void QUIETSTART::bit_reversedFractions_base2(const inputParameters * params, ionSpecies * ions, vec * b2fr){
     const unsigned int sf(50);
@@ -63,6 +67,7 @@ void QUIETSTART::bit_reversedFractions_base2(const inputParameters * params, ion
 	}
 }
 
+
 void QUIETSTART::bit_reversedFractions_base3(const inputParameters * params, ionSpecies * ions, vec * b3fr){
     const unsigned int sf(50);
     vec fracs = zeros(sf);
@@ -86,6 +91,7 @@ void QUIETSTART::bit_reversedFractions_base3(const inputParameters * params, ion
 		}
 	}
 }
+
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions,\
@@ -144,6 +150,7 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
 		exit(0);
 	}
 }
+
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions,\

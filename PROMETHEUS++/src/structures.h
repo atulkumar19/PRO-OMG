@@ -92,6 +92,7 @@ struct inputParameters{
 	int argc;
 	char **argv;
 
+	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
 	int quietStart; // Flag for using a quiet start
 
 	int restart;
@@ -100,14 +101,16 @@ struct inputParameters{
 	int numberOfRKIterations;
 	double smoothingParameter;
 	int timeIterations;
+	double simulationTime; // In units of the shorter ion gyro-period in the simulation
 	int transient;//Transient time (in number of iterations).
 	double DT;//Time step
 	double DTc;//Ciclotron period fraction.
-	double backgroundTc;//Background ion cycloperiod.
+	double shorterIonGyroperiod;//Shorter ion cycloperiod.
 	int loadFields;
 	int loadGrid;
 	int usingHDF5;
-	double saveVariablesEach;//Save variables each "saveVariablesEach" times the background ion cycloperiod.
+	double outputCadence;//Save variables each "outputCadence" times the background ion cycloperiod.
+	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
 	//Mesh geometry

@@ -1942,8 +1942,23 @@ void PIC::advanceIonsVelocity(const inputParameters * params,const characteristi
 	//cout << "Status: Advancing the ions' velocity...\n";
 
 	#ifdef ONED
-		//aiv_Boris_1D(params,CS,mesh,EB,IONS,DT);
-		aiv_Vay_1D(params,CS,mesh,EB,IONS,DT);
+	switch (params->particleIntegrator){
+		case(1):{
+				aiv_Boris_1D(params,CS,mesh,EB,IONS,DT);
+				break;
+				}
+		case(2):{
+				aiv_Vay_1D(params,CS,mesh,EB,IONS,DT);
+				break;
+				}
+		case(3):{
+				exit(0);
+				break;
+				}
+		default:{
+				aiv_Vay_1D(params,CS,mesh,EB,IONS,DT);
+				}
+	}
 	#endif
 
 	#ifdef TWOD

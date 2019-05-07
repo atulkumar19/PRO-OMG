@@ -78,10 +78,10 @@ struct backgroundParameters{
 	double By;
 	double Bz;
 
-	//Angle between the z-axis and the background magnetic field.
-	double theta;
-	//Angle between the z-axis and the propagation vector.
-	double phi;
+	double theta; // Spherical polar angle (as measured from z-axis)
+	double phi; // Spherical azimuthal angle (as measured from x-axis)
+
+	double propVectorAngle; // Angle between the z-axis and the propagation vector.
 };
 
 

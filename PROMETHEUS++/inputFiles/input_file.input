@@ -1,5 +1,5 @@
 particleIntegrator          1
-quietStart                  1
+quietStart                  0
 restart                     0
 weightingScheme             1
 BC                          1
@@ -10,8 +10,8 @@ filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              10.0
-outputCadence               0.03
+simulationTime              5.0
+outputCadence               0.015
 transient                   0
 numberOfIonSpecies          2
 numberOfTracerSpecies       0
@@ -21,11 +21,12 @@ numberOfTestModes           100
 numberOfAlfvenicModes       0
 maxAngle                    360
 fracMagEnerInj              0.0625
+propVectorAngle             0.0
 ne                          1E19
 Te                          1.0E3
 Bo                          2.1
-theta                       0
-phi                         0
+theta                       0.0
+phi                         0.0
 NX                          128
 NY                          1
 NZ                          1

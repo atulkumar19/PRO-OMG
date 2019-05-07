@@ -158,13 +158,14 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	params->BGP.Te = parametersMap["Te"]*F_E/F_KB; // Te in eV in input file
 
 	params->BGP.theta = parametersMap["theta"];
-
 	params->BGP.phi = parametersMap["phi"];
+
+	params->BGP.propVectorAngle = parametersMap["propVectorAngle"];
 
 	params->BGP.Bo = parametersMap["Bo"];
 
-	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0);
-	params->BGP.By = 0.0;
+	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
+	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
 	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
 }
 
@@ -379,8 +380,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			if(ii == 0){ //Background ions (Protons)
 				if(params->quietStart == 0){
 	                RANDOMSTART rs;
-	    			rs.maxwellianVelocityDistribution(params,&ions,"z");
-//					rs.maxwellianVelocityDistribution(params,&ions,"x");
+	    			rs.maxwellianVelocityDistribution(params,&ions);
 	            }else if(params->quietStart == 1){
 					QUIETSTART qs(params,&ions);
 					qs.maxwellianVelocityDistribution(params,&ions,"z");

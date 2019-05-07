@@ -79,7 +79,7 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 
 	params->shorterIonGyroperiod = (2.0*M_PI/higherIonCyclotronFrequency); // Shorter ion gyroperiod.
 
-	if(params->BGP.theta == 0){
+	if(params->BGP.theta == 0.0){
 //		CFL_ions = 0.5*(params->DrL*VT/ion_vmax)/(2*M_PI*sqrt((double)params->dimension));
 //		DT = CFL_ions*params->shorterIonGyroperiod;
 

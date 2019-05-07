@@ -63,7 +63,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 	MPI_ARMA_VEC mpi_phase(params->numberOfAlfvenicModes);
 	MPI_Bcast(Aw.phase.memptr(),1,mpi_phase.type,0,params->mpi.mpi_topo);
 
-	double PHI(params->BGP.phi*M_PI/180);
+	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
 	for(int ii=0;ii<params->numberOfAlfvenicModes;ii++){//Here the staggered grid is not taken into account.
 		double Bx(Aw.amp(ii)*cos(PHI)),By(Aw.amp(ii)),Bz(Aw.amp(ii)*sin(PHI));
@@ -130,7 +130,7 @@ void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mes
 		if(params->shuffleModes == 1)
 			Aw.phase = shuffle(Aw.phase);
 
-		double PHI(params->BGP.phi*M_PI/180);
+		double PHI(params->BGP.propVectorAngle*M_PI/180);
 
 //		cout << sum(Aw.amp%Aw.amp) << '\t' << spectra.n_rows << '\n';
 
@@ -330,7 +330,7 @@ void ALFVENIC::addMagneticPerturbations(emf * EB){
 
 void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<ionSpecies> * IONS){
 
-	double PHI(params->BGP.phi*M_PI/180);
+	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
 	for(unsigned int ii=0;ii<params->numberOfIonSpecies;ii++){
 		for(int jj=0;jj<params->numberOfAlfvenicModes;jj++){

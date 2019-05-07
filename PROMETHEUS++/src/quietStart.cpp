@@ -151,7 +151,6 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
 	}
 }
 
-
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions,\
 					const string parDirection){

@@ -28,7 +28,7 @@ public:
 
 	void ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions, const string parDirection);
 
-	void maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions, const string parDirection);
+	void maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions);
 
 	void shellVelocityDistribution(const inputParameters * params, ionSpecies * ions);
 };

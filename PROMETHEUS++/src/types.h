@@ -132,6 +132,7 @@ struct ionsBGP{
 	double Wc;//Average cyclotron frequency.
 	double Wpi;//ion plasma frequency.
 
+	// Guiding-center variables
 	double mu; // Magnetic moment.
 };
 
@@ -155,6 +156,9 @@ public:
 	arma::mat P; //ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; //ions' relativistic gamma factor.
 	arma::vec meshNode; //Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
+
+	// Guiding-center variables
+	arma:: vec Ppar; // Parallel momentum used in guiding-center orbits
 
 	//These weights are used in the charge extrapolation and the force interpolation
 	arma::vec wxl, wxc, wxr;//Particles' weights w.r.t. the vertices of the grid cells

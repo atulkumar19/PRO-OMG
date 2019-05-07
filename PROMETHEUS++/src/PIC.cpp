@@ -1185,6 +1185,176 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh,const ionSpecies * ions,vfield_cu
 
 
 #ifdef ONED
+void PIC::aiv_GC_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+
+
+	MPI_AllgatherField(params,&EB->E);
+	MPI_AllgatherField(params,&EB->B);
+
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	forwardPBC_1D(&EB->E.X);
+	forwardPBC_1D(&EB->E.Y);
+	forwardPBC_1D(&EB->E.Z);
+
+	forwardPBC_1D(&EB->B.X);
+	forwardPBC_1D(&EB->B.Y);
+	forwardPBC_1D(&EB->B.Z);
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+	int NX(EB->E.X.n_elem);
+
+	emf emf_nodes;
+	emf_nodes.zeros(NX);
+
+	emf_nodes.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
+	emf_nodes.E.Y.subvec(1,NX-2) = EB->E.Y.subvec(1,NX-2);
+	emf_nodes.E.Z.subvec(1,NX-2) = EB->E.Z.subvec(1,NX-2);
+
+	emf_nodes.B.X.subvec(1,NX-2) = EB->B.X.subvec(1,NX-2);
+	emf_nodes.B.Y.subvec(1,NX-2) = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) );
+	emf_nodes.B.Z.subvec(1,NX-2) = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) );
+
+	forwardPBC_1D(&emf_nodes.E.X);
+	forwardPBC_1D(&emf_nodes.E.Y);
+	forwardPBC_1D(&emf_nodes.E.Z);
+
+	forwardPBC_1D(&emf_nodes.B.X);
+	forwardPBC_1D(&emf_nodes.B.Y);
+	forwardPBC_1D(&emf_nodes.B.Z);
+
+	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
+
+		mat Ep = zeros(IONS->at(ii).NSP,3);
+		mat Bp = zeros(IONS->at(ii).NSP,3);
+
+		switch (params->weightingScheme){
+			case(0):{
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			case(1):{
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			case(2):{
+					exit(0);
+					break;
+					}
+			case(3):{
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TOS_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			case(4):{
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					break;
+					}
+			default:{
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.E,&Ep);
+					EMF_TSC_1D(params,&IONS->at(ii),&emf_nodes.B,&Bp);
+					}
+		}
+
+		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
+		int NSP(IONS->at(ii).NSP);
+		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
+		vec gp(IONS->at(ii).NSP);
+		vec sigma(IONS->at(ii).NSP);
+		vec us(IONS->at(ii).NSP);
+		vec s(IONS->at(ii).NSP);
+		mat U(IONS->at(ii).NSP,3);
+		mat VxB(IONS->at(ii).NSP,3);
+		mat tau(IONS->at(ii).NSP,3);
+		mat up(IONS->at(ii).NSP,3);
+		mat t(IONS->at(ii).NSP,3);
+		mat upxt(IONS->at(ii).NSP,3);
+
+		crossProduct(&IONS->at(ii).V,&Bp,&VxB);//VxB
+
+		#pragma omp parallel shared(IONS,U,gp,sigma,us,s,VxB,tau,up,t,upxt) firstprivate(A,NSP)
+		{
+			#pragma omp for
+			for(int ip=0;ip<NSP;ip++){
+				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip),IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
+				U.row(ip) = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+
+				U.row(ip) += 0.5*A*(Ep.row(ip) + VxB.row(ip)); // U_hs = U_L + 0.5*a*(E + cross(V,B)); % Half step for velocity
+				tau.row(ip) = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+				up.row(ip) = U.row(ip) + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+				gp(ip) = sqrt( 1.0 + dot(up.row(ip),up.row(ip))/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+				sigma(ip) = gp(ip)*gp(ip) - dot(tau.row(ip),tau.row(ip)); // sigma = gammap^2 - tau*tau';
+				us(ip) = dot(up.row(ip),tau.row(ip))/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( dot(tau.row(ip),tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+				t.row(ip) = tau.row(ip)/IONS->at(ii).g(ip); 			// t = tau/gamma;
+				s(ip) = 1.0/( 1.0 + dot(t.row(ip),t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
+			}
+
+			#pragma omp critical
+			crossProduct(&up,&t,&upxt);
+
+			#pragma omp for
+			for(int ip=0;ip<NSP;ip++){
+				U.row(ip) = s(ip)*( up.row(ip) + dot(up.row(ip),t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up,t));
+				IONS->at(ii).V.row(ip) = U.row(ip)/IONS->at(ii).g(ip);	// V = U_L/gamma;
+			}
+		} // End of parallel region
+
+		extrapolateIonVelocity(params,mesh,&IONS->at(ii));
+
+		MPI_BcastBulkVelocity(params,&IONS->at(ii));
+
+		switch (params->weightingScheme){
+			case(0):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TOS(&IONS->at(ii).nv, params->smoothingParameter);
+					break;
+					}
+			case(1):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TSC(&IONS->at(ii).nv,params->smoothingParameter);
+					break;
+					}
+			case(2):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ii).nv, params->smoothingParameter);
+					break;
+					}
+			case(3):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ii).nv, params->smoothingParameter);
+					break;
+					}
+			case(4):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ii).nv,params->smoothingParameter);
+					break;
+					}
+			default:{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TSC(&IONS->at(ii).nv,params->smoothingParameter);
+					}
+		}
+
+	}//structure to iterate over all the ion species.
+
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	restoreVector(&EB->E.X);
+	restoreVector(&EB->E.Y);
+	restoreVector(&EB->E.Z);
+
+	restoreVector(&EB->B.X);
+	restoreVector(&EB->B.Y);
+	restoreVector(&EB->B.Z);
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+}
+#endif
+
+
+#ifdef ONED
 void PIC::aiv_Vay_1D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 
@@ -1379,6 +1549,20 @@ void PIC::aiv_Vay_1D(const inputParameters * params,const characteristicScales *
 	restoreVector(&EB->B.Y);
 	restoreVector(&EB->B.Z);
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+}
+#endif
+
+
+#ifdef TWOD
+void PIC::aiv_Vay_2D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+
+}
+#endif
+
+
+#ifdef THREED
+void PIC::aiv_Vay_3D(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 }
 #endif

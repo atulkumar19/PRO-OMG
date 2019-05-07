@@ -379,23 +379,21 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		}else{
 			if(ii == 0){ //Background ions (Protons)
 				if(params->quietStart == 0){
-	                RANDOMSTART rs;
+	                RANDOMSTART rs(params);
 	    			rs.maxwellianVelocityDistribution(params,&ions);
 	            }else if(params->quietStart == 1){
 					QUIETSTART qs(params,&ions);
-					qs.maxwellianVelocityDistribution(params,&ions,"z");
+					qs.maxwellianVelocityDistribution(params,&ions);
 				}
 			}
 
 			if(ii == 1){//Alpha-particles
 				if(params->quietStart == 0){
-                   	RANDOMSTART rs;
-	                rs.ringLikeVelocityDistribution(params,&ions,"z");
-//					rs.maxwellianVelocityDistribution(params,&ions,"z");
-//					rs.beamVelocityDistribution(params,&ions,"z"); //Perpendicular propagation case
+                   	RANDOMSTART rs(params);
+	                rs.ringLikeVelocityDistribution(params,&ions);
 	            }else if(params->quietStart == 1){
 	                QUIETSTART qs(params,&ions);
-	                qs.ringLikeVelocityDistribution(params,&ions,"z");
+	                qs.ringLikeVelocityDistribution(params,&ions);
 	            }
 			}
 

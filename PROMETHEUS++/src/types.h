@@ -124,26 +124,24 @@ class oneDimensional::ionSpeciesParams : public vfield_vec{
 struct ionsBGP{
 	double Dn;
 
-	double Tpar;//Parallel temperature.
-	double Tper;//Perpendicular temperature.
-	double LarmorRadius;//Larmor radius.
-	double VTper;//Thermal velocity.
-	double VTpar;//Thermal velocity.
-	double Wc;//Average cyclotron frequency.
-	double Wpi;//ion plasma frequency.
-
-	// Guiding-center variables
-	double mu; // Magnetic moment.
+	double Tpar;		// Parallel temperature.
+	double Tper;		// Perpendicular temperature.
+	double LarmorRadius;// Larmor radius.
+	double VTper;		// Thermal velocity.
+	double VTpar;		// Thermal velocity.
+	double Wc;			// Average cyclotron frequency.
+	double Wpi;			// Ion plasma frequency.
+	double mu; 			// Average magnetic moment
 };
 
 public:
 	int SPECIES;
-	double NSP; //Initial number of superparticles for the given ion species.
-	double NCP; //Number of charged particles per superparticle.
-	double NPC; //Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
-	double Q; //Charge.
-	double Z; //Atomic number.
-	double M; //mass
+	double NSP; // Initial number of superparticles for the given ion species.
+	double NCP; // Number of charged particles per superparticle.
+	double NPC; // Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
+	double Q; 	// Charge.
+	double Z; 	// Atomic number.
+	double M; 	// Mass
 
 	// variables for controlling super-particles' outputs
 	double pctSupPartOutput;
@@ -151,24 +149,25 @@ public:
 
 	ionsBGP BGP;
 
-	arma::mat X; //ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat V; //ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat P; //ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::vec g; //ions' relativistic gamma factor.
-	arma::vec meshNode; //Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
+	arma::mat X; 		// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::vec g; 		// Ions' relativistic gamma factor.
+	arma::vec meshNode; // Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
 
 	// Guiding-center variables
-	arma:: vec Ppar; // Parallel momentum used in guiding-center orbits
+	arma::vec mu; 	// Ions' magnetic moment.
+	arma::vec Ppar; // Parallel momentum used in guiding-center orbits
 
 	//These weights are used in the charge extrapolation and the force interpolation
-	arma::vec wxl, wxc, wxr;//Particles' weights w.r.t. the vertices of the grid cells
-	arma::vec wxll, wxrr;//Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
+	arma::vec wxl, wxc, wxr;	// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxll, wxrr;		// Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
 
 	arma::vec wyl, wyc, wyr;
 	arma::vec wzl, wzc, wzr;
 
-	arma::vec n; //ion density in the mesh
-	vfield_vec nv; //fluid velocity times ion density in the mesh
+	arma::vec n; 	// Ion density in the mesh
+	vfield_vec nv; 	// Fluid velocity times ion density in the mesh
 };
 
 

@@ -158,6 +158,7 @@ struct characteristicScales{
 	double bField;
 	double pressure;
 	double temperature;
+	double magneticMoment;
 
 	characteristicScales(){
 		time = 0.0;
@@ -169,6 +170,7 @@ struct characteristicScales{
 		eField = 0.0;
 		bField = 0.0;
 		pressure = 0.0;
+		magneticMoment = 0.0;
 	}
 };
 

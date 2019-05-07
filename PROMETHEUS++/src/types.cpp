@@ -308,4 +308,3 @@ void threeDimensional::electromagneticFields::zeros(unsigned int N, unsigned int
 	E.zeros(N,M,P);
 	B.zeros(N,M,P);
 }
-

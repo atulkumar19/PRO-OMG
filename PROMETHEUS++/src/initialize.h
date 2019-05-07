@@ -27,13 +27,8 @@ class INITIALIZE{
 	double ionSkinDepth, LarmorRadius;
 
 	map<string,float> loadParameters(const char *  inputFile);
+
 	map<string,float> loadParameters(string *  inputFile);
-
-	void ringLikeVelocityDistribution(const inputParameters * params,ionSpecies * ions,const string parDirection);
-
-	void beamVelocityDistribution(const inputParameters * params,ionSpecies * ions,const string parDirection);
-
-	void maxwellianVelocityDistribution(const inputParameters * params,ionSpecies * ions,const string parDirection);
 
 public:
 

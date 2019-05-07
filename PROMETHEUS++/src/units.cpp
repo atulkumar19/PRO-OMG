@@ -40,7 +40,8 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 			cout << "+ Cyclotron frequency: " << scientific << IONS->at(ii).BGP.Wc << fixed << " Hz\n";
 			cout << "+ Plasma frequency: " << scientific << IONS->at(ii).BGP.Wpi << fixed << " Hz\n";
 			cout << "+ Gyroperiod: " << scientific << 2.0*M_PI/IONS->at(ii).BGP.Wc << fixed << " s\n";
-			cout << "+ Larmor radius: " << scientific << IONS->at(ii).BGP.LarmorRadius << fixed << " m\n\n";
+			cout << "+ Larmor radius: " << scientific << IONS->at(ii).BGP.LarmorRadius << fixed << " m\n";
+			cout << "+ Magnetic moment: " << scientific << IONS->at(ii).BGP.mu << fixed << " A*m^2\n\n";
 		}
 
 		//We don't take into account the tracers dynamics of course!
@@ -190,23 +191,22 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	CS->eField = ( characteristicPlasmaFrequency*CS->mass*CS->velocity )/CS->charge;
 	CS->bField = ( characteristicPlasmaFrequency*CS->mass )/CS->charge;
 	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB;
-
-
 	CS->pressure = CS->mass*CS->density*CS->velocity*CS->velocity;
+	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
 
 	if(params->mpi.rank_cart == 0){
-		cout << "Average mass: " << scientific << CS->mass << " kg\n";
-		cout << "Average charge: " << scientific << CS->charge << " C\n";
-		cout << "Density: " << scientific << CS->density << " m^(-3)\n";
-		cout << "Time: " << scientific << CS->time << " s\n";
-		cout << "Plasma frequency: " << scientific << characteristicPlasmaFrequency << " s\n";
-		cout << "Velocity: " << scientific << CS->velocity << " m/s\n";
-		cout << "Length: " << scientific << CS->length << " m\n";
-		cout << "Electric field intensity: " << scientific << CS->eField << " V/m\n";
-		cout << "Magnetic field intensity: " << scientific << CS->bField << " T\n";
-		cout << "Pressure: " << scientific << CS->pressure << " Pa\n";
-		cout << "Temperature: " << scientific << CS->temperature << " K\n";
-		cout << fixed;
+		cout << "Average mass: " << scientific << CS->mass << fixed << " kg\n";
+		cout << "Average charge: " << scientific << CS->charge << fixed << " C\n";
+		cout << "Density: " << scientific << CS->density << fixed << " m^(-3)\n";
+		cout << "Time: " << scientific << CS->time << fixed << " s\n";
+		cout << "Plasma frequency: " << scientific << characteristicPlasmaFrequency << fixed << " s\n";
+		cout << "Velocity: " << scientific << CS->velocity << fixed << " m/s\n";
+		cout << "Length: " << scientific << CS->length << fixed << " m\n";
+		cout << "Electric field intensity: " << scientific << CS->eField << fixed << " V/m\n";
+		cout << "Magnetic field intensity: " << scientific << CS->bField << fixed << " T\n";
+		cout << "Pressure: " << scientific << CS->pressure << fixed << " Pa\n";
+		cout << "Temperature: " << scientific << CS->temperature << fixed << " K\n";
+		cout << "Magnetic moment: " << scientific << CS->magneticMoment << fixed << " A*m^2\n";
 		cout << "* * * * * * * * * * * * CHARACTERISTIC SCALES IN SIMULATION DEFINED  * * * * * * * * * * * * * * * * * *\n\n";
 	}
 }

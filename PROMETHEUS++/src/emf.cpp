@@ -619,8 +619,15 @@ void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry
 
 
 #ifdef ONED
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,characteristicScales * CS,const int BAE){
-
+/* In this function the different ionSpecies vectors represent the following:
+	+ IONS__: Ions' variables at time level "l - 3/2"
+	+ IONS_: Ions' variables at time level "l - 1/2"
+	+ IONS: Ions' variables at time level "l + 1/2"
+*/
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params, const meshGeometry * mesh,\
+														oneDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS__,\
+														vector<ionSpecies> * IONS_, vector<ionSpecies> * IONS,\
+														characteristicScales * CS, const int BAE){
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -631,92 +638,92 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	double n_ch = CS->length*CS->density;//Dimensionless characteristic density.
 
-	vec nNew = zeros(dim);//Density n = ne = sum_k[ Z_k*n_k ]
-	vfield_vec newU;//Ion's flow velocity of the specific population under study (already dimensionless).
-	newU.zeros(dim);//Flow velocity along the x-direction
+	vec n = zeros(dim);//Density n = ne = sum_k[ Z_k*n_k ]
+	vfield_vec U;//Ion's flow velocity of the specific population under study (already dimensionless).
+	U.zeros(dim);//Flow velocity along the x-direction
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
-			forwardPBC_1D(&newIONS->at(ii).n);
-			forwardPBC_1D(&newIONS->at(ii).nv.X);
-			forwardPBC_1D(&newIONS->at(ii).nv.Y);
-			forwardPBC_1D(&newIONS->at(ii).nv.Z);
+			forwardPBC_1D(&IONS->at(ii).n);
+			forwardPBC_1D(&IONS->at(ii).nv.X);
+			forwardPBC_1D(&IONS->at(ii).nv.Y);
+			forwardPBC_1D(&IONS->at(ii).nv.Z);
 
-			nNew += newIONS->at(ii).Z*newIONS->at(ii).n.subvec(iIndex-1,fIndex+1);
+			n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 			//sum_k[ Z_k*n_k*u_k ]
-			newU.X += newIONS->at(ii).Z*newIONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
-			newU.Y += newIONS->at(ii).Z*newIONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
-			newU.Z += newIONS->at(ii).Z*newIONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
+			U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+			U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+			U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
-	newU.X /= nNew;
-	newU.Y /= nNew;
-	newU.Z /= nNew;
+	U.X /= n;
+	U.Y /= n;
+	U.Z /= n;
 
-	nNew /= n_ch;//Dimensionless density
+	n /= n_ch;//Dimensionless density
 
-	vec nOld = zeros(dim);//Density n = ne = sum_k[ Z_k*n_k ]
-	vfield_vec oldU;//Ion's flow velocity of the specific population under study (already dimensionless).
-	oldU.zeros(dim);//Flow velocity along the x-direction
+	vec n_ = zeros(dim);//Density n = ne = sum_k[ Z_k*n_k ]
+	vfield_vec U_;//Ion's flow velocity of the specific population under study (already dimensionless).
+	U_.zeros(dim);//Flow velocity along the x-direction
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
-		forwardPBC_1D(&oldIONS->at(ii).n);
-		forwardPBC_1D(&oldIONS->at(ii).nv.X);
-		forwardPBC_1D(&oldIONS->at(ii).nv.Y);
-		forwardPBC_1D(&oldIONS->at(ii).nv.Z);
+		forwardPBC_1D(&IONS_->at(ii).n);
+		forwardPBC_1D(&IONS_->at(ii).nv.X);
+		forwardPBC_1D(&IONS_->at(ii).nv.Y);
+		forwardPBC_1D(&IONS_->at(ii).nv.Z);
 
 
-		nOld += oldIONS->at(ii).Z*oldIONS->at(ii).n.subvec(iIndex-1,fIndex+1);
+		n_ += IONS_->at(ii).Z*IONS_->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 		//sum_k[ Z_k*n_k*u_k ]
-		oldU.X += oldIONS->at(ii).Z*oldIONS->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
-		oldU.Y += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
-		oldU.Z += oldIONS->at(ii).Z*oldIONS->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
+		U_.X += IONS_->at(ii).Z*IONS_->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+		U_.Y += IONS_->at(ii).Z*IONS_->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+		U_.Z += IONS_->at(ii).Z*IONS_->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 	}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
-	oldU.X /= nOld;
-	oldU.Y /= nOld;
-	oldU.Z /= nOld;
+	U_.X /= n_;
+	U_.Y /= n_;
+	U_.Z /= n_;
 
-	nOld /= n_ch;//Dimensionless density
+	n_ /= n_ch;//Dimensionless density
 
 	/* Bashford-Adams extrapolation variables */
-	vec n_BAE = zeros(dim);
-	vfield_vec U_BAE(dim);//Ion's flow velocity of the specific population under study (already dimensionless).
+	vec n__ = zeros(dim);
+	vfield_vec U__(dim);//Ion's flow velocity of the specific population under study (already dimensionless).
 
 	if(BAE == 1){
-		U_BAE.fill(0);
+		U__.fill(0);
 
 		for(int ii=0;ii<params->numberOfIonSpecies;ii++){
-			forwardPBC_1D(&IONS_BAE->at(ii).n);
-			forwardPBC_1D(&IONS_BAE->at(ii).nv.X);
-			forwardPBC_1D(&IONS_BAE->at(ii).nv.Y);
-			forwardPBC_1D(&IONS_BAE->at(ii).nv.Z);
+			forwardPBC_1D(&IONS__->at(ii).n);
+			forwardPBC_1D(&IONS__->at(ii).nv.X);
+			forwardPBC_1D(&IONS__->at(ii).nv.Y);
+			forwardPBC_1D(&IONS__->at(ii).nv.Z);
 
-			n_BAE += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).n.subvec(iIndex-1,fIndex+1);
+			n__ += IONS__->at(ii).Z*IONS__->at(ii).n.subvec(iIndex-1,fIndex+1);
 
 			//sum_k[ Z_k*n_k*u_k ]
-			U_BAE.X += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
-			U_BAE.Y += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
-			U_BAE.Z += IONS_BAE->at(ii).Z*IONS_BAE->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
+			U__.X += IONS__->at(ii).Z*IONS__->at(ii).nv.X.subvec(iIndex-1,fIndex+1);
+			U__.Y += IONS__->at(ii).Z*IONS__->at(ii).nv.Y.subvec(iIndex-1,fIndex+1);
+			U__.Z += IONS__->at(ii).Z*IONS__->at(ii).nv.Z.subvec(iIndex-1,fIndex+1);
 		}//This density is not normalized (n =/= n/n_ch) but it is dimensionless.
 
-		U_BAE.X /= n_BAE;
-		U_BAE.Y /= n_BAE;
-		U_BAE.Z /= n_BAE;
+		U__.X /= n__;
+		U__.Y /= n__;
+		U__.Z /= n__;
 
-		n_BAE /= n_ch;//Dimensionless density
+		n__ /= n_ch;//Dimensionless density
 	}
 
 
 	//Definitions
 
-	vfield_vec U;
+	vfield_vec V;
 
 	if(BAE == 1){//Here we use the velocity extrapolation V^(N+1) = 2*V^(N+1/2) - 1.5*V^(N-1/2) + 0.5*V^(N-3/2)
-		U = 2.0*newU - 1.5*oldU + 0.5*U_BAE;
+		V = 2.0*U - 1.5*U_ + 0.5*U__;
 	}else{//Here we use the velocity extrapolation V^(N+1) = 1.5*V^(N+1/2) - 0.5*V^(N-1/2)
-		U = 1.5*newU - 0.5*oldU;
+		V = 1.5*U - 0.5*U_;
 	}
 
 	vfield_vec curlB;
@@ -731,7 +738,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Y += 0.5*( - (EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex,fIndex))/mesh->DX );//curl(B)y(i+1)
 
 
-	EB->E.X.subvec(iIndex,fIndex)  = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex)  )/( F_MU_DS*F_E_DS*( 0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex)  = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex)  )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) ) );
 
 
 	curlB.Z = 0.5*( (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX );//curl(B)z(i)
@@ -739,18 +746,18 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	curlB.Z += 0.5*( (EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex,fIndex))/mesh->DX );//curl(B)z(i+1)
 
 
-	EB->E.X.subvec(iIndex,fIndex) += - ( curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - ( curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) ) );
 
 
 	curlB.fill(0);
 
 
-	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( U.Y.subvec(1,dim-2) + U.Y.subvec(2,dim-1) ) % EB->B.Z.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( V.Y.subvec(1,dim-2) + V.Y.subvec(2,dim-1) ) % EB->B.Z.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,dim-2) + U.Z.subvec(2,dim-1) ) % EB->B.Y.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.Z.subvec(1,dim-2) + V.Z.subvec(2,dim-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (nNew.subvec(2,dim-1) \
-									- nNew.subvec(1,dim-2))/mesh->DX )/(0.5*( nNew.subvec(1,dim-2) + nNew.subvec(2,dim-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,dim-1) \
+									- n.subvec(1,dim-2))/mesh->DX )/(0.5*( n.subvec(1,dim-2) + n.subvec(2,dim-1) ) );
 
 
 	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
@@ -761,21 +768,21 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	//y-component
 
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*nNew.subvec(1,dim-2));
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,dim-2));
 
-	EB->E.Y.subvec(iIndex,fIndex) += - U.Z.subvec(1,dim-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Y.subvec(iIndex,fIndex) += - V.Z.subvec(1,dim-2) % EB->B.X.subvec(iIndex,fIndex);
 
-	EB->E.Y.subvec(iIndex,fIndex) += U.X.subvec(1,dim-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Y.subvec(iIndex,fIndex) += V.X.subvec(1,dim-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
 
 
 	//z-component
 
 
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*nNew.subvec(1,dim-2));
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,dim-2));
 
-	EB->E.Z.subvec(iIndex,fIndex) += - U.X.subvec(1,dim-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Z.subvec(iIndex,fIndex) += - V.X.subvec(1,dim-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
 
-	EB->E.Z.subvec(iIndex,fIndex) += U.Y.subvec(1,dim-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Z.subvec(iIndex,fIndex) += V.Y.subvec(1,dim-2) % EB->B.X.subvec(iIndex,fIndex);
 
 
 #ifdef CHECKS_ON

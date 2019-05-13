@@ -44,6 +44,7 @@ endif
 
 BINARIES = $(addprefix $(OBJ)/,structures.o\
 main.o	\
+timeSteppingMethods.o	\
 PIC.o	\
 initialize.o	\
 units.o	\

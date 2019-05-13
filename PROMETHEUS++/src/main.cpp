@@ -12,6 +12,7 @@
 #include "generalFunctions.h"
 #include "outputHDF5.h"
 #include "alfvenic.h"
+#include "timeSteppingMethods.h"
 
 #include <omp.h>
 #include "mpi_main.h"

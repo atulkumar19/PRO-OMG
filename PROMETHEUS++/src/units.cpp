@@ -191,7 +191,9 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	CS->eField = ( characteristicPlasmaFrequency*CS->mass*CS->velocity )/CS->charge;
 	CS->bField = ( characteristicPlasmaFrequency*CS->mass )/CS->charge;
 	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB;
-	CS->pressure = CS->mass*CS->density*CS->velocity*CS->velocity;
+	CS->pressure = CS->bField*CS->velocity*CS->velocity*CS->charge*CS->density*CS->time; // CS->eField*CS->velocity*CS->charge*CS->density*CS->time;
+	CS->resistivity = CS->bField/(CS->charge*CS->density);
+//	CS->mass*CS->density*CS->velocity*CS->velocity;
 	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
 
 	if(params->mpi.rank_cart == 0){
@@ -207,6 +209,7 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 		cout << "Pressure: " << scientific << CS->pressure << fixed << " Pa\n";
 		cout << "Temperature: " << scientific << CS->temperature << fixed << " K\n";
 		cout << "Magnetic moment: " << scientific << CS->magneticMoment << fixed << " A*m^2\n";
+		cout << "Resistivity: " << scientific << CS->magneticMoment << fixed << " Ohms*m\n";
 		cout << "* * * * * * * * * * * * CHARACTERISTIC SCALES IN SIMULATION DEFINED  * * * * * * * * * * * * * * * * * *\n\n";
 	}
 }

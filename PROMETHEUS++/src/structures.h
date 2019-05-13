@@ -159,6 +159,7 @@ struct characteristicScales{
 	double pressure;
 	double temperature;
 	double magneticMoment;
+	double resistivity;
 
 	characteristicScales(){
 		time = 0.0;

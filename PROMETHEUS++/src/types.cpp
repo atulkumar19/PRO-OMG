@@ -86,6 +86,12 @@ void vfield_vec::ones(unsigned int N){
 	Z.ones(N);
 }
 
+void vfield_vec::zeros(){
+	X.zeros();
+	Y.zeros();
+	Z.zeros();
+}
+
 void vfield_vec::zeros(unsigned int N){
 	X.zeros(N);
 	Y.zeros(N);
@@ -190,6 +196,12 @@ void vfield_mat::ones(unsigned int N, unsigned int M){
 	Z.ones(N,M);
 }
 
+void vfield_mat::zeros(){
+	X.zeros();
+	Y.zeros();
+	Z.zeros();
+}
+
 void vfield_mat::zeros(unsigned int N, unsigned int M){
 	X.zeros(N,M);
 	Y.zeros(N,M);
@@ -286,6 +298,12 @@ void vfield_cube::ones(unsigned int N, unsigned int M, unsigned int P){
 	X.ones(N,M,P);
 	Y.ones(N,M,P);
 	Z.ones(N,M,P);
+}
+
+void vfield_cube::zeros(){
+	X.zeros();
+	Y.zeros();
+	Z.zeros();
 }
 
 void vfield_cube::zeros(unsigned int N, unsigned int M, unsigned int P){

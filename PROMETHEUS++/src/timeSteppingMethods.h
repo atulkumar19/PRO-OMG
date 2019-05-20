@@ -19,7 +19,13 @@
 
 
 class TIME_STEPPING_METHODS{
-    public:
+    double t1;						//
+    double t2;						//
+
+public:
+
+    void advanceFullOrbitIonsAndMasslessElectrons();
+
 };
 
 

@@ -720,6 +720,9 @@ void PIC::eivTSC_3D(const inputParameters * params,const meshGeometry * mesh,ion
 
 void PIC::extrapolateIonVelocity(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions){
 
+	ions->nv__ = ions->nv_;
+	ions->nv_ = ions->nv;
+
 	switch (params->weightingScheme){
 		case(0):{
 				#ifdef ONED
@@ -902,6 +905,8 @@ void PIC::eidTSC_3D(const inputParameters * params,const meshGeometry * mesh,ion
 
 
 void PIC::extrapolateIonDensity(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions){
+
+	ions->n_ = ions->n;
 
 	switch (params->weightingScheme){
 		case(0):{

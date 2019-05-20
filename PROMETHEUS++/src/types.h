@@ -46,6 +46,7 @@ public:
 
 	void fill(double value);
 	void ones(unsigned int N);
+	void zeros();
 	void zeros(unsigned int N);
 };
 
@@ -74,6 +75,7 @@ public:
 
 	void fill(double value);
 	void ones(unsigned int N, unsigned int M);
+	void zeros();
 	void zeros(unsigned int N, unsigned int M);
 };
 
@@ -102,6 +104,7 @@ public:
 
 	void fill(double value);
 	void ones(unsigned int N, unsigned int M, unsigned int P);
+	void zeros();
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
 
@@ -166,8 +169,11 @@ public:
 	arma::vec wyl, wyc, wyr;
 	arma::vec wzl, wzc, wzr;
 
-	arma::vec n; 	// Ion density in the mesh
-	vfield_vec nv; 	// Fluid velocity times ion density in the mesh
+	arma::vec n; 		// Ion density at time level "l + 1"
+	arma::vec n_; 		// Ion density at time level "l + 1/2;
+	vfield_vec nv; 		// Ion bulk velocity at time level "l + 1/2"
+	vfield_vec nv_; 	// Ion bulk velocity at time level "l - 1/2"
+	vfield_vec nv__; 	// Ion bulk velocity at time level "l - 3/2"
 };
 
 

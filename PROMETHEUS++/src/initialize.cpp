@@ -402,8 +402,12 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 			}
 		}
 
-		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		ions.n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		ions.n_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+
+		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		ions.nv_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		ions.nv__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 		// Setting size and value to zero of arrays for ions' variables
 		if(params->mpi.rank_cart == 0)

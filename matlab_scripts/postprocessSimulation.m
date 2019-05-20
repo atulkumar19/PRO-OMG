@@ -1,5 +1,6 @@
 function ST = postprocessSimulation(path)
 % Example: ST = postprocessSimulation('../PROMETHEUS++/outputFiles/HDF5/')
+% ST = postprocessSimulation('../PROMETHEUS++/outputFiles/dispersion_relation/HDF5/')
 % Physical constants
 
 close all

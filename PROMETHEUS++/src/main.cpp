@@ -68,9 +68,20 @@ int main(int argc, char* argv[]){
 	PIC ionsDynamics; // Initializing the PIC class object.
 	GENERAL_FUNCTIONS genFun;
 
-	ionsDynamics.advanceIonsPosition(&params, &mesh, &IONS, 0); // Initialization of the particles' density and meshNode.
+	// Repeat 3 times
+	ionsDynamics.advanceIonsPosition(&params, &mesh, &IONS, 0);
 
 	ionsDynamics.advanceIonsVelocity(&params, &CS, &mesh, &EB, &IONS, 0);
+
+	ionsDynamics.advanceIonsPosition(&params, &mesh, &IONS, 0);
+
+	ionsDynamics.advanceIonsVelocity(&params, &CS, &mesh, &EB, &IONS, 0);
+
+	ionsDynamics.advanceIonsPosition(&params, &mesh, &IONS, 0);
+
+	ionsDynamics.advanceIonsVelocity(&params, &CS, &mesh, &EB, &IONS, 0);
+
+	// Repeat 3 times
 
 	alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
@@ -79,11 +90,6 @@ int main(int argc, char* argv[]){
 	t1 = MPI::Wtime();
 
 	for(int tt=0;tt<params.timeIterations;tt++){ // Time iterations.
-		vector<ionSpecies> auxIONS;
-		vector<ionSpecies> IONS_;
-
-		ionsDynamics.ionVariables(&IONS, &auxIONS, 0); // The ion density of IONS is copied into auxIONS
-		ionsDynamics.ionVariables(&IONS, &IONS_, 1); // The ion flow velocity at the time level nv^(N-1/2) is stored in auxIONS.
 
 		if(tt == 0){
 			genFun.checkStability(&params, &mesh, &CS, &IONS);
@@ -94,33 +100,29 @@ int main(int argc, char* argv[]){
 
 		ionsDynamics.advanceIonsPosition(&params, &mesh, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
-		ionsDynamics.ionVariables(&IONS, &auxIONS, 2); // Bulk ion variables computed at (N+1/2) and saved to auxIONS
-
-		fields.advanceBField(&params, &mesh, &EB, &auxIONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+		fields.advanceBField(&params, &mesh, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
 		if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
 			 // Using the Bashford-Adams extrapolation.
-			fields.advanceEFieldWithVelocityExtrapolation(&params, &mesh, &EB, &IONS__, &IONS_, &IONS, 1);
+			fields.advanceEFieldWithVelocityExtrapolation(&params, &mesh, &EB, &IONS, 1);
 		}else{
 			 // Using basic velocity extrapolation.
-			fields.advanceEFieldWithVelocityExtrapolation(&params, &mesh, &EB, &IONS__, &IONS_, &IONS, 0);
+			fields.advanceEFieldWithVelocityExtrapolation(&params, &mesh, &EB, &IONS, 0);
 		}
 
 		currentTime += params.DT*CS.time;
 
 		if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0){
-			auxIONS = IONS; // Ions position at level X^(N+1) and ions' velocity at level V^(N+1/2)
+			vector<ionSpecies> IONS_OUT = IONS;
 			// The ions' velocity is advanced in time in order to obtain V^(N+1)
-			ionsDynamics.advanceIonsVelocity(&params, &CS, &mesh, &EB, &auxIONS, params.DT/2);
-			hdfObj.saveOutputs(&params, &auxIONS, &IONS, &EB, &CS, outputIterator+1, currentTime);
+			ionsDynamics.advanceIonsVelocity(&params, &CS, &mesh, &EB, &IONS_OUT, params.DT/2);
+			hdfObj.saveOutputs(&params, &IONS_OUT, &IONS, &EB, &CS, outputIterator+1, currentTime);
 			outputIterator++;
 		}
 
 		if( (params.checkStability == 1) && fmod((double)(tt+1), params.rateOfChecking) == 0 ){
 			genFun.checkStability(&params, &mesh, &CS, &IONS);
 		}
-
-		IONS__ = IONS_; // Ions variables at time level (N-3/2) for tt>=2
 
 //		genFun.checkEnergy(&params,&mesh,&CS,&IONS,&EB,tt);
 		if(tt==100){

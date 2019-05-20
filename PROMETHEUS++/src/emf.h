@@ -28,6 +28,8 @@ class EMF_SOLVER{
 
 	double n_cs;
 
+	vec ne;			// Electron plasma density at time level "l + 1"
+
 	vec n; 			// Total plasma density at time level "l + 1"
 
 	vec n_; 		// Total plasma density at time level "l - 1/2"
@@ -41,6 +43,12 @@ class EMF_SOLVER{
 	vfield_vec U_; 	// Ions' bulk velocity at time level "l - 1/2"
 
 	vfield_vec U__; // Ions' bulk velocity at time level "l - 3/2"
+
+	vfield_vec Ui; // Ions' bulk velocity at time level "l - 3/2"
+
+	vfield_vec Ui_; // Ions' bulk velocity at time level "l - 3/2"
+
+	vfield_vec Ui__; // Ions' bulk velocity at time level "l - 3/2"
 
 	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB);
 
@@ -79,11 +87,11 @@ class EMF_SOLVER{
 
 	void advanceEField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
 
-	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS__,vector<ionSpecies> * IONS_,vector<ionSpecies> * IONS,const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS_BAE,vector<ionSpecies> * oldIONS,vector<ionSpecies> * newIONS,const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE);
 
 };
 

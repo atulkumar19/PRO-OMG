@@ -906,6 +906,8 @@ void PIC::eidTSC_3D(const inputParameters * params,const meshGeometry * mesh,ion
 
 void PIC::extrapolateIonDensity(const inputParameters * params,const meshGeometry * mesh,ionSpecies * ions){
 
+	ions->n___ = ions->n__;
+	ions->n__ = ions->n_;
 	ions->n_ = ions->n;
 
 	switch (params->weightingScheme){

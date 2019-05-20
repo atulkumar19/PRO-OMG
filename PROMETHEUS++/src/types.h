@@ -170,7 +170,9 @@ public:
 	arma::vec wzl, wzc, wzr;
 
 	arma::vec n; 		// Ion density at time level "l + 1"
-	arma::vec n_; 		// Ion density at time level "l + 1/2;
+	arma::vec n_; 		// Ion density at time level "l - 1;
+	arma::vec n__; 		// Ion density at time level "l - 2;
+	arma::vec n___; 		// Ion density at time level "l - 3;
 	vfield_vec nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_vec nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 	// Ion bulk velocity at time level "l - 3/2"

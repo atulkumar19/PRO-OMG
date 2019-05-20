@@ -404,6 +404,8 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 		ions.n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		ions.n_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		ions.n__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		ions.n___.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		ions.nv_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);

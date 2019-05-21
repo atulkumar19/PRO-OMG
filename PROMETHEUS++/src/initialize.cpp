@@ -415,9 +415,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		if(params->mpi.rank_cart == 0)
 			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << ions.NSP << '\n';
 
-		ions.P.zeros(ions.NSP,3);
-		ions.g.zeros(ions.NSP);
-
 		ions.meshNode.zeros(ions.NSP);
 		ions.wxc.zeros(ions.NSP);
 		ions.wxl.zeros(ions.NSP);

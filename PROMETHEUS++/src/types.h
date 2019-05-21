@@ -37,7 +37,7 @@ public:
 	vfield_vec operator -= (vfield_vec R);
 	vfield_vec operator * (double s);
 	vfield_vec operator *= (double s);
-    	friend vfield_vec operator * (double s, vfield_vec R );
+    friend vfield_vec operator * (double s, vfield_vec R );
 	vfield_vec operator / (double s);
 	vfield_vec operator / (vfield_vec R);
 	vfield_vec operator /= (double s);
@@ -67,7 +67,7 @@ public:
 	vfield_mat operator -= (vfield_mat R);
 	vfield_mat operator * (double s);
 	vfield_mat operator *= (double s);
-    	friend vfield_mat operator * (double s, vfield_mat R );
+    friend vfield_mat operator * (double s, vfield_mat R );
 	vfield_mat operator / (double s);
 	vfield_mat operator / (vfield_mat R);
 	vfield_mat operator /= (double s);
@@ -96,7 +96,7 @@ public:
 	vfield_cube operator -= (vfield_cube R);
 	vfield_cube operator * (double s);
 	vfield_cube operator *= (double s);
-    	friend vfield_cube operator * (double s, vfield_cube R );
+    friend vfield_cube operator * (double s, vfield_cube R );
 	vfield_cube operator / (double s);
 	vfield_cube operator / (vfield_cube R);
 	vfield_cube operator /= (double s);
@@ -154,7 +154,7 @@ public:
 
 	arma::mat X; 		// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::vec P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 		// Ions' relativistic gamma factor.
 	arma::vec meshNode; // Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
 

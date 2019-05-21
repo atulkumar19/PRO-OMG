@@ -18,6 +18,7 @@ void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, i
 
 	ions->X = randu<mat>(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);
+	ions->P = zeros(ions->NSP);
 	ions->g = zeros(ions->NSP);
 	ions->mu = zeros(ions->NSP);
 
@@ -43,6 +44,7 @@ void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, i
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
 		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
+		ions->P(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
 	ions->BGP.mu = mean(ions->mu);
@@ -54,6 +56,7 @@ void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params,
 
 	ions->X = randu<mat>(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);
+	ions->P = zeros(ions->NSP);
 	ions->g = zeros(ions->NSP);
 	ions->mu = zeros(ions->NSP);
 
@@ -81,6 +84,7 @@ void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params,
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
 		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
+		ions->P(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
 	ions->BGP.mu = mean(ions->mu);

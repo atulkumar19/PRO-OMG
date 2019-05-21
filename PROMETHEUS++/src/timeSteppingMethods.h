@@ -20,11 +20,17 @@
 
 class TIME_STEPPING_METHODS{
     double t1;						//
-    double t2;						//
+    double t2;
+    double currentTime; 			// Current time in simulation.	//
+    int outputIterator;			//
 
 public:
 
-    void advanceFullOrbitIonsAndMasslessElectrons();
+    TIME_STEPPING_METHODS(inputParameters * params);
+
+    void advanceFullOrbitIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, emf * EB);
+
+    void advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, emf * EB);
 
 };
 

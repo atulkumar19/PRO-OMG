@@ -31,13 +31,13 @@ class HDF{
 	#define CPP_TYPE float
 #endif
 
-void siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void siv_2D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void siv_2D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void siv_3D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void siv_3D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
 
 
@@ -53,7 +53,7 @@ public:
 
 HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS);
 
-void saveOutputs(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, emf * EB, const characteristicScales * CS, const int IT, double totalTime);
+void saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, emf * EB, const characteristicScales * CS, const int IT, double totalTime);
 
 };
 

@@ -22,7 +22,7 @@ void HDF::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
 
 
 //Constructor of HDF5Obj class
-HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
+HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 
 	try{
 		stringstream dn;
@@ -238,7 +238,7 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 }
 
 #ifdef ONED
-void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
@@ -275,7 +275,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 		Group *group_ions = new Group( outputFile->createGroup( "ions" ) );
 #endif
 
-		for(int ii=0;ii<IONS->size();ii++){//Iterations over the ion species.
+		for(int ii=0;ii<IONS_OUT->size();ii++){//Iterations over the ion species.
 
 			stringstream ionSpec;
 			ionSpec << (ii+1);
@@ -293,14 +293,14 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string xposition( "x" );
 
 			CPP_TYPE *xpos;
-			VAUX = CS->length*( IONS->at(ii).X(span(0,IONS->at(ii).nSupPartOutput - 1),0) );
+			VAUX = CS->length*( IONS_OUT->at(ii).X(span(0,IONS_OUT->at(ii).nSupPartOutput - 1),0) );
 #ifdef HDF5_DOUBLE
 			xpos = VAUX.memptr();
 #elif defined HDF5_FLOAT
 			armaCastDoubleToFloat(&VAUX, &FVAUX);
 			xpos = FVAUX.memptr();
 #endif
-		   	hsize_t dims_xpos[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
+		   	hsize_t dims_xpos[1] = {(unsigned int)IONS_OUT->at(ii).nSupPartOutput};
 			DataSpace *dataspace_xpos = new DataSpace(1, dims_xpos);
 			DataSet *dataset_xpos = new DataSet(group_position->createDataSet( xposition, HDF_TYPE, *dataspace_xpos ));
 			dataset_xpos->write( xpos, HDF_TYPE );
@@ -314,14 +314,14 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string xvelocity( "vx" );
 
 			CPP_TYPE *xvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).V(span(0,IONS->at(ii).nSupPartOutput - 1),0));
+			VAUX = CS->velocity*(IONS_OUT->at(ii).V(span(0,IONS_OUT->at(ii).nSupPartOutput - 1),0));
 #ifdef HDF5_DOUBLE
 			xvel = VAUX.memptr();
 #elif defined HDF5_FLOAT
 			armaCastDoubleToFloat(&VAUX, &FVAUX);
 			xvel = FVAUX.memptr();
 #endif
-		   	hsize_t dims_xvel[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
+		   	hsize_t dims_xvel[1] = {(unsigned int)IONS_OUT->at(ii).nSupPartOutput};
 			DataSpace *dataspace_xvel = new DataSpace(1, dims_xvel);
 			DataSet *dataset_xvel = new DataSet(group_velocity->createDataSet( xvelocity, HDF_TYPE, *dataspace_xvel ));
 			dataset_xvel->write( xvel, HDF_TYPE );
@@ -331,14 +331,14 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string yvelocity( "vy" );
 
 			CPP_TYPE *yvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).V(span(0,IONS->at(ii).nSupPartOutput - 1),1));
+			VAUX = CS->velocity*(IONS_OUT->at(ii).V(span(0,IONS_OUT->at(ii).nSupPartOutput - 1),1));
 #ifdef HDF5_DOUBLE
 			yvel = VAUX.memptr();
 #elif defined HDF5_FLOAT
 			armaCastDoubleToFloat(&VAUX, &FVAUX);
 			yvel = FVAUX.memptr();
 #endif
-		   	hsize_t dims_yvel[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
+		   	hsize_t dims_yvel[1] = {(unsigned int)IONS_OUT->at(ii).nSupPartOutput};
 			DataSpace *dataspace_yvel = new DataSpace(1, dims_yvel);
 			DataSet *dataset_yvel = new DataSet(group_velocity->createDataSet( yvelocity, HDF_TYPE, *dataspace_yvel ));
 			dataset_yvel->write( yvel, HDF_TYPE );
@@ -348,14 +348,14 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string zvelocity( "vz" );
 
 			CPP_TYPE *zvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).V(span(0,IONS->at(ii).nSupPartOutput - 1),2));
+			VAUX = CS->velocity*(IONS_OUT->at(ii).V(span(0,IONS_OUT->at(ii).nSupPartOutput - 1),2));
 #ifdef HDF5_DOUBLE
 			zvel = VAUX.memptr();
 #elif defined HDF5_FLOAT
 			armaCastDoubleToFloat(&VAUX, &FVAUX);
 			zvel = FVAUX.memptr();
 #endif
-		   	hsize_t dims_zvel[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
+		   	hsize_t dims_zvel[1] = {(unsigned int)IONS_OUT->at(ii).nSupPartOutput};
 			DataSpace *dataspace_zvel = new DataSpace(1, dims_zvel);
 			DataSet *dataset_zvel = new DataSet(group_velocity->createDataSet( zvelocity, HDF_TYPE, *dataspace_zvel ));
 			dataset_zvel->write( zvel, HDF_TYPE );
@@ -369,7 +369,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string numberDensity( "numberDensity" );
 
 			CPP_TYPE *n;
-			VAUX = IONS->at(ii).n.subvec(iIndex,fIndex)/CS->length;
+			VAUX = IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length;
 #ifdef HDF5_DOUBLE
 			n = VAUX.memptr();
 #elif defined HDF5_FLOAT
@@ -389,7 +389,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string xBulkVelocity( "Ux" );
 
 			CPP_TYPE *Ux;
-			VAUX = CS->velocity*tmpIONS->at(ii).nv.X.subvec(iIndex,fIndex)/CS->length;
+			VAUX = CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/CS->length;
 #ifdef HDF5_DOUBLE
 			Ux = VAUX.memptr();
 #elif defined HDF5_FLOAT
@@ -406,7 +406,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string yBulkVelocity( "Uy" );
 
 			CPP_TYPE *Uy;
-			VAUX = CS->velocity*tmpIONS->at(ii).nv.Y.subvec(iIndex,fIndex)/CS->length;
+			VAUX = CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/CS->length;
 #ifdef HDF5_DOUBLE
 			Uy = VAUX.memptr();
 #elif defined HDF5_FLOAT
@@ -423,7 +423,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 			H5std_string zBulkVelocity( "Uz" );
 
 			CPP_TYPE *Uz;
-			VAUX = CS->velocity*tmpIONS->at(ii).nv.Z.subvec(iIndex,fIndex)/CS->length;
+			VAUX = CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/CS->length;
 #ifdef HDF5_DOUBLE
 			Uz = VAUX.memptr();
 #elif defined HDF5_FLOAT
@@ -469,30 +469,30 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 #endif
 
 #ifdef TWOD
-void HDF::siv_2D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::siv_2D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 }
 #endif
 
 #ifdef THREED
-void HDF::siv_3D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::siv_3D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 }
 #endif
 
 
-void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 	#ifdef ONED
-		siv_1D(params, tmpIONS, IONS, CS, IT);
+		siv_1D(params, IONS_OUT, CS, IT);
 	#endif
 
 	#ifdef TWOD
-		siv_2D(params, tmpIONS, IONS, CS, IT);
+		siv_2D(params, IONS_OUT, CS, IT);
 	#endif
 
 	#ifdef THREED
-		siv_3D(params, tmpIONS, IONS, CS, IT);
+		siv_3D(params, IONS_OUT, CS, IT);
 	#endif
 
 }
@@ -701,7 +701,7 @@ void HDF::saveFieldsVariables(const inputParameters * params, threeDimensional::
 
 }
 
-void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, emf * EB, const characteristicScales * CS, const int IT, double totalTime){
+void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, emf * EB, const characteristicScales * CS, const int IT, double totalTime){
 
 
 	try{
@@ -775,7 +775,7 @@ void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> *
 		error.printError();
     }
 
-	saveIonsVariables(params, tmpIONS, IONS, CS, IT);
+	saveIonsVariables(params, IONS_OUT, CS, IT);
 
 	saveFieldsVariables(params, EB, CS, IT);
 

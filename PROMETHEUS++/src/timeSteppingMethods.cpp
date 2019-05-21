@@ -65,7 +65,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
         if(tt==100){
             t2 = MPI::Wtime();
             if(params->mpi.rank_cart == 0){
-                cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2-t1)/6000.0 <<" minutes\n";
+                cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
             }
         }
     } // Time iterations.
@@ -84,13 +84,7 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
 
-        if(tt == 0){
-            ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT/2); // Initial condition time level V^(1/2)
-        }else{
-            ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT); // Advance ions' velocity V^(N+1/2).
-        }
-
-        ionsDynamics.advanceIonsPosition(params, mesh, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
+        ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
         fields.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
@@ -105,10 +99,7 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
         currentTime += params->DT*CS->time;
 
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
-            vector<ionSpecies> IONS_OUT = *IONS;
-            // The ions' velocity is advanced in time in order to obtain V^(N+1)
-            ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, &IONS_OUT, params->DT/2);
-            hdfObj->saveOutputs(params, &IONS_OUT, EB, CS, outputIterator+1, currentTime);
+            hdfObj->saveOutputs(params, IONS, EB, CS, outputIterator + 1, currentTime);
             outputIterator++;
         }
 
@@ -116,7 +107,7 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
         if(tt==100){
             t2 = MPI::Wtime();
             if(params->mpi.rank_cart == 0){
-                cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2-t1)/6000.0 <<" minutes\n";
+                cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
             }
         }
     } // Time iterations.

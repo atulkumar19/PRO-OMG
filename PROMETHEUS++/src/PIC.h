@@ -34,6 +34,10 @@ class PIC{
 	vec x;
 	uvec logic;
 
+	// Runge-Kutta 45 (Dorman-Prince) methd
+	arma::mat::fixed<7,7> A;
+	arma::vec::fixed<7> B4;
+	arma::vec::fixed<7> B5;
 
 	void MPI_BcastDensity(const inputParameters * params,ionSpecies * ions);
 
@@ -127,13 +131,14 @@ class PIC{
 
   public:
 
-	PIC(){};
-
-	void ionVariables(vector<ionSpecies> * IONS,vector<ionSpecies> * copyIONS,const int flag);
+	PIC();
 
 	void advanceIonsVelocity(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT);
 
 	void advanceIonsPosition(const inputParameters * params,const meshGeometry * mesh,vector<ionSpecies> * IONS,const double DT);
+
+
+	void advanceGCIons(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT);
 };
 
 #endif

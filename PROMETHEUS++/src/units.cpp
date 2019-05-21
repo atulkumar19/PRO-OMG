@@ -187,13 +187,13 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 
 	CS->time = 1/characteristicPlasmaFrequency;
 	CS->velocity = F_C;
-	CS->length = CS->velocity/characteristicPlasmaFrequency;
-	CS->eField = ( characteristicPlasmaFrequency*CS->mass*CS->velocity )/CS->charge;
-	CS->bField = ( characteristicPlasmaFrequency*CS->mass )/CS->charge;
+	CS->momentum = CS->mass*CS->velocity;
+	CS->length = CS->velocity*CS->time;
+	CS->eField = ( CS->mass*CS->velocity )/( CS->charge*CS->time );
+	CS->bField = CS->eField/CS->velocity; // CS->mass/( CS->charge*CS->time );
 	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB;
-	CS->pressure = CS->bField*CS->velocity*CS->velocity*CS->charge*CS->density*CS->time; // CS->eField*CS->velocity*CS->charge*CS->density*CS->time;
+	CS->pressure = CS->bField*CS->velocity*CS->velocity*CS->charge*CS->density*CS->time;
 	CS->resistivity = CS->bField/(CS->charge*CS->density);
-//	CS->mass*CS->density*CS->velocity*CS->velocity;
 	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
 
 	if(params->mpi.rank_cart == 0){
@@ -254,6 +254,8 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 		IONS->at(ii).BGP.Wpi *= CS->time;//IMPORTANT: Not normalized before!!
 		IONS->at(ii).X = IONS->at(ii).X/CS->length;
 		IONS->at(ii).V = IONS->at(ii).V/CS->velocity;
+		IONS->at(ii).P = IONS->at(ii).P/CS->momentum;
+		IONS->at(ii).mu = IONS->at(ii).P/CS->magneticMoment;
 	}//Iterations over the ion species.
 	//Normalizing ions' properties.
 

@@ -1,5 +1,77 @@
 #include "PIC.h"
 
+PIC::PIC(){
+/*
+	A = { 	{0.0,           0.0,            0.0,        0.0,        0.0,            0.0,    0.0},
+	 		{1/5,           0.0,            0.0,        0.0,        0.0,            0.0,    0.0},
+	 		{3/40,          9/40,           0.0,        0.0,        0.0,            0.0,    0.0},
+	 		{44/45,         -56/15,         32/9,       0.0,        0.0,            0.0,    0.0},
+	 		{19372/6561,    -25360/2187,    64448/6561, -212/729,   0.0,            0.0,    0.0},
+	 		{9017/3168,     -355/33,        46732/5247, 49/176,     -5103/18656,    0.0,    0.0},
+	 		{35/384,        0.0,            500/1113,   125/192,    -2187/6784,     11/84,  0.0}	};
+*/
+	A(0,0) = 0.0;
+	A(0,1) = 0.0;
+	A(0,2) = 0.0;
+	A(0,3) = 0.0;
+	A(0,4) = 0.0;
+	A(0,5) = 0.0;
+	A(0,6) = 0.0;
+
+	A(1,0) = 1.0/5.0;
+	A(1,1) = 0.0;
+	A(1,2) = 0.0;
+	A(1,3) = 0.0;
+	A(1,4) = 0.0;
+	A(1,5) = 0.0;
+	A(1,6) = 0.0;
+
+	A(2,0) = 3.0/40.0;
+	A(2,1) = 9.0/40.0;
+	A(2,2) = 0.0;
+	A(2,3) = 0.0;
+	A(2,4) = 0.0;
+	A(2,5) = 0.0;
+	A(2,6) = 0.0;
+
+	A(3,0) = 44.0/45.0;
+	A(3,1) = -56.0/15.0;
+	A(3,2) = 32.0/9.0;
+	A(3,3) = 0.0;
+	A(3,4) = 0.0;
+	A(3,5) = 0.0;
+	A(3,6) = 0.0;
+
+	A(4,0) = 19372.0/6561.0;
+	A(4,1) = -25360.0/2187.0;
+	A(4,2) = 64448.0/6561.0;
+	A(4,3) = -212.0/729.0;
+	A(4,4) = 0.0;
+	A(4,5) = 0.0;
+	A(4,6) = 0.0;
+
+	A(5,0) = 9017.0/3168.0;
+	A(5,1) = -355.0/33.0;
+	A(5,2) = 46732.0/5247.0;
+	A(5,3) = 49.0/176.0;
+	A(5,4) = -5103.0/18656.0;
+	A(5,5) = 0.0;
+	A(5,6) = 0.0;
+
+	A(6,0) = 35.0/384.0;
+	A(6,1) = 0.0;
+	A(6,2) = 500.0/1113.0;
+	A(6,3) = 125.0/192.0;
+	A(6,4) = -2187.0/6784.0;
+	A(6,5) = 11.0/84.0;
+	A(6,6) = 0.0;
+
+	B4 = {	5179.0/57600.0, 0.0, 7571.0/16695.0, 393.0/640.0, -92097.0/339200.0, 187.0/2100.0, 1.0/40.0	};
+
+	B5 = {	35.0/384.0, 0.0, 500.0/1113.0, 125.0/192.0, -2187.0/6784.0, 11.0/84.0, 0.0	};
+
+}
+
 void PIC::MPI_BcastDensity(const inputParameters * params,ionSpecies * ions){
 
 	vec nSend = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
@@ -2041,93 +2113,6 @@ void PIC::aip_3D(const inputParameters * params,const meshGeometry * mesh,vector
 }
 
 
-void PIC::ionVariables(vector<ionSpecies> * IONS,vector<ionSpecies> * copyIONS,const int flag){
-	switch(flag){
-		case(0):{// Copy ion density of IONS into copyIONS
-			for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-				ionSpecies ions;
-
-				ions.SPECIES = IONS->at(ii).SPECIES;
-				ions.NSP = IONS->at(ii).NSP;
-				ions.NCP = IONS->at(ii).NCP;
-				ions.NPC = IONS->at(ii).NPC;
-				ions.Z = IONS->at(ii).Z;
-				ions.Q = IONS->at(ii).Q;
-				ions.M = IONS->at(ii).M;
-
-				ions.BGP = IONS->at(ii).BGP;
-
-				ions.n = IONS->at(ii).n;
-
-				copyIONS->push_back(ions);
-			}
-			break;
-		}
-		case(1):{// IONS is copied into copyIONS through the push_back method
-			for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-				ionSpecies ions;
-
-				ions.SPECIES = IONS->at(ii).SPECIES;
-				ions.NSP = IONS->at(ii).NSP;
-				ions.NCP = IONS->at(ii).NCP;
-				ions.NPC = IONS->at(ii).NPC;
-				ions.Z = IONS->at(ii).Z;
-				ions.Q = IONS->at(ii).Q;
-				ions.M = IONS->at(ii).M;
-
-				ions.BGP = IONS->at(ii).BGP;
-
-				ions.n = IONS->at(ii).n;
-				ions.nv = IONS->at(ii).nv;
-
-				copyIONS->push_back(ions);
-			}
-			break;
-		}
-		case(2):{// Copy ion bulk velocity of IONS into copyIONS and compute ion density as the mean ion density of IONS and copyIONS
-			for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-				copyIONS->at(ii).SPECIES = IONS->at(ii).SPECIES;
-				copyIONS->at(ii).NSP = IONS->at(ii).NSP;
-				copyIONS->at(ii).NCP = IONS->at(ii).NCP;
-				copyIONS->at(ii).NPC = IONS->at(ii).NPC;
-				copyIONS->at(ii).Z = IONS->at(ii).Z;
-				copyIONS->at(ii).Q = IONS->at(ii).Q;
-				copyIONS->at(ii).M = IONS->at(ii).M;
-
-				copyIONS->at(ii).BGP = IONS->at(ii).BGP;
-
-				copyIONS->at(ii).n = 0.5*(copyIONS->at(ii).n + IONS->at(ii).n);
-				copyIONS->at(ii).nv = IONS->at(ii).nv;
-			}
-			break;
-		}
-		case(3):{// Copy ions density and bulk velocity of IONS into copyIONS
-			for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-				copyIONS->at(ii).SPECIES = IONS->at(ii).SPECIES;
-				copyIONS->at(ii).NSP = IONS->at(ii).NSP;
-				copyIONS->at(ii).NCP = IONS->at(ii).NCP;
-				copyIONS->at(ii).NPC = IONS->at(ii).NPC;
-				copyIONS->at(ii).Z = IONS->at(ii).Z;
-				copyIONS->at(ii).Q = IONS->at(ii).Q;
-				copyIONS->at(ii).M = IONS->at(ii).M;
-
-				copyIONS->at(ii).BGP = IONS->at(ii).BGP;
-
-				copyIONS->at(ii).n = IONS->at(ii).n;
-				copyIONS->at(ii).nv = IONS->at(ii).nv;
-
-			}
-			break;
-		}
-		default:{
-			std::ofstream ofs("errors/ionVariables.txt",std::ofstream::out);
-			ofs << "ERROR: velocityExtrapolation. Please, introduce a valid option.\n";
-			ofs.close();
-			exit(1);
-		}
- 	}
-}
-
 void PIC::advanceIonsVelocity(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
 
 	//cout << "Status: Advancing the ions' velocity...\n";
@@ -2176,4 +2161,12 @@ void PIC::advanceIonsPosition(const inputParameters * params,const meshGeometry 
 	#ifdef THREED
 		aip_3D(params,mesh,IONS,DT);
 	#endif
+}
+
+void PIC::advanceGCIons(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS,const double DT){
+
+	vector<ionSpecies> IONS_RK = *IONS;
+
+
+
 }

@@ -150,6 +150,7 @@ struct inputParameters{
 struct characteristicScales{
 	double time;
 	double velocity;
+	double momentum;
 	double length;
 	double mass;
 	double charge;

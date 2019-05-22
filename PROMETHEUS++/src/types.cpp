@@ -315,6 +315,8 @@ void vfield_cube::zeros(unsigned int N, unsigned int M, unsigned int P){
 void oneDimensional::electromagneticFields::zeros(unsigned int N){
 	E.zeros(N);
 	B.zeros(N);
+	b.zeros(N);
+	b_.zeros(N);
 }
 
 void twoDimensional::electromagneticFields::zeros(unsigned int N, unsigned int M){

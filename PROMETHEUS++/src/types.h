@@ -114,9 +114,11 @@ class oneDimensional::electromagneticFields : public vfield_vec{
 public:
 	vfield_vec E;
 	vfield_vec B;
+	vfield_vec b;
+	vfield_vec b_;
 
 	electromagneticFields(){};
-	electromagneticFields(unsigned int N) : E(N), B(N){}
+	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N){};
 	void zeros(unsigned int N);
 	void fill(double A);
 };
@@ -154,7 +156,7 @@ public:
 
 	arma::mat X; 		// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::vec P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 		// Ions' relativistic gamma factor.
 	arma::vec meshNode; // Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
 
@@ -184,9 +186,11 @@ class twoDimensional::electromagneticFields : public vfield_mat{
 public:
 	vfield_mat E;
 	vfield_mat B;
+	vfield_mat b;
+	vfield_mat b_;
 
 	electromagneticFields(){};
-	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M){}
+	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M), b(N,M), b_(N,M){};
 	void zeros(unsigned int N, unsigned int M);
 };
 
@@ -196,9 +200,11 @@ class threeDimensional::electromagneticFields : public vfield_cube{
 public:
 	vfield_cube E;
 	vfield_cube B;
+	vfield_cube b;
+	vfield_cube b_;
 
 	electromagneticFields(){};
-	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P){}
+	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P){};
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
 #endif

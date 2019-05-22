@@ -30,7 +30,6 @@ int main(int argc, char* argv[]){
 	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	emf EB; 						// Derived type with variables of electromagnetic fields.
 
-
 	INITIALIZE init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);

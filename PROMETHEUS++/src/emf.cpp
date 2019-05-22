@@ -59,7 +59,7 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * fiel
 void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->meshDim(0) + 2;
-	vec b = zeros(dim_x);
+	arma::vec b = zeros(dim_x);
 	double w0(23.0/48.0), w1(0.25), w2(1.0/96.0);//weights
 
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart + 1);
@@ -102,7 +102,7 @@ void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_mat * vf,doubl
 void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->meshDim(0) + 2;
-	vec b = zeros(dim_x);
+	arma::vec b = zeros(dim_x);
 	double w0(0.75), w1(0.125);//weights
 
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart + 1);
@@ -144,7 +144,7 @@ void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_mat * vf,doubl
 void EMF_SOLVER::smooth(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->meshDim(0) + 2;
-	vec b = zeros(dim_x);
+	arma::vec b = zeros(dim_x);
 	double w0(0.5), w1(0.25);//weights
 
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);

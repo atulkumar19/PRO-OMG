@@ -505,6 +505,12 @@ void INITIALIZE::initializeFields(const inputParameters * params,const meshGeome
 		EB->B.Y.fill(params->BGP.By);//y
 		EB->B.Z.fill(params->BGP.Bz);//z
 
+		EB->b.X = EB->B.X/sqrt( dot(EB->B.X, EB->B.X) + dot(EB->B.Y, EB->B.Y) + dot(EB->B.Y, EB->B.Y) );
+		EB->b.Y = EB->B.Y/sqrt( dot(EB->B.X, EB->B.X) + dot(EB->B.Y, EB->B.Y) + dot(EB->B.Y, EB->B.Y) );
+		EB->b.Z = EB->B.Z/sqrt( dot(EB->B.X, EB->B.X) + dot(EB->B.Y, EB->B.Y) + dot(EB->B.Y, EB->B.Y) );
+
+		EB->b_ = EB->b;
+
 		if(params->mpi.rank_cart == 0){
 			cout << "Initializing electromagnetic fields within simulation\n";
 			cout << "Magnetic field component along simulation domain (x-axis): " << scientific << params->BGP.Bx << fixed << " T\n";

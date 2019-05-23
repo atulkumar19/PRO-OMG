@@ -56,6 +56,25 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * fiel
 }
 
 
+void EMF_SOLVER::MPI_passGhosts(const inputParameters * params, arma::vec * field){
+
+	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+
+	double sendBuf, recvBuf;
+
+	sendBuf = (*field)(fIndex);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	(*field)(iIndex-1) = recvBuf;
+
+	sendBuf = (*field)(iIndex);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	(*field)(fIndex+1) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
+}
+
+
 void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->meshDim(0) + 2;
@@ -282,7 +301,18 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 				}
 	}
 
+	EB->b_ = EB->b;
+
+	EB->_B = sqrt( EB->B.X % EB->B.X + EB->B.Y % EB->B.Y + EB->B.Z % EB->B.Z ); // Redefine at positions where all the components are known!!!
+
+	EB->b.X = EB->B.X/EB->_B;
+	EB->b.Y = EB->B.Y/EB->_B;
+	EB->b.Z = EB->B.Z/EB->_B;
+
 	MPI_passGhosts(params,&EB->B);
+	MPI_passGhosts(params,&EB->b);
+	MPI_passGhosts(params,&EB->b_);
+	MPI_passGhosts(params,&EB->_B);
 }
 
 

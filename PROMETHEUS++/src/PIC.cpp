@@ -156,6 +156,22 @@ void PIC::MPI_AllgatherField(const inputParameters * params, vfield_vec * field)
 }
 
 
+void PIC::MPI_AllgatherField(const inputParameters * params, arma::vec * field){
+
+	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	arma::vec recvBuf(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->meshDim(0));
+
+	MPI_ARMA_VEC chunk(params->meshDim(0));
+
+	//Allgather for x-component
+	sendBuf = field->subvec(iIndex, fIndex);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	field->subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+}
+
+
 void PIC::smooth_TOS(arma::vec * v, double as){
 
 	//Step 1: Averaging process
@@ -1157,7 +1173,6 @@ void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * ions, vf
 
 #ifdef ONED
 void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * ions, vfield_vec * emf, arma::mat * F){
-
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
 	//				    0       x
@@ -1996,8 +2011,57 @@ void PIC::advanceIonsPosition(const inputParameters * params, const meshGeometry
 }
 
 
-void PIC::getEffectiveFields(){
+void PIC::EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, arma::vec * wx, int mn, double q, double mu, double g, double ppar, emf * EB, arma::vec * B, arma::vec * E){
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+	// wxl = wx(0)
+	// wxc = wx(1)
+	// wxr = wx(2)
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
+	int N =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
+	int ix = mn + 1;
+
+	if(ix == 0){//For the particles on the right side boundary.
+
+	}else if(ix == (N-1)){
+
+	}else{
+		// wxl
+		(*B)(0) += (*wx)(0)*EB->B.X(ix-1);
+		(*B)(1) += (*wx)(0)*( EB->B.Y(ix-1) - (ppar/q)*(EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		(*B)(2) += (*wx)(0)*( EB->B.Z(ix-1) + (ppar/q)*(EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
+
+		// wxc
+		(*B)(0) += (*wx)(1)*EB->B.X(ix);
+		(*B)(1) += (*wx)(1)*( EB->B.Y(ix) - (ppar/q)*(EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
+		(*B)(2) += (*wx)(1)*( EB->B.Z(ix) + (ppar/q)*(EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
+
+		// wxr
+		(*B)(0) += (*wx)(2)*EB->B.X(ix+1);
+		(*B)(1) += (*wx)(2)*( EB->B.Y(ix+1) - (ppar/q)*(EB->b.Z(ix+2) - EB->b.Z(ix+1))/DX );
+		(*B)(2) += (*wx)(2)*( EB->B.Z(ix+1) + (ppar/q)*(EB->b.Y(ix+2) - EB->b.Y(ix+1))/DX );
+
+		// wxl
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT) )/q );
+		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT) )/q;
+		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT) )/q;
+
+// Check equations below
+		// wxc
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT) )/q );
+		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT) )/q;
+		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT) )/q;
+
+		// wxr
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT) )/q );
+		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT) )/q;
+		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT) )/q;
+
+	}
 }
 
 
@@ -2008,6 +2072,9 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 
 	MPI_AllgatherField(params, &EB->E);
 	MPI_AllgatherField(params, &EB->B);
+	MPI_AllgatherField(params, &EB->b);
+	MPI_AllgatherField(params, &EB->b_);
+	MPI_AllgatherField(params, &EB->_B);
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	forwardPBC_1D(&EB->E.X);
@@ -2017,6 +2084,16 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	forwardPBC_1D(&EB->B.X);
 	forwardPBC_1D(&EB->B.Y);
 	forwardPBC_1D(&EB->B.Z);
+
+	forwardPBC_1D(&EB->b.X);
+	forwardPBC_1D(&EB->b.Y);
+	forwardPBC_1D(&EB->b.Z);
+
+	forwardPBC_1D(&EB->b_.X);
+	forwardPBC_1D(&EB->b_.Y);
+	forwardPBC_1D(&EB->b_.Z);
+
+	forwardPBC_1D(&EB->_B);
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
 	emf EB_;
@@ -2030,6 +2107,14 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	EB_.B.Y.subvec(1,NX-2) = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) );
 	EB_.B.Z.subvec(1,NX-2) = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) );
 
+	EB_.b.X.subvec(1,NX-2) = EB->b.X.subvec(1,NX-2);
+	EB_.b.Y.subvec(1,NX-2) = 0.5*( EB->b.Y.subvec(1,NX-2) + EB->b.Y.subvec(0,NX-3) );
+	EB_.b.Z.subvec(1,NX-2) = 0.5*( EB->b.Z.subvec(1,NX-2) + EB->b.Z.subvec(0,NX-3) );
+
+	EB_.b_.X.subvec(1,NX-2) = EB->b_.X.subvec(1,NX-2);
+	EB_.b_.Y.subvec(1,NX-2) = 0.5*( EB->b_.Y.subvec(1,NX-2) + EB->b_.Y.subvec(0,NX-3) );
+	EB_.b_.Z.subvec(1,NX-2) = 0.5*( EB->b_.Z.subvec(1,NX-2) + EB->b_.Z.subvec(0,NX-3) );
+
 	forwardPBC_1D(&EB_.E.X);
 	forwardPBC_1D(&EB_.E.Y);
 	forwardPBC_1D(&EB_.E.Z);
@@ -2037,6 +2122,16 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	forwardPBC_1D(&EB_.B.X);
 	forwardPBC_1D(&EB_.B.Y);
 	forwardPBC_1D(&EB_.B.Z);
+
+	forwardPBC_1D(&EB_.b.X);
+	forwardPBC_1D(&EB_.b.Y);
+	forwardPBC_1D(&EB_.b.Z);
+
+	forwardPBC_1D(&EB_.b_.X);
+	forwardPBC_1D(&EB_.b_.Y);
+	forwardPBC_1D(&EB_.b_.Z);
+
+	forwardPBC_1D(&EB_._B);
 
 	for(int ss=1;ss<IONS_RK.size();ss++){
 		for(int pp=1;pp<IONS_RK.at(ss).NSP;pp++){

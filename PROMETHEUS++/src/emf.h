@@ -18,7 +18,9 @@ using namespace arma;
 
 class EMF_SOLVER{
 
-	void MPI_passGhosts(const inputParameters * params,vfield_vec * field);
+	void MPI_passGhosts(const inputParameters * params, vfield_vec * field);
+
+	void MPI_passGhosts(const inputParameters * params, arma::vec * field);
 
 	double dt;//Time step for the RK4 function
 
@@ -50,18 +52,18 @@ class EMF_SOLVER{
 
 	vfield_vec Ui__; // Ions' bulk velocity at time level "l - 3/2"
 
-	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB);
+	void FaradaysLaw(const inputParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB);
 
-	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB);
+	void FaradaysLaw(const inputParameters * params, const meshGeometry * mesh, twoDimensional::electromagneticFields * EB);
 
-	void FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB);
+	void FaradaysLaw(const inputParameters * params, const meshGeometry * mesh, threeDimensional::electromagneticFields * EB);
 
 
-	void aef_1D(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS);
+	void aef_1D(const inputParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS);
 
-	void aef_2D(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS);
+	void aef_2D(const inputParameters * params, const meshGeometry * mesh, twoDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS);
 
-	void aef_3D(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS);
+	void aef_3D(const inputParameters * params, const meshGeometry * mesh, threeDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS);
 
   public:
 
@@ -69,29 +71,29 @@ class EMF_SOLVER{
 
 	EMF_SOLVER(const inputParameters * params, characteristicScales * CS);
 
-	void smooth_TOS(const inputParameters * params,vfield_vec * vf,double as);
+	void smooth_TOS(const inputParameters * params, vfield_vec * vf, double as);
 
-	void smooth_TOS(const inputParameters * params,vfield_mat * vf,double as);
+	void smooth_TOS(const inputParameters * params, vfield_mat * vf, double as);
 
-	void smooth_TSC(const inputParameters * params,vfield_vec * vf,double as);
+	void smooth_TSC(const inputParameters * params, vfield_vec * vf, double as);
 
-	void smooth_TSC(const inputParameters * params,vfield_mat * vf,double as);
+	void smooth_TSC(const inputParameters * params, vfield_mat * vf, double as);
 
-	void smooth(const inputParameters * params,vfield_vec * vf,double as);
+	void smooth(const inputParameters * params, vfield_vec * vf, double as);
 
-	void smooth(const inputParameters * params,vfield_mat * vf,double as);
+	void smooth(const inputParameters * params, vfield_mat * vf, double as);
 
-	void equilibrium(const inputParameters * params,vector<ionSpecies> * IONS,emf * EB);
+	void equilibrium(const inputParameters * params, vector<ionSpecies> * IONS, emf * EB);
 
-	void advanceBField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
+	void advanceBField(const inputParameters * params, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS);
 
-	void advanceEField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
+	void advanceEField(const inputParameters * params, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS);
 
-	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS, const int BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params, const meshGeometry * mesh, twoDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS, const int BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params, const meshGeometry * mesh, threeDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS, const int BAE);
 
 };
 

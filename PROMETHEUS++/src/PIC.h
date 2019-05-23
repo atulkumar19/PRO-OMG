@@ -49,6 +49,8 @@ class PIC{
 
 	void MPI_AllgatherField(const inputParameters * params, vfield_vec * field);
 
+	void MPI_AllgatherField(const inputParameters * params, arma::vec * field);
+
 
 	void smooth_TOS(arma::vec * v, double as);
 
@@ -130,7 +132,7 @@ class PIC{
 	void aip_3D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
 
 
-	void getEffectiveFields();
+	void EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, arma::vec * wx, int mn, double q, double mu, double g, double ppar, emf * EB, arma::vec * B, arma::vec * E);
 
 	void ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
 

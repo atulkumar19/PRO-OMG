@@ -263,6 +263,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 
 	EB->E /= CS->eField;
 	EB->B /= CS->bField;
+	EB->_B /= CS->bField;
 
 	//Normalizing the electromagnetic fields.
 }

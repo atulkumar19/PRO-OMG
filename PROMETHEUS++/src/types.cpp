@@ -317,14 +317,21 @@ void oneDimensional::electromagneticFields::zeros(unsigned int N){
 	B.zeros(N);
 	b.zeros(N);
 	b_.zeros(N);
+	_B.zeros(N);
 }
 
 void twoDimensional::electromagneticFields::zeros(unsigned int N, unsigned int M){
 	E.zeros(N,M);
 	B.zeros(N,M);
+	b.zeros(N,M);
+	b_.zeros(N,M);
+	_B.zeros(N,M);
 }
 
 void threeDimensional::electromagneticFields::zeros(unsigned int N, unsigned int M, unsigned int P){
 	E.zeros(N,M,P);
 	B.zeros(N,M,P);
+	b.zeros(N,M,P);
+	b_.zeros(N,M,P);
+	_B.zeros(N,M,P);
 }

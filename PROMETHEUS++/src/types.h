@@ -116,9 +116,10 @@ public:
 	vfield_vec B;
 	vfield_vec b;
 	vfield_vec b_;
+	arma::vec _B;
 
 	electromagneticFields(){};
-	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N){};
+	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
 	void zeros(unsigned int N);
 	void fill(double A);
 };
@@ -188,9 +189,10 @@ public:
 	vfield_mat B;
 	vfield_mat b;
 	vfield_mat b_;
+	arma::mat _B;
 
 	electromagneticFields(){};
-	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M), b(N,M), b_(N,M){};
+	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M), b(N,M), b_(N,M), _B(N,M){};
 	void zeros(unsigned int N, unsigned int M);
 };
 
@@ -202,9 +204,10 @@ public:
 	vfield_cube B;
 	vfield_cube b;
 	vfield_cube b_;
+	arma::cube _B;
 
 	electromagneticFields(){};
-	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P){};
+	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P), _B(N,M,P){};
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
 #endif

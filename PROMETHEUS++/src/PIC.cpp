@@ -2027,39 +2027,44 @@ void PIC::EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, a
 
 	if(ix == 0){//For the particles on the right side boundary.
 
+	}else if(ix == 1){
+
+	}else if(ix == (N-2)){
+
 	}else if(ix == (N-1)){
 
 	}else{
+		// Effective magnetic field
 		// wxl
 		(*B)(0) += (*wx)(0)*EB->B.X(ix-1);
-		(*B)(1) += (*wx)(0)*( EB->B.Y(ix-1) - (ppar/q)*(EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
-		(*B)(2) += (*wx)(0)*( EB->B.Z(ix-1) + (ppar/q)*(EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
+		(*B)(1) += (*wx)(0)*( EB->B.Y(ix-1) - (ppar/q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		(*B)(2) += (*wx)(0)*( EB->B.Z(ix-1) + (ppar/q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
 
 		// wxc
 		(*B)(0) += (*wx)(1)*EB->B.X(ix);
-		(*B)(1) += (*wx)(1)*( EB->B.Y(ix) - (ppar/q)*(EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
-		(*B)(2) += (*wx)(1)*( EB->B.Z(ix) + (ppar/q)*(EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
+		(*B)(1) += (*wx)(1)*( EB->B.Y(ix) - (ppar/q)*( EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
+		(*B)(2) += (*wx)(1)*( EB->B.Z(ix) + (ppar/q)*( EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
 
 		// wxr
 		(*B)(0) += (*wx)(2)*EB->B.X(ix+1);
-		(*B)(1) += (*wx)(2)*( EB->B.Y(ix+1) - (ppar/q)*(EB->b.Z(ix+2) - EB->b.Z(ix+1))/DX );
-		(*B)(2) += (*wx)(2)*( EB->B.Z(ix+1) + (ppar/q)*(EB->b.Y(ix+2) - EB->b.Y(ix+1))/DX );
+		(*B)(1) += (*wx)(2)*( EB->B.Y(ix+1) - (ppar/q)*( EB->b.Z(ix+2) - EB->b.Z(ix+1))/DX );
+		(*B)(2) += (*wx)(2)*( EB->B.Z(ix+1) + (ppar/q)*( EB->b.Y(ix+2) - EB->b.Y(ix+1))/DX );
 
+		// Effective electric field
 		// wxl
-		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT) )/q );
-		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT) )/q;
-		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT) )/q;
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
+		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
+		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
 
-// Check equations below
 		// wxc
-		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT) )/q );
-		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT) )/q;
-		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT) )/q;
+		(*E)(0) += (*wx)(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B(ix+1) - EB->_B(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
+		(*E)(1) += (*wx)(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
+		(*E)(2) += (*wx)(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
 
 		// wxr
-		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT) )/q );
-		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT) )/q;
-		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT) )/q;
+		(*E)(0) += (*wx)(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B(ix+2) - EB->_B(ix+1))/DX - ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/q );
+		(*E)(1) += (*wx)(2)*( EB->E.Y(ix+1) + ( ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/q );
+		(*E)(2) += (*wx)(2)*( EB->E.Z(ix+1) + ( ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/q );
 
 	}
 }

@@ -114,9 +114,9 @@ class oneDimensional::electromagneticFields : public vfield_vec{
 public:
 	vfield_vec E;
 	vfield_vec B;
+	vfield_vec _B;
 	vfield_vec b;
 	vfield_vec b_;
-	arma::vec _B;
 
 	electromagneticFields(){};
 	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};

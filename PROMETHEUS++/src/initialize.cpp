@@ -498,18 +498,25 @@ void INITIALIZE::initializeFields(const inputParameters * params,const meshGeome
 			cout << "Loading external electromagnetic fields\n";
 		MPI_Abort(MPI_COMM_WORLD,-123);
 	}else{//The electromagnetic fields are being initialized in the runtime.
-		int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
-		EB->zeros(dim + 2);//We include the ghost mesh points (+2) in the initialization
+		int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		//int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
+		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
 
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y
 		EB->B.Z.fill(params->BGP.Bz);//z
 
-		EB->_B = sqrt( EB->B.X % EB->B.X + EB->B.Y % EB->B.Y + EB->B.Z % EB->B.Z );
+		EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
+						+ 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
+						+ 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
 
-		EB->b.X = EB->B.X/EB->_B;
-		EB->b.Y = EB->B.Y/EB->_B;
-		EB->b.Z = EB->B.Z/EB->_B;
+		EB->_B.Y.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+						+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+		EB->_B.Z.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+						+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+		EB->b = EB->B/EB->_B;
 
 		EB->b_ = EB->b;
 

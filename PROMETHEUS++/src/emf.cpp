@@ -25,7 +25,8 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * fiel
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
-	double sendBuf, recvBuf;
+	double sendBuf;
+	double recvBuf;
 
 	sendBuf = field->X(fIndex);
 	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
@@ -61,7 +62,8 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params, arma::vec * fiel
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
-	double sendBuf, recvBuf;
+	double sendBuf;
+	double recvBuf;
 
 	sendBuf = (*field)(fIndex);
 	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
@@ -243,6 +245,7 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
+	int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
 
@@ -303,15 +306,24 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 
 	EB->b_ = EB->b;
 
-	EB->_B = sqrt( EB->B.X % EB->B.X + EB->B.Y % EB->B.Y + EB->B.Z % EB->B.Z ); // Redefine at positions where all the components are known!!!
-
-	EB->b.X = EB->B.X/EB->_B;
-	EB->b.Y = EB->B.Y/EB->_B;
-	EB->b.Z = EB->B.Z/EB->_B;
-
 	MPI_passGhosts(params,&EB->B);
-	MPI_passGhosts(params,&EB->b);
 	MPI_passGhosts(params,&EB->b_);
+
+
+	EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
+					+ 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
+					+ 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
+
+	EB->_B.Y.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+					+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+	EB->_B.Z.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+					+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+	EB->b = EB->B/EB->_B;
+
+
+	MPI_passGhosts(params,&EB->b);
 	MPI_passGhosts(params,&EB->_B);
 }
 

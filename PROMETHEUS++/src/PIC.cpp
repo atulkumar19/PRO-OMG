@@ -1187,23 +1187,22 @@ void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * ions, vf
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
-
 	#pragma omp parallel for private(ii) shared(N, NSP, params, ions, emf, F)
 	for(ii=0;ii<NSP;ii++){
 		int ix = ions->meshNode(ii) + 1;
 		if(ix == (N-1)){//For the particles on the right side boundary.
-			(*F)(ii,0) += ions->wxl(ii)*emf->X(N-2);
-			(*F)(ii,1) += ions->wxl(ii)*emf->Y(N-2);
-			(*F)(ii,2) += ions->wxl(ii)*emf->Z(N-2);
+			(*F)(ii,0) += ions->wxl(ii)*emf->X(ix-1);
+			(*F)(ii,1) += ions->wxl(ii)*emf->Y(ix-1);
+			(*F)(ii,2) += ions->wxl(ii)*emf->Z(ix-1);
 
-			(*F)(ii,0) += ions->wxc(ii)*emf->X(N-1);
-			(*F)(ii,1) += ions->wxc(ii)*emf->Y(N-1);
-			(*F)(ii,2) += ions->wxc(ii)*emf->Z(N-1);
+			(*F)(ii,0) += ions->wxc(ii)*emf->X(ix);
+			(*F)(ii,1) += ions->wxc(ii)*emf->Y(ix);
+			(*F)(ii,2) += ions->wxc(ii)*emf->Z(ix);
 
 			(*F)(ii,0) += ions->wxr(ii)*emf->X(2);
 			(*F)(ii,1) += ions->wxr(ii)*emf->Y(2);
 			(*F)(ii,2) += ions->wxr(ii)*emf->Z(2);
-		}else if(ix != (N-1)){
+		}else{
 			(*F)(ii,0) += ions->wxl(ii)*emf->X(ix-1);
 			(*F)(ii,1) += ions->wxl(ii)*emf->Y(ix-1);
 			(*F)(ii,2) += ions->wxl(ii)*emf->Z(ix-1);
@@ -2025,14 +2024,70 @@ void PIC::EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, a
 	int N =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
 	int ix = mn + 1;
 
-	if(ix == 0){//For the particles on the right side boundary.
+	if(ix == (N-2)){
+		// Effective magnetic field
+		// wxl
+		(*B)(0) += (*wx)(0)*EB->B.X(ix-1);
+		(*B)(1) += (*wx)(0)*( EB->B.Y(ix-1) - (ppar/q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		(*B)(2) += (*wx)(0)*( EB->B.Z(ix-1) + (ppar/q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
 
-	}else if(ix == 1){
+		// wxc
+		(*B)(0) += (*wx)(1)*EB->B.X(ix);
+		(*B)(1) += (*wx)(1)*( EB->B.Y(ix) - (ppar/q)*( EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
+		(*B)(2) += (*wx)(1)*( EB->B.Z(ix) + (ppar/q)*( EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
 
-	}else if(ix == (N-2)){
+		// wxr
+		(*B)(0) += (*wx)(2)*EB->B.X(ix+1);
+		(*B)(1) += (*wx)(2)*( EB->B.Y(ix+1) - (ppar/q)*( EB->b.Z(2) - EB->b.Z(ix+1))/DX );
+		(*B)(2) += (*wx)(2)*( EB->B.Z(ix+1) + (ppar/q)*( EB->b.Y(2) - EB->b.Y(ix+1))/DX );
 
+		// Effective electric field
+		// wxl
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
+		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
+		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
+
+		// wxc
+		(*E)(0) += (*wx)(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
+		(*E)(1) += (*wx)(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
+		(*E)(2) += (*wx)(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
+
+		// wxr
+		(*E)(0) += (*wx)(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B.X(2) - EB->_B.X(ix+1))/DX - ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/q );
+		(*E)(1) += (*wx)(2)*( EB->E.Y(ix+1) + ( ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/q );
+		(*E)(2) += (*wx)(2)*( EB->E.Z(ix+1) + ( ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/q );
 	}else if(ix == (N-1)){
+		// Effective magnetic field
+		// wxl
+		(*B)(0) += (*wx)(0)*EB->B.X(ix-1);
+		(*B)(1) += (*wx)(0)*( EB->B.Y(ix-1) - (ppar/q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		(*B)(2) += (*wx)(0)*( EB->B.Z(ix-1) + (ppar/q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
 
+		// wxc
+		(*B)(0) += (*wx)(1)*EB->B.X(ix);
+		(*B)(1) += (*wx)(1)*( EB->B.Y(ix) - (ppar/q)*( EB->b.Z(2) - EB->b.Z(ix))/DX );
+		(*B)(2) += (*wx)(1)*( EB->B.Z(ix) + (ppar/q)*( EB->b.Y(2) - EB->b.Y(ix))/DX );
+
+		// wxr
+		(*B)(0) += (*wx)(2)*EB->B.X(2);
+		(*B)(1) += (*wx)(2)*( EB->B.Y(2) - (ppar/q)*( EB->b.Z(3) - EB->b.Z(2))/DX );
+		(*B)(2) += (*wx)(2)*( EB->B.Z(2) + (ppar/q)*( EB->b.Y(3) - EB->b.Y(2))/DX );
+
+		// Effective electric field
+		// wxl
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
+		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
+		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
+
+		// wxc
+		(*E)(0) += (*wx)(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(2) - EB->_B.X(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
+		(*E)(1) += (*wx)(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
+		(*E)(2) += (*wx)(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
+
+		// wxr
+		(*E)(0) += (*wx)(2)*( EB->E.X(2) - ( (2*mu/g)*(EB->_B.X(3) - EB->_B.X(2))/DX - ppar*(EB->b.X(2) - EB->b_.X(2))/DT )/q );
+		(*E)(1) += (*wx)(2)*( EB->E.Y(2) + ( ppar*(EB->b.Y(2) - EB->b_.Y(2))/DT )/q );
+		(*E)(2) += (*wx)(2)*( EB->E.Z(2) + ( ppar*(EB->b.Z(2) - EB->b_.Z(2))/DT )/q );
 	}else{
 		// Effective magnetic field
 		// wxl
@@ -2052,20 +2107,19 @@ void PIC::EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, a
 
 		// Effective electric field
 		// wxl
-		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B(ix) - EB->_B(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
+		(*E)(0) += (*wx)(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
 		(*E)(1) += (*wx)(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
 		(*E)(2) += (*wx)(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
 
 		// wxc
-		(*E)(0) += (*wx)(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B(ix+1) - EB->_B(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
+		(*E)(0) += (*wx)(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
 		(*E)(1) += (*wx)(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
 		(*E)(2) += (*wx)(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
 
 		// wxr
-		(*E)(0) += (*wx)(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B(ix+2) - EB->_B(ix+1))/DX - ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/q );
+		(*E)(0) += (*wx)(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B.X(ix+2) - EB->_B.X(ix+1))/DX - ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/q );
 		(*E)(1) += (*wx)(2)*( EB->E.Y(ix+1) + ( ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/q );
 		(*E)(2) += (*wx)(2)*( EB->E.Z(ix+1) + ( ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/q );
-
 	}
 }
 
@@ -2098,7 +2152,9 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	forwardPBC_1D(&EB->b_.Y);
 	forwardPBC_1D(&EB->b_.Z);
 
-	forwardPBC_1D(&EB->_B);
+	forwardPBC_1D(&EB->_B.X);
+	forwardPBC_1D(&EB->_B.Y);
+	forwardPBC_1D(&EB->_B.Z);
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
 	emf EB_;
@@ -2136,7 +2192,14 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	forwardPBC_1D(&EB_.b_.Y);
 	forwardPBC_1D(&EB_.b_.Z);
 
-	forwardPBC_1D(&EB_._B);
+	forwardPBC_1D(&EB_._B.X);
+	forwardPBC_1D(&EB_._B.Y);
+	forwardPBC_1D(&EB_._B.Z);
+
+	cout << "ALL OK!";
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Abort(MPI_COMM_WORLD,-123);
 
 	for(int ss=1;ss<IONS_RK.size();ss++){
 		for(int pp=1;pp<IONS_RK.at(ss).NSP;pp++){

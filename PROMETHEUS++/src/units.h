@@ -29,6 +29,8 @@ class UNITS{
 
 	void dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB,const characteristicScales * CS);
 
+	void broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS);
+
 public:
 
 	UNITS(){};

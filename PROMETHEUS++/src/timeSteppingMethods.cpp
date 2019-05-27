@@ -86,6 +86,9 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
+
+
+/*
         fields.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
@@ -110,6 +113,8 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
                 cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
             }
         }
+*/
+
     } // Time iterations.
 
 }

@@ -111,6 +111,7 @@ public:
 
 class oneDimensional::electromagneticFields : public vfield_vec{
 
+
 public:
 	vfield_vec E;
 	vfield_vec B;
@@ -159,7 +160,7 @@ public:
 	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 		// Ions' relativistic gamma factor.
-	arma::vec meshNode; // Position of each particle in the discrete mesh. meshNode(ii,0) = position of the iith particle along the x axis.
+	arma::vec meshNode; // Position of each particle in the discrete mesh. 
 
 	// Guiding-center variables
 	arma::vec mu; 	// Ions' magnetic moment.

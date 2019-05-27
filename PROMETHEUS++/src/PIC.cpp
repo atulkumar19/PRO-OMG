@@ -2176,6 +2176,8 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	EB_.b_.Y.subvec(1,NX-2) = 0.5*( EB->b_.Y.subvec(1,NX-2) + EB->b_.Y.subvec(0,NX-3) );
 	EB_.b_.Z.subvec(1,NX-2) = 0.5*( EB->b_.Z.subvec(1,NX-2) + EB->b_.Z.subvec(0,NX-3) );
 
+	EB_._B = EB->_B;
+
 	forwardPBC_1D(&EB_.E.X);
 	forwardPBC_1D(&EB_.E.Y);
 	forwardPBC_1D(&EB_.E.Z);
@@ -2196,16 +2198,28 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 	forwardPBC_1D(&EB_._B.Y);
 	forwardPBC_1D(&EB_._B.Z);
 
-	cout << "ALL OK!";
+	for(int ss=0;ss<IONS_RK.size();ss++){
+		arma::vec wx;
+		arma::vec B = zeros(3);
+		arma::vec E = zeros(3);
 
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Abort(MPI_COMM_WORLD,-123);
+		for(int pp=0;pp<IONS_RK.at(ss).NSP;pp++){
+			wx = { IONS_RK.at(ss).wxl(pp), IONS_RK.at(ss).wxc(pp), IONS_RK.at(ss).wxr(pp) };
 
-	for(int ss=1;ss<IONS_RK.size();ss++){
-		for(int pp=1;pp<IONS_RK.at(ss).NSP;pp++){
-			while(time_rk < DT){
+			EFF_EMF_TSC_1D(params, params->DT, mesh->DX, &wx, IONS_RK.at(ss).meshNode(pp), IONS_RK.at(ss).Q, IONS_RK.at(ss).mu(pp), IONS_RK.at(ss).g(pp), IONS_RK.at(ss).Ppar(pp), &EB_, &B, &E);
 
-			} // First time loop
+			B.print("B");
+
+			E.print("E");
+
+			MPI_Barrier(MPI_COMM_WORLD);
+			MPI_Abort(MPI_COMM_WORLD,-101);
+
+//			while(time_rk < DT){
+
+
+
+//			} // First time loop
 		} // Particles loop
 	} // Species loop
 

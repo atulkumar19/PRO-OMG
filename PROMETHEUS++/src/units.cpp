@@ -165,6 +165,56 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 }
 
 
+
+void UNITS::broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS){
+
+	// Define MPI type for characteristicScales structure.
+	int numStructElem(13);
+	int structLength[13] = {1,1,1,1,1,1,1,1,1,1,1,1,1};
+	MPI_Aint displ[13];
+	MPI_Datatype csTypes[13] = {MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE,\
+		MPI_DOUBLE};
+	MPI_Datatype MPI_CS;
+
+	MPI_Get_address(&CS->time,&displ[0]);
+	MPI_Get_address(&CS->velocity,&displ[1]);
+	MPI_Get_address(&CS->momentum,&displ[2]);
+	MPI_Get_address(&CS->length,&displ[3]);
+	MPI_Get_address(&CS->mass,&displ[4]);
+	MPI_Get_address(&CS->charge,&displ[5]);
+	MPI_Get_address(&CS->density,&displ[6]);
+	MPI_Get_address(&CS->eField,&displ[7]);
+	MPI_Get_address(&CS->bField,&displ[8]);
+	MPI_Get_address(&CS->pressure,&displ[9]);
+	MPI_Get_address(&CS->temperature,&displ[10]);
+	MPI_Get_address(&CS->magneticMoment,&displ[11]);
+	MPI_Get_address(&CS->resistivity,&displ[12]);
+
+	for(int ii=numStructElem-1;ii>=0;ii--)
+		displ[ii] -= displ[0];
+
+	MPI_Type_create_struct(numStructElem,structLength,displ,csTypes,&MPI_CS);
+	MPI_Type_commit(&MPI_CS);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	MPI_Bcast(CS,1,MPI_CS,0,MPI_COMM_WORLD);
+
+	MPI_Type_free(&MPI_CS);
+}
+
+
 void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
@@ -255,7 +305,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 		IONS->at(ii).X = IONS->at(ii).X/CS->length;
 		IONS->at(ii).V = IONS->at(ii).V/CS->velocity;
 		IONS->at(ii).P = IONS->at(ii).P/CS->momentum;
-		IONS->at(ii).mu = IONS->at(ii).P/CS->magneticMoment;
+		IONS->at(ii).mu = IONS->at(ii).mu/CS->magneticMoment;
 	}//Iterations over the ion species.
 	//Normalizing ions' properties.
 
@@ -281,7 +331,5 @@ void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params,vector<i
 		defineCharacteristicScales(params,IONS,CS);
 	}
 
-	MPI_MAIN mpi_class;
-
-	mpi_class.broadcastCharacteristicScales(params,CS);
+	broadcastCharacteristicScales(params,CS);
 }

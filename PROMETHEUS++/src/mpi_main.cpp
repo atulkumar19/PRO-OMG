@@ -1,38 +1,5 @@
 #include "mpi_main.h"
 
-void MPI_MAIN::broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS){
-
-	// Define MPI type for characteristicScales structure.
-	int numStructElem(10);
-	int structLength[10] = {1,1,1,1,1,1,1,1,1,1};
-	MPI_Aint displ[10];
-	MPI_Datatype csTypes[10] = {MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE};
-	MPI_Datatype MPI_CS;
-
-	MPI_Get_address(&CS->time,&displ[0]);
-	MPI_Get_address(&CS->velocity,&displ[1]);
-	MPI_Get_address(&CS->length,&displ[2]);
-	MPI_Get_address(&CS->mass,&displ[3]);
-	MPI_Get_address(&CS->charge,&displ[4]);
-	MPI_Get_address(&CS->density,&displ[5]);
-	MPI_Get_address(&CS->eField,&displ[6]);
-	MPI_Get_address(&CS->bField,&displ[7]);
-	MPI_Get_address(&CS->pressure,&displ[8]);
-	MPI_Get_address(&CS->temperature,&displ[9]);
-
-	for(int ii=numStructElem-1;ii>=0;ii--)
-		displ[ii] -= displ[0];
-
-	MPI_Type_create_struct(numStructElem,structLength,displ,csTypes,&MPI_CS);
-	MPI_Type_commit(&MPI_CS);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	MPI_Bcast(CS,1,MPI_CS,0,MPI_COMM_WORLD);
-
-	MPI_Type_free(&MPI_CS);
-}
-
 
 void MPI_MAIN::mpi_function(inputParameters * params){
 

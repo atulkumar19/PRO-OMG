@@ -28,8 +28,6 @@ public:
 	//! Constructor of MPI_MAIN
 	MPI_MAIN(){};
 
-	void broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS);
-
 	void mpi_function(inputParameters * params);
 
 	void createMPITopology(inputParameters * params);

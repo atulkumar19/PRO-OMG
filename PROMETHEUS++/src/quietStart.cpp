@@ -109,7 +109,7 @@ void QUIETSTART::bit_reversedFractions_base3(const inputParameters * params, ion
 void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
-	ions->P = zeros(ions->NSP);
+	ions->Ppar = zeros(ions->NSP);
     ions->g = zeros(ions->NSP);
     ions->mu = zeros(ions->NSP);
 
@@ -152,7 +152,7 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
         ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
-		ions->P(pp) = ions->g(pp)*ions->M*V1(pp);
+		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
     ions->BGP.mu = mean(ions->mu);
@@ -163,7 +163,7 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->g = zeros(ions->NSP);
-    ions->P = zeros(ions->NSP);
+    ions->Ppar = zeros(ions->NSP);
     ions->mu = zeros(ions->NSP);
 
 	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
@@ -211,7 +211,7 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
         ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
-		ions->P(pp) = ions->g(pp)*ions->M*V1(pp);
+		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
     ions->BGP.mu = mean(ions->mu);

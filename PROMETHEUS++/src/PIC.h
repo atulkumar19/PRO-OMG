@@ -73,11 +73,11 @@ class PIC{
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
 
-	void assingCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+	void assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
 
-	void assingCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+	void assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
 
-	void assingCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+	void assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
 
 
 	void eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
@@ -132,7 +132,18 @@ class PIC{
 	void aip_3D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
 
 
+	void didbv_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+
+	void didbv_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+
+	void didbv_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+
+	void depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+
+
 	void EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, arma::vec * wx, int mn, double q, double mu, double g, double ppar, emf * EB, arma::vec * B, arma::vec * E);
+
+	
 
 	void ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
 

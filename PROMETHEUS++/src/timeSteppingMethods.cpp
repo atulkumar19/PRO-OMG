@@ -84,8 +84,12 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
 
-        ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
+        for(int tt=0;tt<3;tt++){
+            ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
+        }
 
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Abort(MPI_COMM_WORLD,-101);
 
 
 /*

@@ -357,8 +357,8 @@ void PIC::smooth(vfield_mat * vf, double as){
 }
 
 
-void PIC::assingCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
-	//This function assings the particles to the closest mesh node depending in their position and
+void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
+	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
 	//wxc = 23/48 - (x/H)^2/4
@@ -445,8 +445,8 @@ void PIC::assingCell_TOS(const inputParameters * params, const meshGeometry * me
 			break;
 		}
 		default:{
-			std::ofstream ofs("errors/assingCell_TSC.txt", std::ofstream::out);
-			ofs << "assingCell_TSC: Introduce a valid option!\n";
+			std::ofstream ofs("errors/assignCell_TSC.txt", std::ofstream::out);
+			ofs << "assignCell_TSC: Introduce a valid option!\n";
 			ofs.close();
 			exit(1);
 		}
@@ -454,7 +454,7 @@ void PIC::assingCell_TOS(const inputParameters * params, const meshGeometry * me
 
     #ifdef CHECKS_ON
 	if(!ions->meshNode.is_finite()){
-		std::ofstream ofs("errors/assingCell_TSC.txt", std::ofstream::out);
+		std::ofstream ofs("errors/assignCell_TSC.txt", std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
 		exit(1);
@@ -463,8 +463,8 @@ void PIC::assingCell_TOS(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assingCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
-	//This function assings the particles to the closest mesh node depending in their position and
+void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
+	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
 	//		wxl		   wxc		wxr
@@ -485,7 +485,6 @@ void PIC::assingCell_TSC(const inputParameters * params, const meshGeometry * me
 			{
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++)
-					//ions->meshNode(ii,0) = floor((ions->X(ii,0) + 0.5*mesh->DX)/mesh->DX);
 					ions->meshNode(ii) = floor((ions->X(ii, 0) + 0.5*mesh->DX)/mesh->DX);
 
 				NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
@@ -500,9 +499,7 @@ void PIC::assingCell_TSC(const inputParameters * params, const meshGeometry * me
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
-					//if(ions->meshNode(ii,0) != NC){
 					if(ions->meshNode(ii) != NC){
-						//X(ii) = ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii,0));
 						X(ii) = ions->X(ii, 0) - mesh->nodes.X(ions->meshNode(ii));
 					}else{
 						X(ii) = ions->X(ii, 0) - (mesh->nodes.X(NC-1) + mesh->DX);
@@ -546,8 +543,8 @@ void PIC::assingCell_TSC(const inputParameters * params, const meshGeometry * me
 			break;
 		}
 		default:{
-			std::ofstream ofs("errors/assingCell_TSC.txt",std::ofstream::out);
-			ofs << "assingCell_TSC: Introduce a valid option!\n";
+			std::ofstream ofs("errors/assignCell_TSC.txt",std::ofstream::out);
+			ofs << "assignCell_TSC: Introduce a valid option!\n";
 			ofs.close();
 			exit(1);
 		}
@@ -555,7 +552,7 @@ void PIC::assingCell_TSC(const inputParameters * params, const meshGeometry * me
 
     #ifdef CHECKS_ON
 	if(!ions->meshNode.is_finite()){
-		std::ofstream ofs("errors/assingCell_TSC.txt",std::ofstream::out);
+		std::ofstream ofs("errors/assignCell_TSC.txt",std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
 		exit(1);
@@ -564,7 +561,7 @@ void PIC::assingCell_TSC(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assingCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
+void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
 
 	switch (dim){
 		case(1):{
@@ -590,7 +587,7 @@ void PIC::assingCell(const inputParameters * params, const meshGeometry * mesh, 
 			break;
 		}
 		default:{
-			std::ofstream ofs("errors/assingCell.txt", std::ofstream::out);
+			std::ofstream ofs("errors/assignCell_NNS.txt", std::ofstream::out);
 			ofs << "ERROR: Invalid option.\n";
 			ofs.close();
 			exit(1);
@@ -599,7 +596,7 @@ void PIC::assingCell(const inputParameters * params, const meshGeometry * mesh, 
 
     #ifdef CHECKS_ON
 	if(!ions->meshNode.is_finite()){
-		std::ofstream ofs("errors/assingCell.txt", std::ofstream::out);
+		std::ofstream ofs("errors/assignCell_NNS.txt", std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
 		exit(1);
@@ -820,21 +817,21 @@ void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeome
 	switch (params->weightingScheme){
 		case(0):{
 				#ifdef ONED
-					eivTOS_1D(params, mesh, ions);
+				eivTOS_1D(params, mesh, ions);
 				#endif
 				break;
 				}
 		case(1):{
 				#ifdef ONED
-					eivTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, ions);
 				#endif
 
 				#ifdef TWOD
-					eivTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, ions);
 				#endif
 
 				#ifdef THREED
-					eivTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, ions);
 				#endif
 				break;
 				}
@@ -844,35 +841,35 @@ void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeome
 				}
 		case(3):{
 				#ifdef ONED
-					eivTOS_1D(params, mesh, ions);
+				eivTOS_1D(params, mesh, ions);
 				#endif
 				break;
 				}
 		case(4):{
 				#ifdef ONED
-					eivTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, ions);
 				#endif
 
 				#ifdef TWOD
-					eivTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, ions);
 				#endif
 
 				#ifdef THREED
-					eivTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, ions);
 				#endif
 				break;
 				}
 		default:{
 				#ifdef ONED
-					eivTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, ions);
 				#endif
 
 				#ifdef TWOD
-					eivTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, ions);
 				#endif
 
 				#ifdef THREED
-					eivTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, ions);
 				#endif
 				}
 	}
@@ -1007,21 +1004,21 @@ void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeomet
 	switch (params->weightingScheme){
 		case(0):{
 				#ifdef ONED
-					eidTOS_1D(params, mesh, ions);
+				eidTOS_1D(params, mesh, ions);
 				#endif
 				break;
 				}
 		case(1):{
 				#ifdef ONED
-					eidTSC_1D(params, mesh, ions);
+				eidTSC_1D(params, mesh, ions);
 				#endif
 
 				#ifdef TWOD
-					eidTSC_2D(params, mesh, ions);
+				eidTSC_2D(params, mesh, ions);
 				#endif
 
 				#ifdef THREED
-					eidTSC_3D(params, mesh, ions);
+				eidTSC_3D(params, mesh, ions);
 				#endif
 				break;
 				}
@@ -1031,35 +1028,35 @@ void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeomet
 				}
 		case(3):{
 				#ifdef ONED
-					eidTOS_1D(params, mesh, ions);
+				eidTOS_1D(params, mesh, ions);
 				#endif
 				break;
 				}
 		case(4):{
 				#ifdef ONED
-					eidTSC_1D(params, mesh, ions);
+				eidTSC_1D(params, mesh, ions);
 				#endif
 
 				#ifdef TWOD
-					eidTSC_2D(params, mesh, ions);
+				eidTSC_2D(params, mesh, ions);
 				#endif
 
 				#ifdef THREED
-					eidTSC_3D(params, mesh, ions);
+				eidTSC_3D(params, mesh, ions);
 				#endif
 				break;
 				}
 		default:{
 				#ifdef ONED
-					eidTSC_1D(params, mesh, ions);
+				eidTSC_1D(params, mesh, ions);
 				#endif
 
 				#ifdef TWOD
-					eidTSC_2D(params, mesh, ions);
+				eidTSC_2D(params, mesh, ions);
 				#endif
 
 				#ifdef THREED
-					eidTSC_3D(params, mesh, ions);
+				eidTSC_3D(params, mesh, ions);
 				#endif
 				}
 	}
@@ -1796,27 +1793,27 @@ void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vect
 
 		switch (params->weightingScheme){
 			case(0):{
-					assingCell_TOS(params, mesh, &IONS->at(ii), 1);
+					assignCell_TOS(params, mesh, &IONS->at(ii), 1);
 					break;
 					}
 			case(1):{
-					assingCell_TSC(params, mesh, &IONS->at(ii), 1);
+					assignCell_TSC(params, mesh, &IONS->at(ii), 1);
 					break;
 					}
 			case(2):{
-					assingCell(params, mesh, &IONS->at(ii), 1);
+					assignCell_NNS(params, mesh, &IONS->at(ii), 1);
 					break;
 					}
 			case(3):{
-					assingCell_TOS(params, mesh, &IONS->at(ii), 1);
+					assignCell_TOS(params, mesh, &IONS->at(ii), 1);
 					break;
 					}
 			case(4):{
-					assingCell_TSC(params, mesh, &IONS->at(ii), 1);
+					assignCell_TSC(params, mesh, &IONS->at(ii), 1);
 					break;
 					}
 			default:{
-					assingCell_TSC(params, mesh, &IONS->at(ii), 1);
+					assignCell_TSC(params, mesh, &IONS->at(ii), 1);
 					}
 		}
 
@@ -1882,7 +1879,7 @@ void PIC::aip_2D(const inputParameters * params, const meshGeometry * mesh, vect
 				IONS->at(ii).X(jj,1) += ly;
 		}//Periodic boundary condition for the ions
 
-		assingCell_TSC(params, mesh, &IONS->at(ii), 2);
+		assignCell_TSC(params, mesh, &IONS->at(ii), 2);
 
 		extrapolateIonDensity(params, mesh, &IONS->at(ii));//Once the ions have been pushed, we extrapolate the density at the node grids.
 
@@ -1951,7 +1948,7 @@ void PIC::aip_3D(const inputParameters * params, const meshGeometry * mesh, vect
 		}//Periodic boundary condition for the ions
 		#endif
 
-		assingCell_TSC(params, mesh, &IONS->at(ii), 3);
+		assignCell_TSC(params, mesh, &IONS->at(ii), 3);
 
 		extrapolateIonDensity(params, mesh, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
 
@@ -1984,29 +1981,123 @@ void PIC::advanceIonsVelocity(const inputParameters * params, const characterist
 	#endif
 
 	#ifdef TWOD
-		aiv_Boris_2D(params, CS, mesh, EB, IONS, DT);
+	aiv_Boris_2D(params, CS, mesh, EB, IONS, DT);
 	#endif
 
 	#ifdef THREED
-		aiv_Boris_3D(params, CS, mesh, EB, IONS, DT);
+	aiv_Boris_3D(params, CS, mesh, EB, IONS, DT);
 	#endif
 }
+
 
 void PIC::advanceIonsPosition(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
 	//cout << "Status: Advancing the ions' position...\n";
 
 	#ifdef ONED
-		aip_1D(params, mesh, IONS, DT);
+	aip_1D(params, mesh, IONS, DT);
 	#endif
 
 	#ifdef TWOD
-		aip_2D(params, mesh, IONS, DT);
+	aip_2D(params, mesh, IONS, DT);
 	#endif
 
 	#ifdef THREED
-		aip_3D(params, mesh, IONS, DT);
+	aip_3D(params, mesh, IONS, DT);
 	#endif
+}
+
+
+void PIC::didbv_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+
+}
+
+void PIC::didbv_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+
+}
+
+void PIC::didbv_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+
+}
+
+void PIC::depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+
+	ions->n___ = ions->n__;
+	ions->n__ = ions->n_;
+	ions->n_ = ions->n;
+	ions->nv__ = ions->nv_;
+	ions->nv_ = ions->nv;
+
+	switch (params->weightingScheme){
+		case(0):{
+				#ifdef ONED
+				eidTOS_1D(params, mesh, ions);
+				eivTOS_1D(params, mesh, ions);
+				#endif
+				break;
+				}
+		case(1):{
+				#ifdef ONED
+				eidTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, ions);
+				#endif
+
+				#ifdef TWOD
+				eidTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, ions);
+				#endif
+
+				#ifdef THREED
+				eidTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, ions);
+				#endif
+				break;
+				}
+		case(2):{
+				exit(0);
+				break;
+				}
+		case(3):{
+				#ifdef ONED
+				eidTOS_1D(params, mesh, ions);
+				eivTOS_1D(params, mesh, ions);
+				#endif
+				break;
+				}
+		case(4):{
+				#ifdef ONED
+				eidTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, ions);
+				#endif
+
+				#ifdef TWOD
+				eidTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, ions);
+				#endif
+
+				#ifdef THREED
+				eidTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, ions);
+				#endif
+				break;
+				}
+		default:{
+				#ifdef ONED
+				eidTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, ions);
+				#endif
+
+				#ifdef TWOD
+				eidTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, ions);
+				#endif
+
+				#ifdef THREED
+				eidTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, ions);
+				#endif
+				}
+	}// Switch
 }
 
 
@@ -2204,24 +2295,113 @@ void PIC::ai_GC_1D(const inputParameters * params, const characteristicScales * 
 		arma::vec E = zeros(3);
 
 		for(int pp=0;pp<IONS_RK.at(ss).NSP;pp++){
-			wx = { IONS_RK.at(ss).wxl(pp), IONS_RK.at(ss).wxc(pp), IONS_RK.at(ss).wxr(pp) };
+			if (pp==0){
+				wx = { IONS_RK.at(ss).wxl(pp), IONS_RK.at(ss).wxc(pp), IONS_RK.at(ss).wxr(pp) };
 
-			EFF_EMF_TSC_1D(params, params->DT, mesh->DX, &wx, IONS_RK.at(ss).meshNode(pp), IONS_RK.at(ss).Q, IONS_RK.at(ss).mu(pp), IONS_RK.at(ss).g(pp), IONS_RK.at(ss).Ppar(pp), &EB_, &B, &E);
+				EFF_EMF_TSC_1D(params, params->DT, mesh->DX, &wx, IONS_RK.at(ss).meshNode(pp), IONS_RK.at(ss).Q, IONS_RK.at(ss).mu(pp), IONS_RK.at(ss).g(pp), IONS_RK.at(ss).Ppar(pp), &EB_, &B, &E);
 
-			B.print("B");
+				B.print("B");
+				E.print("E");
+			}
 
-			E.print("E");
+			while(time_rk < DT){
+				cout << "RK time loop\n";
+			} // First time loop
 
-			MPI_Barrier(MPI_COMM_WORLD);
-			MPI_Abort(MPI_COMM_WORLD,-101);
-
-//			while(time_rk < DT){
-
-
-
-//			} // First time loop
 		} // Particles loop
+
+		switch (params->weightingScheme){
+			case(0):{
+					assignCell_TOS(params, mesh, &IONS->at(ss), 1);
+					break;
+					}
+			case(1):{
+					assignCell_TSC(params, mesh, &IONS->at(ss), 1);
+					break;
+					}
+			case(2):{
+					assignCell_NNS(params, mesh, &IONS->at(ss), 1);
+					break;
+					}
+			case(3):{
+					assignCell_TOS(params, mesh, &IONS->at(ss), 1);
+					break;
+					}
+			case(4):{
+					assignCell_TSC(params, mesh, &IONS->at(ss), 1);
+					break;
+					}
+			default:{
+					assignCell_TSC(params, mesh, &IONS->at(ss), 1);
+					}
+		}
+
+		depositIonDensityAndBulkVelocity(params, mesh, &IONS->at(ss));
+
+		MPI_BcastDensity(params, &IONS->at(ss));
+
+		MPI_BcastBulkVelocity(params, &IONS->at(ss));
+
+		switch (params->weightingScheme){
+			case(0):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TOS(&IONS->at(ss).n, params->smoothingParameter);
+						smooth_TOS(&IONS->at(ss).nv, params->smoothingParameter);
+					break;
+					}
+			case(1):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth_TSC(&IONS->at(ss).n, params->smoothingParameter);
+						smooth_TSC(&IONS->at(ss).nv, params->smoothingParameter);
+					break;
+					}
+			case(2):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ss).n, params->smoothingParameter);
+						smooth(&IONS->at(ss).nv, params->smoothingParameter);
+					break;
+					}
+			case(3):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ss).n, params->smoothingParameter);
+						smooth(&IONS->at(ss).nv, params->smoothingParameter);
+					break;
+					}
+			case(4):{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ss).n, params->smoothingParameter);
+						smooth(&IONS->at(ss).nv, params->smoothingParameter);
+					break;
+					}
+			default:{
+					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
+						smooth(&IONS->at(ss).n, params->smoothingParameter);
+						smooth(&IONS->at(ss).nv, params->smoothingParameter);
+					}
+		}
 	} // Species loop
+
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	restoreVector(&EB->E.X);
+	restoreVector(&EB->E.Y);
+	restoreVector(&EB->E.Z);
+
+	restoreVector(&EB->B.X);
+	restoreVector(&EB->B.Y);
+	restoreVector(&EB->B.Z);
+
+	restoreVector(&EB->b.X);
+	restoreVector(&EB->b.Y);
+	restoreVector(&EB->b.Z);
+
+	restoreVector(&EB->b_.X);
+	restoreVector(&EB->b_.Y);
+	restoreVector(&EB->b_.Z);
+
+	restoreVector(&EB->_B.X);
+	restoreVector(&EB->_B.Y);
+	restoreVector(&EB->_B.Z);
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
 }
 
@@ -2239,14 +2419,14 @@ void PIC::ai_GC_3D(const inputParameters * params, const characteristicScales * 
 void PIC::advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
 
 	#ifdef ONED
-		ai_GC_1D(params, CS, mesh, EB, IONS, DT);
+	ai_GC_1D(params, CS, mesh, EB, IONS, DT);
 	#endif
 
 	#ifdef TWOD
-		ai_GC_2D(params, CS, mesh, EB, IONS, DT);
+	ai_GC_2D(params, CS, mesh, EB, IONS, DT);
 	#endif
 
 	#ifdef THREED
-		ai_GC_3D(params, CS, mesh, EB, IONS, DT);
+	ai_GC_3D(params, CS, mesh, EB, IONS, DT);
 	#endif
 }

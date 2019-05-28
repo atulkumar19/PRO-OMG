@@ -38,10 +38,7 @@ class PIC{
 	arma::vec x;
 	uvec logic;
 
-	// Runge-Kutta 45 (Dorman-Prince) methd
-	arma::mat::fixed<7,7> A;
-	arma::vec::fixed<7> B4;
-	arma::vec::fixed<7> B5;
+protected:
 
 	void MPI_BcastDensity(const inputParameters * params, ionSpecies * ions);
 
@@ -131,26 +128,6 @@ class PIC{
 
 	void aip_3D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
 
-
-	void didbv_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void didbv_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void didbv_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-
-	void EFF_EMF_TSC_1D(const inputParameters * params, double DT, double DX, arma::vec * wx, int mn, double q, double mu, double g, double ppar, emf * EB, arma::vec * B, arma::vec * E);
-
-	
-
-	void ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
-
-	void ai_GC_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
-
-	void ai_GC_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
-
   public:
 
 	PIC();
@@ -158,6 +135,69 @@ class PIC{
 	void advanceIonsVelocity(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
 
 	void advanceIonsPosition(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
+};
+
+
+class PIC_GC : public PIC{
+private:
+
+	int NX;
+
+	struct GC_VARS{
+		arma::vec wx;
+		arma::vec B;
+		arma::vec E;
+		arma::vec b;
+
+		int mn;
+		double Q;
+		double M;
+		double mu;
+		double g;
+		double Ppar;
+	};
+
+protected:
+
+	// Runge-Kutta 45 (Dorman-Prince) methd
+	arma::mat::fixed<7,7> A;
+	arma::vec::fixed<7> B4;
+	arma::vec::fixed<7> B5;
+
+	arma::vec K1;
+	arma::vec K2;
+	arma::vec K3;
+	arma::vec K4;
+	arma::vec K5;
+	arma::vec K6;
+	arma::vec K7;
+
+	arma::vec S4;
+	arma::vec S5;
+
+	GC_VARS gcv;
+
+	void set_GC_vars(arma::vec * wx, int * mn, double * Q, double * M, double * mu, double * g, double * Ppar);
+
+
+	void depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+
+
+	void EFF_EMF_TSC_1D(double DT, const double DX, GC_VARS * gcv, const emf * EB);
+
+
+	void ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
+
+	void ai_GC_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
+
+	void ai_GC_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
+
+
+	void advanceRungeKutta45Stages_1D(double * DT, const double * DX, GC_VARS * gcv, const emf * EB, int STG);
+
+public:
+
+	PIC_GC(const inputParameters * params);
 
 	void advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT);
 };

@@ -4,7 +4,7 @@
 #include <vector>
 #include <armadillo>
 
-
+// * * * * * * * * NAMESPACES  * * * * * * * * //
 namespace oneDimensional{
 	class electromagneticFields;
 	class ionSpeciesParams;
@@ -19,8 +19,10 @@ namespace twoDimensional{
 namespace threeDimensional{
 	class electromagneticFields;
 }
+// * * * * * * * * NAMESPACES  * * * * * * * * //
 
 
+// * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
 class vfield_vec{
 
 public:
@@ -107,28 +109,11 @@ public:
 	void zeros();
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
+// * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
 
 
-class oneDimensional::electromagneticFields : public vfield_vec{
-
-
-public:
-	vfield_vec E;
-	vfield_vec B;
-	vfield_vec _B;
-	vfield_vec b;
-	vfield_vec b_;
-
-	electromagneticFields(){};
-	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
-	void zeros(unsigned int N);
-	void fill(double A);
-};
-
-
-class oneDimensional::ionSpeciesParams : public vfield_vec{
-
-struct ionsBGP{
+// * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
+struct ionsInitialMeanParameters{
 	double Dn;
 
 	double Tpar;		// Parallel temperature.
@@ -141,8 +126,12 @@ struct ionsBGP{
 	double mu; 			// Average magnetic moment
 };
 
+
+class oneDimensional::ionSpeciesParams : public vfield_vec{
+
 public:
 	int SPECIES;
+	int IC; // Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
 	double NSP; // Initial number of superparticles for the given ion species.
 	double NCP; // Number of charged particles per superparticle.
 	double NPC; // Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
@@ -154,13 +143,13 @@ public:
 	double pctSupPartOutput;
 	unsigned int nSupPartOutput;
 
-	ionsBGP BGP;
+	ionsInitialMeanParameters BGP;
 
 	arma::mat X; 		// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 		// Ions' relativistic gamma factor.
-	arma::ivec meshNode; // Position of each particle in the discrete mesh. 
+	arma::ivec meshNode; // Position of each particle in the discrete mesh.
 
 	// Guiding-center variables
 	arma::vec mu; 	// Ions' magnetic moment.
@@ -180,6 +169,25 @@ public:
 	vfield_vec nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_vec nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 	// Ion bulk velocity at time level "l - 3/2"
+};
+// * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
+
+
+// * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //
+class oneDimensional::electromagneticFields : public vfield_vec{
+
+
+public:
+	vfield_vec E;
+	vfield_vec B;
+	vfield_vec _B;
+	vfield_vec b;
+	vfield_vec b_;
+
+	electromagneticFields(){};
+	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
+	void zeros(unsigned int N);
+	void fill(double A);
 };
 
 
@@ -211,4 +219,12 @@ public:
 	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P), _B(N,M,P){};
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
+// * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //
+
+
+// * * * * * * * * SIMULATION CONTROL DERIVED TYPES  * * * * * * * * //
+
+
+// * * * * * * * * SIMULATION CONTROL DERIVED TYPES  * * * * * * * * //
+
 #endif

@@ -54,7 +54,7 @@ class GENERAL_FUNCTIONS{
 
 	void checkStability(inputParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS);
 
-	void checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, emf * EB, int IT);
+	void checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT);
 
 	void saveDiagnosticsVariables(inputParameters * params);
 

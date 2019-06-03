@@ -1,6 +1,6 @@
 #include "alfvenic.h"
 
-ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	if(params->numberOfAlfvenicModes > 0){
 		if(params->loadModes == 0){
@@ -11,7 +11,7 @@ ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,emf 
 	}
 }
 
-void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	Aw.amp.set_size(params->numberOfAlfvenicModes);
@@ -95,7 +95,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 
 }
 
-void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	mat spectra;
@@ -320,7 +320,7 @@ void ALFVENIC::normalize(const characteristicScales * CS){
 	}
 }
 
-void ALFVENIC::addMagneticPerturbations(emf * EB){
+void ALFVENIC::addMagneticPerturbations(fields * EB){
 	unsigned int NX(EB->B.X.n_elem);
 
 	EB->B.X.subvec(1,NX-2) += Aw.dB.X;
@@ -349,7 +349,7 @@ void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<io
 
 }
 
-void ALFVENIC::addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,emf * EB){
+void ALFVENIC::addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,fields * EB){
 
 	if(params->numberOfAlfvenicModes > 0){
 		addMagneticPerturbations(EB);

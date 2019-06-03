@@ -1223,7 +1223,7 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * ions, vfield_
 
 
 #ifdef ONED
-void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 
 	MPI_AllgatherField(params, &EB->E);
@@ -1241,7 +1241,7 @@ void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales 
 
 	int NX(EB->E.X.n_elem);
 
-	emf EB_;
+	fields EB_;
 	EB_.zeros(NX);
 
 	EB_.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
@@ -1393,21 +1393,21 @@ void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales 
 
 
 #ifdef TWOD
-void PIC::aiv_Vay_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Vay_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::aiv_Vay_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Vay_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
 #ifdef ONED
-void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	MPI_AllgatherField(params, &EB->E);
 	MPI_AllgatherField(params, &EB->B);
@@ -1424,7 +1424,7 @@ void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScale
 
 	int NX(EB->E.X.n_elem);
 
-	emf EB_;
+	fields EB_;
 	EB_.zeros(NX);
 
 	EB_.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
@@ -1591,14 +1591,14 @@ void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScale
 
 
 #ifdef TWOD
-void PIC::aiv_Boris_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Boris_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::aiv_Boris_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Boris_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	forwardPBC_3D(&EB->E.X);
@@ -1614,7 +1614,7 @@ void PIC::aiv_Boris_3D(const inputParameters * params, const characteristicScale
 	int NY(EB->E.Y.n_cols);
 	int NZ(EB->E.Z.n_slices);
 
-	emf EB_;
+	fields EB_;
 	EB_.zeros(NX, NY, NZ);
 
 	EB_.E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.5*( EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->E.X.subcube(0,1,1,NX-3,NY-2,NZ-2) );
@@ -1885,7 +1885,7 @@ void PIC::aip_3D(const inputParameters * params, const meshGeometry * mesh, vect
 }
 
 
-void PIC::advanceIonsVelocity(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsVelocity(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	//cout << "Status: Advancing the ions' velocity...\n";
 
@@ -2058,10 +2058,15 @@ PIC_GC::PIC_GC(const inputParameters * params){
 	gcv.E = zeros(3);
 
 	gcv.mn = 0;
-	gcv.Q = 0.0;
 	gcv.mu = 0.0;
-	gcv.g = 0.0;
+
+	gcv.Xo = 0.0;
+	gcv.Pparo = 0.0;
+	gcv.go = 0.0;
+
+	gcv.X = 0.0;
 	gcv.Ppar = 0.0;
+	gcv.g = 0.0;
 }
 
 
@@ -2146,8 +2151,7 @@ void PIC_GC::depositIonDensityAndBulkVelocity(const inputParameters * params, co
 }
 
 
-void PIC_GC::EFF_EMF_TSC_1D(double DT, const double DX, GC_VARS * gcv, const emf * EB){
-//(double DT, double DX, arma::vec * wx, int mn, double q, double mu, double g, double ppar, const emf * EB, arma::vec * B, arma::vec * E){
+void PIC_GC::EFF_EMF_TSC_1D(const double DT, const double DX, GC_VARS * gcv, const fields * EB){
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
 	//				    0       x
@@ -2158,220 +2162,389 @@ void PIC_GC::EFF_EMF_TSC_1D(double DT, const double DX, GC_VARS * gcv, const emf
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	arma::vec wx = gcv->wx;
-	double q = gcv->Q;
-	double mu = gcv->mu;
-	double g = gcv->g;
-	double ppar = gcv->Ppar;
 	int ix = gcv->mn + 1;
 
 	if(ix == (NX-2)){
 		// Unitary, parallel vector b
 		// wxl
-		gcv->b(0) += wx(0)*EB->b.X(ix-1);
-		gcv->b(1) += wx(0)*EB->b.Y(ix-1);
-		gcv->b(2) += wx(0)*EB->b.Z(ix-1);
+		gcv->b(0) += gcv->wx(0)*EB->b.X(ix-1);
+		gcv->b(1) += gcv->wx(0)*EB->b.Y(ix-1);
+		gcv->b(2) += gcv->wx(0)*EB->b.Z(ix-1);
 
 		// wxc
-		gcv->b(0) += wx(1)*EB->b.X(ix);
-		gcv->b(1) += wx(1)*EB->b.Y(ix);
-		gcv->b(2) += wx(1)*EB->b.Z(ix);
+		gcv->b(0) += gcv->wx(1)*EB->b.X(ix);
+		gcv->b(1) += gcv->wx(1)*EB->b.Y(ix);
+		gcv->b(2) += gcv->wx(1)*EB->b.Z(ix);
 
 		// wxr
-		gcv->b(0) += wx(2)*EB->b.X(ix+1);
-		gcv->b(1) += wx(2)*EB->b.Y(ix+1);
-		gcv->b(2) += wx(2)*EB->b.Z(ix+1);
+		gcv->b(0) += gcv->wx(2)*EB->b.X(ix+1);
+		gcv->b(1) += gcv->wx(2)*EB->b.Y(ix+1);
+		gcv->b(2) += gcv->wx(2)*EB->b.Z(ix+1);
 
 		// Effective magnetic field
 		// wxl
-		gcv->B(0) += wx(0)*EB->B.X(ix-1);
-		gcv->B(1) += wx(0)*( EB->B.Y(ix-1) - (ppar/q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
-		gcv->B(2) += wx(0)*( EB->B.Z(ix-1) + (ppar/q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
+		gcv->B(0) += gcv->wx(0)*EB->B.X(ix-1);
+		gcv->B(1) += gcv->wx(0)*( EB->B.Y(ix-1) - (gcv->Ppar/Q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		gcv->B(2) += gcv->wx(0)*( EB->B.Z(ix-1) + (gcv->Ppar/Q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
 
 		// wxc
-		gcv->B(0) += wx(1)*EB->B.X(ix);
-		gcv->B(1) += wx(1)*( EB->B.Y(ix) - (ppar/q)*( EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
-		gcv->B(2) += wx(1)*( EB->B.Z(ix) + (ppar/q)*( EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
+		gcv->B(0) += gcv->wx(1)*EB->B.X(ix);
+		gcv->B(1) += gcv->wx(1)*( EB->B.Y(ix) - (gcv->Ppar/Q)*( EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
+		gcv->B(2) += gcv->wx(1)*( EB->B.Z(ix) + (gcv->Ppar/Q)*( EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
 
 		// wxr
-		gcv->B(0) += wx(2)*EB->B.X(ix+1);
-		gcv->B(1) += wx(2)*( EB->B.Y(ix+1) - (ppar/q)*( EB->b.Z(2) - EB->b.Z(ix+1))/DX );
-		gcv->B(2) += wx(2)*( EB->B.Z(ix+1) + (ppar/q)*( EB->b.Y(2) - EB->b.Y(ix+1))/DX );
+		gcv->B(0) += gcv->wx(2)*EB->B.X(ix+1);
+		gcv->B(1) += gcv->wx(2)*( EB->B.Y(ix+1) - (gcv->Ppar/Q)*( EB->b.Z(2) - EB->b.Z(ix+1))/DX );
+		gcv->B(2) += gcv->wx(2)*( EB->B.Z(ix+1) + (gcv->Ppar/Q)*( EB->b.Y(2) - EB->b.Y(ix+1))/DX );
 
 		// Effective electric field
 		// wxl
-		//gcv->E(0) += wx(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
-		gcv->E(0) += wx(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX )/q );
-		gcv->E(1) += wx(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
-		gcv->E(2) += wx(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
+		//gcv->E(0) += gcv->wx(0)*( EB->E.X(ix-1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - gcv->Ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/Q );
+		gcv->E(0) += gcv->wx(0)*( EB->E.X(ix-1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX )/Q );
+		gcv->E(1) += gcv->wx(0)*( EB->E.Y(ix-1) + ( gcv->Ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/Q );
+		gcv->E(2) += gcv->wx(0)*( EB->E.Z(ix-1) + ( gcv->Ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/Q );
 
 		// wxc
-		//gcv->E(0) += wx(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
-		gcv->E(0) += wx(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX )/q );
-		gcv->E(1) += wx(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
-		gcv->E(2) += wx(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
+		//gcv->E(0) += gcv->wx(1)*( EB->E.X(ix) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX - gcv->Ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/Q );
+		gcv->E(0) += gcv->wx(1)*( EB->E.X(ix) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX )/Q );
+		gcv->E(1) += gcv->wx(1)*( EB->E.Y(ix) + ( gcv->Ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/Q );
+		gcv->E(2) += gcv->wx(1)*( EB->E.Z(ix) + ( gcv->Ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/Q );
 
 		// wxr
-		//gcv->E(0) += wx(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B.X(2) - EB->_B.X(ix+1))/DX - ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/q );
-		gcv->E(0) += wx(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B.X(2) - EB->_B.X(ix+1))/DX )/q );
-		gcv->E(1) += wx(2)*( EB->E.Y(ix+1) + ( ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/q );
-		gcv->E(2) += wx(2)*( EB->E.Z(ix+1) + ( ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/q );
+		//gcv->E(0) += gcv->wx(2)*( EB->E.X(ix+1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(2) - EB->_B.X(ix+1))/DX - gcv->Ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/Q );
+		gcv->E(0) += gcv->wx(2)*( EB->E.X(ix+1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(2) - EB->_B.X(ix+1))/DX )/Q );
+		gcv->E(1) += gcv->wx(2)*( EB->E.Y(ix+1) + ( gcv->Ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/Q );
+		gcv->E(2) += gcv->wx(2)*( EB->E.Z(ix+1) + ( gcv->Ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/Q );
 	}else if(ix == (NX-1)){
 		// Unitary, parallel vector b
 		// wxl
-		gcv->b(0) += wx(0)*EB->b.X(ix-1);
-		gcv->b(1) += wx(0)*EB->b.Y(ix-1);
-		gcv->b(2) += wx(0)*EB->b.Z(ix-1);
+		gcv->b(0) += gcv->wx(0)*EB->b.X(ix-1);
+		gcv->b(1) += gcv->wx(0)*EB->b.Y(ix-1);
+		gcv->b(2) += gcv->wx(0)*EB->b.Z(ix-1);
 
 		// wxc
-		gcv->b(0) += wx(1)*EB->b.X(ix);
-		gcv->b(1) += wx(1)*EB->b.Y(ix);
-		gcv->b(2) += wx(1)*EB->b.Z(ix);
+		gcv->b(0) += gcv->wx(1)*EB->b.X(ix);
+		gcv->b(1) += gcv->wx(1)*EB->b.Y(ix);
+		gcv->b(2) += gcv->wx(1)*EB->b.Z(ix);
 
 		// wxr
-		gcv->b(0) += wx(2)*EB->b.X(2);
-		gcv->b(1) += wx(2)*EB->b.Y(2);
-		gcv->b(2) += wx(2)*EB->b.Z(2);
+		gcv->b(0) += gcv->wx(2)*EB->b.X(2);
+		gcv->b(1) += gcv->wx(2)*EB->b.Y(2);
+		gcv->b(2) += gcv->wx(2)*EB->b.Z(2);
 
 		// Effective magnetic field
 		// wxl
-		gcv->B(0) += wx(0)*EB->B.X(ix-1);
-		gcv->B(1) += wx(0)*( EB->B.Y(ix-1) - (ppar/q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
-		gcv->B(2) += wx(0)*( EB->B.Z(ix-1) + (ppar/q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
+		gcv->B(0) += gcv->wx(0)*EB->B.X(ix-1);
+		gcv->B(1) += gcv->wx(0)*( EB->B.Y(ix-1) - (gcv->Ppar/Q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		gcv->B(2) += gcv->wx(0)*( EB->B.Z(ix-1) + (gcv->Ppar/Q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
 
 		// wxc
-		gcv->B(0) += wx(1)*EB->B.X(ix);
-		gcv->B(1) += wx(1)*( EB->B.Y(ix) - (ppar/q)*( EB->b.Z(2) - EB->b.Z(ix))/DX );
-		gcv->B(2) += wx(1)*( EB->B.Z(ix) + (ppar/q)*( EB->b.Y(2) - EB->b.Y(ix))/DX );
+		gcv->B(0) += gcv->wx(1)*EB->B.X(ix);
+		gcv->B(1) += gcv->wx(1)*( EB->B.Y(ix) - (gcv->Ppar/Q)*( EB->b.Z(2) - EB->b.Z(ix))/DX );
+		gcv->B(2) += gcv->wx(1)*( EB->B.Z(ix) + (gcv->Ppar/Q)*( EB->b.Y(2) - EB->b.Y(ix))/DX );
 
 		// wxr
-		gcv->B(0) += wx(2)*EB->B.X(2);
-		gcv->B(1) += wx(2)*( EB->B.Y(2) - (ppar/q)*( EB->b.Z(3) - EB->b.Z(2))/DX );
-		gcv->B(2) += wx(2)*( EB->B.Z(2) + (ppar/q)*( EB->b.Y(3) - EB->b.Y(2))/DX );
+		gcv->B(0) += gcv->wx(2)*EB->B.X(2);
+		gcv->B(1) += gcv->wx(2)*( EB->B.Y(2) - (gcv->Ppar/Q)*( EB->b.Z(3) - EB->b.Z(2))/DX );
+		gcv->B(2) += gcv->wx(2)*( EB->B.Z(2) + (gcv->Ppar/Q)*( EB->b.Y(3) - EB->b.Y(2))/DX );
 
 		// Effective electric field
 		// wxl
-		//gcv->E(0) += wx(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
-		gcv->E(0) += wx(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX )/q );
-		gcv->E(1) += wx(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
-		gcv->E(2) += wx(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
+		//gcv->E(0) += gcv->wx(0)*( EB->E.X(ix-1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - gcv->Ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/Q );
+		gcv->E(0) += gcv->wx(0)*( EB->E.X(ix-1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX )/Q );
+		gcv->E(1) += gcv->wx(0)*( EB->E.Y(ix-1) + ( gcv->Ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/Q );
+		gcv->E(2) += gcv->wx(0)*( EB->E.Z(ix-1) + ( gcv->Ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/Q );
 
 		// wxc
-		//gcv->E(0) += wx(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(2) - EB->_B.X(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
-		gcv->E(0) += wx(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(2) - EB->_B.X(ix))/DX )/q );
-		gcv->E(1) += wx(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
-		gcv->E(2) += wx(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
+		//gcv->E(0) += gcv->wx(1)*( EB->E.X(ix) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(2) - EB->_B.X(ix))/DX - gcv->Ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/Q );
+		gcv->E(0) += gcv->wx(1)*( EB->E.X(ix) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(2) - EB->_B.X(ix))/DX )/Q );
+		gcv->E(1) += gcv->wx(1)*( EB->E.Y(ix) + ( gcv->Ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/Q );
+		gcv->E(2) += gcv->wx(1)*( EB->E.Z(ix) + ( gcv->Ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/Q );
 
 		// wxr
-		//gcv->E(0) += wx(2)*( EB->E.X(2) - ( (2*mu/g)*(EB->_B.X(3) - EB->_B.X(2))/DX - ppar*(EB->b.X(2) - EB->b_.X(2))/DT )/q );
-		gcv->E(0) += wx(2)*( EB->E.X(2) - ( (2*mu/g)*(EB->_B.X(3) - EB->_B.X(2))/DX )/q );
-		gcv->E(1) += wx(2)*( EB->E.Y(2) + ( ppar*(EB->b.Y(2) - EB->b_.Y(2))/DT )/q );
-		gcv->E(2) += wx(2)*( EB->E.Z(2) + ( ppar*(EB->b.Z(2) - EB->b_.Z(2))/DT )/q );
+		//gcv->E(0) += gcv->wx(2)*( EB->E.X(2) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(3) - EB->_B.X(2))/DX - gcv->Ppar*(EB->b.X(2) - EB->b_.X(2))/DT )/Q );
+		gcv->E(0) += gcv->wx(2)*( EB->E.X(2) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(3) - EB->_B.X(2))/DX )/Q );
+		gcv->E(1) += gcv->wx(2)*( EB->E.Y(2) + ( gcv->Ppar*(EB->b.Y(2) - EB->b_.Y(2))/DT )/Q );
+		gcv->E(2) += gcv->wx(2)*( EB->E.Z(2) + ( gcv->Ppar*(EB->b.Z(2) - EB->b_.Z(2))/DT )/Q );
 	}else{
 		// Unitary, parallel vector b
 		// wxl
-		gcv->b(0) += wx(0)*EB->b.X(ix-1);
-		gcv->b(1) += wx(0)*EB->b.Y(ix-1);
-		gcv->b(2) += wx(0)*EB->b.Z(ix-1);
+		gcv->b(0) += gcv->wx(0)*EB->b.X(ix-1);
+		gcv->b(1) += gcv->wx(0)*EB->b.Y(ix-1);
+		gcv->b(2) += gcv->wx(0)*EB->b.Z(ix-1);
 
 		// wxc
-		gcv->b(0) += wx(1)*EB->b.X(ix);
-		gcv->b(1) += wx(1)*EB->b.Y(ix);
-		gcv->b(2) += wx(1)*EB->b.Z(ix);
+		gcv->b(0) += gcv->wx(1)*EB->b.X(ix);
+		gcv->b(1) += gcv->wx(1)*EB->b.Y(ix);
+		gcv->b(2) += gcv->wx(1)*EB->b.Z(ix);
 
 		// wxr
-		gcv->b(0) += wx(2)*EB->b.X(ix+1);
-		gcv->b(1) += wx(2)*EB->b.Y(ix+1);
-		gcv->b(2) += wx(2)*EB->b.Z(ix+1);
+		gcv->b(0) += gcv->wx(2)*EB->b.X(ix+1);
+		gcv->b(1) += gcv->wx(2)*EB->b.Y(ix+1);
+		gcv->b(2) += gcv->wx(2)*EB->b.Z(ix+1);
 
 		// Effective magnetic field
 		// wxl
-		gcv->B(0) += wx(0)*EB->B.X(ix-1);
-		gcv->B(1) += wx(0)*( EB->B.Y(ix-1) - (ppar/q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
-		gcv->B(2) += wx(0)*( EB->B.Z(ix-1) + (ppar/q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
+		gcv->B(0) += gcv->wx(0)*EB->B.X(ix-1);
+		gcv->B(1) += gcv->wx(0)*( EB->B.Y(ix-1) - (gcv->Ppar/Q)*( EB->b.Z(ix) - EB->b.Z(ix-1))/DX );
+		gcv->B(2) += gcv->wx(0)*( EB->B.Z(ix-1) + (gcv->Ppar/Q)*( EB->b.Y(ix) - EB->b.Y(ix-1))/DX );
 
 		// wxc
-		gcv->B(0) += wx(1)*EB->B.X(ix);
-		gcv->B(1) += wx(1)*( EB->B.Y(ix) - (ppar/q)*( EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
-		gcv->B(2) += wx(1)*( EB->B.Z(ix) + (ppar/q)*( EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
+		gcv->B(0) += gcv->wx(1)*EB->B.X(ix);
+		gcv->B(1) += gcv->wx(1)*( EB->B.Y(ix) - (gcv->Ppar/Q)*( EB->b.Z(ix+1) - EB->b.Z(ix))/DX );
+		gcv->B(2) += gcv->wx(1)*( EB->B.Z(ix) + (gcv->Ppar/Q)*( EB->b.Y(ix+1) - EB->b.Y(ix))/DX );
 
 		// wxr
-		gcv->B(0) += wx(2)*EB->B.X(ix+1);
-		gcv->B(1) += wx(2)*( EB->B.Y(ix+1) - (ppar/q)*( EB->b.Z(ix+2) - EB->b.Z(ix+1))/DX );
-		gcv->B(2) += wx(2)*( EB->B.Z(ix+1) + (ppar/q)*( EB->b.Y(ix+2) - EB->b.Y(ix+1))/DX );
+		gcv->B(0) += gcv->wx(2)*EB->B.X(ix+1);
+		gcv->B(1) += gcv->wx(2)*( EB->B.Y(ix+1) - (gcv->Ppar/Q)*( EB->b.Z(ix+2) - EB->b.Z(ix+1))/DX );
+		gcv->B(2) += gcv->wx(2)*( EB->B.Z(ix+1) + (gcv->Ppar/Q)*( EB->b.Y(ix+2) - EB->b.Y(ix+1))/DX );
 
 		// Effective electric field
 		// wxl
-		//gcv->E(0) += wx(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/q );
-		gcv->E(0) += wx(0)*( EB->E.X(ix-1) - ( (2*mu/g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX )/q );
-		gcv->E(1) += wx(0)*( EB->E.Y(ix-1) + ( ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/q );
-		gcv->E(2) += wx(0)*( EB->E.Z(ix-1) + ( ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/q );
+		//gcv->E(0) += gcv->wx(0)*( EB->E.X(ix-1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX - gcv->Ppar*(EB->b.X(ix-1) - EB->b_.X(ix-1))/DT )/Q );
+		gcv->E(0) += gcv->wx(0)*( EB->E.X(ix-1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix) - EB->_B.X(ix-1))/DX )/Q );
+		gcv->E(1) += gcv->wx(0)*( EB->E.Y(ix-1) + ( gcv->Ppar*(EB->b.Y(ix-1) - EB->b_.Y(ix-1))/DT )/Q );
+		gcv->E(2) += gcv->wx(0)*( EB->E.Z(ix-1) + ( gcv->Ppar*(EB->b.Z(ix-1) - EB->b_.Z(ix-1))/DT )/Q );
 
 		// wxc
-		//gcv->E(0) += wx(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX - ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/q );
-		gcv->E(0) += wx(1)*( EB->E.X(ix) - ( (2*mu/g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX )/q );
-		gcv->E(1) += wx(1)*( EB->E.Y(ix) + ( ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/q );
-		gcv->E(2) += wx(1)*( EB->E.Z(ix) + ( ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/q );
+		//gcv->E(0) += gcv->wx(1)*( EB->E.X(ix) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX - gcv->Ppar*(EB->b.X(ix) - EB->b_.X(ix))/DT )/Q );
+		gcv->E(0) += gcv->wx(1)*( EB->E.X(ix) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix+1) - EB->_B.X(ix))/DX )/Q );
+		gcv->E(1) += gcv->wx(1)*( EB->E.Y(ix) + ( gcv->Ppar*(EB->b.Y(ix) - EB->b_.Y(ix))/DT )/Q );
+		gcv->E(2) += gcv->wx(1)*( EB->E.Z(ix) + ( gcv->Ppar*(EB->b.Z(ix) - EB->b_.Z(ix))/DT )/Q );
 
 		// wxr
-		//gcv->E(0) += wx(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B.X(ix+2) - EB->_B.X(ix+1))/DX - ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/q );
-		gcv->E(0) += wx(2)*( EB->E.X(ix+1) - ( (2*mu/g)*(EB->_B.X(ix+2) - EB->_B.X(ix+1))/DX )/q );
-		gcv->E(1) += wx(2)*( EB->E.Y(ix+1) + ( ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/q );
-		gcv->E(2) += wx(2)*( EB->E.Z(ix+1) + ( ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/q );
+		//gcv->E(0) += gcv->wx(2)*( EB->E.X(ix+1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix+2) - EB->_B.X(ix+1))/DX - gcv->Ppar*(EB->b.X(ix+1) - EB->b_.X(ix+1))/DT )/Q );
+		gcv->E(0) += gcv->wx(2)*( EB->E.X(ix+1) - ( (2*gcv->mu/gcv->g)*(EB->_B.X(ix+2) - EB->_B.X(ix+1))/DX )/Q );
+		gcv->E(1) += gcv->wx(2)*( EB->E.Y(ix+1) + ( gcv->Ppar*(EB->b.Y(ix+1) - EB->b_.Y(ix+1))/DT )/Q );
+		gcv->E(2) += gcv->wx(2)*( EB->E.Z(ix+1) + ( gcv->Ppar*(EB->b.Z(ix+1) - EB->b_.Z(ix+1))/DT )/Q );
 	}
 }
 
 
-void PIC_GC::set_GC_vars(arma::vec * wx, int * mn, double * Q, double * M, double * mu, double * g, double * Ppar){
-	PIC_GC::gcv.wx = *wx;
+void PIC_GC::set_GC_vars(ionSpecies * IONS, int pp){
+	PIC_GC::gcv.wx = { IONS->wxl(pp), IONS->wxc(pp), IONS->wxr(pp) };;
 	PIC_GC::gcv.B = zeros(3);
 	PIC_GC::gcv.E = zeros(3);
 	PIC_GC::gcv.b = zeros(3);
 
-	PIC_GC::gcv.mn = *mn;
-	PIC_GC::gcv.Q = *Q;
-	PIC_GC::gcv.M = *M;
-	PIC_GC::gcv.mu = *mu;
-	PIC_GC::gcv.g = *g;
-	PIC_GC::gcv.Ppar = *Ppar;
+	PIC_GC::gcv.mn = IONS->meshNode(pp);
+	PIC_GC::gcv.mu = IONS->mu(pp);
+
+	PIC_GC::gcv.X = IONS->X(pp,0);
+	PIC_GC::gcv.Ppar = IONS->Ppar(pp);
+	PIC_GC::gcv.g = IONS->g(pp);
+
+	PIC_GC::gcv.Xo = PIC_GC::gcv.X;
+	PIC_GC::gcv.Pparo = PIC_GC::gcv.Ppar;
+	PIC_GC::gcv.go = PIC_GC::gcv.g;
 }
 
 
-void PIC_GC::advanceRungeKutta45Stages_1D(double * DT, const double * DX, GC_VARS * gcv, const emf * EB, int STG){
-	// We interpolate the effective fields to GC particles position
-	EFF_EMF_TSC_1D(*DT, *DX, gcv, EB);
+void PIC_GC::assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim){
+	//This function assigns the particles to the closest mesh node depending in their position and
+	//calculate the weights for the charge extrapolation and force interpolation
 
-	double Bpar = dot(gcv->b, gcv->B);
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	switch (STG) {
+	switch (dim){
 		case(1):{
-			//K1
-			K1(0) = gcv->Ppar*gcv->B(0)/(gcv->g*gcv->M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
-			K1(1) = gcv->Q*dot(gcv->E, gcv->B)/Bpar;
+			int NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+
+			gcv->mn = floor( (gcv->X + 0.5*mesh->DX)/mesh->DX );
+
+			double X = 0.0;
+			if(gcv->mn != NC){
+				X = gcv->X - mesh->nodes.X(gcv->mn);
+			}else{
+				X = gcv->X - ( mesh->nodes.X(NC-1) + mesh->DX );
+			}
+
+			if(X > 0.0){
+				X = abs(X);
+
+				gcv->wx(0) = 0.5*(1.5 - (mesh->DX + X)/mesh->DX)*(1.5 - (mesh->DX + X)/mesh->DX);
+				gcv->wx(1) = 0.75 - 0.75 - ( X/mesh->DX )*( X/mesh->DX );
+				gcv->wx(2) = 0.5*(1.5 - (mesh->DX - X)/mesh->DX)*(1.5 - (mesh->DX - X)/mesh->DX);
+			}else{
+				X = abs(X);
+
+				gcv->wx(0) = 0.5*(1.5 - (mesh->DX - X)/mesh->DX)*(1.5 - (mesh->DX - X)/mesh->DX);
+				gcv->wx(1) = 0.75 - 0.75 - ( X/mesh->DX )*( X/mesh->DX );
+				gcv->wx(2) = 0.5*(1.5 - (mesh->DX + X)/mesh->DX)*(1.5 - (mesh->DX + X)/mesh->DX);
+			}
+
 			break;
 		}
 		case(2):{
-			//K2
+			// To do something
 			break;
 		}
 		case(3):{
+			// To do something
+			break;
+		}
+		default:{
+			std::ofstream ofs("errors/assignCell_TSC_GC.txt",std::ofstream::out);
+			ofs << "assignCell_TSC_GC: Introduce a valid option!\n";
+			ofs.close();
+			exit(1);
+		}
+	}
+
+    #ifdef CHECKS_ON
+	if(!ions->meshNode.is_finite()){
+		std::ofstream ofs("errors/assignCell_TSC_GC.txt",std::ofstream::out);
+		ofs << "ERROR: Non-finite value for the particle's index.\n";
+		ofs.close();
+		exit(1);
+	}
+    #endif
+}
+
+
+void PIC_GC::assignCell(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim){
+	switch (params->weightingScheme){
+		case(0):{
+				//assignCell_TOS(params, mesh, gcv, 1);
+				break;
+				}
+		case(1):{
+				PIC_GC::assignCell_TSC(params, mesh, gcv, 1);
+				break;
+				}
+		case(2):{
+				//assignCell_NNS(params, mesh, gcv, 1);
+				break;
+				}
+		case(3):{
+				//assignCell_TOS(params, mesh, gcv, 1);
+				break;
+				}
+		case(4):{
+				PIC_GC::assignCell_TSC(params, mesh, gcv, 1);
+				break;
+				}
+		default:{
+				PIC_GC::assignCell_TSC(params, mesh, gcv, 1);
+				}
+	}
+}
+
+
+
+
+void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG){
+	// We interpolate the effective fields to GC particles position
+	switch (STG) {
+		case(1):{
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+			double Bpar = dot(gcv->b, gcv->B);
+
+			gcv->b.print("b");
+			gcv->B.print("B");
+
+			//K1
+			K1(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K1(1) = Q*dot(gcv->E, gcv->B)/Bpar;
+			K1.print("K1");
+
+			break;
+		}
+		case(2):{
+			gcv->X = gcv->Xo + *DT_RK*A(1,0)*K1(0);
+			gcv->Ppar = gcv->Pparo + *DT_RK*A(1,0)*K1(1);
+			cout << "Ckp 1 \n";
+			cout << gcv->X << gcv->Xo << gcv->Ppar << gcv->Pparo << '\n';
+			assignCell(params, mesh, gcv, 1);
+			cout << "Ckp 2 \n";
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			cout << "Ckp 3 \n";
+			double Bpar = dot(gcv->b, gcv->B);
+			cout << "Ckp 4 \n";
+			//K2
+			K2(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K2(1) = Q*dot(gcv->E, gcv->B)/Bpar;
+			break;
+		}
+		case(3):{
+			gcv->X = gcv->Xo + *DT_RK*( A(2,0)*K1(0) + A(2,1)*K2(0) );
+			gcv->Ppar = gcv->Pparo + *DT_RK*( A(2,0)*K1(1) + A(2,1)*K2(1) );
+
+			assignCell(params, mesh, gcv, 1);
+
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+			double Bpar = dot(gcv->b, gcv->B);
+
 			//K3
+			K3(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K3(1) = Q*dot(gcv->E, gcv->B)/Bpar;
 			break;
 		}
 		case(4):{
+			gcv->X = gcv->Xo + *DT_RK*( A(3,0)*K1(0) + A(3,1)*K2(0) + A(3,2)*K3(0) );
+			gcv->Ppar = gcv->Pparo + *DT_RK*( A(3,0)*K1(1) + A(3,1)*K2(1) + A(3,2)*K3(1)) ;
+
+			assignCell(params, mesh, gcv, 1);
+
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+			double Bpar = dot(gcv->b, gcv->B);
+
 			//K4
+			K4(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K4(1) = Q*dot(gcv->E, gcv->B)/Bpar;
 			break;
 		}
 		case(5):{
+			gcv->X = gcv->Xo + *DT_RK*( A(4,0)*K1(0) + A(4,1)*K2(0) + A(4,2)*K3(0) + A(4,3)*K4(0) );
+			gcv->Ppar = gcv->Pparo + *DT_RK*( A(4,0)*K1(1) + A(4,1)*K2(1) + A(4,2)*K3(1) + A(4,3)*K4(1) );
+
+			assignCell(params, mesh, gcv, 1);
+
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+			double Bpar = dot(gcv->b, gcv->B);
+
 			//K5
+			K5(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K5(1) = Q*dot(gcv->E, gcv->B)/Bpar;
 			break;
 		}
 		case(6):{
+			gcv->X = gcv->Xo + *DT_RK*( A(5,0)*K1(0) + A(5,1)*K2(0) + A(5,2)*K3(0) + A(5,3)*K4(0) + A(5,4)*K5(0) );
+			gcv->Ppar = gcv->Pparo + *DT_RK*( A(5,0)*K1(1) + A(5,1)*K2(1) + A(5,2)*K3(1) + A(5,3)*K4(1) + A(5,4)*K5(1) );
+
+			assignCell(params, mesh, gcv, 1);
+
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+			double Bpar = dot(gcv->b, gcv->B);
+
 			//K6
+			K6(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K6(1) = Q*dot(gcv->E, gcv->B)/Bpar;
 			break;
 		}
 		case(7):{
+			gcv->X = gcv->Xo + *DT_RK*( A(6,0)*K1(0) + A(6,1)*K2(0) + A(6,2)*K3(0) + A(6,3)*K4(0) + A(6,4)*K5(0) + A(6,5)*K6(0) );
+			gcv->Ppar = gcv->Pparo + *DT_RK*( A(6,0)*K1(1) + A(6,1)*K2(1) + A(6,2)*K3(1) + A(6,3)*K4(1) + A(6,4)*K5(1) + A(6,5)*K6(1) );
+
+			assignCell(params, mesh, gcv, 1);
+
+			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+			double Bpar = dot(gcv->b, gcv->B);
+
 			//K7
+			K7(0) = gcv->Ppar*gcv->B(0)/(gcv->g*M*Bpar) + (gcv->E(1)*gcv->b(2) - gcv->E(2)*gcv->b(1))/Bpar;
+			K7(1) = Q*dot(gcv->E, gcv->B)/Bpar;
 			break;
 		}
 	}
@@ -2379,7 +2552,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(double * DT, const double * DX, GC_VAR
 }
 
 
-void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 	vector<ionSpecies> IONS_RK = *IONS;
 	double time_rk(0.0);
 	int NX(EB->E.X.n_elem);
@@ -2412,7 +2585,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 	forwardPBC_1D(&EB->_B.Z);
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
-	emf EB_;
+	fields EB_;
 	EB_.zeros(NX);
 
 	EB_.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
@@ -2453,55 +2626,55 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 	forwardPBC_1D(&EB_._B.Y);
 	forwardPBC_1D(&EB_._B.Z);
 
-	arma::vec w = zeros(3);
-
 	for(int ss=0;ss<IONS_RK.size();ss++){// Loop over species
+
+		PIC_GC::Q = IONS_RK.at(ss).Q;
+		PIC_GC::M = IONS_RK.at(ss).M;
 
 		for(int pp=0;pp<IONS_RK.at(ss).NSP;pp++){// Loop over particles
 
 			double DT_RK(0.0);
 
-			while(time_rk < DT){ // First time loop
-				for(int stg=1; stg<7; stg++){
-					w = { IONS_RK.at(ss).wxl(pp), IONS_RK.at(ss).wxc(pp), IONS_RK.at(ss).wxr(pp) };
+			set_GC_vars(&IONS_RK.at(ss), pp);
 
-					set_GC_vars(&w, &IONS_RK.at(ss).meshNode(pp), &IONS_RK.at(ss).Q, &IONS_RK.at(ss).M, &IONS_RK.at(ss).mu(pp), &IONS_RK.at(ss).g(pp), &IONS_RK.at(ss).Ppar(pp));
-
-					advanceRungeKutta45Stages_1D(&DT_RK, &mesh->DX, &gcv, &EB_, stg);
+			//while(time_rk < DT){ // First time loop
+				for(int stg=1; stg<8; stg++){
+					cout << "Stage: " << stg << "\n";
+					advanceRungeKutta45Stages_1D(params, mesh, &DT_RK, &gcv, &EB_, stg);
 				}
-
-				MPI_Barrier(MPI_COMM_WORLD);
-				MPI_Abort(MPI_COMM_WORLD,-202);
 
 				S4 = 0.0;
 				S5 = 0.0;
-			} // First time loop
+
+				MPI_Barrier(MPI_COMM_WORLD);
+				MPI_Abort(MPI_COMM_WORLD,-202);
+			//} // First time loop
 
 		} // Loop over particles
 
 		switch (params->weightingScheme){
 			case(0):{
-					assignCell_TOS(params, mesh, &IONS->at(ss), 1);
+					PIC::assignCell_TOS(params, mesh, &IONS->at(ss), 1);
 					break;
 					}
 			case(1):{
-					assignCell_TSC(params, mesh, &IONS->at(ss), 1);
+					PIC::assignCell_TSC(params, mesh, &IONS->at(ss), 1);
 					break;
 					}
 			case(2):{
-					assignCell_NNS(params, mesh, &IONS->at(ss), 1);
+					PIC::assignCell_NNS(params, mesh, &IONS->at(ss), 1);
 					break;
 					}
 			case(3):{
-					assignCell_TOS(params, mesh, &IONS->at(ss), 1);
+					PIC::assignCell_TOS(params, mesh, &IONS->at(ss), 1);
 					break;
 					}
 			case(4):{
-					assignCell_TSC(params, mesh, &IONS->at(ss), 1);
+					PIC::assignCell_TSC(params, mesh, &IONS->at(ss), 1);
 					break;
 					}
 			default:{
-					assignCell_TSC(params, mesh, &IONS->at(ss), 1);
+					PIC::assignCell_TSC(params, mesh, &IONS->at(ss), 1);
 					}
 		}
 
@@ -2575,17 +2748,17 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 }
 
 
-void PIC_GC::ai_GC_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::ai_GC_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 
 
-void PIC_GC::ai_GC_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::ai_GC_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 
 
-void PIC_GC::advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	#ifdef ONED
 	ai_GC_1D(params, CS, mesh, EB, IONS, DT);

@@ -204,12 +204,12 @@ void EMF_SOLVER::smooth(const inputParameters * params,vfield_mat * vf,double as
 }
 
 
-void EMF_SOLVER::equilibrium(const inputParameters * params,vector<ionSpecies> * IONS,emf * EB){
+void EMF_SOLVER::equilibrium(const inputParameters * params,vector<ionSpecies> * IONS,fields * EB){
 
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,emf * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,fields * EB){//This function calculates -culr(EB->E)
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -241,7 +241,7 @@ void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry *
 }
 
 
-void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
@@ -249,7 +249,7 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
 
-		K1 = *EB;//The value of the emf at the time level (N-1/2)
+		K1 = *EB;//The value of the fields at the time level (N-1/2)
 		advanceEField(params,mesh,&K1,IONS);//E1 (using B^(N-1/2))
 		FaradaysLaw(params,mesh,&K1);//K1
 
@@ -488,7 +488,7 @@ void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh
 #endif
 
 
-void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	//The ions' density and flow velocities are stored in the integer nodes,we'll use mean values of these quantities in order to calculate the electric field in the staggered grid.
 

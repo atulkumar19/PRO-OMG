@@ -118,7 +118,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 
 }
 
-void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, emf * EB, int IT){
+void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iteration over the ions' species
 		int NSP(IONS->at(ii).NSP);

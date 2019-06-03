@@ -701,7 +701,7 @@ void HDF::saveFieldsVariables(const inputParameters * params, threeDimensional::
 
 }
 
-void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, emf * EB, const characteristicScales * CS, const int IT, double totalTime){
+void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime){
 
 
 	try{

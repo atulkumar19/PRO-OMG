@@ -38,11 +38,11 @@ public:
 
 	void loadMeshGeometry(const inputParameters * params,characteristicScales * CS,meshGeometry * mesh);
 
-	void calculateSuperParticleNumberDensity(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,vector<ionSpecies> * IONS);
+	void loadIonParameters(inputParameters * params,vector<ionSpecies> * IONS);
 
-	void loadIons(inputParameters * params,vector<ionSpecies> * IONS);
+	void setupIonsInitialCondition(const inputParameters * params,const characteristicScales * CS,const meshGeometry * mesh,vector<ionSpecies> * IONS);
 
-	void initializeFields(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
+	void initializeFields(const inputParameters * params, const meshGeometry * mesh, fields * EB);
 
 };
 

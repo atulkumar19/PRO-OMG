@@ -28,22 +28,22 @@ int main(int argc, char* argv[]){
 	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
 	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
-	emf EB; 						// Derived type with variables of electromagnetic fields.
+	fields EB; 						// Derived type with variables of electromagnetic fields.
 
 	INITIALIZE init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 
-	init.loadIons(&params, &IONS);
+	init.loadIonParameters(&params, &IONS);
 
 	UNITS units;
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
 	init.loadMeshGeometry(&params, &CS, &mesh);
 
-	init.calculateSuperParticleNumberDensity(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
+	init.initializeFields(&params, &mesh, &EB);
 
-	init.initializeFields(&params, &mesh, &EB, &IONS);
+	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
 
 	HDF hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
 

@@ -9,7 +9,17 @@
 #include<omp.h>
 #include "mpi.h"
 
-using namespace oneDimensional;//This namespace is used in the overloaded functions for the different structures in types.h
+#ifdef ONED
+using namespace oneDimensional;
+#endif
+
+#ifdef TWOD
+using namespace twoDimensional;
+#endif
+
+#ifdef THREED
+using namespace threeDimensional;
+#endif
 
 // Physical constants
 #define F_E 1.602176E-19//Electron charge in C (absolute value)
@@ -57,7 +67,7 @@ struct energyMonitor{
 typedef ionSpeciesParams ionSpecies;
 
 
-typedef electromagneticFields emf;
+typedef electromagneticFields fields;
 
 
 struct meshGeometry{

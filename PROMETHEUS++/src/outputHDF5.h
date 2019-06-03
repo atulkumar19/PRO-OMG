@@ -53,7 +53,7 @@ public:
 
 HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS);
 
-void saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, emf * EB, const characteristicScales * CS, const int IT, double totalTime);
+void saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
 
 };
 

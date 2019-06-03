@@ -8,8 +8,8 @@ TIME_STEPPING_METHODS::TIME_STEPPING_METHODS(inputParameters * params){
 }
 
 void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, \
-                                characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, emf * EB){
-    EMF_SOLVER fields(params, CS); // Initializing the emf class object.
+                                characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
+    EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
     GENERAL_FUNCTIONS genFun;
 
@@ -37,14 +37,14 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
 
         ionsDynamics.advanceIonsPosition(params, mesh, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
 
-        fields.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
              // Using the Bashford-Adams extrapolation.
-            fields.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 1);
+            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 1);
         }else{
              // Using basic velocity extrapolation.
-            fields.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
+            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
         }
 
         currentTime += params->DT*CS->time;
@@ -74,8 +74,8 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
 }
 
 
-void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, emf * EB){
-    EMF_SOLVER fields(params, CS); // Initializing the emf class object.
+void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
+    EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     PIC_GC ionsDynamics(params); // Initializing the PIC class object.
 
     // Filling up density and bulk velocity arrays
@@ -94,14 +94,14 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Abort(MPI_COMM_WORLD,-101);
 /*
-        fields.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
              // Using the Bashford-Adams extrapolation.
-            fields.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 1);
+            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 1);
         }else{
              // Using basic velocity extrapolation.
-            fields.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
+            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
         }
 
         currentTime += params->DT*CS->time;

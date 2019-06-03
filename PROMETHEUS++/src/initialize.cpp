@@ -236,8 +236,104 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 }
 
 
-void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * params,const characteristicScales * CS,\
+void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const characteristicScales * CS,\
 	const meshGeometry * mesh,vector<ionSpecies> * IONS){
+
+	if(params->mpi.rank_cart == 0){
+		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
+	}
+	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
+	
+	for(int ii=0;ii<totalNumSpecies;ii++){
+		if(params->restart == 1){
+			if(params->mpi.rank_cart == 0)
+				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
+			MPI_Abort(MPI_COMM_WORLD,-1);
+		}else{
+			switch (IONS->at(ii).IC) {
+				case(1):{
+						if(params->quietStart == 0){
+							RANDOMSTART rs(params);
+							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}else if(params->quietStart == 1){
+							QUIETSTART qs(params,&IONS->at(ii));
+							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}
+						break;
+						}
+				case(2):{
+						if(params->quietStart == 0){
+							RANDOMSTART rs(params);
+							rs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+						}else if(params->quietStart == 1){
+							QUIETSTART qs(params,&IONS->at(ii));
+							qs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+						}
+						break;
+						}
+				default:{
+						if(params->quietStart == 0){
+							RANDOMSTART rs(params);
+							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}else if(params->quietStart == 1){
+							QUIETSTART qs(params,&IONS->at(ii));
+							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}
+						}
+			} // switch
+		} // if(params->restart == 1)
+
+		IONS->at(ii).n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n___.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+
+		IONS->at(ii).nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+
+		// Setting size and value to zero of arrays for ions' variables
+		if(params->mpi.rank_cart == 0)
+			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
+
+		IONS->at(ii).meshNode.zeros(IONS->at(ii).NSP);
+		IONS->at(ii).wxc.zeros(IONS->at(ii).NSP);
+		IONS->at(ii).wxl.zeros(IONS->at(ii).NSP);
+		IONS->at(ii).wxr.zeros(IONS->at(ii).NSP);
+
+		//Checking the integrity of the initial condition
+		if((int)IONS->at(ii).V.n_elem != (int)(3*IONS->at(ii).NSP)){
+			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
+			MPI_Abort(MPI_COMM_WORLD,-123);
+		 	// The velocity array contains a number of elements that it should not have
+
+		}
+		if((int)IONS->at(ii).X.n_elem != (int)(3*IONS->at(ii).NSP)){
+			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
+			MPI_Abort(MPI_COMM_WORLD,-123);
+			// The position array contains a number of elements that it should not have
+		}
+		//Checking integrity of the initial condition
+	}//Iteration over ion species
+
+
+	double HX;
+	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
+		HX = params->DrL*INITIALIZE::LarmorRadius;
+	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
+		HX = params->dp*INITIALIZE::ionSkinDepth;
+	}
+
+	if(params->quietStart == 0){
+		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
+			IONS->at(ii).X.col(0) = \
+			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
+		}
+	}else if(params->quietStart == 1){
+		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
+			IONS->at(ii).X.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+		}
+	}
 
 	double chargeDensityPerCell;
 
@@ -268,16 +364,20 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 		(mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1)*mesh->DZ*(double)mesh->dim(0))*chargeDensityPerCell;
 	}
 	#endif
+
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *\n";
+
 }
 
 
-void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
+void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> * IONS){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
 	if(params->mpi.rank_cart == 0){
-		cout << "* * * * * * * * * * * * INITIALIZING IONS * * * * * * * * * * * * * * * * * *\n";
+		cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
 		cout << "Number of ion species: " << params->numberOfIonSpecies << "\n";
 		cout << "Number of tracer species: " << params->numberOfTracerSpecies << "\n";
 	}
@@ -307,6 +407,10 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 		name = "NPC" + ss.str();
 		ions.NPC = parametersMap[name];
+		name.clear();
+
+		name = "IC" + ss.str();
+		ions.IC = (int)parametersMap[name];
 		name.clear();
 
 		name = "Tper" + ss.str();
@@ -372,68 +476,6 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		ions.NSP = ceil(ions.NPC*params->meshDim(0));
 		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 
-		if(params->restart == 1){
-			if(params->mpi.rank_cart == 0)
-				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
-			MPI_Abort(MPI_COMM_WORLD,-1);
-		}else{
-			if(ii == 0){ //Background ions (Protons)
-				if(params->quietStart == 0){
-	                RANDOMSTART rs(params);
-	    			rs.maxwellianVelocityDistribution(params,&ions);
-	            }else if(params->quietStart == 1){
-					QUIETSTART qs(params,&ions);
-					qs.maxwellianVelocityDistribution(params,&ions);
-				}
-			}
-
-			if(ii == 1){//Alpha-particles
-				if(params->quietStart == 0){
-                   	RANDOMSTART rs(params);
-	                rs.ringLikeVelocityDistribution(params,&ions);
-	            }else if(params->quietStart == 1){
-	                QUIETSTART qs(params,&ions);
-	                qs.ringLikeVelocityDistribution(params,&ions);
-	            }
-			}
-
-			if(ii == 2){//Tracer ions
-				// Do something
-			}
-		}
-
-		ions.n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		ions.n_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		ions.n__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		ions.n___.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
-		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		ions.nv_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		ions.nv__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
-		// Setting size and value to zero of arrays for ions' variables
-		if(params->mpi.rank_cart == 0)
-			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << ions.NSP << '\n';
-
-		ions.meshNode.zeros(ions.NSP);
-		ions.wxc.zeros(ions.NSP);
-		ions.wxl.zeros(ions.NSP);
-		ions.wxr.zeros(ions.NSP);
-
-		//Checking the integrity of the initial condition
-		if((int)ions.V.n_elem != (int)(3*ions.NSP)){
-			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
-			MPI_Abort(MPI_COMM_WORLD,-123);
-		 	// The velocity array contains a number of elements that it should not have
-
-		}
-		if((int)ions.X.n_elem != (int)(3*ions.NSP)){
-			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
-			MPI_Abort(MPI_COMM_WORLD,-123);
-			// The position array contains a number of elements that it should not have
-		}
-		//Checking integrity of the initial condition
-
 		IONS->push_back(ions);
 	}//Iteration over ion species
 
@@ -460,32 +502,14 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		cout <<"Ion skin depth used in simulation " << INITIALIZE::ionSkinDepth <<" m\n";
 	}
 
-	double HX;
-	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-		HX = params->DrL*INITIALIZE::LarmorRadius;
-	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-		HX = params->dp*INITIALIZE::ionSkinDepth;
-	}
-
-	if(params->quietStart == 0){
-		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).X.col(0) = \
-			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
-		}
-	}else if(params->quietStart == 1){
-		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).X.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
-		}
-	}
-
 	if(params->mpi.rank_cart == 0)
-		cout << "* * * * * * * * * * * * IONS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
+		cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
 
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 
-void INITIALIZE::initializeFields(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void INITIALIZE::initializeFields(const inputParameters * params, const meshGeometry * mesh, fields * EB){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;

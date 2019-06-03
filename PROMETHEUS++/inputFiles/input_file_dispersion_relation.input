@@ -1,4 +1,4 @@
-particleIntegrator          3
+particleIntegrator          1
 quietStart                  1
 restart                     0
 weightingScheme             1

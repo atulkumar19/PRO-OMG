@@ -24,7 +24,7 @@ class EMF_SOLVER{
 
 	double dt;//Time step for the RK4 function
 
-	emf AUX, K1, K2, K3, K4;
+	fields AUX, K1, K2, K3, K4;
 
 	int dim_x;
 
@@ -83,11 +83,11 @@ class EMF_SOLVER{
 
 	void smooth(const inputParameters * params, vfield_mat * vf, double as);
 
-	void equilibrium(const inputParameters * params, vector<ionSpecies> * IONS, emf * EB);
+	void equilibrium(const inputParameters * params, vector<ionSpecies> * IONS, fields * EB);
 
-	void advanceBField(const inputParameters * params, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS);
+	void advanceBField(const inputParameters * params, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS);
 
-	void advanceEField(const inputParameters * params, const meshGeometry * mesh, emf * EB, vector<ionSpecies> * IONS);
+	void advanceEField(const inputParameters * params, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS);
 
 	void advanceEFieldWithVelocityExtrapolation(const inputParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS, const int BAE);
 

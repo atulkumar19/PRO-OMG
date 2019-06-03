@@ -77,22 +77,22 @@ class ALFVENIC{
 
 	double brentRoots(const plasmaParams *PP,double x1,double x2,double k,int ITMAX);
 
-	void addMagneticPerturbations(emf * EB);
+	void addMagneticPerturbations(fields * EB);
 
 	void addVelocityPerturbations(const inputParameters * params,vector<ionSpecies> * IONS);
 
-	void generateModes(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
+	void generateModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS);
 
-	void loadModes(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
+	void loadModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS);
 
 
 public:
 
-	ALFVENIC(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS);
+	ALFVENIC(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS);
 
 	void normalize(const characteristicScales * CS);
 
-	void addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,emf * EB);
+	void addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,fields * EB);
 
 };
 

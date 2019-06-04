@@ -243,7 +243,7 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
 	}
 	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
-	
+
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		if(params->restart == 1){
 			if(params->mpi.rank_cart == 0)
@@ -364,6 +364,11 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 		(mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1)*mesh->DZ*(double)mesh->dim(0))*chargeDensityPerCell;
 	}
 	#endif
+
+	PIC pic;
+	for(int ii=0;ii<totalNumSpecies;ii++){
+		pic.assignCell(params, mesh, &IONS->at(ii), 1);
+	}
 
 	if(params->mpi.rank_cart == 0)
 		cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *\n";

@@ -5,7 +5,7 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 
 void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB){
 	if(params->mpi.rank_cart == 0)
-		cout << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
+		cout << "\n* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
 	double DT(0);
 	double averageB(0);
@@ -119,6 +119,8 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 
 		CFL_ions = (0.5*Cmax*mesh->DX/ion_vmax)/params->shorterIonGyroperiod;
 
+		cout << "CFL (W): " << CFL_w << "CFL (i): " << CFL_ions << "\n";
+
 		if(CFL_w < CFL_ions){
 			params->checkStability = 1;
 			params->rateOfChecking = 100;
@@ -221,7 +223,7 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 	// All the quantities below have units (SI).
 
 	if(params->mpi.rank_cart == 0)
-		cout << "* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *\n";
+		cout << "\n* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *\n";
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species.
 		CS->mass += IONS->at(ii).M;

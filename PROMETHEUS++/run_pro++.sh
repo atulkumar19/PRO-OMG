@@ -11,9 +11,11 @@ NUM_MPI_PROCESSES=2
 LOC_OUTPUT_FOLDER="/home/leo/Documents/PRO++/PROMETHEUS++/outputFiles"
 
 # File identifier
-FILE_ID="dispersion_relation"
+# FILE_ID="dispersion_relation"
+FILE_ID="GC"
+
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_PATH}:${ARMA_PATH}
 
-# mpirun -x LD_LIBRARY_PATH -np $((NUM_MPI_PROCESSES))  bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER} ${FILE_ID}
-mpirun -x LD_LIBRARY_PATH -np $((NUM_MPI_PROCESSES))  bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER}
+mpirun -x LD_LIBRARY_PATH -np $((NUM_MPI_PROCESSES))  bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER} ${FILE_ID}
+# mpirun -x LD_LIBRARY_PATH -np $((NUM_MPI_PROCESSES))  bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER}

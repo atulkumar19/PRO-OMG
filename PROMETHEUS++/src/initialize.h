@@ -14,6 +14,7 @@
 
 #include "randomStart.h"
 #include "quietStart.h"
+#include "PIC.h"
 
 #include "mpi_main.h"
 

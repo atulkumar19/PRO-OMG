@@ -132,6 +132,8 @@ protected:
 
 	PIC();
 
+	void assignCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+
 	void advanceIonsVelocity(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
 	void advanceIonsPosition(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
@@ -142,10 +144,12 @@ class PIC_GC : public PIC{
 private:
 
 	int NX;
-	double Q;
-	double M;
+	double LX;
 
 	struct GC_VARS{
+		double Q;
+		double M;
+
 		arma::vec wx;
 		arma::vec B;
 		arma::vec E;
@@ -158,12 +162,19 @@ private:
 		double Pparo;
 		double go;
 
+		double Xo_;
+		double Pparo_;
+		double go_;
+
 		double X;
 		double Ppar;
 		double g;
 	};
 
 protected:
+
+	// double Tol;
+	#define Tol 1E-8
 
 	// Runge-Kutta 45 (Dorman-Prince) methd
 	arma::mat::fixed<7,7> A;
@@ -198,18 +209,18 @@ protected:
 	void assignCell(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim);
 
 
+	void advanceRungeKutta45Stages_1D(const inputParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG);
+
+
 	void ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
 	void ai_GC_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
 	void ai_GC_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-
-	void advanceRungeKutta45Stages_1D(const inputParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG);
-
 public:
 
-	PIC_GC(const inputParameters * params);
+	PIC_GC(const inputParameters * params, const meshGeometry * mesh);
 
 	void advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 };

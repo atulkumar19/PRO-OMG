@@ -76,12 +76,12 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
 
 void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
-    PIC_GC ionsDynamics(params); // Initializing the PIC class object.
+    PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 
     // Filling up density and bulk velocity arrays
-    for(int tt=0;tt<3;tt++){
-        ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
-    }
+    //for(int tt=0;tt<3;tt++){
+    //    ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
+    //}
 
     hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 

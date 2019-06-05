@@ -307,6 +307,7 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 		IONS->at(ii).X = IONS->at(ii).X/CS->length;
 		IONS->at(ii).V = IONS->at(ii).V/CS->velocity;
 		IONS->at(ii).P = IONS->at(ii).P/CS->momentum;
+		IONS->at(ii).Ppar = IONS->at(ii).Ppar/CS->momentum;
 		IONS->at(ii).mu = IONS->at(ii).mu/CS->magneticMoment;
 	}//Iterations over the ion species.
 	//Normalizing ions' properties.

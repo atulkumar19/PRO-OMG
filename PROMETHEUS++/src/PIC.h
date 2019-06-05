@@ -152,7 +152,9 @@ private:
 
 		arma::vec wx;
 		arma::vec B;
+		arma::vec Bs;
 		arma::vec E;
+		arma::vec Es;
 		arma::vec b;
 
 		int mn;

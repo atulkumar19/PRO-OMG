@@ -4,17 +4,17 @@ PIC::PIC(){
 
 }
 
-void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * ions){
+void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS){
 
 	arma::vec nSend = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
 	arma::vec nRecv = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
-	nSend = ions->n;
+	nSend = IONS->n;
 
 	MPI_ARMA_VEC mpi_n(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
 
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
 		MPI_Sendrecv(nSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, nRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.mpi_topo, MPI_STATUS_IGNORE);
-		ions->n += nRecv;
+		IONS->n += nRecv;
 		nSend = nRecv;
 	}
 
@@ -22,7 +22,7 @@ void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * ions){
 }
 
 
-void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ions){
+void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * IONS){
 
 	arma::vec bufSend = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
 	arma::vec bufRecv = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
@@ -31,30 +31,30 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ion
 
 
 	//x-component
-	bufSend = ions->nv.X;
+	bufSend = IONS->nv.X;
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
 		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.mpi_topo, MPI_STATUS_IGNORE);
-		ions->nv.X += bufRecv;
+		IONS->nv.X += bufRecv;
 		bufSend = bufRecv;
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	//x-component
-	bufSend = ions->nv.Y;
+	bufSend = IONS->nv.Y;
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
 		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.mpi_topo, MPI_STATUS_IGNORE);
-		ions->nv.Y += bufRecv;
+		IONS->nv.Y += bufRecv;
 		bufSend = bufRecv;
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	//x-component
-	bufSend = ions->nv.Z;
+	bufSend = IONS->nv.Z;
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
 		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.mpi_topo, MPI_STATUS_IGNORE);
-		ions->nv.Z += bufRecv;
+		IONS->nv.Z += bufRecv;
 		bufSend = bufRecv;
 	}
 
@@ -289,7 +289,7 @@ void PIC::smooth(vfield_mat * vf, double as){
 }
 
 
-void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
+void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -311,33 +311,33 @@ void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * me
 	switch (dim){
 		case(1):{
 			int ii;
-			int NSP(ions->NSP);//number of superparticles
+			int NSP(IONS->NSP);//number of superparticles
 			int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);//number of grid cells
 			arma::vec X;
 			uvec LOGIC;
 
-			#pragma omp parallel shared(mesh, ions, X, LOGIC) private(ii) firstprivate(NSP, NC)
+			#pragma omp parallel shared(mesh, IONS, X, LOGIC) private(ii) firstprivate(NSP, NC)
 			{
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++)
-					ions->meshNode(ii) = floor((ions->X(ii, 0) + 0.5*mesh->DX)/mesh->DX);
+					IONS->meshNode(ii) = floor((IONS->X(ii, 0) + 0.5*mesh->DX)/mesh->DX);
 
 				#pragma omp single
 				{
-					ions->wxc = zeros(NSP);
-					ions->wxl = zeros(NSP);
-					ions->wxr = zeros(NSP);
-					ions->wxll = zeros(NSP);
-					ions->wxrr = zeros(NSP);
+					IONS->wxc = zeros(NSP);
+					IONS->wxl = zeros(NSP);
+					IONS->wxr = zeros(NSP);
+					IONS->wxll = zeros(NSP);
+					IONS->wxrr = zeros(NSP);
 					X = zeros(NSP);
 				}
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
-					if(ions->meshNode(ii) != NC){
-						X(ii) = ions->X(ii, 0) - mesh->nodes.X(ions->meshNode(ii));
+					if(IONS->meshNode(ii) != NC){
+						X(ii) = IONS->X(ii, 0) - mesh->nodes.X(IONS->meshNode(ii));
 					}else{
-						X(ii) =  ions->X(ii, 0) - (mesh->nodes.X(NC-1) + mesh->DX);
+						X(ii) =  IONS->X(ii, 0) - (mesh->nodes.X(NC-1) + mesh->DX);
 					}
 				}
 
@@ -349,21 +349,21 @@ void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * me
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
-					ions->wxc(ii) = CC1 - CC2*(X(ii)/mesh->DX)*(X(ii)/mesh->DX);
+					IONS->wxc(ii) = CC1 - CC2*(X(ii)/mesh->DX)*(X(ii)/mesh->DX);
 				}
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
 					if(LOGIC(ii) == 1){
-						ions->wxl(ii) = CC3*((mesh->DX + X(ii))/mesh->DX - 1)*((mesh->DX + X(ii))/mesh->DX - CC4)*((mesh->DX + X(ii))/mesh->DX + CC5) + CC2;
-						ions->wxr(ii) = CC3*((mesh->DX - X(ii))/mesh->DX - 1)*((mesh->DX - X(ii))/mesh->DX - CC4)*((mesh->DX - X(ii))/mesh->DX + CC5) + CC2;
-						ions->wxll(ii) = CC6*(CC7 - (2*mesh->DX + X(ii))/mesh->DX)*((2 - (2*mesh->DX + X(ii))/mesh->DX)*(2 - (2*mesh->DX + X(ii))/mesh->DX) + CC8) - CC6;
-						ions->wxrr(ii) = CC6*(CC7 - (2*mesh->DX - X(ii))/mesh->DX)*((2 - (2*mesh->DX - X(ii))/mesh->DX)*(2 - (2*mesh->DX - X(ii))/mesh->DX) + CC8) - CC6;
+						IONS->wxl(ii) = CC3*((mesh->DX + X(ii))/mesh->DX - 1)*((mesh->DX + X(ii))/mesh->DX - CC4)*((mesh->DX + X(ii))/mesh->DX + CC5) + CC2;
+						IONS->wxr(ii) = CC3*((mesh->DX - X(ii))/mesh->DX - 1)*((mesh->DX - X(ii))/mesh->DX - CC4)*((mesh->DX - X(ii))/mesh->DX + CC5) + CC2;
+						IONS->wxll(ii) = CC6*(CC7 - (2*mesh->DX + X(ii))/mesh->DX)*((2 - (2*mesh->DX + X(ii))/mesh->DX)*(2 - (2*mesh->DX + X(ii))/mesh->DX) + CC8) - CC6;
+						IONS->wxrr(ii) = CC6*(CC7 - (2*mesh->DX - X(ii))/mesh->DX)*((2 - (2*mesh->DX - X(ii))/mesh->DX)*(2 - (2*mesh->DX - X(ii))/mesh->DX) + CC8) - CC6;
 					}else{
-						ions->wxl(ii) = CC3*((mesh->DX - X(ii))/mesh->DX - 1)*((mesh->DX - X(ii))/mesh->DX - CC4)*((mesh->DX - X(ii))/mesh->DX + CC5) + CC2;
-						ions->wxr(ii) = CC3*((mesh->DX + X(ii))/mesh->DX - 1)*((mesh->DX + X(ii))/mesh->DX - CC4)*((mesh->DX + X(ii))/mesh->DX + CC5) + CC2;
-						ions->wxll(ii) = CC6*(CC7 - (2*mesh->DX - X(ii))/mesh->DX)*((2 - (2*mesh->DX - X(ii))/mesh->DX)*(2 - (2*mesh->DX - X(ii))/mesh->DX) + CC8) - CC6;
-						ions->wxrr(ii) = CC6*(CC7 - (2*mesh->DX + X(ii))/mesh->DX)*((2 - (2*mesh->DX + X(ii))/mesh->DX)*(2 - (2*mesh->DX + X(ii))/mesh->DX) + CC8) - CC6;
+						IONS->wxl(ii) = CC3*((mesh->DX - X(ii))/mesh->DX - 1)*((mesh->DX - X(ii))/mesh->DX - CC4)*((mesh->DX - X(ii))/mesh->DX + CC5) + CC2;
+						IONS->wxr(ii) = CC3*((mesh->DX + X(ii))/mesh->DX - 1)*((mesh->DX + X(ii))/mesh->DX - CC4)*((mesh->DX + X(ii))/mesh->DX + CC5) + CC2;
+						IONS->wxll(ii) = CC6*(CC7 - (2*mesh->DX - X(ii))/mesh->DX)*((2 - (2*mesh->DX - X(ii))/mesh->DX)*(2 - (2*mesh->DX - X(ii))/mesh->DX) + CC8) - CC6;
+						IONS->wxrr(ii) = CC6*(CC7 - (2*mesh->DX + X(ii))/mesh->DX)*((2 - (2*mesh->DX + X(ii))/mesh->DX)*(2 - (2*mesh->DX + X(ii))/mesh->DX) + CC8) - CC6;
 					}
 				}
 
@@ -385,7 +385,7 @@ void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * me
 	}
 
     #ifdef CHECKS_ON
-	if(!ions->meshNode.is_finite()){
+	if(!IONS->meshNode.is_finite()){
 		std::ofstream ofs("errors/assignCell_TSC.txt", std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
@@ -395,7 +395,7 @@ void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
+void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -409,32 +409,32 @@ void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * me
 	switch (dim){
 		case(1):{
 			int ii;
-			int NSP(ions->NSP);//number of superparticles
+			int NSP(IONS->NSP);//number of superparticles
 			int NC;//number of grid cells
 			arma::vec X;
 			uvec LOGIC;
-			#pragma omp parallel shared(mesh, ions, X, NSP, LOGIC) private(ii, NC)
+			#pragma omp parallel shared(mesh, IONS, X, NSP, LOGIC) private(ii, NC)
 			{
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++)
-					ions->meshNode(ii) = floor((ions->X(ii, 0) + 0.5*mesh->DX)/mesh->DX);
+					IONS->meshNode(ii) = floor((IONS->X(ii, 0) + 0.5*mesh->DX)/mesh->DX);
 
 				NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
 
 				#pragma omp single
 				{
-					ions->wxc = zeros(NSP);
-					ions->wxl = zeros(NSP);
-					ions->wxr = zeros(NSP);
+					IONS->wxc = zeros(NSP);
+					IONS->wxl = zeros(NSP);
+					IONS->wxr = zeros(NSP);
 					X = zeros(NSP);
 				}
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
-					if(ions->meshNode(ii) != NC){
-						X(ii) = ions->X(ii, 0) - mesh->nodes.X(ions->meshNode(ii));
+					if(IONS->meshNode(ii) != NC){
+						X(ii) = IONS->X(ii, 0) - mesh->nodes.X(IONS->meshNode(ii));
 					}else{
-						X(ii) = ions->X(ii, 0) - (mesh->nodes.X(NC-1) + mesh->DX);
+						X(ii) = IONS->X(ii, 0) - (mesh->nodes.X(NC-1) + mesh->DX);
 					}
 				}
 
@@ -446,17 +446,17 @@ void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * me
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
-					ions->wxc(ii) = 0.75 - (X(ii)/mesh->DX)*(X(ii)/mesh->DX);
+					IONS->wxc(ii) = 0.75 - (X(ii)/mesh->DX)*(X(ii)/mesh->DX);
 				}
 
 				#pragma omp for
 				for(ii=0;ii<NSP;ii++){
 					if(LOGIC(ii) == 1){
-						ions->wxl(ii) = 0.5*(1.5 - (mesh->DX + X(ii))/mesh->DX)*(1.5 - (mesh->DX + X(ii))/mesh->DX);
-						ions->wxr(ii) = 0.5*(1.5 - (mesh->DX - X(ii))/mesh->DX)*(1.5 - (mesh->DX - X(ii))/mesh->DX);
+						IONS->wxl(ii) = 0.5*(1.5 - (mesh->DX + X(ii))/mesh->DX)*(1.5 - (mesh->DX + X(ii))/mesh->DX);
+						IONS->wxr(ii) = 0.5*(1.5 - (mesh->DX - X(ii))/mesh->DX)*(1.5 - (mesh->DX - X(ii))/mesh->DX);
 					}else{
-						ions->wxl(ii) = 0.5*(1.5 - (mesh->DX - X(ii))/mesh->DX)*(1.5 - (mesh->DX - X(ii))/mesh->DX);
-						ions->wxr(ii) = 0.5*(1.5 - (mesh->DX + X(ii))/mesh->DX)*(1.5 - (mesh->DX + X(ii))/mesh->DX);
+						IONS->wxl(ii) = 0.5*(1.5 - (mesh->DX - X(ii))/mesh->DX)*(1.5 - (mesh->DX - X(ii))/mesh->DX);
+						IONS->wxr(ii) = 0.5*(1.5 - (mesh->DX + X(ii))/mesh->DX)*(1.5 - (mesh->DX + X(ii))/mesh->DX);
 					}
 				}
 
@@ -480,7 +480,7 @@ void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * me
 	}
 
     #ifdef CHECKS_ON
-	if(!ions->meshNode.is_finite()){
+	if(!IONS->meshNode.is_finite()){
 		std::ofstream ofs("errors/assignCell_TSC.txt",std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
@@ -490,19 +490,19 @@ void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim){
+void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 
 	switch (dim){
 		case(1):{
 			/*Periodic boundary condition*/
 			int aux(0);
-			for(int ii=0;ii<ions->NSP;ii++){
-				aux = floor(ions->X(ii, 0)/mesh->DX);
+			for(int ii=0;ii<IONS->NSP;ii++){
+				aux = floor(IONS->X(ii, 0)/mesh->DX);
 				if(aux == mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS){
-					ions->meshNode(ii) = 0;
-					ions->X(ii) = 0;
+					IONS->meshNode(ii) = 0;
+					IONS->X(ii) = 0;
 				}else{
-					ions->meshNode(ii) = aux;
+					IONS->meshNode(ii) = aux;
 				}
 				aux = 0;
 			}
@@ -524,7 +524,7 @@ void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * me
 	}
 
     #ifdef CHECKS_ON
-	if(!ions->meshNode.is_finite()){
+	if(!IONS->meshNode.is_finite()){
 		std::ofstream ofs("errors/assignCell_NNS.txt", std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
@@ -537,27 +537,27 @@ void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * me
 void PIC::assignCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 	switch (params->weightingScheme){
 		case(0):{
-				PIC::assignCell_TOS(params, mesh, IONS, 1);
+				PIC::assignCell_TOS(params, mesh, IONS, dim);
 				break;
 				}
 		case(1):{
-				PIC::assignCell_TSC(params, mesh, IONS, 1);
+				PIC::assignCell_TSC(params, mesh, IONS, dim);
 				break;
 				}
 		case(2):{
-				PIC::assignCell_NNS(params, mesh, IONS, 1);
+				PIC::assignCell_NNS(params, mesh, IONS, dim);
 				break;
 				}
 		case(3):{
-				PIC::assignCell_TOS(params, mesh, IONS, 1);
+				PIC::assignCell_TOS(params, mesh, IONS, dim);
 				break;
 				}
 		case(4):{
-				PIC::assignCell_TSC(params, mesh, IONS, 1);
+				PIC::assignCell_TSC(params, mesh, IONS, dim);
 				break;
 				}
 		default:{
-				PIC::assignCell_TSC(params, mesh, IONS, 1);
+				PIC::assignCell_TSC(params, mesh, IONS, dim);
 				}
 	}
 }
@@ -578,115 +578,115 @@ void PIC::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB
 
 
 #ifdef ONED
-void PIC::eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
-	int NSP(ions->NSP);
+	int NSP(IONS->NSP);
 	int ii(0);
 	vfield_vec nv;
 
-	ions->nv.zeros(NC);//Setting to zero the ions' bulk velocity
+	IONS->nv.zeros(NC);//Setting to zero the ions' bulk velocity
 	nv.zeros(NC);
 
-	#pragma omp parallel shared(mesh, ions) firstprivate(NC, nv) private(ii)
+	#pragma omp parallel shared(mesh, IONS) firstprivate(NC, nv) private(ii)
 	{
 		#pragma omp for
 		for(ii=0;ii<NSP;ii++){
-			int ix = ions->meshNode(ii) + 1;
+			int ix = IONS->meshNode(ii) + 1;
 			if(ix == (NC-2)){//For the particles on the right side boundary.
-				nv.X(NC-4) += ions->wxll(ii)*ions->V(ii,0);
-				nv.X(NC-3) += ions->wxl(ii)*ions->V(ii,0);
-				nv.X(NC-2) += ions->wxc(ii)*ions->V(ii,0);
-				nv.X(NC-1) += ions->wxr(ii)*ions->V(ii,0);
-				nv.X(0) += ions->wxrr(ii)*ions->V(ii,0);
+				nv.X(NC-4) += IONS->wxll(ii)*IONS->V(ii,0);
+				nv.X(NC-3) += IONS->wxl(ii)*IONS->V(ii,0);
+				nv.X(NC-2) += IONS->wxc(ii)*IONS->V(ii,0);
+				nv.X(NC-1) += IONS->wxr(ii)*IONS->V(ii,0);
+				nv.X(0) += IONS->wxrr(ii)*IONS->V(ii,0);
 
-				nv.Y(NC-4) += ions->wxll(ii)*ions->V(ii,1);
-				nv.Y(NC-3) += ions->wxl(ii)*ions->V(ii,1);
-				nv.Y(NC-2) += ions->wxc(ii)*ions->V(ii,1);
-				nv.Y(NC-1) += ions->wxr(ii)*ions->V(ii,1);
-				nv.Y(0) += ions->wxrr(ii)*ions->V(ii,1);
+				nv.Y(NC-4) += IONS->wxll(ii)*IONS->V(ii,1);
+				nv.Y(NC-3) += IONS->wxl(ii)*IONS->V(ii,1);
+				nv.Y(NC-2) += IONS->wxc(ii)*IONS->V(ii,1);
+				nv.Y(NC-1) += IONS->wxr(ii)*IONS->V(ii,1);
+				nv.Y(0) += IONS->wxrr(ii)*IONS->V(ii,1);
 
-				nv.Z(NC-4) += ions->wxll(ii)*ions->V(ii,2);
-				nv.Z(NC-3) += ions->wxl(ii)*ions->V(ii,2);
-				nv.Z(NC-2) += ions->wxc(ii)*ions->V(ii,2);
-				nv.Z(NC-1) += ions->wxr(ii)*ions->V(ii,2);
-				nv.Z(0) += ions->wxrr(ii)*ions->V(ii,2);
+				nv.Z(NC-4) += IONS->wxll(ii)*IONS->V(ii,2);
+				nv.Z(NC-3) += IONS->wxl(ii)*IONS->V(ii,2);
+				nv.Z(NC-2) += IONS->wxc(ii)*IONS->V(ii,2);
+				nv.Z(NC-1) += IONS->wxr(ii)*IONS->V(ii,2);
+				nv.Z(0) += IONS->wxrr(ii)*IONS->V(ii,2);
 			}else if(ix == (NC-1)){//For the particles on the right side boundary.
-				nv.X(NC-3) += ions->wxll(ii)*ions->V(ii,0);
-				nv.X(NC-2) += ions->wxl(ii)*ions->V(ii,0);
-				nv.X(NC-1) += ions->wxc(ii)*ions->V(ii,0);
-				nv.X(2) += ions->wxr(ii)*ions->V(ii,0);
-				nv.X(3) += ions->wxrr(ii)*ions->V(ii,0);
+				nv.X(NC-3) += IONS->wxll(ii)*IONS->V(ii,0);
+				nv.X(NC-2) += IONS->wxl(ii)*IONS->V(ii,0);
+				nv.X(NC-1) += IONS->wxc(ii)*IONS->V(ii,0);
+				nv.X(2) += IONS->wxr(ii)*IONS->V(ii,0);
+				nv.X(3) += IONS->wxrr(ii)*IONS->V(ii,0);
 
-				nv.Y(NC-3) += ions->wxll(ii)*ions->V(ii,1);
-				nv.Y(NC-2) += ions->wxl(ii)*ions->V(ii,1);
-				nv.Y(NC-1) += ions->wxc(ii)*ions->V(ii,1);
-				nv.Y(2) += ions->wxr(ii)*ions->V(ii,1);
-				nv.Y(3) += ions->wxrr(ii)*ions->V(ii,1);
+				nv.Y(NC-3) += IONS->wxll(ii)*IONS->V(ii,1);
+				nv.Y(NC-2) += IONS->wxl(ii)*IONS->V(ii,1);
+				nv.Y(NC-1) += IONS->wxc(ii)*IONS->V(ii,1);
+				nv.Y(2) += IONS->wxr(ii)*IONS->V(ii,1);
+				nv.Y(3) += IONS->wxrr(ii)*IONS->V(ii,1);
 
-				nv.Z(NC-3) += ions->wxll(ii)*ions->V(ii,2);
-				nv.Z(NC-2) += ions->wxl(ii)*ions->V(ii,2);
-				nv.Z(NC-1) += ions->wxc(ii)*ions->V(ii,2);
-				nv.Z(2) += ions->wxr(ii)*ions->V(ii,2);
-				nv.Z(3) += ions->wxrr(ii)*ions->V(ii,2);
+				nv.Z(NC-3) += IONS->wxll(ii)*IONS->V(ii,2);
+				nv.Z(NC-2) += IONS->wxl(ii)*IONS->V(ii,2);
+				nv.Z(NC-1) += IONS->wxc(ii)*IONS->V(ii,2);
+				nv.Z(2) += IONS->wxr(ii)*IONS->V(ii,2);
+				nv.Z(3) += IONS->wxrr(ii)*IONS->V(ii,2);
 			}else if(ix == 1){
-				nv.X(NC-1) += ions->wxll(ii)*ions->V(ii,0);
-				nv.X(0) += ions->wxl(ii)*ions->V(ii,0);
-				nv.X(ix) += ions->wxc(ii)*ions->V(ii,0);
-				nv.X(ix+1) += ions->wxr(ii)*ions->V(ii,0);
-				nv.X(ix+2) += ions->wxrr(ii)*ions->V(ii,0);
+				nv.X(NC-1) += IONS->wxll(ii)*IONS->V(ii,0);
+				nv.X(0) += IONS->wxl(ii)*IONS->V(ii,0);
+				nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
+				nv.X(ix+1) += IONS->wxr(ii)*IONS->V(ii,0);
+				nv.X(ix+2) += IONS->wxrr(ii)*IONS->V(ii,0);
 
-				nv.Y(NC-1) += ions->wxll(ii)*ions->V(ii,1);
-				nv.Y(0) += ions->wxl(ii)*ions->V(ii,1);
-				nv.Y(ix) += ions->wxc(ii)*ions->V(ii,1);
-				nv.Y(ix+1) += ions->wxr(ii)*ions->V(ii,1);
-				nv.Y(ix+2) += ions->wxrr(ii)*ions->V(ii,1);
+				nv.Y(NC-1) += IONS->wxll(ii)*IONS->V(ii,1);
+				nv.Y(0) += IONS->wxl(ii)*IONS->V(ii,1);
+				nv.Y(ix) += IONS->wxc(ii)*IONS->V(ii,1);
+				nv.Y(ix+1) += IONS->wxr(ii)*IONS->V(ii,1);
+				nv.Y(ix+2) += IONS->wxrr(ii)*IONS->V(ii,1);
 
-				nv.Z(NC-1) += ions->wxll(ii)*ions->V(ii,2);
-				nv.Z(0) += ions->wxl(ii)*ions->V(ii,2);
-				nv.Z(ix) += ions->wxc(ii)*ions->V(ii,2);
-				nv.Z(ix+1) += ions->wxr(ii)*ions->V(ii,2);
-				nv.Z(ix+2) += ions->wxrr(ii)*ions->V(ii,2);
+				nv.Z(NC-1) += IONS->wxll(ii)*IONS->V(ii,2);
+				nv.Z(0) += IONS->wxl(ii)*IONS->V(ii,2);
+				nv.Z(ix) += IONS->wxc(ii)*IONS->V(ii,2);
+				nv.Z(ix+1) += IONS->wxr(ii)*IONS->V(ii,2);
+				nv.Z(ix+2) += IONS->wxrr(ii)*IONS->V(ii,2);
 			}else{
-				nv.X(ix-2) += ions->wxll(ii)*ions->V(ii,0);
-				nv.X(ix-1) += ions->wxl(ii)*ions->V(ii,0);
-				nv.X(ix) += ions->wxc(ii)*ions->V(ii,0);
-				nv.X(ix+1) += ions->wxr(ii)*ions->V(ii,0);
-				nv.X(ix+2) += ions->wxrr(ii)*ions->V(ii,0);
+				nv.X(ix-2) += IONS->wxll(ii)*IONS->V(ii,0);
+				nv.X(ix-1) += IONS->wxl(ii)*IONS->V(ii,0);
+				nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
+				nv.X(ix+1) += IONS->wxr(ii)*IONS->V(ii,0);
+				nv.X(ix+2) += IONS->wxrr(ii)*IONS->V(ii,0);
 
-				nv.Y(ix-2) += ions->wxll(ii)*ions->V(ii,1);
-				nv.Y(ix-1) += ions->wxl(ii)*ions->V(ii,1);
-				nv.Y(ix) += ions->wxc(ii)*ions->V(ii,1);
-				nv.Y(ix+1) += ions->wxr(ii)*ions->V(ii,1);
-				nv.Y(ix+2) += ions->wxrr(ii)*ions->V(ii,1);
+				nv.Y(ix-2) += IONS->wxll(ii)*IONS->V(ii,1);
+				nv.Y(ix-1) += IONS->wxl(ii)*IONS->V(ii,1);
+				nv.Y(ix) += IONS->wxc(ii)*IONS->V(ii,1);
+				nv.Y(ix+1) += IONS->wxr(ii)*IONS->V(ii,1);
+				nv.Y(ix+2) += IONS->wxrr(ii)*IONS->V(ii,1);
 
-				nv.Z(ix-2) += ions->wxll(ii)*ions->V(ii,2);
-				nv.Z(ix-1) += ions->wxl(ii)*ions->V(ii,2);
-				nv.Z(ix) += ions->wxc(ii)*ions->V(ii,2);
-				nv.Z(ix+1) += ions->wxr(ii)*ions->V(ii,2);
-				nv.Z(ix+2) += ions->wxrr(ii)*ions->V(ii,2);
+				nv.Z(ix-2) += IONS->wxll(ii)*IONS->V(ii,2);
+				nv.Z(ix-1) += IONS->wxl(ii)*IONS->V(ii,2);
+				nv.Z(ix) += IONS->wxc(ii)*IONS->V(ii,2);
+				nv.Z(ix+1) += IONS->wxr(ii)*IONS->V(ii,2);
+				nv.Z(ix+2) += IONS->wxrr(ii)*IONS->V(ii,2);
 			}
 		}
 
 		#pragma omp critical (update_bulk_velocity)
 		{
-		ions->nv += nv;
+		IONS->nv += nv;
 		}
 
 	}//End of the parallel region
 
-	backwardPBC_1D(&ions->nv.X);
-	backwardPBC_1D(&ions->nv.Y);
-	backwardPBC_1D(&ions->nv.Z);
+	backwardPBC_1D(&IONS->nv.X);
+	backwardPBC_1D(&IONS->nv.Y);
+	backwardPBC_1D(&IONS->nv.Z);
 
-	ions->nv *= ions->NCP/mesh->DX;
+	IONS->nv *= IONS->NCP/mesh->DX;
 
 }
 #endif
 
 
 #ifdef ONED
-void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -697,99 +697,99 @@ void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
-	int NSP(ions->NSP);
+	int NSP(IONS->NSP);
 	int ii(0);
 	vfield_vec nv;
-	ions->nv.zeros(NC);//Setting to zero the ions' bulk velocity
+	IONS->nv.zeros(NC);//Setting to zero the ions' bulk velocity
 
-	#pragma omp parallel shared(mesh, ions) private(ii, NC, nv)
+	#pragma omp parallel shared(mesh, IONS) private(ii, NC, nv)
 	{
 		NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;
 		nv.zeros(NC);
 		#pragma omp for
 		for(ii=0;ii<NSP;ii++){
-			int ix = ions->meshNode(ii) + 1;
+			int ix = IONS->meshNode(ii) + 1;
 			if(ix == (NC-1)){//For the particles on the right side boundary.
-				nv.X(NC-2) += ions->wxl(ii)*ions->V(ii,0);
-				nv.X(NC-1) += ions->wxc(ii)*ions->V(ii,0);
-				nv.X(2) += ions->wxr(ii)*ions->V(ii,0);
+				nv.X(NC-2) += IONS->wxl(ii)*IONS->V(ii,0);
+				nv.X(NC-1) += IONS->wxc(ii)*IONS->V(ii,0);
+				nv.X(2) += IONS->wxr(ii)*IONS->V(ii,0);
 
-				nv.Y(NC-2) += ions->wxl(ii)*ions->V(ii,1);
-				nv.Y(NC-1) += ions->wxc(ii)*ions->V(ii,1);
-				nv.Y(2) += ions->wxr(ii)*ions->V(ii,1);
+				nv.Y(NC-2) += IONS->wxl(ii)*IONS->V(ii,1);
+				nv.Y(NC-1) += IONS->wxc(ii)*IONS->V(ii,1);
+				nv.Y(2) += IONS->wxr(ii)*IONS->V(ii,1);
 
-				nv.Z(NC-2) += ions->wxl(ii)*ions->V(ii,2);
-				nv.Z(NC-1) += ions->wxc(ii)*ions->V(ii,2);
-				nv.Z(2) += ions->wxr(ii)*ions->V(ii,2);
+				nv.Z(NC-2) += IONS->wxl(ii)*IONS->V(ii,2);
+				nv.Z(NC-1) += IONS->wxc(ii)*IONS->V(ii,2);
+				nv.Z(2) += IONS->wxr(ii)*IONS->V(ii,2);
 			}else if(ix != (NC-1)){
-				nv.X(ix-1) += ions->wxl(ii)*ions->V(ii,0);
-				nv.X(ix) += ions->wxc(ii)*ions->V(ii,0);
-				nv.X(ix+1) += ions->wxr(ii)*ions->V(ii,0);
+				nv.X(ix-1) += IONS->wxl(ii)*IONS->V(ii,0);
+				nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
+				nv.X(ix+1) += IONS->wxr(ii)*IONS->V(ii,0);
 
-				nv.Y(ix-1) += ions->wxl(ii)*ions->V(ii,1);
-				nv.Y(ix) += ions->wxc(ii)*ions->V(ii,1);
-				nv.Y(ix+1) += ions->wxr(ii)*ions->V(ii,1);
+				nv.Y(ix-1) += IONS->wxl(ii)*IONS->V(ii,1);
+				nv.Y(ix) += IONS->wxc(ii)*IONS->V(ii,1);
+				nv.Y(ix+1) += IONS->wxr(ii)*IONS->V(ii,1);
 
-				nv.Z(ix-1) += ions->wxl(ii)*ions->V(ii,2);
-				nv.Z(ix) += ions->wxc(ii)*ions->V(ii,2);
-				nv.Z(ix+1) += ions->wxr(ii)*ions->V(ii,2);
+				nv.Z(ix-1) += IONS->wxl(ii)*IONS->V(ii,2);
+				nv.Z(ix) += IONS->wxc(ii)*IONS->V(ii,2);
+				nv.Z(ix+1) += IONS->wxr(ii)*IONS->V(ii,2);
 			}
 		}
 
 		#pragma omp critical (update_bulk_velocity)
 		{
-		ions->nv += nv;
+		IONS->nv += nv;
 		}
 
 	}//End of the parallel region
 
-	backwardPBC_1D(&ions->nv.X);
-	backwardPBC_1D(&ions->nv.Y);
-	backwardPBC_1D(&ions->nv.Z);
+	backwardPBC_1D(&IONS->nv.X);
+	backwardPBC_1D(&IONS->nv.Y);
+	backwardPBC_1D(&IONS->nv.Z);
 
-	ions->nv *= ions->NCP/mesh->DX;
+	IONS->nv *= IONS->NCP/mesh->DX;
 
 }
 #endif
 
 
 #ifdef TWOD
-void PIC::eivTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eivTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::eivTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eivTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
-void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
-	ions->nv__ = ions->nv_;
-	ions->nv_ = ions->nv;
+	IONS->nv__ = IONS->nv_;
+	IONS->nv_ = IONS->nv;
 
 	switch (params->weightingScheme){
 		case(0):{
 				#ifdef ONED
-				eivTOS_1D(params, mesh, ions);
+				eivTOS_1D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		case(1):{
 				#ifdef ONED
-				eivTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eivTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eivTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, IONS);
 				#endif
 				break;
 				}
@@ -799,35 +799,35 @@ void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeome
 				}
 		case(3):{
 				#ifdef ONED
-				eivTOS_1D(params, mesh, ions);
+				eivTOS_1D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		case(4):{
 				#ifdef ONED
-				eivTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eivTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eivTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		default:{
 				#ifdef ONED
-				eivTSC_1D(params, mesh, ions);
+				eivTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eivTSC_2D(params, mesh, ions);
+				eivTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eivTSC_3D(params, mesh, ions);
+				eivTSC_3D(params, mesh, IONS);
 				#endif
 				}
 	}
@@ -835,62 +835,62 @@ void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeome
 
 
 #ifdef ONED
-void PIC::eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
-	int NSP(ions->NSP);
+	int NSP(IONS->NSP);
 	int ii(0);
 	arma::vec n;
 
-	ions->n = zeros(NC);//Setting to zero the ion density.
+	IONS->n = zeros(NC);//Setting to zero the ion density.
 	n.zeros(NC);
 
-	#pragma omp parallel shared(mesh, ions) private(ii) firstprivate(NSP, NC, n)
+	#pragma omp parallel shared(mesh, IONS) private(ii) firstprivate(NSP, NC, n)
 	{
 		#pragma omp for
 		for(ii=0;ii<NSP;ii++){
-			int ix = ions->meshNode(ii) + 1;
+			int ix = IONS->meshNode(ii) + 1;
 			if(ix == (NC-2)){//For the particles on the right side boundary.
-				n(NC-4) += ions->wxll(ii);
-				n(NC-3) += ions->wxl(ii);
-				n(NC-2) += ions->wxc(ii);
-				n(NC-1) += ions->wxr(ii);
-				n(0) += ions->wxrr(ii);
+				n(NC-4) += IONS->wxll(ii);
+				n(NC-3) += IONS->wxl(ii);
+				n(NC-2) += IONS->wxc(ii);
+				n(NC-1) += IONS->wxr(ii);
+				n(0) += IONS->wxrr(ii);
 			}else if(ix == (NC-1)){//For the particles on the right side boundary.
-				n(NC-3) += ions->wxll(ii);
-				n(NC-2) += ions->wxl(ii);
-				n(NC-1) += ions->wxc(ii);
-				n(2) += ions->wxr(ii);
-				n(3) += ions->wxrr(ii);
+				n(NC-3) += IONS->wxll(ii);
+				n(NC-2) += IONS->wxl(ii);
+				n(NC-1) += IONS->wxc(ii);
+				n(2) += IONS->wxr(ii);
+				n(3) += IONS->wxrr(ii);
 			}else if(ix == 1){
-				n(NC-1) += ions->wxll(ii);
-				n(0) += ions->wxl(ii);
-				n(ix) += ions->wxc(ii);
-				n(ix+1) += ions->wxr(ii);
-				n(ix+2) += ions->wxrr(ii);
+				n(NC-1) += IONS->wxll(ii);
+				n(0) += IONS->wxl(ii);
+				n(ix) += IONS->wxc(ii);
+				n(ix+1) += IONS->wxr(ii);
+				n(ix+2) += IONS->wxrr(ii);
 			}else{
-				n(ix-2) += ions->wxll(ii);
-				n(ix-1) += ions->wxl(ii);
-				n(ix) += ions->wxc(ii);
-				n(ix+1) += ions->wxr(ii);
-				n(ix+2) += ions->wxrr(ii);
+				n(ix-2) += IONS->wxll(ii);
+				n(ix-1) += IONS->wxl(ii);
+				n(ix) += IONS->wxc(ii);
+				n(ix+1) += IONS->wxr(ii);
+				n(ix+2) += IONS->wxrr(ii);
 			}
 		}
 
 		#pragma omp critical (update_density)
 		{
-		ions->n += n;
+		IONS->n += n;
 		}
 
 	}//End of the parallel region
 
-	backwardPBC_1D(&ions->n);
-	ions->n *= ions->NCP/mesh->DX;
+	backwardPBC_1D(&IONS->n);
+	IONS->n *= IONS->NCP/mesh->DX;
 }
 #endif
 
 
 #ifdef ONED
-void PIC::eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -901,82 +901,82 @@ void PIC::eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
-	int NSP(ions->NSP);
+	int NSP(IONS->NSP);
 	int ii(0);
 	arma::vec n;
 
-	ions->n = zeros(NC);//Setting to zero the ion density.
+	IONS->n = zeros(NC);//Setting to zero the ion density.
 	n.zeros(NC);
 
-	#pragma omp parallel shared(mesh, ions) private(ii) firstprivate(NSP, NC, n)
+	#pragma omp parallel shared(mesh, IONS) private(ii) firstprivate(NSP, NC, n)
 	{
 		#pragma omp for
 		for(ii=0;ii<NSP;ii++){
-			int ix = ions->meshNode(ii) + 1;
+			int ix = IONS->meshNode(ii) + 1;
 
 			if(ix == (NC-1)){//For the particles on the right side boundary.
-				n(NC-2) += ions->wxl(ii);
-				n(NC-1) += ions->wxc(ii);
-				n(2) += ions->wxr(ii);
+				n(NC-2) += IONS->wxl(ii);
+				n(NC-1) += IONS->wxc(ii);
+				n(2) += IONS->wxr(ii);
 			}else if(ix != (NC-1)){
-				n(ix-1) += ions->wxl(ii);
-				n(ix) += ions->wxc(ii);
-				n(ix+1) += ions->wxr(ii);
+				n(ix-1) += IONS->wxl(ii);
+				n(ix) += IONS->wxc(ii);
+				n(ix+1) += IONS->wxr(ii);
 			}
 		}
 
 		#pragma omp critical (update_density)
 		{
-		ions->n += n;
+		IONS->n += n;
 		}
 
 	}//End of the parallel region
 
-	backwardPBC_1D(&ions->n);
-	ions->n *= ions->NCP/mesh->DX;
+	backwardPBC_1D(&IONS->n);
+	IONS->n *= IONS->NCP/mesh->DX;
 
 }
 #endif
 
 
 #ifdef TWOD
-void PIC::eidTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eidTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::eidTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::eidTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
-void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
-	ions->n___ = ions->n__;
-	ions->n__ = ions->n_;
-	ions->n_ = ions->n;
+	IONS->n___ = IONS->n__;
+	IONS->n__ = IONS->n_;
+	IONS->n_ = IONS->n;
 
 	switch (params->weightingScheme){
 		case(0):{
 				#ifdef ONED
-				eidTOS_1D(params, mesh, ions);
+				eidTOS_1D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		case(1):{
 				#ifdef ONED
-				eidTSC_1D(params, mesh, ions);
+				eidTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eidTSC_2D(params, mesh, ions);
+				eidTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eidTSC_3D(params, mesh, ions);
+				eidTSC_3D(params, mesh, IONS);
 				#endif
 				break;
 				}
@@ -986,35 +986,35 @@ void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeomet
 				}
 		case(3):{
 				#ifdef ONED
-				eidTOS_1D(params, mesh, ions);
+				eidTOS_1D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		case(4):{
 				#ifdef ONED
-				eidTSC_1D(params, mesh, ions);
+				eidTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eidTSC_2D(params, mesh, ions);
+				eidTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eidTSC_3D(params, mesh, ions);
+				eidTSC_3D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		default:{
 				#ifdef ONED
-				eidTSC_1D(params, mesh, ions);
+				eidTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eidTSC_2D(params, mesh, ions);
+				eidTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eidTSC_3D(params, mesh, ions);
+				eidTSC_3D(params, mesh, IONS);
 				#endif
 				}
 	}
@@ -1022,7 +1022,7 @@ void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeomet
 
 
 #ifdef ONED
-void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * ions, vfield_vec * EMF, arma::mat * F){
+void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * IONS, vfield_vec * EMF, arma::mat * F){
 
 	//wxc = 23/48 - (x/H)^2/4
 	//wxr = (abs(x)/H - 1)*(abs(x)/H - 5/2)*(abs(x)/H + 1/2)/6 + 1/4
@@ -1031,95 +1031,95 @@ void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * ions, vf
 	//wxll = [7/2 - abs(x)/H]*[(2 - abs(x)/H)^2 + 3/4]/12 -1/12
 
 	int N =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
-	int NSP(ions->NSP);
+	int NSP(IONS->NSP);
 	int ii(0);
 
 	//Contrary to what may be thought,  F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
 
-	#pragma omp parallel for private(ii) shared(ions, EMF, F) firstprivate(N, NSP)
+	#pragma omp parallel for private(ii) shared(IONS, EMF, F) firstprivate(N, NSP)
 	for(ii=0;ii<NSP;ii++){
-		int ix = ions->meshNode(ii) + 1;
+		int ix = IONS->meshNode(ii) + 1;
 		if(ix == (N-2)){//For the particles on the right side boundary.
-			(*F)(ii,0) += ions->wxll(ii)*EMF->X(N-4);
-			(*F)(ii,1) += ions->wxll(ii)*EMF->Y(N-4);
-			(*F)(ii,2) += ions->wxll(ii)*EMF->Z(N-4);
+			(*F)(ii,0) += IONS->wxll(ii)*EMF->X(N-4);
+			(*F)(ii,1) += IONS->wxll(ii)*EMF->Y(N-4);
+			(*F)(ii,2) += IONS->wxll(ii)*EMF->Z(N-4);
 
-			(*F)(ii,0) += ions->wxl(ii)*EMF->X(N-3);
-			(*F)(ii,1) += ions->wxl(ii)*EMF->Y(N-3);
-			(*F)(ii,2) += ions->wxl(ii)*EMF->Z(N-3);
+			(*F)(ii,0) += IONS->wxl(ii)*EMF->X(N-3);
+			(*F)(ii,1) += IONS->wxl(ii)*EMF->Y(N-3);
+			(*F)(ii,2) += IONS->wxl(ii)*EMF->Z(N-3);
 
-			(*F)(ii,0) += ions->wxc(ii)*EMF->X(N-2);
-			(*F)(ii,1) += ions->wxc(ii)*EMF->Y(N-2);
-			(*F)(ii,2) += ions->wxc(ii)*EMF->Z(N-2);
+			(*F)(ii,0) += IONS->wxc(ii)*EMF->X(N-2);
+			(*F)(ii,1) += IONS->wxc(ii)*EMF->Y(N-2);
+			(*F)(ii,2) += IONS->wxc(ii)*EMF->Z(N-2);
 
-			(*F)(ii,0) += ions->wxr(ii)*EMF->X(N-1);
-			(*F)(ii,1) += ions->wxr(ii)*EMF->Y(N-1);
-			(*F)(ii,2) += ions->wxr(ii)*EMF->Z(N-1);
+			(*F)(ii,0) += IONS->wxr(ii)*EMF->X(N-1);
+			(*F)(ii,1) += IONS->wxr(ii)*EMF->Y(N-1);
+			(*F)(ii,2) += IONS->wxr(ii)*EMF->Z(N-1);
 
-			(*F)(ii,0) += ions->wxrr(ii)*EMF->X(0);
-			(*F)(ii,1) += ions->wxrr(ii)*EMF->Y(0);
-			(*F)(ii,2) += ions->wxrr(ii)*EMF->Z(0);
+			(*F)(ii,0) += IONS->wxrr(ii)*EMF->X(0);
+			(*F)(ii,1) += IONS->wxrr(ii)*EMF->Y(0);
+			(*F)(ii,2) += IONS->wxrr(ii)*EMF->Z(0);
 		}else if(ix == (N-1)){//For the particles on the right side boundary.
-			(*F)(ii,0) += ions->wxll(ii)*EMF->X(N-3);
-			(*F)(ii,1) += ions->wxll(ii)*EMF->Y(N-3);
-			(*F)(ii,2) += ions->wxll(ii)*EMF->Z(N-3);
+			(*F)(ii,0) += IONS->wxll(ii)*EMF->X(N-3);
+			(*F)(ii,1) += IONS->wxll(ii)*EMF->Y(N-3);
+			(*F)(ii,2) += IONS->wxll(ii)*EMF->Z(N-3);
 
-			(*F)(ii,0) += ions->wxl(ii)*EMF->X(N-2);
-			(*F)(ii,1) += ions->wxl(ii)*EMF->Y(N-2);
-			(*F)(ii,2) += ions->wxl(ii)*EMF->Z(N-2);
+			(*F)(ii,0) += IONS->wxl(ii)*EMF->X(N-2);
+			(*F)(ii,1) += IONS->wxl(ii)*EMF->Y(N-2);
+			(*F)(ii,2) += IONS->wxl(ii)*EMF->Z(N-2);
 
-			(*F)(ii,0) += ions->wxc(ii)*EMF->X(N-1);
-			(*F)(ii,1) += ions->wxc(ii)*EMF->Y(N-1);
-			(*F)(ii,2) += ions->wxc(ii)*EMF->Z(N-1);
+			(*F)(ii,0) += IONS->wxc(ii)*EMF->X(N-1);
+			(*F)(ii,1) += IONS->wxc(ii)*EMF->Y(N-1);
+			(*F)(ii,2) += IONS->wxc(ii)*EMF->Z(N-1);
 
-			(*F)(ii,0) += ions->wxr(ii)*EMF->X(2);
-			(*F)(ii,1) += ions->wxr(ii)*EMF->Y(2);
-			(*F)(ii,2) += ions->wxr(ii)*EMF->Z(2);
+			(*F)(ii,0) += IONS->wxr(ii)*EMF->X(2);
+			(*F)(ii,1) += IONS->wxr(ii)*EMF->Y(2);
+			(*F)(ii,2) += IONS->wxr(ii)*EMF->Z(2);
 
-			(*F)(ii,0) += ions->wxrr(ii)*EMF->X(3);
-			(*F)(ii,1) += ions->wxrr(ii)*EMF->Y(3);
-			(*F)(ii,2) += ions->wxrr(ii)*EMF->Z(3);
+			(*F)(ii,0) += IONS->wxrr(ii)*EMF->X(3);
+			(*F)(ii,1) += IONS->wxrr(ii)*EMF->Y(3);
+			(*F)(ii,2) += IONS->wxrr(ii)*EMF->Z(3);
 		}else if(ix == 1){
-			(*F)(ii,0) += ions->wxll(ii)*EMF->X(N-1);
-			(*F)(ii,1) += ions->wxll(ii)*EMF->Y(N-1);
-			(*F)(ii,2) += ions->wxll(ii)*EMF->Z(N-1);
+			(*F)(ii,0) += IONS->wxll(ii)*EMF->X(N-1);
+			(*F)(ii,1) += IONS->wxll(ii)*EMF->Y(N-1);
+			(*F)(ii,2) += IONS->wxll(ii)*EMF->Z(N-1);
 
-			(*F)(ii,0) += ions->wxl(ii)*EMF->X(0);
-			(*F)(ii,1) += ions->wxl(ii)*EMF->Y(0);
-			(*F)(ii,2) += ions->wxl(ii)*EMF->Z(0);
+			(*F)(ii,0) += IONS->wxl(ii)*EMF->X(0);
+			(*F)(ii,1) += IONS->wxl(ii)*EMF->Y(0);
+			(*F)(ii,2) += IONS->wxl(ii)*EMF->Z(0);
 
-			(*F)(ii,0) += ions->wxc(ii)*EMF->X(ix);
-			(*F)(ii,1) += ions->wxc(ii)*EMF->Y(ix);
-			(*F)(ii,2) += ions->wxc(ii)*EMF->Z(ix);
+			(*F)(ii,0) += IONS->wxc(ii)*EMF->X(ix);
+			(*F)(ii,1) += IONS->wxc(ii)*EMF->Y(ix);
+			(*F)(ii,2) += IONS->wxc(ii)*EMF->Z(ix);
 
-			(*F)(ii,0) += ions->wxr(ii)*EMF->X(ix+1);
-			(*F)(ii,1) += ions->wxr(ii)*EMF->Y(ix+1);
-			(*F)(ii,2) += ions->wxr(ii)*EMF->Z(ix+1);
+			(*F)(ii,0) += IONS->wxr(ii)*EMF->X(ix+1);
+			(*F)(ii,1) += IONS->wxr(ii)*EMF->Y(ix+1);
+			(*F)(ii,2) += IONS->wxr(ii)*EMF->Z(ix+1);
 
-			(*F)(ii,0) += ions->wxrr(ii)*EMF->X(ix+2);
-			(*F)(ii,1) += ions->wxrr(ii)*EMF->Y(ix+2);
-			(*F)(ii,2) += ions->wxrr(ii)*EMF->Z(ix+2);
+			(*F)(ii,0) += IONS->wxrr(ii)*EMF->X(ix+2);
+			(*F)(ii,1) += IONS->wxrr(ii)*EMF->Y(ix+2);
+			(*F)(ii,2) += IONS->wxrr(ii)*EMF->Z(ix+2);
 		}else{
-			(*F)(ii,0) += ions->wxll(ii)*EMF->X(ix-2);
-			(*F)(ii,1) += ions->wxll(ii)*EMF->Y(ix-2);
-			(*F)(ii,2) += ions->wxll(ii)*EMF->Z(ix-2);
+			(*F)(ii,0) += IONS->wxll(ii)*EMF->X(ix-2);
+			(*F)(ii,1) += IONS->wxll(ii)*EMF->Y(ix-2);
+			(*F)(ii,2) += IONS->wxll(ii)*EMF->Z(ix-2);
 
-			(*F)(ii,0) += ions->wxl(ii)*EMF->X(ix-1);
-			(*F)(ii,1) += ions->wxl(ii)*EMF->Y(ix-1);
-			(*F)(ii,2) += ions->wxl(ii)*EMF->Z(ix-1);
+			(*F)(ii,0) += IONS->wxl(ii)*EMF->X(ix-1);
+			(*F)(ii,1) += IONS->wxl(ii)*EMF->Y(ix-1);
+			(*F)(ii,2) += IONS->wxl(ii)*EMF->Z(ix-1);
 
-			(*F)(ii,0) += ions->wxc(ii)*EMF->X(ix);
-			(*F)(ii,1) += ions->wxc(ii)*EMF->Y(ix);
-			(*F)(ii,2) += ions->wxc(ii)*EMF->Z(ix);
+			(*F)(ii,0) += IONS->wxc(ii)*EMF->X(ix);
+			(*F)(ii,1) += IONS->wxc(ii)*EMF->Y(ix);
+			(*F)(ii,2) += IONS->wxc(ii)*EMF->Z(ix);
 
-			(*F)(ii,0) += ions->wxr(ii)*EMF->X(ix+1);
-			(*F)(ii,1) += ions->wxr(ii)*EMF->Y(ix+1);
-			(*F)(ii,2) += ions->wxr(ii)*EMF->Z(ix+1);
+			(*F)(ii,0) += IONS->wxr(ii)*EMF->X(ix+1);
+			(*F)(ii,1) += IONS->wxr(ii)*EMF->Y(ix+1);
+			(*F)(ii,2) += IONS->wxr(ii)*EMF->Z(ix+1);
 
-			(*F)(ii,0) += ions->wxrr(ii)*EMF->X(ix+2);
-			(*F)(ii,1) += ions->wxrr(ii)*EMF->Y(ix+2);
-			(*F)(ii,2) += ions->wxrr(ii)*EMF->Z(ix+2);
+			(*F)(ii,0) += IONS->wxrr(ii)*EMF->X(ix+2);
+			(*F)(ii,1) += IONS->wxrr(ii)*EMF->Y(ix+2);
+			(*F)(ii,2) += IONS->wxrr(ii)*EMF->Z(ix+2);
 		}
 	}//End of the parallel region
 }
@@ -1127,7 +1127,7 @@ void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * ions, vf
 
 
 #ifdef ONED
-void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * ions, vfield_vec * emf, arma::mat * F){
+void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * IONS, vfield_vec * emf, arma::mat * F){
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
 	//				    0       x
@@ -1137,38 +1137,38 @@ void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * ions, vf
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int N =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
-	int NSP(ions->NSP);
+	int NSP(IONS->NSP);
 	int ii(0);
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
-	#pragma omp parallel for private(ii) shared(N, NSP, params, ions, emf, F)
+	#pragma omp parallel for private(ii) shared(N, NSP, params, IONS, emf, F)
 	for(ii=0;ii<NSP;ii++){
-		int ix = ions->meshNode(ii) + 1;
+		int ix = IONS->meshNode(ii) + 1;
 		if(ix == (N-1)){//For the particles on the right side boundary.
-			(*F)(ii,0) += ions->wxl(ii)*emf->X(ix-1);
-			(*F)(ii,1) += ions->wxl(ii)*emf->Y(ix-1);
-			(*F)(ii,2) += ions->wxl(ii)*emf->Z(ix-1);
+			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
+			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
+			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
 
-			(*F)(ii,0) += ions->wxc(ii)*emf->X(ix);
-			(*F)(ii,1) += ions->wxc(ii)*emf->Y(ix);
-			(*F)(ii,2) += ions->wxc(ii)*emf->Z(ix);
+			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
+			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
+			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
 
-			(*F)(ii,0) += ions->wxr(ii)*emf->X(2);
-			(*F)(ii,1) += ions->wxr(ii)*emf->Y(2);
-			(*F)(ii,2) += ions->wxr(ii)*emf->Z(2);
+			(*F)(ii,0) += IONS->wxr(ii)*emf->X(2);
+			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(2);
+			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(2);
 		}else{
-			(*F)(ii,0) += ions->wxl(ii)*emf->X(ix-1);
-			(*F)(ii,1) += ions->wxl(ii)*emf->Y(ix-1);
-			(*F)(ii,2) += ions->wxl(ii)*emf->Z(ix-1);
+			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
+			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
+			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
 
-			(*F)(ii,0) += ions->wxc(ii)*emf->X(ix);
-			(*F)(ii,1) += ions->wxc(ii)*emf->Y(ix);
-			(*F)(ii,2) += ions->wxc(ii)*emf->Z(ix);
+			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
+			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
+			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
 
-			(*F)(ii,0) += ions->wxr(ii)*emf->X(ix+1);
-			(*F)(ii,1) += ions->wxr(ii)*emf->Y(ix+1);
-			(*F)(ii,2) += ions->wxr(ii)*emf->Z(ix+1);
+			(*F)(ii,0) += IONS->wxr(ii)*emf->X(ix+1);
+			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(ix+1);
+			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(ix+1);
 		}
 	}//End of the parallel region
 
@@ -1176,17 +1176,51 @@ void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * ions, vf
 #endif
 
 
+void PIC::interpolateElectromagneticFields_1D(const inputParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B){
+	switch (params->weightingScheme){
+		case(0):{
+				EMF_TOS_1D(params, IONS, &EB->E, E);
+				EMF_TOS_1D(params, IONS, &EB->B, B);
+				break;
+				}
+		case(1):{
+				EMF_TSC_1D(params, IONS, &EB->E, E);
+				EMF_TSC_1D(params, IONS, &EB->B, B);
+				break;
+				}
+		case(2):{
+				exit(0);
+				break;
+				}
+		case(3):{
+				EMF_TOS_1D(params, IONS, &EB->E, E);
+				EMF_TOS_1D(params, IONS, &EB->B, B);
+				break;
+				}
+		case(4):{
+				EMF_TSC_1D(params, IONS, &EB->E, E);
+				EMF_TSC_1D(params, IONS, &EB->B, B);
+				break;
+				}
+		default:{
+				EMF_TSC_1D(params, IONS, &EB->E, E);
+				EMF_TSC_1D(params, IONS, &EB->B, B);
+				}
+	}
+}
+
+
 #ifdef TWOD
-void PIC::EMF_TSC_2D(const meshGeometry * mesh, const ionSpecies * ions, vfield_cube * emf, arma::mat * F){
+void PIC::EMF_TSC_2D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * emf, arma::mat * F){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * ions, vfield_cube * emf, arma::mat * F){
+void PIC::EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * emf, arma::mat * F){
 
-	for(int ii=0;ii<ions->NSP;ii++){//Iterating over the particles
+	for(int ii=0;ii<IONS->NSP;ii++){//Iterating over the particles
 
 		double wx(0);
 		double wy(0);
@@ -1199,13 +1233,13 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * ions, vfield_
 		double w6(0);
 		double w7(0);
 		double w8(0);
-		int ix(ions->meshNode(ii,0)+1);
-		int iy(ions->meshNode(ii,1)+1);
-		int iz(ions->meshNode(ii,2)+1);
+		int ix(IONS->meshNode(ii,0)+1);
+		int iy(IONS->meshNode(ii,1)+1);
+		int iz(IONS->meshNode(ii,2)+1);
 
-		wx = 1 - (ions->X(ii,0) - mesh->nodes.X(ions->meshNode(ii,0)))/mesh->DX;//
-		wy = 1 - (ions->X(ii,1) - mesh->nodes.Y(ions->meshNode(ii,1)))/mesh->DY;//
-		wz = 1 - (ions->X(ii,2) - mesh->nodes.Z(ions->meshNode(ii,2)))/mesh->DZ;//
+		wx = 1 - (IONS->X(ii,0) - mesh->nodes.X(IONS->meshNode(ii,0)))/mesh->DX;//
+		wy = 1 - (IONS->X(ii,1) - mesh->nodes.Y(IONS->meshNode(ii,1)))/mesh->DY;//
+		wz = 1 - (IONS->X(ii,2) - mesh->nodes.Z(IONS->meshNode(ii,2)))/mesh->DZ;//
 
 		wx = (wx<0) ? 0 : wx;
 		wy = (wy<0) ? 0 : wy;
@@ -1294,36 +1328,7 @@ void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales 
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
-		switch (params->weightingScheme){
-			case(0):{
-					EMF_TOS_1D(params, &IONS->at(ii), &EB_.E, &Ep);
-					EMF_TOS_1D(params, &IONS->at(ii), &EB_.B, &Bp);
-					break;
-					}
-			case(1):{
-					EMF_TSC_1D(params, &IONS->at(ii), &EB_.E, &Ep);
-					EMF_TSC_1D(params, &IONS->at(ii), &EB_.B, &Bp);
-					break;
-					}
-			case(2):{
-					exit(0);
-					break;
-					}
-			case(3):{
-					EMF_TOS_1D(params, &IONS->at(ii), &EB_.E, &Ep);
-					EMF_TOS_1D(params, &IONS->at(ii), &EB_.B, &Bp);
-					break;
-					}
-			case(4):{
-					EMF_TSC_1D(params, &IONS->at(ii), &EB_.E, &Ep);
-					EMF_TSC_1D(params, &IONS->at(ii), &EB_.B, &Bp);
-					break;
-					}
-			default:{
-					EMF_TSC_1D(params, &IONS->at(ii), &EB_.E, &Ep);
-					EMF_TSC_1D(params, &IONS->at(ii), &EB_.B, &Bp);
-					}
-		}
+		interpolateElectromagneticFields_1D(params, &IONS->at(ii), &EB_, &Ep, &Bp);
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
 		int NSP(IONS->at(ii).NSP);
@@ -1749,31 +1754,7 @@ void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vect
 			}
 		}//End of the parallel region
 
-		switch (params->weightingScheme){
-			case(0):{
-					assignCell_TOS(params, mesh, &IONS->at(ii), 1);
-					break;
-					}
-			case(1):{
-					assignCell_TSC(params, mesh, &IONS->at(ii), 1);
-					break;
-					}
-			case(2):{
-					assignCell_NNS(params, mesh, &IONS->at(ii), 1);
-					break;
-					}
-			case(3):{
-					assignCell_TOS(params, mesh, &IONS->at(ii), 1);
-					break;
-					}
-			case(4):{
-					assignCell_TSC(params, mesh, &IONS->at(ii), 1);
-					break;
-					}
-			default:{
-					assignCell_TSC(params, mesh, &IONS->at(ii), 1);
-					}
-		}
+		PIC::assignCell(params, mesh, &IONS->at(ii), 1);
 
 		extrapolateIonDensity(params, mesh, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
 
@@ -1990,36 +1971,36 @@ void PIC_GC::set_GC_vars(ionSpecies * IONS, int pp){
 }
 
 
-void PIC_GC::depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions){
+void PIC_GC::depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
-	ions->n___ = ions->n__;
-	ions->n__ = ions->n_;
-	ions->n_ = ions->n;
-	ions->nv__ = ions->nv_;
-	ions->nv_ = ions->nv;
+	IONS->n___ = IONS->n__;
+	IONS->n__ = IONS->n_;
+	IONS->n_ = IONS->n;
+	IONS->nv__ = IONS->nv_;
+	IONS->nv_ = IONS->nv;
 
 	switch (params->weightingScheme){
 		case(0):{
 				#ifdef ONED
-				PIC::eidTOS_1D(params, mesh, ions);
-				eivTOS_1D(params, mesh, ions);
+				PIC::eidTOS_1D(params, mesh, IONS);
+				PIC::eivTOS_1D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		case(1):{
 				#ifdef ONED
-				eidTSC_1D(params, mesh, ions);
-				eivTSC_1D(params, mesh, ions);
+				PIC::eidTSC_1D(params, mesh, IONS);
+				PIC::eivTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eidTSC_2D(params, mesh, ions);
-				eivTSC_2D(params, mesh, ions);
+				PIC::eidTSC_2D(params, mesh, IONS);
+				PIC::eivTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eidTSC_3D(params, mesh, ions);
-				eivTSC_3D(params, mesh, ions);
+				PIC::eidTSC_3D(params, mesh, IONS);
+				PIC::eivTSC_3D(params, mesh, IONS);
 				#endif
 				break;
 				}
@@ -2029,42 +2010,42 @@ void PIC_GC::depositIonDensityAndBulkVelocity(const inputParameters * params, co
 				}
 		case(3):{
 				#ifdef ONED
-				eidTOS_1D(params, mesh, ions);
-				eivTOS_1D(params, mesh, ions);
+				PIC::eidTOS_1D(params, mesh, IONS);
+				PIC::eivTOS_1D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		case(4):{
 				#ifdef ONED
-				eidTSC_1D(params, mesh, ions);
-				eivTSC_1D(params, mesh, ions);
+				PIC::eidTSC_1D(params, mesh, IONS);
+				PIC::eivTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eidTSC_2D(params, mesh, ions);
-				eivTSC_2D(params, mesh, ions);
+				PIC::eidTSC_2D(params, mesh, IONS);
+				PIC::eivTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eidTSC_3D(params, mesh, ions);
-				eivTSC_3D(params, mesh, ions);
+				PIC::eidTSC_3D(params, mesh, IONS);
+				PIC::eivTSC_3D(params, mesh, IONS);
 				#endif
 				break;
 				}
 		default:{
 				#ifdef ONED
-				eidTSC_1D(params, mesh, ions);
-				eivTSC_1D(params, mesh, ions);
+				PIC::eidTSC_1D(params, mesh, IONS);
+				PIC::eivTSC_1D(params, mesh, IONS);
 				#endif
 
 				#ifdef TWOD
-				eidTSC_2D(params, mesh, ions);
-				eivTSC_2D(params, mesh, ions);
+				PIC::eidTSC_2D(params, mesh, IONS);
+				PIC::eivTSC_2D(params, mesh, IONS);
 				#endif
 
 				#ifdef THREED
-				eidTSC_3D(params, mesh, ions);
-				eivTSC_3D(params, mesh, ions);
+				PIC::eidTSC_3D(params, mesh, IONS);
+				PIC::eivTSC_3D(params, mesh, IONS);
 				#endif
 				}
 	}// Switch
@@ -2083,6 +2064,11 @@ void PIC_GC::EFF_EMF_TSC_1D(const double DT, const double DX, GC_VARS * gcv, con
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int ix = gcv->mn + 1;
+	gcv->b.fill(0.0);
+	gcv->B.fill(0.0);
+	gcv->E.fill(0.0);
+	gcv->Bs.fill(0.0);
+	gcv->Es.fill(0.0);
 
 	// Computation of B, E and b fields.
 	if(ix == (NX-2)){
@@ -2406,7 +2392,7 @@ void PIC_GC::assignCell_TSC(const inputParameters * params, const meshGeometry *
 	}
 
     #ifdef CHECKS_ON
-	if(!ions->meshNode.is_finite()){
+	if(!IONS->meshNode.is_finite()){
 		std::ofstream ofs("errors/assignCell_TSC_GC.txt",std::ofstream::out);
 		ofs << "ERROR: Non-finite value for the particle's index.\n";
 		ofs.close();
@@ -2423,7 +2409,7 @@ void PIC_GC::assignCell(const inputParameters * params, const meshGeometry * mes
 				break;
 				}
 		case(1):{
-				PIC_GC::assignCell_TSC(params, mesh, gcv, 1);
+				PIC_GC::assignCell_TSC(params, mesh, gcv, dim);
 				break;
 				}
 		case(2):{
@@ -2435,28 +2421,41 @@ void PIC_GC::assignCell(const inputParameters * params, const meshGeometry * mes
 				break;
 				}
 		case(4):{
-				PIC_GC::assignCell_TSC(params, mesh, gcv, 1);
+				PIC_GC::assignCell_TSC(params, mesh, gcv, dim);
 				break;
 				}
 		default:{
-				PIC_GC::assignCell_TSC(params, mesh, gcv, 1);
+				PIC_GC::assignCell_TSC(params, mesh, gcv, dim);
 				}
 	}
 }
 
 
+void PIC_GC::computeFullOrbitVelocity(const inputParameters * params, const meshGeometry * mesh, const fields * EB, GC_VARS * gcv, arma::rowvec * V, int dim){
+
+	PIC_GC::assignCell(params, mesh, gcv, dim);
+
+	PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+
+	double Bspar = dot(gcv->b, gcv->Bs);
+
+	//K1
+	(*V)(0) = gcv->Ppar*gcv->Bs(0)/(gcv->g*gcv->M*Bspar) + (gcv->Es(1)*gcv->b(2) - gcv->Es(2)*gcv->b(1))/Bspar;
+	(*V)(1) = gcv->Ppar*gcv->Bs(1)/(gcv->g*gcv->M*Bspar) - (gcv->Es(0)*gcv->b(2) - gcv->Es(2)*gcv->b(0))/Bspar;
+	(*V)(2) = gcv->Ppar*gcv->Bs(2)/(gcv->g*gcv->M*Bspar) + (gcv->Es(0)*gcv->b(1) - gcv->Es(1)*gcv->b(0))/Bspar;
+}
 
 
 void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG){
 	// We interpolate the effective fields to GC particles position
 	switch (STG) {
 		case(1):{
-//			gcv->Xo_ = gcv->Xo;
-//			gcv->Pparo_ = gcv->Pparo;
+			gcv->Xo_ = gcv->Xo;
+			gcv->Pparo_ = gcv->Pparo;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->Bs);
 
@@ -2473,9 +2472,9 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			gcv->X = fmod(gcv->X, LX);
 			gcv->X = (gcv->X < 0) ? gcv->X + LX : gcv->X;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2492,9 +2491,9 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			gcv->X = fmod(gcv->X, LX);
 			gcv->X = (gcv->X < 0) ? gcv->X + LX : gcv->X;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2511,9 +2510,9 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			gcv->X = fmod(gcv->X, LX);
 			gcv->X = (gcv->X < 0) ? gcv->X + LX : gcv->X;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2530,9 +2529,9 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			gcv->X = fmod(gcv->X, LX);
 			gcv->X = (gcv->X < 0) ? gcv->X + LX : gcv->X;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2549,9 +2548,9 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			gcv->X = fmod(gcv->X, LX);
 			gcv->X = (gcv->X < 0) ? gcv->X + LX : gcv->X;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2568,9 +2567,9 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			gcv->X = fmod(gcv->X, LX);
 			gcv->X = (gcv->X < 0) ? gcv->X + LX : gcv->X;
 
-			assignCell(params, mesh, gcv, 1);
+			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2672,9 +2671,6 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 //			cout << "BEFORE: " << gcv.Pparo << " | " << gcv.Ppar << "\n";
 
 			while(TRK < params->DT){ // Sub-cycling time loop
-				gcv.Xo_ = gcv.Xo;
-				gcv.Pparo_ = gcv.Pparo;
-
 				for(int stg=1; stg<8; stg++){
 					advanceRungeKutta45Stages_1D(params, mesh, &DT_RK, &gcv, &EB_, stg);
 				}
@@ -2741,36 +2737,19 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 				gcv.Pparo = S4(1);
 			}
 
+			gcv.X = gcv.Xo;
+			gcv.Ppar = gcv.Pparo;
+
 			IONS->at(ss).X(pp,0) = gcv.Xo;
 			IONS->at(ss).Ppar(pp) = gcv.Pparo;
-			// Generate IONS->at(ss).V
+
+			// Compute particles' (full-orbit) velocities
+			arma::rowvec V(3);
+			PIC_GC::computeFullOrbitVelocity(params, mesh, &EB_, &gcv, &V, 1);
+			IONS->at(ss).V.row(pp) = V;
 		} // Loop over particles
 
-		switch (params->weightingScheme){
-			case(0):{
-					PIC::assignCell_TOS(params, mesh, &IONS->at(ss), 1);
-					break;
-					}
-			case(1):{
-					PIC::assignCell_TSC(params, mesh, &IONS->at(ss), 1);
-					break;
-					}
-			case(2):{
-					PIC::assignCell_NNS(params, mesh, &IONS->at(ss), 1);
-					break;
-					}
-			case(3):{
-					PIC::assignCell_TOS(params, mesh, &IONS->at(ss), 1);
-					break;
-					}
-			case(4):{
-					PIC::assignCell_TSC(params, mesh, &IONS->at(ss), 1);
-					break;
-					}
-			default:{
-					PIC::assignCell_TSC(params, mesh, &IONS->at(ss), 1);
-					}
-		}
+		IONS->at(ss).V.print("V");
 
 		depositIonDensityAndBulkVelocity(params, mesh, &IONS->at(ss));
 

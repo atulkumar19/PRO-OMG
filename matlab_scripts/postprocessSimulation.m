@@ -22,9 +22,9 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-FourierAnalysis(ST,'B','z');
+% FourierAnalysis(ST,'B','z');
 
-EnergyDiagnostic(ST);
+% EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)

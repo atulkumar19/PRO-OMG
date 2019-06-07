@@ -40,9 +40,9 @@ class PIC{
 
 protected:
 
-	void MPI_BcastDensity(const inputParameters * params, ionSpecies * ions);
+	void MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS);
 
-	void MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ions);
+	void MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * IONS);
 
 	void MPI_AllgatherField(const inputParameters * params, vfield_vec * field);
 
@@ -70,42 +70,46 @@ protected:
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
 
-	void assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+	void assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
 
-	void assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+	void assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
 
-	void assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
-
-
-	void eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void eivTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void eivTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
-
-	void extrapolateIonVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
 
 
-	void eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void eidTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void eivTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void eidTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void eivTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void extrapolateIonDensity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void extrapolateIonVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
 
-	void EMF_TOS_1D(const inputParameters * params, const ionSpecies * ions, vfield_vec * EMF, arma::mat * F);
+	void eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void EMF_TSC_1D(const inputParameters * params, const ionSpecies * ions, vfield_vec * fields, arma::mat * F);
+	void eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void EMF_TSC_2D(const meshGeometry * mesh, const ionSpecies * ions, vfield_cube * fields, arma::mat * F);
+	void eidTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
-	void EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * ions, vfield_cube * fields, arma::mat * F);
+	void eidTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+
+	void extrapolateIonDensity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+
+
+	void EMF_TOS_1D(const inputParameters * params, const ionSpecies * IONS, vfield_vec * fields, arma::mat * F);
+
+	void EMF_TSC_1D(const inputParameters * params, const ionSpecies * IONS, vfield_vec * fields, arma::mat * F);
+
+	void interpolateElectromagneticFields_1D(const inputParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B);
+
+
+	void EMF_TSC_2D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
+
+	void EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
+
 
 
 	void aiv_Vay_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
@@ -132,7 +136,7 @@ protected:
 
 	PIC();
 
-	void assignCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions, int dim);
+	void assignCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
 
 	void advanceIonsVelocity(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
@@ -200,7 +204,7 @@ protected:
 	void set_GC_vars(ionSpecies * IONS, int pp);
 
 
-	void depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * ions);
+	void depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
 
 
 	void EFF_EMF_TSC_1D(const double DT, const double DX, GC_VARS * gcv, const fields * EB);
@@ -208,7 +212,8 @@ protected:
 
 	void assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim);
 
-	void assignCell(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim);
+
+	void computeFullOrbitVelocity(const inputParameters * params, const meshGeometry * mesh, const fields * EB, GC_VARS * gcv, arma::rowvec * V, int dim);
 
 
 	void advanceRungeKutta45Stages_1D(const inputParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG);
@@ -223,6 +228,8 @@ protected:
 public:
 
 	PIC_GC(const inputParameters * params, const meshGeometry * mesh);
+
+	void assignCell(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim);
 
 	void advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 };

@@ -11,7 +11,7 @@ NUM_MPI_PROCESSES=2
 LOC_OUTPUT_FOLDER="/home/leo/Documents/PRO++/PROMETHEUS++/outputFiles"
 
 # File identifier
-# FILE_ID="dispersion_relation"
+#FILE_ID="dispersion_relation"
 FILE_ID="GC"
 
 

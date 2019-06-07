@@ -78,11 +78,6 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 
-    // Filling up density and bulk velocity arrays
-    //for(int tt=0;tt<3;tt++){
-    //    ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
-    //}
-
     hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 
     t1 = MPI::Wtime();
@@ -91,26 +86,21 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Abort(MPI_COMM_WORLD,-101);
-/*
-        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
-
-        if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
-             // Using the Bashford-Adams extrapolation.
-            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 1);
-        }else{
-             // Using basic velocity extrapolation.
-            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
-        }
+//        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         currentTime += params->DT*CS->time;
+
+        hdfObj->saveOutputs(params, IONS, EB, CS, 1, currentTime);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Abort(MPI_COMM_WORLD,-101);
 
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
             hdfObj->saveOutputs(params, IONS, EB, CS, outputIterator + 1, currentTime);
             outputIterator++;
         }
 
+/*
     //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);
         if(tt==100){
             t2 = MPI::Wtime();

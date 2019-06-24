@@ -43,3 +43,25 @@ void MPI_MAIN::createMPITopology(inputParameters * params){
 */
 	}
 }
+
+
+void MPI_MAIN::finalizeCommunications(inputParameters * params){
+	bool finalized = false;
+
+	if(params->mpi.rank_cart == 0)
+		cout << "\n* * * * * * * * * * * * FINALIZING MPI COMMUNICATIONS * * * * * * * * * * * * * * * * * *\n";
+
+	MPI_Barrier(params->mpi.mpi_topo);
+
+	MPI_Finalize();
+
+	finalized = MPI::Is_finalized();
+
+	if(finalized)
+		cout << "MPI process: " << params->mpi.rank_cart << " FINALIZED\n";
+	else
+		cout << "MPI process: " << params->mpi.rank_cart << " NOT FINALIZED - ERROR\n";
+
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * MPI COMMUNICATIONS FINALIZED * * * * * * * * * * * * * * * * * *\n";
+}

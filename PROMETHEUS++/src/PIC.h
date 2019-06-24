@@ -201,6 +201,9 @@ protected:
 	GC_VARS gcv;
 
 
+	void set_to_zero_RK45_variables();
+
+
 	void set_GC_vars(ionSpecies * IONS, int pp);
 
 

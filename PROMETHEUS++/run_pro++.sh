@@ -12,8 +12,7 @@ LOC_OUTPUT_FOLDER="/home/leo/Documents/PRO++/PROMETHEUS++/outputFiles"
 
 # File identifier
 #FILE_ID="dispersion_relation"
-FILE_ID="GC"
-
+FILE_ID="dispersion_relation"
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_PATH}:${ARMA_PATH}
 

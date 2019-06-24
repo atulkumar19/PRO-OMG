@@ -32,6 +32,8 @@ public:
 
 	void createMPITopology(inputParameters * params);
 
+	void finalizeCommunications(inputParameters * params);
+
 };
 
 class MPI_ARMA_VEC{

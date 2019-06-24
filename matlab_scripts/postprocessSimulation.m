@@ -8,7 +8,7 @@ close all
 ST.kB = 1.38E-23; % Boltzmann constant
 ST.mu0 = (4E-7)*pi; % Magnetic permeability of vacuum
 ST.ep0 = 8.854E-12; % Electric permittivity of vacuum
-ST.c=2.9979E8; % Speed of light
+ST.c = 2.9979E8; % Speed of light
 ST.amu = 1.660539E-27; % Atomic mass unit in kg
 
 ST.qe = 1.602176E-19; % Electron charge
@@ -22,9 +22,9 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-% FourierAnalysis(ST,'B','z');
+FourierAnalysis(ST,'B','z');
 
-% EnergyDiagnostic(ST);
+EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)

@@ -20,6 +20,14 @@ void HDF::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
 #endif
 
 
+void saveToHDF5(int * value){
+
+}
+
+void saveArrayToHDF5(){
+
+}
+
 
 //Constructor of HDF5Obj class
 HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
@@ -28,7 +36,9 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		stringstream dn;
 		dn << params->mpi.rank_cart;
 
-		string name, path;
+		string name;
+		string path;
+
 		path = params->PATH + "/HDF5/";
 		name = path + "main_D"  + dn.str() + ".h5";
 		const H5std_string	FILE_NAME( name );
@@ -236,6 +246,8 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
     }
 
 }
+
+
 
 #ifdef ONED
 void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){

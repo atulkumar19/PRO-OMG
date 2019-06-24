@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
 				}
 	}
 
-	MPI_Finalize();
+	mpi_main.finalizeCommunications(&params);
 
 	return(0);
 }

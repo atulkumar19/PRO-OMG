@@ -83,32 +83,28 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
     t1 = MPI::Wtime();
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
+        if(params->mpi.rank_cart == 0)
+            cout << "ITERATION: " << tt + 1 << "\n";
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
 //        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
+//        fields_solver.advanceEField(params, mesh, EB, IONS);
+
         currentTime += params->DT*CS->time;
-
-        hdfObj->saveOutputs(params, IONS, EB, CS, 1, currentTime);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Abort(MPI_COMM_WORLD,-101);
 
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
             hdfObj->saveOutputs(params, IONS, EB, CS, outputIterator + 1, currentTime);
             outputIterator++;
         }
 
-/*
-    //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);
         if(tt==100){
             t2 = MPI::Wtime();
             if(params->mpi.rank_cart == 0){
                 cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
             }
         }
-*/
 
     } // Time iterations.
 

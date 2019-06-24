@@ -1949,6 +1949,20 @@ void PIC::advanceIonsPosition(const inputParameters * params, const meshGeometry
 
 /* * * * * * * * CLASS PIC_GC OBJECTS * * * * * * * */
 
+void PIC_GC::set_to_zero_RK45_variables(){
+	K1.fill(0.0);
+	K2.fill(0.0);
+	K3.fill(0.0);
+	K4.fill(0.0);
+	K5.fill(0.0);
+	K6.fill(0.0);
+	K7.fill(0.0);
+
+	S4.fill(0.0);
+	S5.fill(0.0);
+}
+
+
 void PIC_GC::set_GC_vars(ionSpecies * IONS, int pp){
 	gcv.Q = IONS->Q;
 	gcv.M = IONS->M;
@@ -2667,8 +2681,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 
 			set_GC_vars(&IONS->at(ss), pp);
 
-//			cout << "BEFORE: " << gcv.Xo << " | " << gcv.X << "\n";
-//			cout << "BEFORE: " << gcv.Pparo << " | " << gcv.Ppar << "\n";
+			set_to_zero_RK45_variables();
 
 			while(TRK < params->DT){ // Sub-cycling time loop
 				for(int stg=1; stg<8; stg++){
@@ -2748,8 +2761,6 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 			PIC_GC::computeFullOrbitVelocity(params, mesh, &EB_, &gcv, &V, 1);
 			IONS->at(ss).V.row(pp) = V;
 		} // Loop over particles
-
-		IONS->at(ss).V.print("V");
 
 		depositIonDensityAndBulkVelocity(params, mesh, &IONS->at(ss));
 
@@ -2944,9 +2955,6 @@ PIC_GC::PIC_GC(const inputParameters * params, const meshGeometry * mesh){
 	S4 = zeros(4);
 	S5 = zeros(4);
 	#endif
-
-	gcv.Q = 0.0;
-	gcv.M = 0.0;
 
 	gcv.wx = zeros(3);
 	gcv.B = zeros(3);

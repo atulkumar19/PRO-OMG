@@ -591,14 +591,13 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 		for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 			forwardPBC_1D(&IONS->at(ii).n__);
-			forwardPBC_1D(&IONS->at(ii).n___);
 			forwardPBC_1D(&IONS->at(ii).nv__.X);
 			forwardPBC_1D(&IONS->at(ii).nv__.Y);
 			forwardPBC_1D(&IONS->at(ii).nv__.Z);
 
 			// Ions density at time level "l - 3/2"
 			// n(l-3/2) = ( n(l-1) + n(l-2) )/2
-			n__ += 0.5*IONS->at(ii).Z*(IONS->at(ii).n___.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1));
+			n__ += 0.5*IONS->at(ii).Z*(IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1));
 
 			//sum_k[ Z_k*n_k*u_k ]
 			U__.X += IONS->at(ii).Z*IONS->at(ii).nv__.X.subvec(iIndex-1,fIndex+1);
@@ -653,13 +652,12 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,dim_x-1) \
 									- ne.subvec(1,dim_x-2))/mesh->DX )/(0.5*( ne.subvec(1,dim_x-2) + ne.subvec(2,dim_x-1) ) );
 
-
-	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
-
-	curlB.Z = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
+	// EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.X.subvec(1,dim_x-2) + V.X.subvec(2,dim_x-1) ) % ( (V.X.subvec(2,dim_x-1) - V.X.subvec(1,dim_x-2))/mesh->DX );
 
 
 	//y-component
+
+	curlB.Z = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
 
 
 	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,dim_x-2));
@@ -671,6 +669,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 	//z-component
 
+	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
 
 	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,dim_x-2));
 

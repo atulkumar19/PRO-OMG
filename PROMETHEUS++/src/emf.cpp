@@ -652,7 +652,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,dim_x-1) \
 									- ne.subvec(1,dim_x-2))/mesh->DX )/(0.5*( ne.subvec(1,dim_x-2) + ne.subvec(2,dim_x-1) ) );
 
-	// EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.X.subvec(1,dim_x-2) + V.X.subvec(2,dim_x-1) ) % ( (V.X.subvec(2,dim_x-1) - V.X.subvec(1,dim_x-2))/mesh->DX );
+	EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.X.subvec(1,dim_x-2) + V.X.subvec(2,dim_x-1) ) % ( (V.X.subvec(2,dim_x-1) - V.X.subvec(1,dim_x-2))/mesh->DX );
 
 
 	//y-component

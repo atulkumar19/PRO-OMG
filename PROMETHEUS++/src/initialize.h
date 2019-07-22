@@ -27,9 +27,11 @@ class INITIALIZE{
 
 	double ionSkinDepth, LarmorRadius;
 
-	map<string,float> loadParameters(const char *  inputFile);
+	vector<string> split(const string& str, const string& delim);
 
 	map<string,float> loadParameters(string *  inputFile);
+
+	map<string,string> loadParametersString(string *  inputFile);
 
 public:
 

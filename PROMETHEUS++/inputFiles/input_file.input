@@ -32,3 +32,4 @@ NY                          1
 NZ                          1
 DrL                         1.0
 dp                          -1
+outputs_variables           {X,V,g}

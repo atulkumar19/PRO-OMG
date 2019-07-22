@@ -1,5 +1,23 @@
 #include "initialize.h"
 
+vector<string> INITIALIZE::split(const string& str, const string& delim)
+{
+    vector<string> tokens;
+    size_t prev = 0, pos = 0;
+    do
+    {
+        pos = str.find(delim, prev);
+        if (pos == string::npos) pos = str.length();
+        string token = str.substr(prev, pos-prev);
+        if (!token.empty()) tokens.push_back(token);
+        prev = pos + delim.length();
+    }
+    while (pos < str.length() && prev < str.length());
+
+    return tokens;
+}
+
+
 map<string,float> INITIALIZE::loadParameters(string * inputFile){
 	string key;
 	float value;
@@ -24,32 +42,33 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
 }
 
 
-map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
+map<string,string> INITIALIZE::loadParametersString(string * inputFile){
 	string key;
-	float value;
+	string value;
 	fstream reader;
-	std::map<string,float> readMap;
+	std::map<string,string> readMap;
 
-	reader.open(inputFile ,ifstream::in);
 
-    	if (!reader){
-      		cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
-        	MPI_Abort(MPI_COMM_WORLD,-123);
-    	}
+	reader.open(inputFile->data(),ifstream::in);
 
-    	while ( reader >> key >> value ){
-          	readMap[ key ] = value;
-    	}
+    if (!reader){
+    	cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
+    	MPI_Abort(MPI_COMM_WORLD,-123);
+    }
 
-    	reader.close();
+    while ( reader >> key >> value ){
+      	readMap[ key ] = value;
+		// cout << key << "\t" << std::stod(value) << "\n";
+		 //cout << key << "\t" << value << "\n";
+    }
 
-    	return readMap;
+    reader.close();
+
+    return readMap;
 }
 
 
 INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
-	std::map<string,float> parametersMap;
-
 	MPI_Comm_size(MPI_COMM_WORLD,&params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
 
@@ -70,16 +89,19 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	params->argc = argc;
 	params->argv = argv;
 
+	string name;
+
 	if(params->argc > 2){
 		string argv(params->argv[2]);
-		string name = "inputFiles/input_file_" + argv + ".input";
-		parametersMap = loadParameters(&name);
-
+		name = "inputFiles/input_file_" + argv + ".input";
 		params->PATH += "/" + argv;
 	}else{
-		parametersMap = loadParameters("inputFiles/input_file.input");
+		name = "inputFiles/input_file.input";
 		params->PATH += "/";
 	}
+
+	std::map<string,string> parametersStringMap;
+	parametersStringMap = loadParametersString(&name);
 
 	// Create HDF5 folders if they don't exist
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
@@ -96,77 +118,81 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 		rsys = system(sys);
 	}
 
-	params->particleIntegrator = (int)parametersMap["particleIntegrator"];
+	params->particleIntegrator = std::stoi( parametersStringMap["particleIntegrator"] );
 
-	params->quietStart = parametersMap["quietStart"];
+	params->quietStart = std::stod( parametersStringMap["quietStart"] );
 
-	params->DTc = parametersMap["DTc"];
+	params->DTc = std::stod( parametersStringMap["DTc"] );
 
-	params->restart = (int)parametersMap["restart"];
+	params->restart = std::stoi( parametersStringMap["restart"] );
 
-	params->weightingScheme = (int)parametersMap["weightingScheme"];
+	params->weightingScheme = std::stoi( parametersStringMap["weightingScheme"] );
 
-	params->BC = (int)parametersMap["BC"];
+	params->BC = std::stoi( parametersStringMap["BC"] );
 
-	params->smoothingParameter = parametersMap["smoothingParameter"];
+	params->smoothingParameter = std::stod( parametersStringMap["smoothingParameter"] );
 
-	params->numberOfRKIterations = (int)parametersMap["numberOfRKIterations"];
+	params->numberOfRKIterations = std::stoi( parametersStringMap["numberOfRKIterations"] );
 
-	params->filtersPerIterationFields = (int)parametersMap["filtersPerIterationFields"];
+	params->filtersPerIterationFields = std::stoi( parametersStringMap["filtersPerIterationFields"] );
 
-	params->filtersPerIterationIons = (int)parametersMap["filtersPerIterationIons"];
+	params->filtersPerIterationIons = std::stoi( parametersStringMap["filtersPerIterationIons"] );
 
-	params->checkSmoothParameter = (int)parametersMap["checkSmoothParameter"];
+	params->checkSmoothParameter = std::stoi( parametersStringMap["checkSmoothParameter"] );
 
-	params->simulationTime = parametersMap["simulationTime"];
+	params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
 
-	params->transient = (unsigned int)parametersMap["transient"];
+	params->transient = (unsigned int)std::stoi( parametersStringMap["transient"] );
 
-	params->numberOfIonSpecies = (int)parametersMap["numberOfIonSpecies"];
+	params->numberOfIonSpecies = std::stoi( parametersStringMap["numberOfIonSpecies"] );
 
-	params->numberOfTracerSpecies = (int)parametersMap["numberOfTracerSpecies"];
+	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
-	params->loadModes = (unsigned int)parametersMap["loadModes"];
+	params->loadModes = (unsigned int)std::stoi( parametersStringMap["loadModes"] );
 
-	params->numberOfAlfvenicModes = (unsigned int)parametersMap["numberOfAlfvenicModes"];
+	params->numberOfAlfvenicModes = (unsigned int)std::stoi( parametersStringMap["numberOfAlfvenicModes"] );
 
-	params->numberOfTestModes = (unsigned int)parametersMap["numberOfTestModes"];
+	params->numberOfTestModes = (unsigned int)std::stoi( parametersStringMap["numberOfTestModes"] );
 
-	params->maxAngle = parametersMap["maxAngle"];
+	params->maxAngle = std::stod( parametersStringMap["maxAngle"] );
 
-	params->shuffleModes = (unsigned int)parametersMap["shuffleModes"];
+	params->shuffleModes = (unsigned int)std::stoi( parametersStringMap["shuffleModes"] );
 
-	params->fracMagEnerInj = parametersMap["fracMagEnerInj"];
+	params->fracMagEnerInj = std::stod( parametersStringMap["fracMagEnerInj"] );
 
-	params->ne = parametersMap["ne"];
+	params->ne = std::stod( parametersStringMap["ne"] );
 
-	params->loadFields = (int)parametersMap["loadFields"];
+	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
 
-	params->outputCadence = parametersMap["outputCadence"];
+	params->outputCadence = std::stod( parametersStringMap["outputCadence"] );
 
 	params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
 
 	params->meshDim.set_size(3);
-	params->meshDim(0) = (unsigned int)parametersMap["NX"];
-	params->meshDim(1) = (unsigned int)parametersMap["NY"];
-	params->meshDim(2) = (unsigned int)parametersMap["NZ"];
+	params->meshDim(0) = (unsigned int)std::stoi( parametersStringMap["NX"] );
+	params->meshDim(1) = (unsigned int)std::stoi( parametersStringMap["NY"] );
+	params->meshDim(2) = (unsigned int)std::stoi( parametersStringMap["NZ"] );
 
-	params->DrL = parametersMap["DrL"];
+	params->DrL = std::stod( parametersStringMap["DrL"] );
 
-	params->dp = parametersMap["dp"];
+	params->dp = std::stod( parametersStringMap["dp"] );
 
-	params->BGP.Te = parametersMap["Te"]*F_E/F_KB; // Te in eV in input file
+	params->BGP.Te = std::stod( parametersStringMap["Te"] )*F_E/F_KB; // Te in eV in input file
 
-	params->BGP.theta = parametersMap["theta"];
-	params->BGP.phi = parametersMap["phi"];
+	params->BGP.theta = std::stod( parametersStringMap["theta"] );
+	params->BGP.phi = std::stod( parametersStringMap["phi"] );
 
-	params->BGP.propVectorAngle = parametersMap["propVectorAngle"];
+	params->BGP.propVectorAngle = std::stod( parametersStringMap["propVectorAngle"] );
 
-	params->BGP.Bo = parametersMap["Bo"];
+	params->BGP.Bo = std::stod( parametersStringMap["Bo"] );
 
 	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
 	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
 	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
+
+	// Parsing list of variables in outputs
+	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
+	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
 }
 
 
@@ -377,7 +403,6 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 
 
 void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> * IONS){
-
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
@@ -388,14 +413,16 @@ void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> *
 	}
 
 
-	std::map<string,float> parametersMap;
+	string name;
 	if(params->argc > 2){
 		string argv(params->argv[2]);
-		string name = "inputFiles/ions_properties_" + argv + ".ion";
-		parametersMap = loadParameters(&name);
+		name = "inputFiles/ions_properties_" + argv + ".ion";
 	}else{
-		parametersMap = loadParameters("inputFiles/ions_properties.ion");
+		name = "inputFiles/ions_properties.ion";
 	}
+
+	std::map<string,float> parametersMap;
+	parametersMap = loadParameters(&name);
 
 	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
 

@@ -96,6 +96,9 @@ struct backgroundParameters{
 
 
 struct inputParameters{
+	// List of variables in the outputs
+	std::vector<std::string> outputs_variables;
+
 	//Control parameters for the simulation
 	std::string PATH;//Path to save the outputs. It must point to the directory where the folder outputFiles is.
 

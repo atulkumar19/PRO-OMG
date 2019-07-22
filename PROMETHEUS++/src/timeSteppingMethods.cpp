@@ -99,7 +99,7 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
             outputIterator++;
         }
 
-        if(tt==100){
+        if(tt == 100){
             t2 = MPI::Wtime();
             if(params->mpi.rank_cart == 0){
                 cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";

@@ -160,6 +160,8 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 
 	if(params->mpi.rank_cart == 0){
 		cout << "Time steps in simulation: " << params->timeIterations << "\n";
+		cout << "Simulation time: " << scientific << params->DT*params->timeIterations << fixed << " s\n";
+		cout << "Simulation time: " << scientific << params->DT*params->timeIterations/params->shorterIonGyroperiod << fixed << " gyroperiods\n";
 		cout << "Cadence for saving outputs: " << params->outputCadenceIterations << "\n";
 		cout << "Cadence for checking stability: " << params->rateOfChecking << "\n";
 		cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *\n\n";

@@ -20,12 +20,51 @@ void HDF::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
 #endif
 
 
-void saveToHDF5(int * value){
+void saveToHDF5(H5File * file, string name, int * value){
+	H5std_string nameSpace( name );
+	int data[1] = {*value};
+	hsize_t dims[1] = {1};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
 
+	dataset->write( data, PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
 }
 
-void saveArrayToHDF5(){
 
+void saveToHDF5(H5File * file, string name, std::vector<int> * values){
+	H5std_string nameSpace( name );
+	int size = (int)values->size();
+
+	int data[size];
+	for(int ii=0; ii<size; ii++){
+		data[ii] = values->at(ii);
+	}
+
+	hsize_t dims[1] = {size};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( data, PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+void saveToHDF5(H5File * file, string name, CPP_TYPE * value){
+	H5std_string nameSpace( name );
+	CPP_TYPE data[1] = {*value};
+	hsize_t dims[1] = {1};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( data, HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
 }
 
 
@@ -46,23 +85,20 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 
 		Exception::dontPrint();
 
-		// Create a new file using the default property lists.
-		H5File *outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
 
-		H5std_string numOfDomains( "numOfDomains" );
-		int nod[1] = {params->mpi.NUMBER_MPI_DOMAINS};
-	   	hsize_t dims_nod[1] = {1};
-		DataSpace *dataspace_nod = new DataSpace(1, dims_nod);
-		DataSet *dataset_nod = new DataSet(outputFile->createDataSet( numOfDomains, PredType::NATIVE_INT, *dataspace_nod ));
-		dataset_nod->write( nod, PredType::NATIVE_INT);
-		delete dataspace_nod;
-		delete dataset_nod;
+		// Create a new file using the default property lists.
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
+
+		name = "numOfDomains";
+		int value = params->mpi.NUMBER_MPI_DOMAINS;
+		saveToHDF5(outputFile, name, &value);
+		name.clear();
+
 
 		//Geometry of the mesh
-		Group *group_geo = new Group( outputFile->createGroup( "/geometry" ) );
+		Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
 
 		H5std_string cellDim( "finiteDiferences" );
-		H5std_string numCell( "numberOfCells" );
 
 #ifdef HDF5_DOUBLE
 		CPP_TYPE cd[3] = {mesh->DX,mesh->DY,mesh->DZ};
@@ -76,6 +112,13 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		delete dataspace_cd;
 		delete dataset_cd;
 
+
+		name = "numberOfCells";
+		vector<int> int_vector{mesh->dim(0),mesh->dim(1),mesh->dim(2)};
+		saveToHDF5(outputFile, name, &int_vector);
+		name.clear();
+
+		H5std_string numCell( "numberOfCells" );
 		unsigned int nc[3] = {mesh->dim(0),mesh->dim(1),mesh->dim(2)};
 	   	hsize_t dims_nc[1] = {3};
 		DataSpace *dataspace_nc = new DataSpace(1, dims_nc);
@@ -83,6 +126,8 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		dataset_nc->write( nc, PredType::NATIVE_INT );
 		delete dataspace_nc;
 		delete dataset_nc;
+
+
 
 		//Saving the x-axis coordinates
 		H5std_string xAxis( "xAxis");

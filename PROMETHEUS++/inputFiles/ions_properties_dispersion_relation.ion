@@ -9,4 +9,4 @@ M1                          1.0
 replenishRate1              0
 replenishPercentage1        0
 newParticlesPerIteration1   0
-pctSupPartOutput1           100
+pctSupPartOutput1           100.0

@@ -433,78 +433,100 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 			Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
 			name.clear();
 
-			//Saving the x-axis coordinates
-			name = "X";
-#ifdef HDF5_DOUBLE
-			vec_values = CS->length*IONS_OUT->at(ii).X.col(0);
-			saveToHDF5(group_ionSpecies, name, &vec_values);
-#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(CS->length*IONS_OUT->at(ii).X.col(0));
-			saveToHDF5(group_ionSpecies, name, &fvec_values);
-#endif
-			name.clear();
+			for(int ov=0; ov<params->outputs_variables.size(); ov++){
+				if(params->outputs_variables.at(ov) == "X"){
+					//Saving the x-axis coordinates
+					name = "X";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->length*IONS_OUT->at(ii).X.col(0);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->length*IONS_OUT->at(ii).X.col(0));
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+				}else if(params->outputs_variables.at(ov) == "V"){
+					name = "V";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->velocity*IONS_OUT->at(ii).V;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from(CS->velocity*IONS_OUT->at(ii).V);
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+				}else if(params->outputs_variables.at(ov) == "n"){
+					//Saving ions species density
+					name = "n";
+					#ifdef HDF5_DOUBLE
+					vec_values = IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+				}else if(params->outputs_variables.at(ov) == "g"){
+					//Saving ions species density
+					name = "g";
+					#ifdef HDF5_DOUBLE
+					vec_values = IONS_OUT->at(ii).g;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).g);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+				}else if(params->outputs_variables.at(ov) == "Ppar"){
+					//Saving ions species density
+					name = "Ppar";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->momentum*IONS_OUT->at(ii).Ppar;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from( CS->momentum*IONS_OUT->at(ii).Ppar );
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+				}else if(params->outputs_variables.at(ov) == "U"){
+					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
 
+					//x-component species bulk velocity
+					name = "x";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					saveToHDF5(group_bulkVelocity, name, &fvec_values);
+					#endif
+					name.clear();
 
-			//Saving the x-axis coordinates
-			//cout << IONS_OUT->at(ii).V.n_rows << "\t" << IONS_OUT->at(ii).V.n_cols << endl;
+					//x-component species bulk velocity
+					name = "y";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					saveToHDF5(group_bulkVelocity, name, &fvec_values);
+					#endif
+					name.clear();
 
-			name = "V";
-#ifdef HDF5_DOUBLE
-			mat_values = CS->velocity*IONS_OUT->at(ii).V;
-			saveToHDF5(group_ionSpecies, name, &mat_values);
-#elif defined HDF5_FLOAT
-			fmat_values = conv_to<fmat>::from(CS->velocity*IONS_OUT->at(ii).V);
-			saveToHDF5(group_ionSpecies, name, &fmat_values);
-#endif
-			name.clear();
+					//x-component species bulk velocity
+					name = "z";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					saveToHDF5(group_bulkVelocity, name, &fvec_values);
+					#endif
+					name.clear();
 
-			//Saving ions species density
-			name = "n";
-#ifdef HDF5_DOUBLE
-			vec_values = IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length;
-			saveToHDF5(group_ionSpecies, name, &vec_values);
-#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length);
-			saveToHDF5(group_ionSpecies, name, &fvec_values);
-#endif
-			name.clear();
-
-			Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
-
-			//x-component species bulk velocity
-			name = "x";
-#ifdef HDF5_DOUBLE
-			vec_values = CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
-			saveToHDF5(group_ionSpecies, name, &vec_values);
-#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
-			saveToHDF5(group_bulkVelocity, name, &fvec_values);
-#endif
-			name.clear();
-
-			//x-component species bulk velocity
-			name = "y";
-#ifdef HDF5_DOUBLE
-			vec_values = CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
-			saveToHDF5(group_ionSpecies, name, &vec_values);
-#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
-			saveToHDF5(group_bulkVelocity, name, &fvec_values);
-#endif
-			name.clear();
-
-			//x-component species bulk velocity
-			name = "z";
-#ifdef HDF5_DOUBLE
-			vec_values = CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
-			saveToHDF5(group_ionSpecies, name, &vec_values);
-#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
-			saveToHDF5(group_bulkVelocity, name, &fvec_values);
-#endif
-			name.clear();
-
-			delete group_bulkVelocity;
+					delete group_bulkVelocity;
+				}
+			}
 
 			delete group_ionSpecies;
 		}//Iterations over the ion species.
@@ -609,81 +631,83 @@ void HDF::saveFieldsVariables(const inputParameters * params, oneDimensional::el
 
 		Group * group_fields = new Group( group_iteration->createGroup( "fields" ) );//Electromagnetic fields
 
-		Group * group_field = new Group( group_fields->createGroup( "E" ) );//Electric fields
+		for(int ov=0; ov<params->outputs_variables.size(); ov++){
+			if(params->outputs_variables.at(ov) == "E"){
+				Group * group_field = new Group( group_fields->createGroup( "E" ) );//Electric fields
 
-		//x-component of electric field
-		name = "x";
-		#ifdef HDF5_DOUBLE
-		vec_values = 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) );
-		saveToHDF5(group_ionSpecies, name, &vec_values);
-		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from( 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) ) );
-		saveToHDF5(group_field, name, &fvec_values);
-		#endif
-		name.clear();
+				//x-component of electric field
+				name = "x";
+				#ifdef HDF5_DOUBLE
+				vec_values = 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) );
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) ) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		//y-component of electric field
-		name = "y";
-		#ifdef HDF5_DOUBLE
-		vec_values = CS->eField*EB->E.Y.subvec(iIndex,fIndex);
-		saveToHDF5(group_ionSpecies, name, &vec_values);
-		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Y.subvec(iIndex,fIndex) );
-		saveToHDF5(group_field, name, &fvec_values);
-		#endif
-		name.clear();
+				//y-component of electric field
+				name = "y";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->eField*EB->E.Y.subvec(iIndex,fIndex);
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Y.subvec(iIndex,fIndex) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		//z-component of electric field
-		name = "z";
-		#ifdef HDF5_DOUBLE
-		vec_values = CS->eField*EB->E.Z.subvec(iIndex,fIndex);
-		saveToHDF5(group_ionSpecies, name, &vec_values);
-		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Z.subvec(iIndex,fIndex) );
-		saveToHDF5(group_field, name, &fvec_values);
-		#endif
-		name.clear();
+				//z-component of electric field
+				name = "z";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->eField*EB->E.Z.subvec(iIndex,fIndex);
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Z.subvec(iIndex,fIndex) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		delete group_field;
+				delete group_field;
+			}if(params->outputs_variables.at(ov) == "B"){
+				Group * group_field = new Group( group_fields->createGroup( "B" ) );//Electric fields
 
+				//x-component of magnetic field
+				name = "x";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->bField*EB->B.X.subvec(iIndex,fIndex);
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->bField*EB->B.X.subvec(iIndex,fIndex) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		group_field = new Group( group_fields->createGroup( "B" ) );//Electric fields
+				//y-component of magnetic field
+				name = "y";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) );
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) ) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		//x-component of magnetic field
-		name = "x";
-		#ifdef HDF5_DOUBLE
-		vec_values = CS->bField*EB->B.X.subvec(iIndex,fIndex);
-		saveToHDF5(group_ionSpecies, name, &vec_values);
-		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from( CS->bField*EB->B.X.subvec(iIndex,fIndex) );
-		saveToHDF5(group_field, name, &fvec_values);
-		#endif
-		name.clear();
+				//z-component of magnetic field
+				name = "z";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) );
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) ) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		//y-component of magnetic field
-		name = "y";
-		#ifdef HDF5_DOUBLE
-		vec_values = CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) );
-		saveToHDF5(group_ionSpecies, name, &vec_values);
-		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) ) );
-		saveToHDF5(group_field, name, &fvec_values);
-		#endif
-		name.clear();
-
-		//z-component of magnetic field
-		name = "z";
-		#ifdef HDF5_DOUBLE
-		vec_values = CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) );
-		saveToHDF5(group_ionSpecies, name, &vec_values);
-		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) ) );
-		saveToHDF5(group_field, name, &fvec_values);
-		#endif
-		name.clear();
-
-		delete group_field;
-
+				delete group_field;
+			}
+		}
 
 		delete group_fields;//Electromagnetic fields
 

@@ -1,4 +1,4 @@
-particleIntegrator          1
+particleIntegrator          2
 quietStart                  1
 restart                     0
 weightingScheme             1
@@ -32,4 +32,4 @@ NY                          1
 NZ                          1
 DrL                         0.5
 dp                          -1
-outputs_variables           {X,V,g}
+outputs_variables           {g,V,B,E}

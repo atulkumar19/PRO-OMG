@@ -83,8 +83,8 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
     t1 = MPI::Wtime();
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
-        if(params->mpi.rank_cart == 0)
-            cout << "ITERATION: " << tt + 1 << "\n";
+        //if(params->mpi.rank_cart == 0) cout << "MPI: " << params->mpi.rank_cart << " | ITERATION: " << tt + 1 << endl;
+        cout << "MPI: " << params->mpi.rank_cart << " | ITERATION: " << tt + 1 << endl;
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 

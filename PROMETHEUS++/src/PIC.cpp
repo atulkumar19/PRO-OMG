@@ -2669,9 +2669,9 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 	forwardPBC_1D(&EB_._B.Y);
 	forwardPBC_1D(&EB_._B.Z);
 
-	for(int ss=0;ss<IONS->size();ss++){// Loop over species
-
-		for(int pp=0;pp<IONS->at(ss).NSP;pp++){// Loop over particles
+	for(int ss=0; ss<IONS->size(); ss++){// Loop over species
+/*
+		for(int pp=0; pp<IONS->at(ss).NSP; pp++){// Loop over particles
 
 			double DT_RK(params->DT);
 			double TRK(0.0);
@@ -2704,6 +2704,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 
 				DS45 = sqrt( dot(S5 - S4, S4 - S5) );
 
+
 				s = pow(0.5*DT_RK*Tol/(DT*DS45), 0.25);
 
 				if(s >= 2.0){
@@ -2724,7 +2725,9 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 					DT_RK *= 0.5;
 				}
 
+
 			} // Sub-cycling time loop
+
 
 			if(TRK > params->DT){
 				DT_RK = params->DT - TRK_;
@@ -2746,9 +2749,12 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 				// Periodic boundary condition
 				S4(1) = gcv.Pparo + DT_RK*( B4(0)*K1(1) + B4(1)*K2(1) + B4(2)*K3(1) + B4(3)*K4(1) + B4(4)*K5(1) + B4(5)*K6(1) + B4(6)*K7(1) );
 
+				// if ( !S4.is_finite() )	MPI_Abort(MPI_COMM_WORLD,-1010101);
+
 				gcv.Xo = S4(0);
 				gcv.Pparo = S4(1);
 			}
+
 
 			gcv.X = gcv.Xo;
 			gcv.Ppar = gcv.Pparo;
@@ -2760,6 +2766,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 			arma::rowvec V(3);
 			PIC_GC::computeFullOrbitVelocity(params, mesh, &EB_, &gcv, &V, 1);
 			IONS->at(ss).V.row(pp) = V;
+
 		} // Loop over particles
 
 		depositIonDensityAndBulkVelocity(params, mesh, &IONS->at(ss));
@@ -2805,6 +2812,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 						smooth(&IONS->at(ss).nv, params->smoothingParameter);
 					}
 		}
+*/
 	} // Loop over species
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.

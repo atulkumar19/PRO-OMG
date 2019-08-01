@@ -22,6 +22,9 @@
 
 #include "mpi_main.h"
 
+//#include <cfenv>
+//#pragma STDC FENV_ACCESS ON
+
 using namespace std;
 using namespace arma;
 

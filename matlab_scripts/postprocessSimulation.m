@@ -23,9 +23,11 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-FourierAnalysis(ST,'B','z');
+GC_test_1(ST);
 
-EnergyDiagnostic(ST);
+% FourierAnalysis(ST,'B','z');
+
+% EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -131,6 +133,48 @@ time = zeros(1,ST.numberOfOutputs);
 for ii=1:ST.numberOfOutputs
     time(ii) = ST.data.(['D0_O' num2str(ii-1)]).time;
 end
+
+end
+
+
+function GC_test_1(ST)
+% Function for testing ExB drift of a GC particle in constant perpendicular
+% electric and magnetic fields.
+NT = int64(ST.numberOfOutputs);
+NSPP = int64(ST.params.ions.numberOfIonSpecies);
+ND = int64(ST.params.numOfDomains);
+DX = int64(ST.params.geometry.DX);
+
+ilabels = {};
+
+for ss=1:NSPP
+    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
+    NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
+    NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
+    NPARTICLES = ND*NSP;
+    
+    X = zeros(NPARTICLES,NT);
+    V = zeros(NPARTICLES,3,NT);
+    
+    for ii=1:NT        
+        for dd=1:ND
+            iIndex = NSP*(dd - 1) + 1;
+            fIndex = iIndex + NSP - 1;
+            
+            X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
+            V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
+        end
+    end
+    
+    ilabels{ss} = ['Species ' num2str(ss)];
+    
+    ST.data.(['spp_' num2str(ss)]).X = X;
+    ST.data.(['spp_' num2str(ss)]).V = V;
+end
+ilabels{NSPP + 1} = 'Total';
+
+
+
 
 end
 

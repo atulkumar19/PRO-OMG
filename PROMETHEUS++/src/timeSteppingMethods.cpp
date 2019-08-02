@@ -82,8 +82,10 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
     t1 = MPI::Wtime();
 
+    // cout << "MPI: " << params->mpi.rank_cart << " TI: " << params->timeIterations << endl;
+
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
-        //if(params->mpi.rank_cart == 0) cout << "MPI: " << params->mpi.rank_cart << " | ITERATION: " << tt + 1 << endl;
+        // if(params->mpi.rank_cart == 0) cout << "MPI: " << params->mpi.rank_cart << " | ITERATION: " << tt + 1 << endl;
         cout << "MPI: " << params->mpi.rank_cart << " | ITERATION: " << tt + 1 << endl;
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
@@ -94,10 +96,12 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
         currentTime += params->DT*CS->time;
 
+
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
             hdfObj->saveOutputs(params, IONS, EB, CS, outputIterator + 1, currentTime);
             outputIterator++;
         }
+
 
         if(tt == 100){
             t2 = MPI::Wtime();

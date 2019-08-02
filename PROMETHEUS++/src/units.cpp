@@ -149,8 +149,23 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 		}
 	}
 
+	// * * * */
+	double * DTs;
+	double smallest_DT;//smallest timestep accross all MPI processes
 
-	params->DT = DT;
+	DTs = (double*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(double));
+
+	MPI_Allgather(&DT, 1, MPI_DOUBLE, DTs, 1, MPI_DOUBLE, params->mpi.mpi_topo);
+
+	smallest_DT = *DTs;
+	for(int ii=1; ii<params->mpi.NUMBER_MPI_DOMAINS; ii++){//Notice 'ii' starts at 1 instead of 0
+		if( *(DTs + ii) < smallest_DT )
+			smallest_DT = *(DTs + ii);
+	}
+	free(DTs);
+
+	params->DT = smallest_DT;
+	// * * * */
 
 	// Using the shorter gyro-period in the simulation we calculate the number of time steps so that:
 	// params->simulationTime = params->DT*params->timeIterations/params->shorterIonGyroperiod

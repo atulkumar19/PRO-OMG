@@ -558,6 +558,8 @@ void INITIALIZE::initializeFields(const inputParameters * params, const meshGeom
 		//int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
 		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
 
+        EB->E.Y.fill(0.1);
+
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y
 		EB->B.Z.fill(params->BGP.Bz);//z

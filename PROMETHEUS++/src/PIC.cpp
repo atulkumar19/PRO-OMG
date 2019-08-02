@@ -12,6 +12,8 @@ void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS){
 
 	MPI_ARMA_VEC mpi_n(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
 
+	MPI_Barrier(params->mpi.mpi_topo);
+
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
 		MPI_Sendrecv(nSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, nRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.mpi_topo, MPI_STATUS_IGNORE);
 		IONS->n += nRecv;
@@ -29,6 +31,7 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ION
 
 	MPI_ARMA_VEC mpi_n(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
 
+	MPI_Barrier(params->mpi.mpi_topo);
 
 	//x-component
 	bufSend = IONS->nv.X;
@@ -38,7 +41,7 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ION
 		bufSend = bufRecv;
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(params->mpi.mpi_topo);
 
 	//x-component
 	bufSend = IONS->nv.Y;
@@ -48,7 +51,7 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ION
 		bufSend = bufRecv;
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(params->mpi.mpi_topo);
 
 	//x-component
 	bufSend = IONS->nv.Z;
@@ -71,20 +74,28 @@ void PIC::MPI_AllgatherField(const inputParameters * params, vfield_vec * field)
 
 	MPI_ARMA_VEC chunk(params->meshDim(0));
 
+	MPI_Barrier(params->mpi.mpi_topo);
+
 	//Allgather for x-component
 	sendBuf = field->X.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
 	field->X.subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
 
 	//Allgather for y-component
 	sendBuf = field->Y.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
 	field->Y.subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
+	MPI_Barrier(params->mpi.mpi_topo);
+
 	//Allgather for z-component
 	sendBuf = field->Z.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
 	field->Z.subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
 }
 
 
@@ -97,10 +108,14 @@ void PIC::MPI_AllgatherField(const inputParameters * params, arma::vec * field){
 
 	MPI_ARMA_VEC chunk(params->meshDim(0));
 
+	MPI_Barrier(params->mpi.mpi_topo);
+
 	//Allgather for x-component
 	sendBuf = field->subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
 	field->subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
 }
 
 
@@ -1220,65 +1235,6 @@ void PIC::EMF_TSC_2D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_
 #ifdef THREED
 void PIC::EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * emf, arma::mat * F){
 
-	for(int ii=0;ii<IONS->NSP;ii++){//Iterating over the particles
-
-		double wx(0);
-		double wy(0);
-		double wz(0);
-		double w1(0);
-		double w2(0);
-		double w3(0);
-		double w4(0);
-		double w5(0);
-		double w6(0);
-		double w7(0);
-		double w8(0);
-		int ix(IONS->meshNode(ii,0)+1);
-		int iy(IONS->meshNode(ii,1)+1);
-		int iz(IONS->meshNode(ii,2)+1);
-
-		wx = 1 - (IONS->X(ii,0) - mesh->nodes.X(IONS->meshNode(ii,0)))/mesh->DX;//
-		wy = 1 - (IONS->X(ii,1) - mesh->nodes.Y(IONS->meshNode(ii,1)))/mesh->DY;//
-		wz = 1 - (IONS->X(ii,2) - mesh->nodes.Z(IONS->meshNode(ii,2)))/mesh->DZ;//
-
-		wx = (wx<0) ? 0 : wx;
-		wy = (wy<0) ? 0 : wy;
-		wz = (wz<0) ? 0 : wz;
-
-		w1 = wx*wy*wz;
-		(*F)(ii,0) += w1*emf->X(ix,iy,iz);//(i,j,k)
-		(*F)(ii,1) += w1*emf->Y(ix,iy,iz);//(i,j,k)
-		(*F)(ii,2) += w1*emf->Z(ix,iy,iz);//(i,j,k)
-		w2 = (1-wx)*wy*wz;
-		(*F)(ii,0) += w2*emf->X(ix+1,iy,iz);//(i+1,j,k)
-		(*F)(ii,1) += w2*emf->Y(ix+1,iy,iz);//(i+1,j,k)
-		(*F)(ii,2) += w2*emf->Z(ix+1,iy,iz);//(i+1,j,k)
-		w3 = wx*(1-wy)*wz;
-		(*F)(ii,0) += w3*emf->X(ix,iy+1,iz);//(i,j+1,k)
-		(*F)(ii,1) += w3*emf->Y(ix,iy+1,iz);//(i,j+1,k)
-		(*F)(ii,2) += w3*emf->Z(ix,iy+1,iz);//(i,j+1,k)
-		w4 = (1-wx)*(1-wy)*wz;
-		(*F)(ii,0) += w4*emf->X(ix+1,iy+1,iz);//(i+1,j+1,k)
-		(*F)(ii,1) += w4*emf->Y(ix+1,iy+1,iz);//(i+1,j+1,k)
-		(*F)(ii,2) += w4*emf->Z(ix+1,iy+1,iz);//(i+1,j+1,k)
-		w5 = wx*wy*(1-wz);
-		(*F)(ii,0) += w5*emf->X(ix,iy,iz+1);//(i,j,k+1)
-		(*F)(ii,1) += w5*emf->Y(ix,iy,iz+1);//(i,j,k+1)
-		(*F)(ii,2) += w5*emf->Z(ix,iy,iz+1);//(i,j,k+1)
-		w6 = (1-wx)*wy*(1-wz);
-		(*F)(ii,0) += w6*emf->X(ix+1,iy,iz+1);//(i+1,j,k+1)
-		(*F)(ii,1) += w6*emf->Y(ix+1,iy,iz+1);//(i+1,j,k+1)
-		(*F)(ii,2) += w6*emf->Z(ix+1,iy,iz+1);//(i+1,j,k+1)
-		w7 = wx*(1-wy)*(1-wz);
-		(*F)(ii,0) += w7*emf->X(ix,iy+1,iz+1);//(i,j+1,k+1)
-		(*F)(ii,1) += w7*emf->Y(ix,iy+1,iz+1);//(i,j+1,k+1)
-		(*F)(ii,2) += w7*emf->Z(ix,iy+1,iz+1);//(i,j+1,k+1)
-		w8 = (1-wx)*(1-wy)*(1-wz);
-		(*F)(ii,0) += w8*emf->X(ix+1,iy+1,iz+1);//(i+1,j+1,k+1)
-		(*F)(ii,1) += w8*emf->Y(ix+1,iy+1,iz+1);//(i+1,j+1,k+1)
-		(*F)(ii,2) += w8*emf->Z(ix+1,iy+1,iz+1);//(i+1,j+1,k+1)
-
-	}//Iterating over the particles
 }
 #endif
 
@@ -1634,101 +1590,6 @@ void PIC::aiv_Boris_2D(const inputParameters * params, const characteristicScale
 #ifdef THREED
 void PIC::aiv_Boris_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	forwardPBC_3D(&EB->E.X);
-	forwardPBC_3D(&EB->E.Y);
-	forwardPBC_3D(&EB->E.Z);
-
-	forwardPBC_3D(&EB->B.X);
-	forwardPBC_3D(&EB->B.Y);
-	forwardPBC_3D(&EB->B.Z);
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-
-	int NX(EB->E.X.n_rows);
-	int NY(EB->E.Y.n_cols);
-	int NZ(EB->E.Z.n_slices);
-
-	fields EB_;
-	EB_.zeros(NX, NY, NZ);
-
-	EB_.E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.5*( EB->E.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->E.X.subcube(0,1,1,NX-3,NY-2,NZ-2) );
-	EB_.E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.5*( EB->E.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->E.Y.subcube(1,0,1,NX-2,NY-3,NZ-2) );
-	EB_.E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.5*( EB->E.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->E.Z.subcube(1,1,0,NX-2,NY-2,NZ-3) );
-
-	EB_.B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.25*( EB->B.X.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.X.subcube(1,0,1,NX-2,NY-3,NZ-2) ) + 0.25*( EB->B.X.subcube(1,1,0,NX-2,NY-2,NZ-3) + EB->B.X.subcube(1,0,0,NX-2,NY-3,NZ-3) );
-
-	EB_.B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.25*( EB->B.Y.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Y.subcube(0,1,1,NX-3,NY-2,NZ-2) ) + 0.25*( EB->B.Y.subcube(1,1,0,NX-2,NY-2,NZ-3) + EB->B.Y.subcube(0,1,0,NX-3,NY-2,NZ-3) );
-
-	EB_.B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) = 0.25*( EB->B.Z.subcube(1,1,1,NX-2,NY-2,NZ-2) + EB->B.Z.subcube(1,0,1,NX-2,NY-3,NZ-2) ) + 0.25*( EB->B.Z.subcube(0,1,1,NX-3,NY-2,NZ-2) + EB->B.Z.subcube(0,0,1,NX-3,NY-3,NZ-2) );
-
-	forwardPBC_3D(&EB_.E.X);
-	forwardPBC_3D(&EB_.E.Y);
-	forwardPBC_3D(&EB_.E.Z);
-
-	forwardPBC_3D(&EB_.B.X);
-	forwardPBC_3D(&EB_.B.Y);
-	forwardPBC_3D(&EB_.B.Z);
-
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	restoreCube(&EB->E.X);
-	restoreCube(&EB->E.Y);
-	restoreCube(&EB->E.Z);
-
-	restoreCube(&EB->B.X);
-	restoreCube(&EB->B.Y);
-	restoreCube(&EB->B.Z);
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-
-	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-
-		arma::mat Ep = zeros(IONS->at(ii).NSP,3);
-		arma::mat Bp = zeros(IONS->at(ii).NSP,3);
-
-		EMF_TSC_3D(mesh, &IONS->at(ii), &EB_.E, &Ep);
-		EMF_TSC_3D(mesh, &IONS->at(ii), &EB_.B, &Bp);
-
-
-		//Once the electrostatic and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' V. (Q*NCP/M*NCP=Q/M)
-		arma::vec C1;
-		arma::vec C2;
-		arma::vec C3;
-		arma::vec C4;
-		arma::vec BB;
-		arma::vec VB;
-		arma::vec EB;
-		arma::mat ExB;
-		arma::mat VxB;
-
-		BB = sum(Bp % Bp, 1);//B\dotB evaluated at each particle position.
-		VB = sum(IONS->at(ii).V % Bp, 1);//V\dotB
-		EB = sum(Ep % Bp, 1);//E\dotB
-		crossProduct(&Ep, &Bp, &ExB);//E\times B
-		crossProduct(&IONS->at(ii).V, &Bp, &VxB);//V\times B
-
-		C1 = ( 1 - pow(A, 2)*BB/4 )/( 1 + pow(A, 2)*BB/4 );
-		C2 = A/( 1 + pow(A, 2)*BB/4 );
-		C3 = (pow(A, 2)/2)/( 1 + pow(A, 2)*BB/4 );
-		C4 = (pow(A, 3)/4)/( 1 + pow(A, 2)*BB/4 );
-
-		IONS->at(ii).V.col(0) = C1 % IONS->at(ii).V.col(0);
-		IONS->at(ii).V.col(0) += C2 % ( Ep.col(0) + VxB.col(0) );
-		IONS->at(ii).V.col(0) += C3 % ( ExB.col(0) + VB % Bp.col(0) );
-		IONS->at(ii).V.col(0) += C4 % ( EB % Bp.col(0) );
-
-		IONS->at(ii).V.col(1) = C1 % IONS->at(ii).V.col(1);
-		IONS->at(ii).V.col(1) += C2 % ( Ep.col(1) + VxB.col(1) );
-		IONS->at(ii).V.col(1) += C3 % ( ExB.col(1) + VB % Bp.col(1) );
-		IONS->at(ii).V.col(1) += C4 % ( EB % Bp.col(1) );
-
-		IONS->at(ii).V.col(2) = C1 % IONS->at(ii).V.col(2);
-		IONS->at(ii).V.col(2) += C2 % ( Ep.col(2) + VxB.col(2) );
-		IONS->at(ii).V.col(2) += C3 % ( ExB.col(2) + VB % Bp.col(2) );
-		IONS->at(ii).V.col(2) += C4 % ( EB % Bp.col(2) );
-
-		extrapolateIonVelocity(params, mesh, &IONS->at(ii));
-
-	}//structure to iterate over all the ion species.
 }
 #endif
 
@@ -1828,70 +1689,6 @@ void PIC::aip_2D(const inputParameters * params, const meshGeometry * mesh, vect
 
 void PIC::aip_3D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
-	double lx = mesh->nodes.X(mesh->dim(0)-1) + mesh->DX;//
-	double ly = mesh->nodes.Y(mesh->dim(1)-1) + mesh->DY;//
-	double lz = mesh->nodes.Z(mesh->dim(2)-1) + mesh->DZ;//
-
-	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-		//X^(N+1) = X^(N) + DT*V^(N+1/2)
-
-		#ifdef THREED
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
-		IONS->at(ii).X.col(1) += DT*IONS->at(ii).V.col(1);//y-component
-		IONS->at(ii).X.col(2) += DT*IONS->at(ii).V.col(2);//z-component
-		#endif
-
-		#ifdef TWOD
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
-		IONS->at(ii).X.col(1) += DT*IONS->at(ii).V.col(1);//y-component
-		#endif
-
-		#ifdef ONED
-		IONS->at(ii).X.col(0) += DT*IONS->at(ii).V.col(0);//x-component
-		#endif
-
-
-		#ifdef THREED
-		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
-			if(IONS->at(ii).X(jj,0) < 0)
-				IONS->at(ii).X(jj,0) += lx;
-
-			IONS->at(ii).X(jj,1) = fmod(IONS->at(ii).X(jj,1),ly);//y
-			if(IONS->at(ii).X(jj,1) < 0)
-				IONS->at(ii).X(jj,1) += ly;
-
-			IONS->at(ii).X(jj,2) = fmod(IONS->at(ii).X(jj,2),lz);//z
-			if(IONS->at(ii).X(jj,2) < 0)
-				IONS->at(ii).X(jj,2) += lz;
-		}//Periodic boundary condition for the ions
-		#endif
-
-		#ifdef TWOD
-		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
-			if(IONS->at(ii).X(jj,0) < 0)
-				IONS->at(ii).X(jj,0) += lx;
-
-			IONS->at(ii).X(jj,1) = fmod(IONS->at(ii).X(jj,1),ly);//y
-			if(IONS->at(ii).X(jj,1) < 0)
-				IONS->at(ii).X(jj,1) += ly;
-		}//Periodic boundary condition for the ions
-		#endif
-
-		#ifdef ONED
-		for(int jj=0;jj<IONS->at(ii).NSP;jj++){//Periodic boundary condition for the ions
-			IONS->at(ii).X(jj,0) = fmod(IONS->at(ii).X(jj,0),lx);//x
-			if(IONS->at(ii).X(jj,0) < 0)
-				IONS->at(ii).X(jj,0) += lx;
-		}//Periodic boundary condition for the ions
-		#endif
-
-		assignCell_TSC(params, mesh, &IONS->at(ii), 3);
-
-		extrapolateIonDensity(params, mesh, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
-
-	}//structure to iterate over all the ion species.
 }
 
 
@@ -2606,6 +2403,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 	MPI_AllgatherField(params, &EB->b_);
 	MPI_AllgatherField(params, &EB->_B);
 
+
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	forwardPBC_1D(&EB->E.X);
 	forwardPBC_1D(&EB->E.Y);
@@ -2669,8 +2467,8 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 	forwardPBC_1D(&EB_._B.Y);
 	forwardPBC_1D(&EB_._B.Z);
 
+
 	for(int ss=0; ss<IONS->size(); ss++){// Loop over species
-/*
 		for(int pp=0; pp<IONS->at(ss).NSP; pp++){// Loop over particles
 
 			double DT_RK(params->DT);
@@ -2702,10 +2500,9 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 				// Periodic boundary condition
 				S5(1) = gcv.Pparo + DT_RK*( B5(0)*K1(1) + B5(1)*K2(1) + B5(2)*K3(1) + B5(3)*K4(1) + B5(4)*K5(1) + B5(5)*K6(1) + B5(6)*K7(1) );
 
-				DS45 = sqrt( dot(S5 - S4, S4 - S5) );
+				DS45 = sqrt( dot(S5 - S4, S5 - S4) );
 
-
-				s = pow(0.5*DT_RK*Tol/(DT*DS45), 0.25);
+				s = (DS45 < double_zero) ? 3.0 : pow(0.5*DT_RK*Tol/(DT*DS45), 0.25);
 
 				if(s >= 2.0){
 					TRK_ = TRK;
@@ -2724,12 +2521,17 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 				}else if(s < 1.0){
 					DT_RK *= 0.5;
 				}
-
-
 			} // Sub-cycling time loop
 
+			// cout << "MPI: " << params->mpi.rank_cart << " P: " << pp << endl;
+			// cout << "MPI: " << params->mpi.rank_cart << " P: " << pp << " V_x: " << IONS->at(ss).V.row(pp)(0) << " V_y: " << IONS->at(ss).V.row(pp)(1) << " V_z: " << IONS->at(ss).V.row(pp)(2) << endl;
+			// MPI_Barrier(params->mpi.mpi_topo);
+			// MPI_Abort(params->mpi.mpi_topo, -99999);
+			// if (TRK == params->DT) cout << "MPI: " << params->mpi.rank_cart << " P: " << pp << endl;
 
 			if(TRK > params->DT){
+				MPI_Abort(params->mpi.mpi_topo, -99999);
+
 				DT_RK = params->DT - TRK_;
 
 				gcv.Xo = gcv.Xo_;
@@ -2812,7 +2614,6 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 						smooth(&IONS->at(ss).nv, params->smoothingParameter);
 					}
 		}
-*/
 	} // Loop over species
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.

@@ -21,6 +21,10 @@ using namespace twoDimensional;
 using namespace threeDimensional;
 #endif
 
+// Zeros
+#define float_zero 1E-7
+#define double_zero 1E-15
+
 // Physical constants
 #define F_E 1.602176E-19//Electron charge in C (absolute value)
 #define F_ME 9.109382E-31//Electron mass in kg

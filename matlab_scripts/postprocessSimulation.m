@@ -145,10 +145,22 @@ NSPP = int64(ST.params.ions.numberOfIonSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = int64(ST.params.geometry.DX);
 
+% Electric field as set up in simulation
+E = [0.1, 0.1, 0.1];
+% E = zeros(1,3);
+B = ST.params.Bo;
+Bo = sqrt(dot(B,B));
+b = B/Bo;
+
+% Length of simulation domain
+LX = ST.params.geometry.xAxis(end) + ST.params.geometry.DX;
+
+
 ilabels = {};
 
 for ss=1:NSPP
     mi = ST.params.ions.(['spp_' num2str(ss)]).M;
+    qi = ST.params.ions.(['spp_' num2str(ss)]).Q;
     NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
     NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
     NPARTICLES = ND*NSP;
@@ -170,10 +182,82 @@ for ss=1:NSPP
     
     ST.data.(['spp_' num2str(ss)]).X = X;
     ST.data.(['spp_' num2str(ss)]).V = V;
+    
+    % Time
+    t = ST.time;
+    %%
+    % Plot test particle position and velocity
+    ii = randi(NPARTICLES);
+    
+    v = squeeze(V(ii,:,:));
+    x = squeeze(X(ii,1));
+    
+    VExB = [(E(2)*B(3) - E(3)*B(2))/Bo^2, -(E(1)*B(3) - E(3)*B(1))/Bo^2, (E(1)*B(2) - E(2)*B(1))/Bo^2];
+    Vpar = dot(v(:,1),b)*b';
+    VE = ( (qi/mi)*dot(E,b)*b )*t;
+    
+    VGC = repmat(Vpar + VExB, [numel(t),1]) + VE';
+    
+    XGC = VGC(1)*t + x(1);
+    XGC = mod(XGC,LX);
+    XGC(XGC<0) = XGC(XGC<0) + LX;
+    
+    fig = figure;
+    subplot(4,1,1)
+    plot(t, X(ii,:), 'b.', t, XGC, 'r')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('$X(t)$ [m]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,2)
+    plot(t, v(1,:), 'b.', t, VGC(:,1)*ones(size(t)), 'r')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_{GC,x}$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,3)
+    plot(t, v(2,:), 'b.', t, VGC(:,2)*ones(size(t)), 'r')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_{GC,y}$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,4)
+    plot(t, v(3,:), 'b.', t, VGC(:,3)*ones(size(t)), 'r')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_{GC,z}$ [m/s]','interpreter','latex')
+    %%
+    % Plot errors
+    error_XGC = 100*( XGC - X(ii,:) )/X(ii,1);
+    error_VGC_x = 100*( VGC(:,1) - v(1,:)')/v(1,2);
+    error_VGC_y = 100*( VGC(:,2) - v(2,:)')/v(2,2);
+    error_VGC_z = 100*( VGC(:,3) - v(3,:)')/v(3,2);
+    
+    fig = figure;
+    subplot(4,1,1)
+    plot(t,error_XGC, 'k')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('Error in $X(t)$','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,2)
+    plot(t, error_VGC_x, 'k')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('Error in $V_{GC,x}$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,3)
+    plot(t, error_VGC_y, 'k')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('Error in $V_{GC,y}$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,4)
+    plot(t, error_VGC_z, 'k')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('Error in $V_{GC,z}$ [m/s]','interpreter','latex')
+    
+    
 end
-ilabels{NSPP + 1} = 'Total';
-
-
 
 
 end

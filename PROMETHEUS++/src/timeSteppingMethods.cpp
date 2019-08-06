@@ -78,6 +78,9 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 
+    // Initialize density and bulk velocity
+    ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
+
     hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 
     t1 = MPI::Wtime();
@@ -89,12 +92,11 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
-//        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        // fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
-//        fields_solver.advanceEField(params, mesh, EB, IONS);
+        // fields_solver.advanceEField(params, mesh, EB, IONS);
 
         currentTime += params->DT*CS->time;
-
 
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
             hdfObj->saveOutputs(params, IONS, EB, CS, outputIterator + 1, currentTime);

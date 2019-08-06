@@ -23,9 +23,19 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-GC_test_1(ST);
+% GC_test_1(ST);
 
+% GC_test_2(ST);
+
+GC_test_3(ST);
+
+% FourierAnalysis(ST,'B','x');
+% FourierAnalysis(ST,'B','y');
 % FourierAnalysis(ST,'B','z');
+
+% FourierAnalysis(ST,'E','x');
+% FourierAnalysis(ST,'E','y');
+% FourierAnalysis(ST,'E','z');
 
 % EnergyDiagnostic(ST);
 end
@@ -180,8 +190,8 @@ for ss=1:NSPP
     
     ilabels{ss} = ['Species ' num2str(ss)];
     
-    ST.data.(['spp_' num2str(ss)]).X = X;
-    ST.data.(['spp_' num2str(ss)]).V = V;
+%     ST.data.(['spp_' num2str(ss)]).X = X;
+%     ST.data.(['spp_' num2str(ss)]).V = V;
     
     % Time
     t = ST.time;
@@ -261,6 +271,137 @@ end
 
 
 end
+
+function GC_test_2(ST)
+% Function for testing ExB drift of a GC particle in constant perpendicular
+% electric and magnetic fields.
+NT = int64(ST.numberOfOutputs);
+NSPP = int64(ST.params.ions.numberOfIonSpecies);
+ND = int64(ST.params.numOfDomains);
+NX = int64(ST.params.geometry.NX);
+DX = int64(ST.params.geometry.DX);
+
+% Length of simulation domain
+xAxis = ST.params.geometry.xAxis;
+LX = ST.params.geometry.xAxis(end) + ST.params.geometry.DX;
+
+
+ilabels = {};
+
+for ss=1:NSPP    
+    n = zeros(ND*NX,NT);
+    U = zeros(ND*NX,3,NT);
+    
+    for ii=1:NT        
+        for dd=1:ND
+            iIndex = NX*(dd - 1) + 1;
+            fIndex = iIndex + NX - 1;
+            
+            n(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).n;
+            U(iIndex:fIndex,1,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.x;
+            U(iIndex:fIndex,2,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.y;
+            U(iIndex:fIndex,3,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.z;
+        end
+    end
+    
+    ilabels{ss} = ['Species ' num2str(ss)];
+    
+    % Time
+    t = ST.time;
+end
+
+
+end
+
+function GC_test_3(ST)
+% Function for testing ExB drift of a GC particle in constant perpendicular
+% electric and magnetic fields.
+NT = int64(ST.numberOfOutputs);
+NSPP = int64(ST.params.ions.numberOfIonSpecies);
+ND = int64(ST.params.numOfDomains);
+DX = ST.params.geometry.DX;
+NX = int64(ST.params.geometry.NX)
+
+% Geometry
+LX = DX*double(NX)*double(ND);
+
+
+% Electric field as set up in simulation
+B = ST.params.Bo;
+Bo = sqrt(dot(B,B));
+b = B/Bo;
+Eo = 1.0;
+
+ilabels = {};
+
+for ss=1:NSPP
+    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
+    qi = ST.params.ions.(['spp_' num2str(ss)]).Q;
+    NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
+    NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
+    NPARTICLES = ND*NSP;
+    
+    X = zeros(NPARTICLES,NT);
+    V = zeros(NPARTICLES,3,NT);
+    
+    for ii=1:NT        
+        for dd=1:ND
+            iIndex = NSP*(dd - 1) + 1;
+            fIndex = iIndex + NSP - 1;
+            
+            X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
+            V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
+        end
+    end
+    
+    ilabels{ss} = ['Species ' num2str(ss)];
+    
+    % Time
+    t = ST.time;
+    %%
+    % Plot test particle position and velocity
+    ii = randi(NPARTICLES);
+    
+    v = squeeze(V(ii,:,:));
+    x = squeeze(X(ii,:));
+    
+    % Analytical solution
+    XGC = LX*atan( (2*pi/LX)*(Eo/Bo)*t + tan(2*pi*x(1)/LX) )/(2*pi);
+    XGC = mod(XGC,LX);
+    XGC(XGC<0) = XGC(XGC<0) + LX;
+    
+    E = @(x) Eo*cos(2*pi*x/LX);
+    VExB = E(XGC)/Bo;
+    
+    
+    fig = figure;
+    subplot(4,1,1)
+    plot(t, x, 'b.', t, XGC, 'r')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('$X(t)$ [m]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,2)
+    plot(t, v(1,:), 'b.', t, VExB, 'r')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_{GC,x}$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,3)
+    plot(t, v(2,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_{GC,y}$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,1,4)
+    plot(t, v(3,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_{GC,z}$ [m/s]','interpreter','latex')
+end
+
+
+end
+
 
 function FourierAnalysis(ST,field,component)
 if strcmp(component,'x')

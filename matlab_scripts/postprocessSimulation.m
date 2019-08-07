@@ -316,11 +316,16 @@ end
 function GC_test_3(ST)
 % Function for testing ExB drift of a GC particle in constant perpendicular
 % electric and magnetic fields.
+%
+% Code to initialize electric field in C++:
+% double LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+% EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
+
 NT = int64(ST.numberOfOutputs);
 NSPP = int64(ST.params.ions.numberOfIonSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = ST.params.geometry.DX;
-NX = int64(ST.params.geometry.NX)
+NX = int64(ST.params.geometry.NX);
 
 % Geometry
 LX = DX*double(NX)*double(ND);
@@ -343,6 +348,7 @@ for ss=1:NSPP
     
     X = zeros(NPARTICLES,NT);
     V = zeros(NPARTICLES,3,NT);
+    g = zeros(NPARTICLES,NT);
     
     for ii=1:NT        
         for dd=1:ND
@@ -351,6 +357,7 @@ for ss=1:NSPP
             
             X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
             V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
+            g(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).g;
         end
     end
     
@@ -358,8 +365,7 @@ for ss=1:NSPP
     
     % Time
     t = ST.time;
-    %%
-    % Plot test particle position and velocity
+    %% Plot test particle position and velocity
     ii = randi(NPARTICLES);
     
     v = squeeze(V(ii,:,:));
@@ -370,33 +376,48 @@ for ss=1:NSPP
     XGC = mod(XGC,LX);
     XGC(XGC<0) = XGC(XGC<0) + LX;
     
-    E = @(x) Eo*cos(2*pi*x/LX);
+    E = @(x) Eo*cos(2*pi*x/LX).^2;
     VExB = E(XGC)/Bo;
     
     
     fig = figure;
-    subplot(4,1,1)
+    subplot(4,2,1)
     plot(t, x, 'b.', t, XGC, 'r')
     xlabel('Time [s]','interpreter','latex')
     ylabel('$X(t)$ [m]','interpreter','latex')
     
     figure(fig)
-    subplot(4,1,2)
+    subplot(4,2,3)
     plot(t, v(1,:), 'b.', t, VExB, 'r')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_{GC,x}$ [m/s]','interpreter','latex')
     
     figure(fig)
-    subplot(4,1,3)
-    plot(t, v(2,:), 'b.')
+    subplot(4,2,5)
+    plot(t, g(ii,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_{GC,y}$ [m/s]','interpreter','latex')
+    ylabel('$\gamma$','interpreter','latex')
     
     figure(fig)
-    subplot(4,1,4)
+    subplot(4,2,7)
     plot(t, v(3,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_{GC,z}$ [m/s]','interpreter','latex')
+    
+    error_XGC = 100*( XGC - x )/x(1);
+    error_VExB = 100*( VExB - v(1,:))/v(1,1);
+    
+    figure(fig)
+    subplot(4,2,[2 4])
+    plot(t,error_XGC, 'k')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('Error in $X(t)$','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,2,[6 8])
+    plot(t, error_VExB, 'k')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('Error in $V_{GC,x}$ [m/s]','interpreter','latex')
 end
 
 

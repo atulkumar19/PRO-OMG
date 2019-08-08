@@ -2223,15 +2223,6 @@ void PIC_GC::assignCell_TSC(const inputParameters * params, const meshGeometry *
 			exit(1);
 		}
 	}
-
-    #ifdef CHECKS_ON
-	if(!IONS->meshNode.is_finite()){
-		std::ofstream ofs("errors/assignCell_TSC_GC.txt",std::ofstream::out);
-		ofs << "ERROR: Non-finite value for the particle's index.\n";
-		ofs.close();
-		exit(1);
-	}
-    #endif
 }
 
 
@@ -2591,6 +2582,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 			IONS->at(ss).X(pp,0) = gcv.X;
 			IONS->at(ss).Ppar(pp) = gcv.Ppar;
 			IONS->at(ss).g(pp) = gcv.g;
+			IONS->at(ss).meshNode(pp) = gcv.mn;
 		} // Loop over particles
 
 		depositIonDensityAndBulkVelocity(params, mesh, &IONS->at(ss));

@@ -183,7 +183,7 @@ private:
 protected:
 
 	// double Tol;
-	#define Tol 1E-10
+	#define Tol 1E-12
 
 	// Runge-Kutta 45 (Dorman-Prince) methd
 	arma::mat::fixed<7,7> A;

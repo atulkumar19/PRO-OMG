@@ -80,6 +80,13 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 		MPI_Abort(MPI_COMM_WORLD,-123);
 	}
 
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+        time_t current_time = std::time(NULL);
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+        cout << "STARTING SIMULATION ON: " << std::ctime(&current_time) << endl;
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+    }
+
 	//Initialize to zero the variables of the class
 	INITIALIZE::ionSkinDepth = 0.0;
 	INITIALIZE::LarmorRadius = 0.0;
@@ -558,10 +565,9 @@ void INITIALIZE::initializeFields(const inputParameters * params, const meshGeom
 		//int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
 		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
 
-        double LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
-        EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
-
-
+        // TEST ExB
+        // double LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+        // EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y

@@ -178,6 +178,7 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 		cout << "Simulation time: " << scientific << params->DT*params->timeIterations << fixed << " s\n";
 		cout << "Simulation time: " << scientific << params->DT*params->timeIterations/params->shorterIonGyroperiod << fixed << " gyroperiods\n";
 		cout << "Cadence for saving outputs: " << params->outputCadenceIterations << "\n";
+		cout << "Number of outputs: " << floor(params->timeIterations/params->outputCadenceIterations) + 1 << endl;
 		cout << "Cadence for checking stability: " << params->rateOfChecking << "\n";
 		cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *\n\n";
 	}

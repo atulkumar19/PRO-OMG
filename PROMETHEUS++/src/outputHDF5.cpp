@@ -435,6 +435,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 
 			for(int ov=0; ov<params->outputs_variables.size(); ov++){
 				if(params->outputs_variables.at(ov) == "X"){
+
 					//Saving the x-axis coordinates
 					name = "X";
 					#ifdef HDF5_DOUBLE
@@ -445,7 +446,9 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
+
 				}else if(params->outputs_variables.at(ov) == "V"){
+
 					name = "V";
 					#ifdef HDF5_DOUBLE
 					mat_values = CS->velocity*IONS_OUT->at(ii).V;
@@ -455,7 +458,9 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					saveToHDF5(group_ionSpecies, name, &fmat_values);
 					#endif
 					name.clear();
+
 				}else if(params->outputs_variables.at(ov) == "n"){
+
 					//Saving ions species density
 					name = "n";
 					#ifdef HDF5_DOUBLE
@@ -466,7 +471,9 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
+
 				}else if(params->outputs_variables.at(ov) == "g"){
+
 					//Saving ions species density
 					name = "g";
 					#ifdef HDF5_DOUBLE
@@ -477,7 +484,22 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "mu"){
+
+					//Saving ions species density
+					name = "mu";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->magneticMoment*IONS_OUT->at(ii).mu;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->magneticMoment*IONS_OUT->at(ii).mu);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+
 				}else if(params->outputs_variables.at(ov) == "Ppar"){
+
 					//Saving ions species density
 					name = "Ppar";
 					#ifdef HDF5_DOUBLE
@@ -488,7 +510,9 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
+
 				}else if(params->outputs_variables.at(ov) == "U"){
+
 					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
 
 					//x-component species bulk velocity
@@ -591,13 +615,13 @@ void HDF::saveFieldsVariables(const inputParameters * params, oneDimensional::el
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
 	try{
-		forwardPBC_1D(&EB->E.X);
-		forwardPBC_1D(&EB->E.Y);
-		forwardPBC_1D(&EB->E.Z);
+		// forwardPBC_1D(&EB->E.X);
+		// forwardPBC_1D(&EB->E.Y);
+		// forwardPBC_1D(&EB->E.Z);
 
-		forwardPBC_1D(&EB->B.X);
-		forwardPBC_1D(&EB->B.Y);
-		forwardPBC_1D(&EB->B.Z);
+		// forwardPBC_1D(&EB->B.X);
+		// forwardPBC_1D(&EB->B.Y);
+		// forwardPBC_1D(&EB->B.Z);
 
 		string name;
 		string path;

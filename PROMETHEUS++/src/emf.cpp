@@ -247,6 +247,9 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 	dt = params->DT/((double)params->numberOfRKIterations);
 	int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
+	// if(params->mpi.rank_cart == 0)
+		// EB->B.Z.print("B");
+
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
 
 		K1 = *EB;//The value of the fields at the time level (N-1/2)
@@ -275,8 +278,21 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 		FaradaysLaw(params,mesh,&K4);//K4
 
 		EB->B += (dt/6)*( K1.B + 2*K2.B + 2*K3.B + K4.B );
-
 	}//Runge-Kutta iterations
+
+#ifdef CHECKS_ON
+	if(!EB->B.X.is_finite()){
+		cout << "ERROR: Non finite values in Bx" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
+	}else if(!EB->B.Y.is_finite()){
+		cout << "ERROR: Non finite values in By" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
+	}else if(!EB->B.Z.is_finite()){
+		cout << "ERROR: Non finite values in Bz" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
+	}
+#endif
+
 
 	switch (params->weightingScheme){
 		case(0):{
@@ -309,7 +325,6 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 	MPI_passGhosts(params,&EB->B);
 	MPI_passGhosts(params,&EB->b_);
 
-
 	EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
 					+ 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
 					+ 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
@@ -333,6 +348,11 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
+
+	// if(params->mpi.rank_cart == 1){
+		// EB->B.Z.print("Bz");
+		// MPI_Abort(params->mpi.mpi_topo, -200);
+	// }
 
 	//Definitions
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart + 1);
@@ -428,20 +448,14 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 
 #ifdef CHECKS_ON
 	if(!EB->E.X.is_finite()){
-		std::ofstream ofs ("errors/aef_1D.txt",std::ofstream::out);
-		ofs << "\nIn Ex!\n";
-		ofs.close();
-		exit(0);
+		cout << "ERROR: Non finite values in Ex" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
 	}else if(!EB->E.Y.is_finite()){
-		std::ofstream ofs ("errors/aef_1D.txt",std::ofstream::out);
-		ofs << "\nIn Ey!\n";
-		ofs.close();
-		exit(0);
+		cout << "ERROR: Non finite values in Ey" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
 	}else if(!EB->E.Z.is_finite()){
-		std::ofstream ofs ("errors/aef_1D.txt",std::ofstream::out);
-		ofs << "\nIn Ez!\n";
-		ofs.close();
-		exit(0);
+		cout << "ERROR: Non finite values in Ez" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
 	}
 #endif
 
@@ -678,24 +692,18 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	EB->E.Z.subvec(iIndex,fIndex) += V.Y.subvec(1,dim_x-2) % EB->B.X.subvec(iIndex,fIndex);
 
 
-	#ifdef CHECKS_ON
-		if(!EB->E.X.is_finite()){
-			std::ofstream ofs ("errors/aefwve_1D.txt",std::ofstream::out);
-			ofs << "\nIn Ex!\n";
-			ofs.close();
-			exit(0);
-		}else if(!EB->E.Y.is_finite()){
-			std::ofstream ofs ("errors/aefwve_1D.txt",std::ofstream::out);
-			ofs << "\nIn Ey!\n";
-			ofs.close();
-			exit(0);
-		}else if(!EB->E.Z.is_finite()){
-			std::ofstream ofs ("errors/aefwve_1D.txt",std::ofstream::out);
-			ofs << "\nIn Ez!\n";
-			ofs.close();
-			exit(0);
-		}
-	#endif
+#ifdef CHECKS_ON
+	if(!EB->E.X.is_finite()){
+		cout << "ERROR: Non finite values in Ex" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
+	}else if(!EB->E.Y.is_finite()){
+		cout << "ERROR: Non finite values in Ey" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
+	}else if(!EB->E.Z.is_finite()){
+		cout << "ERROR: Non finite values in Ez" << endl;
+		MPI_Abort(params->mpi.mpi_topo, -2);
+	}
+#endif
 
 		switch (params->weightingScheme){
 			case(0):{

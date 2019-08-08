@@ -27,13 +27,15 @@ ST.time = loadTimeVector(ST);
 
 % GC_test_2(ST);
 
-GC_test_3(ST);
+% GC_test_3(ST);
+
+GC_test_4(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
 % FourierAnalysis(ST,'B','z');
 
-% FourierAnalysis(ST,'E','x');
+FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
@@ -275,32 +277,50 @@ end
 function GC_test_2(ST)
 % Function for testing ExB drift of a GC particle in constant perpendicular
 % electric and magnetic fields.
+%
+% Code to initialize electric field in C++:
+% double LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+% EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
+
 NT = int64(ST.numberOfOutputs);
 NSPP = int64(ST.params.ions.numberOfIonSpecies);
 ND = int64(ST.params.numOfDomains);
+DX = ST.params.geometry.DX;
 NX = int64(ST.params.geometry.NX);
-DX = int64(ST.params.geometry.DX);
 
-% Length of simulation domain
-xAxis = ST.params.geometry.xAxis;
-LX = ST.params.geometry.xAxis(end) + ST.params.geometry.DX;
+% Geometry
+LX = DX*double(NX)*double(ND);
 
+
+% Electric field as set up in simulation
+B = ST.params.Bo;
+Bo = sqrt(dot(B,B));
+b = B/Bo;
+Eo = 1.0;
 
 ilabels = {};
 
-for ss=1:NSPP    
-    n = zeros(ND*NX,NT);
-    U = zeros(ND*NX,3,NT);
+for ss=1:NSPP
+    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
+    qi = ST.params.ions.(['spp_' num2str(ss)]).Q;
+    NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
+    NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
+    NPARTICLES = ND*NSP;
+    
+    X = zeros(NPARTICLES,NT);
+    V = zeros(NPARTICLES,3,NT);
+    g = zeros(NPARTICLES,NT);
+    mu = zeros(NPARTICLES,NT);
     
     for ii=1:NT        
         for dd=1:ND
-            iIndex = NX*(dd - 1) + 1;
-            fIndex = iIndex + NX - 1;
+            iIndex = NSP*(dd - 1) + 1;
+            fIndex = iIndex + NSP - 1;
             
-            n(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).n;
-            U(iIndex:fIndex,1,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.x;
-            U(iIndex:fIndex,2,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.y;
-            U(iIndex:fIndex,3,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.z;
+            X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
+            V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
+            g(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).g;
+            mu(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).mu;
         end
     end
     
@@ -308,6 +328,41 @@ for ss=1:NSPP
     
     % Time
     t = ST.time;
+    %% Plot test particle position and velocity
+    ii = randi(NPARTICLES);
+    
+    v = squeeze(V(ii,:,:));
+    x = squeeze(X(ii,:));
+    
+    fig = figure;
+    subplot(3,2,1)
+    plot(t, x, 'b.')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('$X(t)$ [m]','interpreter','latex')
+    
+    figure(fig)
+    subplot(3,2,2)
+    plot(t, v(1,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_x$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(3,2,4)
+    plot(t, v(2,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_y$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(3,2,6)
+    plot(t, v(3,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_z$ [m/s]','interpreter','latex')
+    
+    figure(fig)
+    subplot(3,2,[3 5])
+    plot(t, 1.0 - g(ii,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$\gamma$','interpreter','latex')
 end
 
 
@@ -349,6 +404,7 @@ for ss=1:NSPP
     X = zeros(NPARTICLES,NT);
     V = zeros(NPARTICLES,3,NT);
     g = zeros(NPARTICLES,NT);
+    mu = zeros(NPARTICLES,NT);
     
     for ii=1:NT        
         for dd=1:ND
@@ -358,6 +414,7 @@ for ss=1:NSPP
             X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
             V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
             g(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).g;
+            mu(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).mu;
         end
     end
     
@@ -370,11 +427,13 @@ for ss=1:NSPP
     
     v = squeeze(V(ii,:,:));
     x = squeeze(X(ii,:));
-    
+    y = tan(2*pi*x/LX);
+
     % Analytical solution
     XGC = LX*atan( (2*pi/LX)*(Eo/Bo)*t + tan(2*pi*x(1)/LX) )/(2*pi);
     XGC = mod(XGC,LX);
     XGC(XGC<0) = XGC(XGC<0) + LX;
+    YGC = (2*pi/LX)*(Eo/Bo)*t + tan(2*pi*x(1)/LX);
     
     E = @(x) Eo*cos(2*pi*x/LX).^2;
     VExB = E(XGC)/Bo;
@@ -386,30 +445,29 @@ for ss=1:NSPP
     xlabel('Time [s]','interpreter','latex')
     ylabel('$X(t)$ [m]','interpreter','latex')
     
-    figure(fig)
     subplot(4,2,3)
+    plot(t, y, 'b.', t, YGC, 'r')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('$\tan(2\pi X(t)/L_X)$','interpreter','latex')
+    
+    figure(fig)
+    subplot(4,2,5)
     plot(t, v(1,:), 'b.', t, VExB, 'r')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_{GC,x}$ [m/s]','interpreter','latex')
     
     figure(fig)
-    subplot(4,2,5)
-    plot(t, g(ii,:), 'b.')
+    subplot(4,2,7)
+    plot(t, 1.0 - g(ii,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$\gamma$','interpreter','latex')
     
-    figure(fig)
-    subplot(4,2,7)
-    plot(t, v(3,:), 'b.')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_{GC,z}$ [m/s]','interpreter','latex')
-    
-    error_XGC = 100*( XGC - x )/x(1);
-    error_VExB = 100*( VExB - v(1,:))/v(1,1);
+    error_YGC = 100*( YGC - y )./y;
+    error_VExB = 100*( VExB - v(1,:))./v(1,:);
     
     figure(fig)
     subplot(4,2,[2 4])
-    plot(t,error_XGC, 'k')
+    plot(t,error_YGC, 'k')
     xlabel('Time [s]','interpreter','latex')
     ylabel('Error in $X(t)$','interpreter','latex')
     
@@ -419,6 +477,141 @@ for ss=1:NSPP
     xlabel('Time (s)','interpreter','latex')
     ylabel('Error in $V_{GC,x}$ [m/s]','interpreter','latex')
 end
+
+
+end
+
+function GC_test_4(ST)
+%%
+NT = int64(ST.numberOfOutputs); % Number of snapshots
+ND = int64(ST.params.numOfDomains); % Number of domains
+NXPD = int64(ST.params.geometry.NX); % Number of cells per domain
+NXTD = ND*NXPD; % Number of cells in the whole domain
+NSPP = int64(ST.params.ions.numberOfIonSpecies);
+
+time = ST.time;
+xAxis = ST.params.geometry.xAxis;
+
+if (NT > 1)
+    IT = 1:NT/4:NT;
+else
+    IT = 1;
+end
+
+U = zeros(numel(IT),3,NXTD);
+n = zeros(numel(IT),NXTD);
+E = zeros(numel(IT),3,NXTD);
+B = zeros(numel(IT),3,NXTD);
+
+for ss=1:NSPP
+    for ii=1:numel(IT)
+        for dd=1:ND
+            iIndex = (dd-1)*NXPD + 1;
+            fIndex = dd*NXPD;
+            
+            n(ii,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).ions.(['spp_' num2str(ss)]).n;
+            U(ii,1,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).ions.(['spp_' num2str(ss)]).U.x;
+            U(ii,2,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).ions.(['spp_' num2str(ss)]).U.y;
+            U(ii,3,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).ions.(['spp_' num2str(ss)]).U.z;
+        end
+    end
+    
+    if( any(any(isnan(n))) || any(any(~isfinite(n))) )
+        disp(["WARNING: NaN or Inf in number density of species: " num2str(ss)])
+    end
+    
+    if( any(any(any(isnan(U)))) || any(any(any(~isfinite(U)))) )
+        disp(["WARNING: NaN or Inf in bulk velocity of species: " num2str(ss)])
+    end
+    
+    fig_ions = figure;
+    subplot(4,1,1)
+    plot(xAxis, n)
+    xlim([min(xAxis) max(xAxis)]); grid minor;
+    xlabel('$x$ [m]','Interpreter','latex')
+    ylabel('$n$ [m$^{-3}$]','Interpreter','latex')
+    
+    subplot(4,1,2)
+    plot(xAxis, squeeze(U(:,1,:)))
+    xlim([min(xAxis) max(xAxis)]); grid minor;
+    xlabel('$x$ [m]','Interpreter','latex')
+    ylabel('$U_x$ [m/s]','Interpreter','latex')
+    
+    subplot(4,1,3)
+    plot(xAxis, squeeze(U(:,2,:)))
+    xlim([min(xAxis) max(xAxis)]); grid minor;
+    xlabel('$x$ [m]','Interpreter','latex')
+    ylabel('$U_y$ [m/s]','Interpreter','latex')
+    
+    subplot(4,1,4)
+    plot(xAxis, squeeze(U(:,3,:)))
+    xlim([min(xAxis) max(xAxis)]); grid minor;
+    xlabel('$x$ [m]','Interpreter','latex')
+    ylabel('$U_z$ [m/s]','Interpreter','latex')
+    
+end
+
+for ii=1:numel(IT)
+    for dd=1:ND
+        iIndex = (dd-1)*NXPD + 1;
+        fIndex = dd*NXPD;
+        
+        B(ii,1,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).fields.B.x - ST.params.Bo(1);
+        B(ii,2,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).fields.B.y - ST.params.Bo(2);
+        B(ii,3,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).fields.B.z - ST.params.Bo(3);
+        
+        E(ii,1,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).fields.E.x;
+        E(ii,2,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).fields.E.y;
+        E(ii,3,iIndex:fIndex) = ST.data.(['D' num2str(dd-1) '_O' num2str(IT(ii)-1)]).fields.E.z;
+    end
+end
+
+if( any(any(any(isnan(B)))) || any(any(any(~isfinite(B)))) )
+        disp("WARNING: NaN or Inf in magnetic field (B)")
+end
+
+if( any(any(any(isnan(E)))) || any(any(any(~isfinite(E)))) )
+        disp("WARNING: NaN or Inf in electric field (E)")
+end
+
+
+fig_fields = figure;
+subplot(3,2,1)
+plot(xAxis, squeeze(B(:,1,:)))
+xlim([min(xAxis) max(xAxis)]); grid minor;
+xlabel('$x$ [m]','Interpreter','latex')
+ylabel('$B_x$ [T]','Interpreter','latex')
+
+subplot(3,2,3)
+plot(xAxis, squeeze(B(:,2,:)))
+xlim([min(xAxis) max(xAxis)]); grid minor;
+xlabel('$x$ [m]','Interpreter','latex')
+ylabel('$B_y$ [T]','Interpreter','latex')
+
+subplot(3,2,5)
+plot(xAxis, squeeze(B(:,3,:)))
+xlim([min(xAxis) max(xAxis)]); grid minor;
+xlabel('$x$ [m]','Interpreter','latex')
+ylabel('$B_z$ [T]','Interpreter','latex')
+
+
+subplot(3,2,2)
+plot(xAxis, squeeze(E(:,1,:)))
+xlim([min(xAxis) max(xAxis)]); grid minor;
+xlabel('$x$ [m]','Interpreter','latex')
+ylabel('$E_x$ [V/m]','Interpreter','latex')
+
+subplot(3,2,4)
+plot(xAxis, squeeze(E(:,2,:)))
+xlim([min(xAxis) max(xAxis)]); grid minor;
+xlabel('$x$ [m]','Interpreter','latex')
+ylabel('$E_y$ [V/m]','Interpreter','latex')
+
+subplot(3,2,6)
+plot(xAxis, squeeze(E(:,3,:)))
+xlim([min(xAxis) max(xAxis)]); grid minor;
+xlabel('$x$ [m]','Interpreter','latex')
+ylabel('$E_z$ [V/m]','Interpreter','latex')
 
 
 end

@@ -7,6 +7,7 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
+#include <ctime>
 
 #include <armadillo>
 

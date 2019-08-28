@@ -1,10 +1,36 @@
 # PROMETHEUS++: Hybrid code for fusion and space simulations #
 
-# IMPORTANT! #
+# COPYRIGHT #
 
-Do not cick on revoke in the Access level option!. This will remove your permissions for working on PROMETHEUS++.
+COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
 
-# Getting started #
+# LICENSE #
+This file is part of PROMETHEUS++.
+
+PROMETHEUS++ is free software: you can redistribute it and/or modify
+it under the terms of the **GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version**.
+
+PROMETHEUS++ is distributed in the hope that it will be useful,
+but **WITHOUT ANY WARRANTY**; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+
+# TERMS OF USE #
+
+PROMETHEUS++ a free scientific software distributed under the GNU General Public License 3 or later, threfore users and developers are free to use and modify the code at will while **ALWAYS** complying with the rights and duties that this license confers.
+
+In addition to the above, we ask to use and/or develop the code following standard principles used among the scientific community:
+
+1. If substantial changes are made to the code, including and/or extending the simulation capacities of PROMETHEUS++, we ask the developers to let the community know by generating a *pull request* within the repo, or emailing L Carbajal (leopoldo.carbajal(at)correo.nucleares.unam.mx)
+2. When the use of PROMETHEUS++ results in a publication, please acknowledge the code by citing [L. Carbajal et al. Physics of Plasmas (1994-present) 21, 012106 (2014); doi: 10.1063/1.4861866](http://dx.doi.org/10.1063/1.4861866)
+3. The users of PROMETHEUS++ will be the only accountable party for any published work that uses PROMETHEUS++ simulation results, therefore, it is encouraged to put in touch with L Carbajal to discuss the range of applicability and quality of the simulation results before publishing them.
+
+# GETTING STARTED #
 
 1. Install git in your computer.
 
@@ -20,11 +46,11 @@ Do not cick on revoke in the Access level option!. This will remove your permiss
 
 7. cd to your new folder "new_folder".
 
-# How to install #
+# INSTALLATION #
 
 Make sure you have at least half an hour for the installation, it will take some time! This due to the installation of the external libraries.
 
-### What do you need in your computer before installing PROMETHEUS++? ###
+### BEFORE INSTALLING PROMETHEUS++ ###
 
 It is important to have the following libraries and programs in your system in order to install PROMETHEUS++. Using the software manager of your Linux (Mac) system to get them is always the best option. **NOTE: In most cases, these libraries are already installed in Unix/Linux systems. You might try to follow the installation steps below right away.**
 
@@ -50,11 +76,11 @@ PROMETHEUS++ has been successfully compiled on **Mac OS 10.6.X and higher and on
 
 6. Your installation will be complete when you get the message "Installation succeeded".
 
-# Problems when installing PROMETHEUS++? #
+# PROBLEMS DURING INSTALLATION? #
 
 Please report any problem/bug using the "Issues" section on the left panel.
 
-# Running PROMETHEUS++ #
+# RUNNING PROMETHEUS++ #
 
 export OMP_NUM_THREADS=(number of open MP threads per MPI process)
 mpirun -np (even number of MPI processes) bin/PROMETHEUS++ /path/to/input/folder/ (ID of input file [optional])

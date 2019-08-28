@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "initialize.h"
 
 vector<string> INITIALIZE::split(const string& str, const string& delim)
@@ -71,6 +89,28 @@ map<string,string> INITIALIZE::loadParametersString(string * inputFile){
 INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	MPI_Comm_size(MPI_COMM_WORLD,&params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
+
+    // Copyright and Licence Info
+    if (params->mpi.MPI_DOMAIN_NUMBER){
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+        cout << "* PROMETHEUS++ Copyright (C) 2015-2019  Leopoldo Carbajal               *" << endl;
+        cout << "*                                                                       *" << endl;
+        cout << "* PROMETHEUS++ is free software: you can redistribute it and/or modify  *" << endl;
+        cout << "* it under the terms of the GNU General Public License as published by  *" << endl;
+        cout << "* the Free Software Foundation, either version 3 of the License, or     *" << endl;
+        cout << "* any later version.                                                    *" << endl;
+        cout << "*                                                                       *" << endl;
+        cout << "* PROMETHEUS++ is distributed in the hope that it will be useful,       *" << endl;
+        cout << "* but WITHOUT ANY WARRANTY; without even the implied warranty of        *" << endl;
+        cout << "* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *" << endl;
+        cout << "* GNU General Public License for more details.                          *" << endl;
+        cout << "*                                                                       *" << endl;
+        cout << "* You should have received a copy of the GNU General Public License     *" << endl;
+        cout << "* along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/> *" << endl;
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+        cout << endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS,2.0 ) > 0.0 ){
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0){

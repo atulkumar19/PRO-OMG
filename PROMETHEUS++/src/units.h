@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef H_UNITS
 #define H_UNITS
 
@@ -27,17 +45,19 @@ class UNITS{
 	#define Cmax 1.0f/sqrt(3.0f)
 	#endif
 
-	void dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB,const characteristicScales * CS);
+	void dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS);
 
-	double defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB);
+	void broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS);
 
 public:
 
 	UNITS(){};
 
+	void defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB);
+
 	void defineCharacteristicScales(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS);
 
-	void normalizeVariables(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,emf * EB,const characteristicScales * CS);
+	void normalizeVariables(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS);
 
 	void defineCharacteristicScalesAndBcast(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS);
 

@@ -1,37 +1,22 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "mpi_main.h"
-
-void MPI_MAIN::broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS){
-
-	// Define MPI type for characteristicScales structure.
-	int numStructElem(10);
-	int structLength[10] = {1,1,1,1,1,1,1,1,1,1};
-	MPI_Aint displ[10];
-	MPI_Datatype csTypes[10] = {MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE};
-	MPI_Datatype MPI_CS;
-
-	MPI_Get_address(&CS->time,&displ[0]);
-	MPI_Get_address(&CS->velocity,&displ[1]);
-	MPI_Get_address(&CS->length,&displ[2]);
-	MPI_Get_address(&CS->mass,&displ[3]);
-	MPI_Get_address(&CS->charge,&displ[4]);
-	MPI_Get_address(&CS->density,&displ[5]);
-	MPI_Get_address(&CS->eField,&displ[6]);
-	MPI_Get_address(&CS->bField,&displ[7]);
-	MPI_Get_address(&CS->pressure,&displ[8]);
-	MPI_Get_address(&CS->temperature,&displ[9]);
-
-	for(int ii=numStructElem-1;ii>=0;ii--)
-		displ[ii] -= displ[0];
-
-	MPI_Type_create_struct(numStructElem,structLength,displ,csTypes,&MPI_CS);
-	MPI_Type_commit(&MPI_CS);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	MPI_Bcast(CS,1,MPI_CS,0,MPI_COMM_WORLD);
-
-	MPI_Type_free(&MPI_CS);
-}
 
 
 void MPI_MAIN::mpi_function(inputParameters * params){
@@ -75,4 +60,26 @@ void MPI_MAIN::createMPITopology(inputParameters * params){
 		<< params->mpi.lRank << '\t' << params->mpi.rRank << '\n';
 */
 	}
+}
+
+
+void MPI_MAIN::finalizeCommunications(inputParameters * params){
+	bool finalized = false;
+
+	if(params->mpi.rank_cart == 0)
+		cout << "\n* * * * * * * * * * * * FINALIZING MPI COMMUNICATIONS * * * * * * * * * * * * * * * * * *\n";
+
+	MPI_Barrier(params->mpi.mpi_topo);
+
+	MPI_Finalize();
+
+	finalized = MPI::Is_finalized();
+
+	if(finalized)
+		cout << "MPI process: " << params->mpi.rank_cart << " FINALIZED\n";
+	else
+		cout << "MPI process: " << params->mpi.rank_cart << " NOT FINALIZED - ERROR\n";
+
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * MPI COMMUNICATIONS FINALIZED * * * * * * * * * * * * * * * * * *\n";
 }

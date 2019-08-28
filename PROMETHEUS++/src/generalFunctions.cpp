@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "generalFunctions.h"
 
 void GENERAL_FUNCTIONS::bCastTimestep(inputParameters * params, int logicVariable){
@@ -58,7 +76,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0);
-			vec tmp = IONS->at(ii).velocity.col(0);
+			vec tmp = IONS->at(ii).V.col(0);
 			vxTmp = abs(tmp.max());
 			vx = (vxTmp > vx) ? vxTmp : vx;
 		}
@@ -71,11 +89,11 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0), vyTmp(0);
-			vec tmp = IONS->at(ii).velocity.col(0);
+			vec tmp = IONS->at(ii).V.col(0);
 			vxTmp = abs(tmp.max());
 			vx = (vxTmp > vx) ? vxTmp : vx;
 			tmp.reset();
-			tmp = IONS->at(ii).velocity.col(1);
+			tmp = IONS->at(ii).V.col(1);
 			vyTmp = abs(tmp.max());
 			vy = (vyTmp > vy) ? vyTmp : vy;
 		}
@@ -88,15 +106,15 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0), vyTmp(0), vzTmp(0);
-			vec tmp = IONS->at(ii).velocity.col(0);
+			vec tmp = IONS->at(ii).V.col(0);
 			vxTmp = abs(tmp.max());
 			vx = (vxTmp > vx) ? vxTmp : vx;
 			tmp.reset();
-			tmp = IONS->at(ii).velocity.col(1);
+			tmp = IONS->at(ii).V.col(1);
 			vyTmp = abs(tmp.max());
 			vy = (vyTmp > vy) ? vyTmp : vy;
 			tmp.reset();
-			tmp = IONS->at(ii).velocity.col(2);
+			tmp = IONS->at(ii).V.col(2);
 			vzTmp = abs(tmp.max());
 			vz = (vzTmp > vz) ? vzTmp : vz;
 		}
@@ -118,7 +136,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 
 }
 
-void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, emf * EB, int IT){
+void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iteration over the ions' species
 		int NSP(IONS->at(ii).NSP);
@@ -128,9 +146,9 @@ void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh
 			double tmpEnergy(0);
 			#pragma omp for
 			for(jj=0;jj<NSP;jj++){
-				tmpEnergy += IONS->at(ii).velocity(jj,0)*IONS->at(ii).velocity(jj,0) //
-							+ IONS->at(ii).velocity(jj,1)*IONS->at(ii).velocity(jj,1) //
-							+ IONS->at(ii).velocity(jj,2)*IONS->at(ii).velocity(jj,2);
+				tmpEnergy += IONS->at(ii).V(jj,0)*IONS->at(ii).V(jj,0) //
+							+ IONS->at(ii).V(jj,1)*IONS->at(ii).V(jj,1) //
+							+ IONS->at(ii).V(jj,2)*IONS->at(ii).V(jj,2);
 			}
 			tmpEnergy *= 0.5*IONS->at(ii).M*IONS->at(ii).NCP;
 			tmpEnergy *= CS->mass*CS->velocity*CS->velocity;//Convert to SI units.

@@ -1,4 +1,40 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "initialize.h"
+
+vector<string> INITIALIZE::split(const string& str, const string& delim)
+{
+    vector<string> tokens;
+    size_t prev = 0, pos = 0;
+    do
+    {
+        pos = str.find(delim, prev);
+        if (pos == string::npos) pos = str.length();
+        string token = str.substr(prev, pos-prev);
+        if (!token.empty()) tokens.push_back(token);
+        prev = pos + delim.length();
+    }
+    while (pos < str.length() && prev < str.length());
+
+    return tokens;
+}
+
 
 map<string,float> INITIALIZE::loadParameters(string * inputFile){
 	string key;
@@ -23,33 +59,58 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
     return readMap;
 }
 
-map<string,float> INITIALIZE::loadParameters(const char *  inputFile){
+
+map<string,string> INITIALIZE::loadParametersString(string * inputFile){
 	string key;
-	float value;
+	string value;
 	fstream reader;
-	std::map<string,float> readMap;
+	std::map<string,string> readMap;
 
-	reader.open(inputFile ,ifstream::in);
 
-    	if (!reader){
-      		cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
-        	MPI_Abort(MPI_COMM_WORLD,-123);
-    	}
+	reader.open(inputFile->data(),ifstream::in);
 
-    	while ( reader >> key >> value ){
-          	readMap[ key ] = value;
-    	}
+    if (!reader){
+    	cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
+    	MPI_Abort(MPI_COMM_WORLD,-123);
+    }
 
-    	reader.close();
+    while ( reader >> key >> value ){
+      	readMap[ key ] = value;
+		// cout << key << "\t" << std::stod(value) << "\n";
+		 //cout << key << "\t" << value << "\n";
+    }
 
-    	return readMap;
+    reader.close();
+
+    return readMap;
 }
 
-INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
-	std::map<string,float> parametersMap;
 
+INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	MPI_Comm_size(MPI_COMM_WORLD,&params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
+
+    // Copyright and Licence Info
+    if (params->mpi.MPI_DOMAIN_NUMBER){
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+        cout << "* PROMETHEUS++ Copyright (C) 2015-2019  Leopoldo Carbajal               *" << endl;
+        cout << "*                                                                       *" << endl;
+        cout << "* PROMETHEUS++ is free software: you can redistribute it and/or modify  *" << endl;
+        cout << "* it under the terms of the GNU General Public License as published by  *" << endl;
+        cout << "* the Free Software Foundation, either version 3 of the License, or     *" << endl;
+        cout << "* any later version.                                                    *" << endl;
+        cout << "*                                                                       *" << endl;
+        cout << "* PROMETHEUS++ is distributed in the hope that it will be useful,       *" << endl;
+        cout << "* but WITHOUT ANY WARRANTY; without even the implied warranty of        *" << endl;
+        cout << "* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *" << endl;
+        cout << "* GNU General Public License for more details.                          *" << endl;
+        cout << "*                                                                       *" << endl;
+        cout << "* You should have received a copy of the GNU General Public License     *" << endl;
+        cout << "* along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/> *" << endl;
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+        cout << endl;
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS,2.0 ) > 0.0 ){
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0){
@@ -58,6 +119,13 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 		MPI_Abort(MPI_COMM_WORLD,-123);
 	}
+
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+        time_t current_time = std::time(NULL);
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+        cout << "STARTING SIMULATION ON: " << std::ctime(&current_time) << endl;
+        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+    }
 
 	//Initialize to zero the variables of the class
 	INITIALIZE::ionSkinDepth = 0.0;
@@ -68,16 +136,19 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 	params->argc = argc;
 	params->argv = argv;
 
+	string name;
+
 	if(params->argc > 2){
 		string argv(params->argv[2]);
-		string name = "inputFiles/input_file_" + argv + ".input";
-		parametersMap = loadParameters(&name);
-
+		name = "inputFiles/input_file_" + argv + ".input";
 		params->PATH += "/" + argv;
 	}else{
-		parametersMap = loadParameters("inputFiles/input_file.input");
+		name = "inputFiles/input_file.input";
 		params->PATH += "/";
 	}
+
+	std::map<string,string> parametersStringMap;
+	parametersStringMap = loadParametersString(&name);
 
 	// Create HDF5 folders if they don't exist
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
@@ -94,74 +165,81 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 		rsys = system(sys);
 	}
 
-	params->quietStart = parametersMap["quietStart"];
+	params->particleIntegrator = std::stoi( parametersStringMap["particleIntegrator"] );
 
-	params->DTc = parametersMap["DTc"];
+	params->quietStart = std::stod( parametersStringMap["quietStart"] );
 
-	params->restart = (int)parametersMap["restart"];
+	params->DTc = std::stod( parametersStringMap["DTc"] );
 
-	params->weightingScheme = (int)parametersMap["weightingScheme"];
+	params->restart = std::stoi( parametersStringMap["restart"] );
 
-	params->BC = (int)parametersMap["BC"];
+	params->weightingScheme = std::stoi( parametersStringMap["weightingScheme"] );
 
-	params->smoothingParameter = parametersMap["smoothingParameter"];
+	params->BC = std::stoi( parametersStringMap["BC"] );
 
-	params->numberOfRKIterations = (int)parametersMap["numberOfRKIterations"];
+	params->smoothingParameter = std::stod( parametersStringMap["smoothingParameter"] );
 
-	params->filtersPerIterationFields = (int)parametersMap["filtersPerIterationFields"];
+	params->numberOfRKIterations = std::stoi( parametersStringMap["numberOfRKIterations"] );
 
-	params->filtersPerIterationIons = (int)parametersMap["filtersPerIterationIons"];
+	params->filtersPerIterationFields = std::stoi( parametersStringMap["filtersPerIterationFields"] );
 
-	params->checkSmoothParameter = (int)parametersMap["checkSmoothParameter"];
+	params->filtersPerIterationIons = std::stoi( parametersStringMap["filtersPerIterationIons"] );
 
-	params->timeIterations = (int)parametersMap["timeIterations"];
+	params->checkSmoothParameter = std::stoi( parametersStringMap["checkSmoothParameter"] );
 
-	params->transient = (unsigned int)parametersMap["transient"];
+	params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
 
-	params->numberOfIonSpecies = (int)parametersMap["numberOfIonSpecies"];
+	params->transient = (unsigned int)std::stoi( parametersStringMap["transient"] );
 
-	params->numberOfTracerSpecies = (int)parametersMap["numberOfTracerSpecies"];
+	params->numberOfIonSpecies = std::stoi( parametersStringMap["numberOfIonSpecies"] );
 
-	params->loadModes = (unsigned int)parametersMap["loadModes"];
+	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
-	params->numberOfAlfvenicModes = (unsigned int)parametersMap["numberOfAlfvenicModes"];
+	params->loadModes = (unsigned int)std::stoi( parametersStringMap["loadModes"] );
 
-	params->numberOfTestModes = (unsigned int)parametersMap["numberOfTestModes"];
+	params->numberOfAlfvenicModes = (unsigned int)std::stoi( parametersStringMap["numberOfAlfvenicModes"] );
 
-	params->maxAngle = parametersMap["maxAngle"];
+	params->numberOfTestModes = (unsigned int)std::stoi( parametersStringMap["numberOfTestModes"] );
 
-	params->shuffleModes = (unsigned int)parametersMap["shuffleModes"];
+	params->maxAngle = std::stod( parametersStringMap["maxAngle"] );
 
-	params->fracMagEnerInj = parametersMap["fracMagEnerInj"];
+	params->shuffleModes = (unsigned int)std::stoi( parametersStringMap["shuffleModes"] );
 
-	params->ne = parametersMap["ne"];
+	params->fracMagEnerInj = std::stod( parametersStringMap["fracMagEnerInj"] );
 
-	params->loadFields = (int)parametersMap["loadFields"];
+	params->ne = std::stod( parametersStringMap["ne"] );
 
-	params->saveVariablesEach = parametersMap["saveVariablesEach"];
+	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
+
+	params->outputCadence = std::stod( parametersStringMap["outputCadence"] );
 
 	params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
 
 	params->meshDim.set_size(3);
-	params->meshDim(0) = (unsigned int)parametersMap["NX"];
-	params->meshDim(1) = (unsigned int)parametersMap["NY"];
-	params->meshDim(2) = (unsigned int)parametersMap["NZ"];
+	params->meshDim(0) = (unsigned int)std::stoi( parametersStringMap["NX"] );
+	params->meshDim(1) = (unsigned int)std::stoi( parametersStringMap["NY"] );
+	params->meshDim(2) = (unsigned int)std::stoi( parametersStringMap["NZ"] );
 
-	params->DrL = parametersMap["DrL"];
+	params->DrL = std::stod( parametersStringMap["DrL"] );
 
-	params->dp = parametersMap["dp"];
+	params->dp = std::stod( parametersStringMap["dp"] );
 
-	params->BGP.Te = parametersMap["Te"];
+	params->BGP.Te = std::stod( parametersStringMap["Te"] )*F_E/F_KB; // Te in eV in input file
 
-	params->BGP.theta = parametersMap["theta"];
+	params->BGP.theta = std::stod( parametersStringMap["theta"] );
+	params->BGP.phi = std::stod( parametersStringMap["phi"] );
 
-	params->BGP.phi = parametersMap["phi"];
+	params->BGP.propVectorAngle = std::stod( parametersStringMap["propVectorAngle"] );
 
-	params->BGP.Bo = parametersMap["Bo"];
+	params->BGP.Bo = std::stod( parametersStringMap["Bo"] );
 
-	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0);
-	params->BGP.By = 0.0;
+	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
+	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
 	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
+
+	// Parsing list of variables in outputs
+	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
+	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
 }
 
 
@@ -231,8 +309,104 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 }
 
 
-void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * params,const characteristicScales * CS,\
+void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const characteristicScales * CS,\
 	const meshGeometry * mesh,vector<ionSpecies> * IONS){
+
+	if(params->mpi.rank_cart == 0){
+		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
+	}
+	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
+
+	for(int ii=0;ii<totalNumSpecies;ii++){
+		if(params->restart == 1){
+			if(params->mpi.rank_cart == 0)
+				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
+			MPI_Abort(MPI_COMM_WORLD,-1);
+		}else{
+			switch (IONS->at(ii).IC) {
+				case(1):{
+						if(params->quietStart == 0){
+							RANDOMSTART rs(params);
+							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}else if(params->quietStart == 1){
+							QUIETSTART qs(params,&IONS->at(ii));
+							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}
+						break;
+						}
+				case(2):{
+						if(params->quietStart == 0){
+							RANDOMSTART rs(params);
+							rs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+						}else if(params->quietStart == 1){
+							QUIETSTART qs(params,&IONS->at(ii));
+							qs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+						}
+						break;
+						}
+				default:{
+						if(params->quietStart == 0){
+							RANDOMSTART rs(params);
+							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}else if(params->quietStart == 1){
+							QUIETSTART qs(params,&IONS->at(ii));
+							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+						}
+						}
+			} // switch
+		} // if(params->restart == 1)
+
+		IONS->at(ii).n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n___.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+
+		IONS->at(ii).nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+
+		// Setting size and value to zero of arrays for ions' variables
+		if(params->mpi.rank_cart == 0)
+			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
+
+		IONS->at(ii).meshNode.zeros(IONS->at(ii).NSP);
+		IONS->at(ii).wxc.zeros(IONS->at(ii).NSP);
+		IONS->at(ii).wxl.zeros(IONS->at(ii).NSP);
+		IONS->at(ii).wxr.zeros(IONS->at(ii).NSP);
+
+		//Checking the integrity of the initial condition
+		if((int)IONS->at(ii).V.n_elem != (int)(3*IONS->at(ii).NSP)){
+			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
+			MPI_Abort(MPI_COMM_WORLD,-123);
+		 	// The velocity array contains a number of elements that it should not have
+
+		}
+		if((int)IONS->at(ii).X.n_elem != (int)(3*IONS->at(ii).NSP)){
+			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
+			MPI_Abort(MPI_COMM_WORLD,-123);
+			// The position array contains a number of elements that it should not have
+		}
+		//Checking integrity of the initial condition
+	}//Iteration over ion species
+
+
+	double HX;
+	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
+		HX = params->DrL*INITIALIZE::LarmorRadius;
+	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
+		HX = params->dp*INITIALIZE::ionSkinDepth;
+	}
+
+	if(params->quietStart == 0){
+		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
+			IONS->at(ii).X.col(0) = \
+			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
+		}
+	}else if(params->quietStart == 1){
+		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
+			IONS->at(ii).X.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+		}
+	}
 
 	double chargeDensityPerCell;
 
@@ -263,28 +437,39 @@ void INITIALIZE::calculateSuperParticleNumberDensity(const inputParameters * par
 		(mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1)*mesh->DZ*(double)mesh->dim(0))*chargeDensityPerCell;
 	}
 	#endif
+
+	PIC pic;
+	for(int ii=0;ii<totalNumSpecies;ii++){
+		pic.assignCell(params, mesh, &IONS->at(ii), 1);
+	}
+
+	if(params->mpi.rank_cart == 0)
+		cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *\n";
+
 }
 
-void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
+void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> * IONS){
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
 	if(params->mpi.rank_cart == 0){
-		cout << "* * * * * * * * * * * * INITIALIZING IONS * * * * * * * * * * * * * * * * * *\n";
+		cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
 		cout << "Number of ion species: " << params->numberOfIonSpecies << "\n";
 		cout << "Number of tracer species: " << params->numberOfTracerSpecies << "\n";
 	}
 
 
-	std::map<string,float> parametersMap;
+	string name;
 	if(params->argc > 2){
 		string argv(params->argv[2]);
-		string name = "inputFiles/ions_properties_" + argv + ".ion";
-		parametersMap = loadParameters(&name);
+		name = "inputFiles/ions_properties_" + argv + ".ion";
 	}else{
-		parametersMap = loadParameters("inputFiles/ions_properties.ion");
+		name = "inputFiles/ions_properties.ion";
 	}
+
+	std::map<string,float> parametersMap;
+	parametersMap = loadParameters(&name);
 
 	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
 
@@ -303,12 +488,16 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		ions.NPC = parametersMap[name];
 		name.clear();
 
+		name = "IC" + ss.str();
+		ions.IC = (int)parametersMap[name];
+		name.clear();
+
 		name = "Tper" + ss.str();
-		ions.BGP.Tper = parametersMap[name];
+		ions.BGP.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
 		name.clear();
 
 		name = "Tpar" + ss.str();
-		ions.BGP.Tpar = parametersMap[name];
+		ions.BGP.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
 		name.clear();
 
 		name = "Dn" + ss.str();
@@ -364,64 +553,7 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 
 		//Definition of the initial total number of superparticles for each species
 		ions.NSP = ceil(ions.NPC*params->meshDim(0));
-
-		if(params->mpi.rank_cart == 0)
-			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << ions.NSP << '\n';
-
 		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
-
-		if(params->restart == 1){
-			if(params->mpi.rank_cart == 0)
-				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
-			MPI_Abort(MPI_COMM_WORLD,-1);
-		}else{
-			if(ii == 0){ //Background ions (Protons)
-				if(params->quietStart == 0){
-	                RANDOMSTART rs;
-	    			rs.maxwellianVelocityDistribution(params,&ions,"z");
-//					rs.maxwellianVelocityDistribution(params,&ions,"x");
-	            }else if(params->quietStart == 1){
-					QUIETSTART qs(params,&ions);
-					qs.maxwellianVelocityDistribution(params,&ions,"z");
-				}
-			}
-
-			if(ii == 1){//Alpha-particles
-				if(params->quietStart == 0){
-                   	RANDOMSTART rs;
-	                rs.ringLikeVelocityDistribution(params,&ions,"z");
-//					rs.maxwellianVelocityDistribution(params,&ions,"z");
-//					rs.beamVelocityDistribution(params,&ions,"z"); //Perpendicular propagation case
-	            }else if(params->quietStart == 1){
-	                QUIETSTART qs(params,&ions);
-	                qs.ringLikeVelocityDistribution(params,&ions,"z");
-	            }
-			}
-
-			if(ii == 2){//Tracer ions
-				// Do something
-			}
-		}
-
-		ions.nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
-		ions.n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
-		ions.meshNode.zeros(ions.NSP);
-
-		//Checking the integrity of the initial condition
-		if((int)ions.velocity.n_elem != (int)(3*ions.NSP)){
-			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
-			MPI_Abort(MPI_COMM_WORLD,-123);
-		 	// The velocity array contains a number of elements that it should not have
-
-		}
-		if((int)ions.position.n_elem != (int)(3*ions.NSP)){
-			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
-			MPI_Abort(MPI_COMM_WORLD,-123);
-			// The position array contains a number of elements that it should not have
-		}
-		//Checking integrity of the initial condition
 
 		IONS->push_back(ions);
 	}//Iteration over ion species
@@ -449,32 +581,14 @@ void INITIALIZE::loadIons(inputParameters * params,vector<ionSpecies> * IONS){
 		cout <<"Ion skin depth used in simulation " << INITIALIZE::ionSkinDepth <<" m\n";
 	}
 
-	double HX;
-	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-		HX = params->DrL*INITIALIZE::LarmorRadius;
-	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-		HX = params->dp*INITIALIZE::ionSkinDepth;
-	}
-
-	if(params->quietStart == 0){
-		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).position.col(0) = \
-			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).position.col(0));
-		}
-	}else if(params->quietStart == 1){
-		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).position.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
-		}
-	}
-
 	if(params->mpi.rank_cart == 0)
-		cout << "* * * * * * * * * * * * IONS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
+		cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
 
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 
-void INITIALIZE::initializeFields(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void INITIALIZE::initializeFields(const inputParameters * params, const meshGeometry * mesh, fields * EB){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
@@ -487,12 +601,30 @@ void INITIALIZE::initializeFields(const inputParameters * params,const meshGeome
 			cout << "Loading external electromagnetic fields\n";
 		MPI_Abort(MPI_COMM_WORLD,-123);
 	}else{//The electromagnetic fields are being initialized in the runtime.
-		int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
-		EB->zeros(dim + 2);//We include the ghost mesh points (+2) in the initialization
+		int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
+
+        // TEST ExB
+        // double LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+        // EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y
 		EB->B.Z.fill(params->BGP.Bz);//z
+
+		EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
+						+ 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
+						+ 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
+
+		EB->_B.Y.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+						+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+		EB->_B.Z.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+						+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+		EB->b = EB->B/EB->_B;
+
+		EB->b_ = EB->b;
 
 		if(params->mpi.rank_cart == 0){
 			cout << "Initializing electromagnetic fields within simulation\n";

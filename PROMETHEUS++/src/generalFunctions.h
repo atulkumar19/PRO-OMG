@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef H_GENERAL_FUNCTIONS
 #define H_GENERAL_FUNCTIONS
 
@@ -54,7 +72,7 @@ class GENERAL_FUNCTIONS{
 
 	void checkStability(inputParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS);
 
-	void checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, emf * EB, int IT);
+	void checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT);
 
 	void saveDiagnosticsVariables(inputParameters * params);
 

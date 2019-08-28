@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <iostream>
 #include <vector>
 #include <armadillo>
@@ -12,6 +30,7 @@
 #include "generalFunctions.h"
 #include "outputHDF5.h"
 #include "alfvenic.h"
+#include "timeSteppingMethods.h"
 
 #include <omp.h>
 #include "mpi_main.h"
@@ -19,123 +38,67 @@
 using namespace std;
 using namespace arma;
 
-int main(int argc,char* argv[]){
-	MPI_Init(&argc,&argv);
+int main(int argc, char* argv[]){
+	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
 
 	inputParameters params; 		// Input parameters for the simulation.
 	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
-	vector<ionSpecies> IONS_BAE;  	// Bashford-Adams extrapolation term.
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
-	int outputIterator(0);			//
 	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
-	emf EB; 						// Derived type with variables of electromagnetic fields.
-	double currentTime(0); 			// Current time in simulation.
-	double t1;						//
-	double t2;						// 
+	fields EB; 						// Derived type with variables of electromagnetic fields.
 
-
-	INITIALIZE init(&params,argc,argv);
+	INITIALIZE init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 
-	init.loadIons(&params,&IONS);
+	init.loadIonParameters(&params, &IONS);
 
 	UNITS units;
-	units.defineCharacteristicScalesAndBcast(&params,&IONS,&CS);
+	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
-	init.loadMeshGeometry(&params,&CS,&mesh);
+	init.loadMeshGeometry(&params, &CS, &mesh);
 
-	init.calculateSuperParticleNumberDensity(&params,&CS,&mesh,&IONS); // Calculation of IONS[ii].NCP for each species
+	init.initializeFields(&params, &mesh, &EB);
 
-	init.initializeFields(&params,&mesh,&EB,&IONS);
+	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
 
-	HDF hdfObj(&params,&mesh,&IONS); // Outputs in HDF5 format
+	HDF hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
 
-	ALFVENIC alfvenPerturbations(&params,&mesh,&EB,&IONS); // Include Alfvenic perturbations in the initial condition
+	ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
+
+	units.defineTimeStep(&params, &mesh, &IONS, &EB);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
-	units.normalizeVariables(&params,&mesh,&IONS,&EB,&CS);
+	units.normalizeVariables(&params, &mesh, &IONS, &EB, &CS);
 
 	alfvenPerturbations.normalize(&CS);
 
 	/**************** All the quantities below are dimensionless ****************/
 
-	EMF_SOLVER fields; // Initializing the emf class object.
-	PIC ionsDynamics; // Initializing the PIC class object.
-	GENERAL_FUNCTIONS genFun;
+	alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
-	ionsDynamics.advanceIonsPosition(&params,&mesh,&IONS,0); // Initialization of the particles' density and meshNode.
+	TIME_STEPPING_METHODS timeStepping(&params);
 
-	ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,0);
+	switch (params.particleIntegrator){
+		case(1):{
+				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				break;
+				}
+		case(2):{
+				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				break;
+				}
+		case(3):{
+				timeStepping.advanceGCIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				break;
+				}
+		default:{
+				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				}
+	}
 
-	fields.advanceEField(&params,&mesh,&EB,&IONS,&CS);
-
-	fields.advanceBField(&params,&mesh,&EB,&IONS,&CS);
-
-	alfvenPerturbations.addPerturbations(&params,&IONS,&EB);
-
-	hdfObj.saveOutputs(&params,&IONS,&IONS,&EB,&CS,0,0);
-
-	t1 = MPI::Wtime();
-
-	for(int tt=0;tt<params.timeIterations;tt++){ // Time iterations.
-		vector<ionSpecies> auxIONS;
-		vector<ionSpecies> IONS_VE;
-
-		ionsDynamics.ionVariables(&IONS,&auxIONS,0); // The ion density of IONS is copied into auxIONS
-		ionsDynamics.ionVariables(&IONS,&IONS_VE,1); // The ion flow velocity at the time level nv^(N-1/2) is stored in auxIONS.
-
-		if(tt == 0){
-			genFun.checkStability(&params,&mesh,&CS,&IONS);
-			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,params.DT/2); // Initial condition time level V^(1/2)
-		}else{
-			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&IONS,params.DT); // Advance ions' velocity V^(N+1/2).
-		}
-
-		ionsDynamics.advanceIonsPosition(&params,&mesh,&IONS,params.DT); // Advance ions' position in time to level X^(N+1).
-
-		ionsDynamics.ionVariables(&IONS,&auxIONS,2); // Bulk ion variables computed at (N+1/2) and saved to auxIONS
-
-		fields.advanceBField(&params,&mesh,&EB,&auxIONS,&CS); // Use Faraday's law to advance the magnetic field to level B^(N+1/2).
-
-		if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
-			 // Using the Bashford-Adams extrapolation.
-			fields.advanceEFieldWithVelocityExtrapolation(&params,&mesh,&EB,&IONS_BAE,&IONS_VE,&IONS,&CS,1);
-		}else{
-			 // Using basic velocity extrapolation.
-			fields.advanceEFieldWithVelocityExtrapolation(&params,&mesh,&EB,&IONS_BAE,&IONS_VE,&IONS,&CS,0);
-		}
-
-		currentTime += params.DT*CS.time;
-
-		if(fmod((double)(tt + 1),params.saveVariablesEach) == 0){
-			auxIONS = IONS; // Ions position at level X^(N+1) and ions' velocity at level V^(N+1/2)
-			// The ions' velocity is advanced in time in order to obtain V^(N+1)
-			ionsDynamics.advanceIonsVelocity(&params,&CS,&mesh,&EB,&auxIONS,params.DT/2);
-			hdfObj.saveOutputs(&params,&auxIONS,&IONS,&EB,&CS,outputIterator+1,currentTime);
-			outputIterator++;
-		}
-
-		if( (params.checkStability == 1) && fmod((double)(tt+1),params.rateOfChecking) == 0 ){
-			genFun.checkStability(&params,&mesh,&CS,&IONS);
-		}
-
-		IONS_BAE = IONS_VE; // Ions variables at time level (N-3/2) for tt>=2
-
-//		genFun.checkEnergy(&params,&mesh,&CS,&IONS,&EB,tt);
-		if(tt==100){
-			t2 = MPI::Wtime();
-			if(params.mpi.rank_cart == 0){
-				cout << "ESTIMATED TIME OF COMPLETION: " << (double)params.timeIterations*(t2-t1)/6000.0 <<" minutes\n";
-			}
-		}
-	} // Time iterations.
-
-	/**************** All the quantities above are dimensionless ****************/
-	genFun.saveDiagnosticsVariables(&params);
-
-	MPI_Finalize();
+	mpi_main.finalizeCommunications(&params);
 
 	return(0);
 }

@@ -1,6 +1,24 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "alfvenic.h"
 
-ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	if(params->numberOfAlfvenicModes > 0){
 		if(params->loadModes == 0){
@@ -11,7 +29,7 @@ ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,emf 
 	}
 }
 
-void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	Aw.amp.set_size(params->numberOfAlfvenicModes);
@@ -63,7 +81,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 	MPI_ARMA_VEC mpi_phase(params->numberOfAlfvenicModes);
 	MPI_Bcast(Aw.phase.memptr(),1,mpi_phase.type,0,params->mpi.mpi_topo);
 
-	double PHI(params->BGP.phi*M_PI/180);
+	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
 	for(int ii=0;ii<params->numberOfAlfvenicModes;ii++){//Here the staggered grid is not taken into account.
 		double Bx(Aw.amp(ii)*cos(PHI)),By(Aw.amp(ii)),Bz(Aw.amp(ii)*sin(PHI));
@@ -95,7 +113,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 
 }
 
-void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mesh,emf * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	mat spectra;
@@ -130,7 +148,7 @@ void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mes
 		if(params->shuffleModes == 1)
 			Aw.phase = shuffle(Aw.phase);
 
-		double PHI(params->BGP.phi*M_PI/180);
+		double PHI(params->BGP.propVectorAngle*M_PI/180);
 
 //		cout << sum(Aw.amp%Aw.amp) << '\t' << spectra.n_rows << '\n';
 
@@ -320,7 +338,7 @@ void ALFVENIC::normalize(const characteristicScales * CS){
 	}
 }
 
-void ALFVENIC::addMagneticPerturbations(emf * EB){
+void ALFVENIC::addMagneticPerturbations(fields * EB){
 	unsigned int NX(EB->B.X.n_elem);
 
 	EB->B.X.subvec(1,NX-2) += Aw.dB.X;
@@ -330,7 +348,7 @@ void ALFVENIC::addMagneticPerturbations(emf * EB){
 
 void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<ionSpecies> * IONS){
 
-	double PHI(params->BGP.phi*M_PI/180);
+	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
 	for(unsigned int ii=0;ii<params->numberOfIonSpecies;ii++){
 		for(int jj=0;jj<params->numberOfAlfvenicModes;jj++){
@@ -339,9 +357,9 @@ void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<io
 			Cx = (2/Aw.L)*sin( 0.5*Aw.wavenumber(jj)*Aw.L )*cos( 0.5*(Aw.wavenumber(jj)*Aw.L + 2*Aw.phase(jj)) );
 			Cy = (2/Aw.L)*sin( 0.5*Aw.wavenumber(jj)*Aw.L )*sin( 0.5*(Aw.wavenumber(jj)*Aw.L + 2*Aw.phase(jj)) );
 
-			IONS->at(ii).velocity.col(0) += -vx*( sin( Aw.wavenumber(jj)*IONS->at(ii).position.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).position.col(0));
-			IONS->at(ii).velocity.col(1) += vy*( cos( Aw.wavenumber(jj)*IONS->at(ii).position.col(0) + Aw.phase(jj)) + Cy*IONS->at(ii).position.col(0) );
-			IONS->at(ii).velocity.col(2) += vz*( sin( Aw.wavenumber(jj)*IONS->at(ii).position.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).position.col(0) );
+			IONS->at(ii).V.col(0) += -vx*( sin( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).X.col(0));
+			IONS->at(ii).V.col(1) += vy*( cos( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) + Cy*IONS->at(ii).X.col(0) );
+			IONS->at(ii).V.col(2) += vz*( sin( Aw.wavenumber(jj)*IONS->at(ii).X.col(0) + Aw.phase(jj)) - Cx*IONS->at(ii).X.col(0) );
 
 
 		}
@@ -349,7 +367,7 @@ void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<io
 
 }
 
-void ALFVENIC::addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,emf * EB){
+void ALFVENIC::addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,fields * EB){
 
 	if(params->numberOfAlfvenicModes > 0){
 		addMagneticPerturbations(EB);

@@ -1,3 +1,20 @@
+# 	COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+#	This file is part of PROMETHEUS++.
+#
+#   PROMETHEUS++ is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	any later version.
+
+#	PROMETHEUS++ is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+
 #Makefile
 UNAME:=$(shell uname)
 
@@ -28,7 +45,7 @@ ifeq ($(UNAME), Linux)
 	CC=mpic++
 
 	CCXXFLAGS =-std=c++11
-	CCDEFINEFLAGS=-DONED	-DHDF5_FLOAT	-DHDF5_SINGLE_FILE
+	CCDEFINEFLAGS=-DONED	-DHDF5_FLOAT	-DHDF5_SINGLE_FILE	-DCHECKS_ON
 	CCFLAGS =	$(CCXXFLAGS)	-fopenmp	-O2
 
 	HDF_INSTALL = ../HDF5
@@ -44,6 +61,7 @@ endif
 
 BINARIES = $(addprefix $(OBJ)/,structures.o\
 main.o	\
+timeSteppingMethods.o	\
 PIC.o	\
 initialize.o	\
 units.o	\

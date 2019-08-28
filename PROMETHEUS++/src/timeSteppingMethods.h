@@ -16,44 +16,41 @@
     along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef H_RANDOM_START
-#define H_RANDOM_START
+#ifndef H_TIME_STEPPING_METHODS
+#define H_TIME_STEPPING_METHODS
 
 #include <iostream>
-#include <map>
 #include <vector>
-#include <string>
-#include <cmath>
-#include <cstdlib>
-
 #include <armadillo>
+#include <cmath>
+#include <ctime>
 
 #include "structures.h"
+#include "initialize.h"
+#include "PIC.h"
+#include "emf.h"
+#include "generalFunctions.h"
+#include "outputHDF5.h"
 
+#include <omp.h>
 #include "mpi_main.h"
 
-using namespace std;
-using namespace arma;
 
-class RANDOMSTART{
-
-    // Cartesian  unitary vectors
-	arma::vec x = {1.0, 0.0, 0.0};
-	arma::vec y = {0.0, 1.0, 0.0};
-	arma::vec z = {0.0, 0.0, 1.0};
-
-
-	arma::vec b1; // Unitary vector along B field
-	arma::vec b2; // Unitary vector perpendicular to b1
-	arma::vec b3; // Unitary vector perpendicular to b1 and b2
+class TIME_STEPPING_METHODS{
+    double t1;						//
+    double t2;
+    double currentTime; 			// Current time in simulation.	//
+    int outputIterator;			//
 
 public:
 
-    RANDOMSTART(const inputParameters * params);
+    TIME_STEPPING_METHODS(inputParameters * params);
 
-	void ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions);
+    void advanceFullOrbitIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
 
-	void maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions);
+    void advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
+
 };
+
 
 #endif

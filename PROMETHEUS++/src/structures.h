@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef H_STRUCTURES
 #define H_STRUCTURES
 
@@ -9,7 +27,21 @@
 #include<omp.h>
 #include "mpi.h"
 
-using namespace oneDimensional;//This namespace is used in the overloaded functions for the different structures in types.h
+#ifdef ONED
+using namespace oneDimensional;
+#endif
+
+#ifdef TWOD
+using namespace twoDimensional;
+#endif
+
+#ifdef THREED
+using namespace threeDimensional;
+#endif
+
+#define float_zero 1E-7
+#define double_zero 1E-15
+
 
 // Physical constants
 #define F_E 1.602176E-19//Electron charge in C (absolute value)
@@ -23,6 +55,7 @@ using namespace oneDimensional;//This namespace is used in the overloaded functi
 extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
 extern double F_E_DS; // Dimensionless vacuum permittivity
 extern double F_MU_DS; // Dimensionless vacuum permittivity
+extern double F_C_DS; // Dimensionless vacuum permittivity
 
 
 struct mpiStruct{
@@ -56,7 +89,7 @@ struct energyMonitor{
 typedef ionSpeciesParams ionSpecies;
 
 
-typedef electromagneticFields emf;
+typedef electromagneticFields fields;
 
 
 struct meshGeometry{
@@ -77,20 +110,25 @@ struct backgroundParameters{
 	double By;
 	double Bz;
 
-	//Angle between the z-axis and the background magnetic field.
-	double theta;
-	//Angle between the z-axis and the propagation vector.
-	double phi;
+	double theta; // Spherical polar angle (as measured from z-axis)
+	double phi; // Spherical azimuthal angle (as measured from x-axis)
+
+	double propVectorAngle; // Angle between the z-axis and the propagation vector.
 };
 
 
 struct inputParameters{
+	// List of variables in the outputs
+	std::vector<std::string> outputs_variables;
+
+
 	//Control parameters for the simulation
 	std::string PATH;//Path to save the outputs. It must point to the directory where the folder outputFiles is.
 
 	int argc;
 	char **argv;
 
+	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
 	int quietStart; // Flag for using a quiet start
 
 	int restart;
@@ -99,14 +137,16 @@ struct inputParameters{
 	int numberOfRKIterations;
 	double smoothingParameter;
 	int timeIterations;
+	double simulationTime; // In units of the shorter ion gyro-period in the simulation
 	int transient;//Transient time (in number of iterations).
 	double DT;//Time step
 	double DTc;//Ciclotron period fraction.
-	double backgroundTc;//Background ion cycloperiod.
+	double shorterIonGyroperiod;//Shorter ion cycloperiod.
 	int loadFields;
 	int loadGrid;
 	int usingHDF5;
-	double saveVariablesEach;//Save variables each "saveVariablesEach" times the background ion cycloperiod.
+	double outputCadence;//Save variables each "outputCadence" times the background ion cycloperiod.
+	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
 	//Mesh geometry
@@ -116,7 +156,7 @@ struct inputParameters{
 	int numberOfIonSpecies;
 	int numberOfTracerSpecies;
 
-	double ne;
+	double ne; // Electron number density (input file)
 
 	backgroundParameters BGP;
 
@@ -146,6 +186,7 @@ struct inputParameters{
 struct characteristicScales{
 	double time;
 	double velocity;
+	double momentum;
 	double length;
 	double mass;
 	double charge;
@@ -154,6 +195,8 @@ struct characteristicScales{
 	double bField;
 	double pressure;
 	double temperature;
+	double magneticMoment;
+	double resistivity;
 
 	characteristicScales(){
 		time = 0.0;
@@ -165,6 +208,7 @@ struct characteristicScales{
 		eField = 0.0;
 		bField = 0.0;
 		pressure = 0.0;
+		magneticMoment = 0.0;
 	}
 };
 

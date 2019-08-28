@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "outputHDF5.h"
 
 
@@ -20,15 +38,198 @@ void HDF::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
 #endif
 
 
+// Function to save a single integer value
+void saveToHDF5(H5File * file, string name, int * value){
+	H5std_string nameSpace( name );
+	int data[1] = {*value};
+	hsize_t dims[1] = {1};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( data, PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save a single CPP_TYPE value
+void saveToHDF5(H5File * file, string name, CPP_TYPE * value){
+	H5std_string nameSpace( name );
+	CPP_TYPE data[1] = {*value};
+	hsize_t dims[1] = {1};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( data, HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save a single integer value (to a HDF5 group)
+void saveToHDF5(Group * group, string name, int * value){
+	H5std_string nameSpace( name );
+	int data[1] = {*value};
+	hsize_t dims[1] = {1};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( data, PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save a single CPP_TYPE value (to a HDF5 group)
+void saveToHDF5(Group * group, string name, CPP_TYPE * value){
+	H5std_string nameSpace( name );
+	CPP_TYPE data[1] = {*value};
+	hsize_t dims[1] = {1};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( data, HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save a vector of int values
+void saveToHDF5(H5File * file, string name, std::vector<int> * values){
+	H5std_string nameSpace( name );
+	unsigned long long int size = (unsigned long long int)values->size();
+
+	int * data;
+   	data = new int[size];
+    std::copy(values->begin(), values->end(), data);
+
+	hsize_t dims[1] = {size};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( data, PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save a vector of CPP_TYPE values
+void saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values){
+	H5std_string nameSpace( name );
+	unsigned long long int size = (unsigned long long int)values->size();
+
+	CPP_TYPE * data;
+   	data = new CPP_TYPE[size];
+    std::copy(values->begin(), values->end(), data);
+
+	hsize_t dims[1] = {size};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( data, HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector
+void saveToHDF5(H5File * file, string name, arma::vec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( values->memptr(), HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector (to a HDF5 group)
+void saveToHDF5(Group * group, string name, arma::vec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( values->memptr(), HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo fvec vector (to a HDF5 group)
+void saveToHDF5(Group * group, string name, arma::fvec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( values->memptr(), HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector (to a HDF5 group)
+void saveToHDF5(Group * group, string name, arma::mat * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[2] = {(hsize_t)values->n_cols, (hsize_t)values->n_rows};
+	DataSpace * dataspace = new DataSpace(2, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( values->memptr(), HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector (to a HDF5 group)
+void saveToHDF5(Group * group, string name, arma::fmat * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[2] = {(hsize_t)values->n_cols, (hsize_t)values->n_rows};
+	DataSpace * dataspace = new DataSpace(2, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, HDF_TYPE, *dataspace ));
+
+	dataset->write( values->memptr(), HDF_TYPE);
+
+	delete dataspace;
+	delete dataset;
+}
+
 
 //Constructor of HDF5Obj class
-HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
+HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 
 	try{
 		stringstream dn;
 		dn << params->mpi.rank_cart;
 
-		string name, path;
+		string name;
+		string path;
+
+		int int_value;
+		CPP_TYPE cpp_type_value;
+		std::vector<CPP_TYPE> vector_values;
+
+		arma::vec vec_values;
+		arma::fvec fvec_values;
+
 		path = params->PATH + "/HDF5/";
 		name = path + "main_D"  + dn.str() + ".h5";
 		const H5std_string	FILE_NAME( name );
@@ -37,68 +238,56 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		Exception::dontPrint();
 
 		// Create a new file using the default property lists.
-		H5File *outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
 
-		H5std_string numOfDomains( "numOfDomains" );
-		int nod[1] = {params->mpi.NUMBER_MPI_DOMAINS};
-	   	hsize_t dims_nod[1] = {1};
-		DataSpace *dataspace_nod = new DataSpace(1, dims_nod);
-		DataSet *dataset_nod = new DataSet(outputFile->createDataSet( numOfDomains, PredType::NATIVE_INT, *dataspace_nod ));
-		dataset_nod->write( nod, PredType::NATIVE_INT);
-		delete dataspace_nod;
-		delete dataset_nod;
+		name = "numOfDomains";
+		saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
+		name.clear();
 
-		H5std_string numOutputFiles( "numOutputFiles" );
-		int nof[1] = {(int)floor(params->timeIterations/params->saveVariablesEach)};
-	   	hsize_t dims_nof[1] = {1};
-		DataSpace *dataspace_nof = new DataSpace(1, dims_nof);
-		DataSet *dataset_nof = new DataSet(outputFile->createDataSet( numOutputFiles, PredType::NATIVE_INT, *dataspace_nof ));
-		dataset_nof->write( nof, PredType::NATIVE_INT);
-		delete dataspace_nof;
-		delete dataset_nof;
 
 		//Geometry of the mesh
-		Group *group_geo = new Group( outputFile->createGroup( "/geometry" ) );
+		Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
 
-		H5std_string cellDim( "finiteDiferences" );
-		H5std_string numCell( "numberOfCells" );
+		name = "DX";
+		cpp_type_value = mesh->DX;
+		saveToHDF5(group_geo, name, &cpp_type_value);
+		name.clear();
 
-#ifdef HDF5_DOUBLE
-		CPP_TYPE cd[3] = {mesh->DX,mesh->DY,mesh->DZ};
-#elif defined HDF5_FLOAT
-		CPP_TYPE cd[3] = {(float)mesh->DX,(float)mesh->DY,(float)mesh->DZ};
-#endif
-	   	hsize_t dims_cd[1] = {3};
-		DataSpace *dataspace_cd = new DataSpace(1, dims_cd);
-		DataSet *dataset_cd = new DataSet(group_geo->createDataSet( cellDim, HDF_TYPE, *dataspace_cd ));
-		dataset_cd->write( cd, HDF_TYPE );
-		delete dataspace_cd;
-		delete dataset_cd;
+		name = "DY";
+		cpp_type_value = mesh->DY;
+		saveToHDF5(group_geo, name, &cpp_type_value);
+		name.clear();
 
-		unsigned int nc[3] = {mesh->dim(0),mesh->dim(1),mesh->dim(2)};
-	   	hsize_t dims_nc[1] = {3};
-		DataSpace *dataspace_nc = new DataSpace(1, dims_nc);
-		DataSet *dataset_nc = new DataSet(group_geo->createDataSet( numCell, PredType::NATIVE_INT, *dataspace_nc ));
-		dataset_nc->write( nc, PredType::NATIVE_INT );
-		delete dataspace_nc;
-		delete dataset_nc;
+		name = "DZ";
+		cpp_type_value = mesh->DZ;
+		saveToHDF5(group_geo, name, &cpp_type_value);
+		name.clear();
+
+		name = "NX";
+		int_value = mesh->dim(0);
+		saveToHDF5(group_geo, name, &int_value);
+		name.clear();
+
+		name = "NY";
+		int_value = mesh->dim(1);
+		saveToHDF5(group_geo, name, &int_value);
+		name.clear();
+
+		name = "NZ";
+		int_value = mesh->dim(2);
+		saveToHDF5(group_geo, name, &int_value);
+		name.clear();
 
 		//Saving the x-axis coordinates
-		H5std_string xAxis( "xAxis");
-		CPP_TYPE  xaxis[mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS];
-		for(int ii=0;ii<mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;ii++){
+		name = "xAxis";
 #ifdef HDF5_DOUBLE
-				xaxis[ii] = mesh->nodes.X(ii);
+		vec_values = mesh->nodes.X;
+		saveToHDF5(group_geo, name, &vec_values);
 #elif defined HDF5_FLOAT
-				xaxis[ii] = (float)mesh->nodes.X(ii);
+		fvec_values = conv_to<fvec>::from(mesh->nodes.X);
+		saveToHDF5(group_geo, name, &fvec_values);
 #endif
-		}
-		hsize_t dims_xaxis[1] = {mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS};
-		DataSpace *dataspace_xaxis = new DataSpace(1, dims_xaxis);
-		DataSet *dataset_xaxis = new DataSet(group_geo->createDataSet( xAxis, HDF_TYPE, *dataspace_xaxis ));
-		dataset_xaxis->write( xaxis, HDF_TYPE );
-		delete dataspace_xaxis;
-		delete dataset_xaxis;
+		name.clear();
 
 		delete group_geo;
 		//Geometry of the mesh
@@ -108,99 +297,75 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 //		delete group_energy;
 
 		//Electron temperature
-		H5std_string electronTemperature( "Te" );
-#ifdef HDF5_DOUBLE
-		CPP_TYPE Te[1] = {params->BGP.Te};
-#elif defined HDF5_FLOAT
-		CPP_TYPE Te[1] = {(float)params->BGP.Te};
-#endif
-	   	hsize_t dims_Te[1] = {1};
-		DataSpace *dataspace_Te = new DataSpace(1, dims_Te);
-		DataSet *dataset_Te = new DataSet(outputFile->createDataSet( electronTemperature, HDF_TYPE, *dataspace_Te ));
-		dataset_Te->write( Te, HDF_TYPE );
-		delete dataspace_Te;
-		delete dataset_Te;
+		name = "Te";
+		cpp_type_value = params->BGP.Te;
+		saveToHDF5(outputFile, name, &cpp_type_value);
+		name.clear();
 
 		//Ions
-		Group *group_ions = new Group( outputFile->createGroup( "/ions" ) );
-		H5std_string numberOfIonSpecies( "numberOfIonSpecies" );
-		H5std_string numberDensity( "numberDensity" );
+		Group * group_ions = new Group( outputFile->createGroup( "/ions" ) );
 
-		int nis[1] = {params->numberOfIonSpecies};
-	   	hsize_t dims_nis[1] = {1};
-		DataSpace *dataspace_nis = new DataSpace(1, dims_nis);
-		DataSet *dataset_nis = new DataSet(group_ions->createDataSet( numberOfIonSpecies, PredType::NATIVE_INT, *dataspace_nis ));
-		dataset_nis->write( nis, PredType::NATIVE_INT );
-		delete dataspace_nis;
-		delete dataset_nis;
+		name = "numberOfIonSpecies";
+		int_value = params->numberOfIonSpecies;
+		saveToHDF5(group_ions, name, &int_value);
+		name.clear();
 
-#ifdef HDF5_DOUBLE
-		CPP_TYPE nd[1] = {params->ne};
-#elif defined HDF5_FLOAT
-		CPP_TYPE nd[1] = {(float)params->ne};
-#endif
-	   	hsize_t dims_nd[1] = {1};
-		DataSpace *dataspace_nd = new DataSpace(1, dims_nd);
-		DataSet *dataset_nd = new DataSet(group_ions->createDataSet( numberDensity, HDF_TYPE, *dataspace_nd ));
-		dataset_nd->write( nd, HDF_TYPE );
-		delete dataspace_nd;
-		delete dataset_nd;
-
+		name = "ne";
+		cpp_type_value = (CPP_TYPE)params->ne;
+		saveToHDF5(group_ions, name, &cpp_type_value);
+		name.clear();
 
 		for(int ii=0;ii<params->numberOfIonSpecies;ii++){
 			stringstream ionSpec;
 			ionSpec << (ii+1);
-			name = "/ions/species_" + ionSpec.str();
-			Group *group_ionSpecies = new Group( outputFile->createGroup( name ) );
+			name = "/ions/spp_" + ionSpec.str();
+			Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
 			name.clear();
 
-			H5std_string fracNumDen( "Dn" );
-#ifdef HDF5_DOUBLE
-			CPP_TYPE dn[1] = {IONS->at(ii).BGP.Dn};
-#elif defined HDF5_FLOAT
-			CPP_TYPE dn[1] = {(float)IONS->at(ii).BGP.Dn};
-#endif
-		   	hsize_t dims_dn[1] = {1};
-			DataSpace *dataspace_dn = new DataSpace(1, dims_dn);
-			DataSet *dataset_dn = new DataSet(group_ionSpecies->createDataSet( fracNumDen, HDF_TYPE, *dataspace_dn ));
-			dataset_dn->write( dn, HDF_TYPE );
-			delete dataspace_dn;
-			delete dataset_dn;
+			name = "Dn";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).BGP.Dn;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
 
-			H5std_string supPartProp( "superParticlesProperties" );
-			CPP_TYPE spp[3] = {(CPP_TYPE)IONS->at(ii).NCP, (CPP_TYPE)IONS->at(ii).NSP, (CPP_TYPE)IONS->at(ii).nSupPartOutput};
-		   	hsize_t dims_spp[1] = {3};
-			DataSpace *dataspace_spp = new DataSpace(1, dims_spp);
-			DataSet *dataset_spp = new DataSet(group_ionSpecies->createDataSet( supPartProp, HDF_TYPE, *dataspace_spp ));
-			dataset_spp->write( spp, HDF_TYPE );
-			delete dataspace_spp;
-			delete dataset_spp;
+			name = "NCP";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).NCP;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
 
-			H5std_string temperature( "T" );
-#ifdef HDF5_DOUBLE
-			CPP_TYPE T[2] = {IONS->at(ii).BGP.Tpar, IONS->at(ii).BGP.Tper};
-#elif defined HDF5_FLOAT
-			CPP_TYPE T[2] = {(float)IONS->at(ii).BGP.Tpar, (float)IONS->at(ii).BGP.Tper};
-#endif
-		   	hsize_t dims_T[1] = {2};
-			DataSpace *dataspace_T = new DataSpace(1, dims_T);
-			DataSet *dataset_T = new DataSet(group_ionSpecies->createDataSet( temperature, HDF_TYPE, *dataspace_T ));
-			dataset_T->write( T, HDF_TYPE );
-			delete dataspace_T;
-			delete dataset_T;
+			name = "NSP";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).NSP;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
 
-			H5std_string ionProp( "ionProperties" );
-#ifdef HDF5_DOUBLE
-			CPP_TYPE ip[4] = {IONS->at(ii).M, IONS->at(ii).Q, IONS->at(ii).Z, IONS->at(ii).colFreq};
-#elif defined HDF5_FLOAT
-			CPP_TYPE ip[4] = {(float)IONS->at(ii).M, (float)IONS->at(ii).Q, (float)IONS->at(ii).Z, 0.0f};
-#endif
-		   	hsize_t dims_ip[1] = {4};
-			DataSpace *dataspace_ip = new DataSpace(1, dims_ip);
-			DataSet *dataset_ip = new DataSet(group_ionSpecies->createDataSet( ionProp, HDF_TYPE, *dataspace_ip ));
-			dataset_ip->write( ip, HDF_TYPE );
-			delete dataspace_ip;
-			delete dataset_ip;
+			name = "NSP_OUT";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).nSupPartOutput;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
+
+			name = "Tpar";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).BGP.Tpar;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
+
+			name = "Tper";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).BGP.Tper;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
+
+			name = "M";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).M;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
+
+			name = "Q";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).Q;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
+
+			name = "Z";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).Z;
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
 
 			delete group_ionSpecies;
 		}
@@ -209,21 +374,10 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 		//Ions
 
 		//Electromagnetic fields
-		H5std_string backgroundMagneticField( "Bo" );
-
-#ifdef HDF5_DOUBLE
-		CPP_TYPE Bo[3] = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
-#elif defined HDF5_FLOAT
-		CPP_TYPE Bo[3] = {(float)params->BGP.Bx, (float)params->BGP.By, (float)params->BGP.Bz};
-#endif
-	   	hsize_t dims_Bo[1] = {3};
-		DataSpace *dataspace_Bo = new DataSpace(1, dims_Bo);
-		DataSet *dataset_Bo = new DataSet(outputFile->createDataSet( backgroundMagneticField, HDF_TYPE, *dataspace_Bo ));
-		dataset_Bo->write( Bo, HDF_TYPE );
-		delete dataspace_Bo;
-		delete dataset_Bo;
-
-		//Electromagnetic fields
+		name = "Bo";
+		vector_values = {(CPP_TYPE)params->BGP.Bx, (CPP_TYPE)params->BGP.By, (CPP_TYPE)params->BGP.Bz};
+		saveToHDF5(outputFile, name, &vector_values);
+		name.clear();
 
 		delete outputFile;
 
@@ -246,207 +400,175 @@ HDF::HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS){
 
 }
 
+
+
 #ifdef ONED
-void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
 	try{
-		string name, path;
-		stringstream iteration, dn;
+		string path;
+		string name;
+		stringstream iteration;
+		stringstream dn;
+
+
+		int int_value;
+		CPP_TYPE cpp_type_value;
+		std::vector<CPP_TYPE> vector_values;
+
+		arma::vec vec_values;
+		arma::fvec fvec_values;
+
+		arma::mat mat_values;
+		arma::fmat fmat_values;
 
 		iteration << IT;
 		dn << params->mpi.rank_cart;
 
 		path = params->PATH + "/HDF5/";
-
-#ifdef HDF5_SINGLE_FILE
 		name = path + "file_D" + dn.str() + ".h5";
-#elif defined HDF5_MULTIPLE_FILES
-		name = path + "file_D" + dn.str() + "_" + iteration.str() + ".h5";
-#endif
-
 		const H5std_string	FILE_NAME( name );
 		name.clear();
 
-		H5File *outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
 
-#ifdef HDF5_SINGLE_FILE
-		string group_iteration_name;
-		group_iteration_name = "/" + iteration.str();
-		Group *group_iteration = new Group (outputFile->openGroup( group_iteration_name ));
+		name = "/" + iteration.str();
+		Group * group_iteration = new Group (outputFile->openGroup( name ));
+		name.clear();
 
 		//Ions
-		Group *group_ions = new Group( group_iteration->createGroup( "ions" ) );
-#elif defined HDF5_MULTIPLE_FILES
-		//Ions
-		Group *group_ions = new Group( outputFile->createGroup( "ions" ) );
-#endif
+		name = "ions";
+		Group * group_ions = new Group( group_iteration->createGroup( "ions" ) );
+		name.clear();
 
-		for(int ii=0;ii<IONS->size();ii++){//Iterations over the ion species.
-
+		for(int ii=0;ii<IONS_OUT->size();ii++){//Iterations over the ion species.
 			stringstream ionSpec;
 			ionSpec << (ii+1);
-			name = "species_" + ionSpec.str();
-			Group *group_ionSpecies = new Group( group_ions->createGroup( name ) );
+			name = "spp_" + ionSpec.str();
+			Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
 			name.clear();
 
-			Group *group_position = new Group( group_ionSpecies->createGroup( "position" ) );
+			for(int ov=0; ov<params->outputs_variables.size(); ov++){
+				if(params->outputs_variables.at(ov) == "X"){
 
-			vec VAUX;
-#ifdef HDF5_FLOAT
-			fvec FVAUX;
-#endif
+					//Saving the x-axis coordinates
+					name = "X";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->length*IONS_OUT->at(ii).X.col(0);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->length*IONS_OUT->at(ii).X.col(0));
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
 
-			H5std_string xposition( "x" );
+				}else if(params->outputs_variables.at(ov) == "V"){
 
-			CPP_TYPE *xpos;
-			VAUX = CS->length*( IONS->at(ii).position(span(0,IONS->at(ii).nSupPartOutput - 1),0) );
-#ifdef HDF5_DOUBLE
-			xpos = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			xpos = FVAUX.memptr();
-#endif
-		   	hsize_t dims_xpos[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
-			DataSpace *dataspace_xpos = new DataSpace(1, dims_xpos);
-			DataSet *dataset_xpos = new DataSet(group_position->createDataSet( xposition, HDF_TYPE, *dataspace_xpos ));
-			dataset_xpos->write( xpos, HDF_TYPE );
-			delete dataspace_xpos;
-			delete dataset_xpos;
+					name = "V";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->velocity*IONS_OUT->at(ii).V;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from(CS->velocity*IONS_OUT->at(ii).V);
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
 
-			delete group_position;
+				}else if(params->outputs_variables.at(ov) == "n"){
 
-			Group *group_velocity = new Group( group_ionSpecies->createGroup( "velocity" ) );
+					//Saving ions species density
+					name = "n";
+					#ifdef HDF5_DOUBLE
+					vec_values = IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
 
-			H5std_string xvelocity( "vx" );
+				}else if(params->outputs_variables.at(ov) == "g"){
 
-			CPP_TYPE *xvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).velocity(span(0,IONS->at(ii).nSupPartOutput - 1),0));
-#ifdef HDF5_DOUBLE
-			xvel = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			xvel = FVAUX.memptr();
-#endif
-		   	hsize_t dims_xvel[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
-			DataSpace *dataspace_xvel = new DataSpace(1, dims_xvel);
-			DataSet *dataset_xvel = new DataSet(group_velocity->createDataSet( xvelocity, HDF_TYPE, *dataspace_xvel ));
-			dataset_xvel->write( xvel, HDF_TYPE );
-			delete dataspace_xvel;
-			delete dataset_xvel;
+					//Saving ions species density
+					name = "g";
+					#ifdef HDF5_DOUBLE
+					vec_values = IONS_OUT->at(ii).g;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).g);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
 
-			H5std_string yvelocity( "vy" );
+				}else if(params->outputs_variables.at(ov) == "mu"){
 
-			CPP_TYPE *yvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).velocity(span(0,IONS->at(ii).nSupPartOutput - 1),1));
-#ifdef HDF5_DOUBLE
-			yvel = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			yvel = FVAUX.memptr();
-#endif
-		   	hsize_t dims_yvel[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
-			DataSpace *dataspace_yvel = new DataSpace(1, dims_yvel);
-			DataSet *dataset_yvel = new DataSet(group_velocity->createDataSet( yvelocity, HDF_TYPE, *dataspace_yvel ));
-			dataset_yvel->write( yvel, HDF_TYPE );
-			delete dataspace_yvel;
-			delete dataset_yvel;
+					//Saving ions species density
+					name = "mu";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->magneticMoment*IONS_OUT->at(ii).mu;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->magneticMoment*IONS_OUT->at(ii).mu);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
 
-			H5std_string zvelocity( "vz" );
+				}else if(params->outputs_variables.at(ov) == "Ppar"){
 
-			CPP_TYPE *zvel;
-			VAUX = CS->velocity*(tmpIONS->at(ii).velocity(span(0,IONS->at(ii).nSupPartOutput - 1),2));
-#ifdef HDF5_DOUBLE
-			zvel = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			zvel = FVAUX.memptr();
-#endif
-		   	hsize_t dims_zvel[1] = {(unsigned int)IONS->at(ii).nSupPartOutput};
-			DataSpace *dataspace_zvel = new DataSpace(1, dims_zvel);
-			DataSet *dataset_zvel = new DataSet(group_velocity->createDataSet( zvelocity, HDF_TYPE, *dataspace_zvel ));
-			dataset_zvel->write( zvel, HDF_TYPE );
-			delete dataspace_zvel;
-			delete dataset_zvel;
+					//Saving ions species density
+					name = "Ppar";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->momentum*IONS_OUT->at(ii).Ppar;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from( CS->momentum*IONS_OUT->at(ii).Ppar );
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
 
-			delete group_velocity;
+				}else if(params->outputs_variables.at(ov) == "U"){
 
-			VAUX.reset();
+					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
 
-			H5std_string numberDensity( "numberDensity" );
+					//x-component species bulk velocity
+					name = "x";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					saveToHDF5(group_bulkVelocity, name, &fvec_values);
+					#endif
+					name.clear();
 
-			CPP_TYPE *n;
-			VAUX = IONS->at(ii).n.subvec(iIndex,fIndex)/CS->length;
-#ifdef HDF5_DOUBLE
-			n = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			n = FVAUX.memptr();
-#endif
-		   	hsize_t dims_n[1] = {(unsigned int)(params->meshDim(0))};
-			DataSpace *dataspace_n = new DataSpace(1, dims_n);
-			DataSet *dataset_n = new DataSet(group_ionSpecies->createDataSet( numberDensity, HDF_TYPE, *dataspace_n ));
-			dataset_n->write( n, HDF_TYPE );
-			delete dataspace_n;
-			delete dataset_n;
+					//x-component species bulk velocity
+					name = "y";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					saveToHDF5(group_bulkVelocity, name, &fvec_values);
+					#endif
+					name.clear();
 
-			Group *group_bulkVelocity = new Group( group_ionSpecies->createGroup( "bulkVelocity" ) );
+					//x-component species bulk velocity
+					name = "z";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					saveToHDF5(group_bulkVelocity, name, &fvec_values);
+					#endif
+					name.clear();
 
-
-			H5std_string xBulkVelocity( "Ux" );
-
-			CPP_TYPE *Ux;
-			VAUX = CS->velocity*tmpIONS->at(ii).nv.X.subvec(iIndex,fIndex)/CS->length;
-#ifdef HDF5_DOUBLE
-			Ux = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			Ux = FVAUX.memptr();
-#endif
-		   	hsize_t dims_Ux[1] = {(unsigned int)params->meshDim(0)};
-			DataSpace *dataspace_Ux = new DataSpace(1, dims_Ux);
-			DataSet *dataset_Ux = new DataSet(group_bulkVelocity->createDataSet( xBulkVelocity, HDF_TYPE, *dataspace_Ux ));
-			dataset_Ux->write( Ux, HDF_TYPE );
-			delete dataspace_Ux;
-			delete dataset_Ux;
-
-			H5std_string yBulkVelocity( "Uy" );
-
-			CPP_TYPE *Uy;
-			VAUX = CS->velocity*tmpIONS->at(ii).nv.Y.subvec(iIndex,fIndex)/CS->length;
-#ifdef HDF5_DOUBLE
-			Uy = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			Uy = FVAUX.memptr();
-#endif
-		   	hsize_t dims_Uy[1] = {(unsigned int)params->meshDim(0)};
-			DataSpace *dataspace_Uy = new DataSpace(1, dims_Uy);
-			DataSet *dataset_Uy = new DataSet(group_bulkVelocity->createDataSet( yBulkVelocity, HDF_TYPE, *dataspace_Uy ));
-			dataset_Uy->write( Uy, HDF_TYPE );
-			delete dataspace_Uy;
-			delete dataset_Uy;
-
-			H5std_string zBulkVelocity( "Uz" );
-
-			CPP_TYPE *Uz;
-			VAUX = CS->velocity*tmpIONS->at(ii).nv.Z.subvec(iIndex,fIndex)/CS->length;
-#ifdef HDF5_DOUBLE
-			Uz = VAUX.memptr();
-#elif defined HDF5_FLOAT
-			armaCastDoubleToFloat(&VAUX, &FVAUX);
-			Uz = FVAUX.memptr();
-#endif
-		   	hsize_t dims_Uz[1] = {(unsigned int)params->meshDim(0)};
-			DataSpace *dataspace_Uz = new DataSpace(1, dims_Uz);
-			DataSet *dataset_Uz = new DataSet(group_bulkVelocity->createDataSet( zBulkVelocity, HDF_TYPE, *dataspace_Uz ));
-			dataset_Uz->write( Uz, HDF_TYPE );
-			delete dataspace_Uz;
-			delete dataset_Uz;
-
-			delete group_bulkVelocity;
+					delete group_bulkVelocity;
+				}
+			}
 
 			delete group_ionSpecies;
 		}//Iterations over the ion species.
@@ -454,9 +576,7 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 		delete group_ions;
 		//Ions*/
 
-#ifdef HDF5_SINGLE_FILE
 		delete group_iteration;
-#endif
 
 		delete outputFile;
 	}//End of try block
@@ -478,30 +598,30 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpI
 #endif
 
 #ifdef TWOD
-void HDF::siv_2D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::siv_2D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 }
 #endif
 
 #ifdef THREED
-void HDF::siv_3D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::siv_3D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 }
 #endif
 
 
-void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT){
+void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 	#ifdef ONED
-		siv_1D(params, tmpIONS, IONS, CS, IT);
+		siv_1D(params, IONS_OUT, CS, IT);
 	#endif
 
 	#ifdef TWOD
-		siv_2D(params, tmpIONS, IONS, CS, IT);
+		siv_2D(params, IONS_OUT, CS, IT);
 	#endif
 
 	#ifdef THREED
-		siv_3D(params, tmpIONS, IONS, CS, IT);
+		siv_3D(params, IONS_OUT, CS, IT);
 	#endif
 
 }
@@ -512,171 +632,130 @@ void HDF::saveFieldsVariables(const inputParameters * params, oneDimensional::el
 	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
 
-	forwardPBC_1D(&EB->E.X);
-	forwardPBC_1D(&EB->E.Y);
-	forwardPBC_1D(&EB->E.Z);
-
-	forwardPBC_1D(&EB->B.X);
-	forwardPBC_1D(&EB->B.Y);
-	forwardPBC_1D(&EB->B.Z);
-
-
 	try{
-		vec VAUX;
-#ifdef HDF5_FLOAT
-		fvec FVAUX;
-#endif
+		// forwardPBC_1D(&EB->E.X);
+		// forwardPBC_1D(&EB->E.Y);
+		// forwardPBC_1D(&EB->E.Z);
 
-		string name, path;
-		stringstream iteration, dn;
+		// forwardPBC_1D(&EB->B.X);
+		// forwardPBC_1D(&EB->B.Y);
+		// forwardPBC_1D(&EB->B.Z);
+
+		string name;
+		string path;
+		stringstream iteration;
+		stringstream dn;
+
+		int int_value;
+		CPP_TYPE cpp_type_value;
+		std::vector<CPP_TYPE> vector_values;
+
+		arma::vec vec_values;
+		arma::fvec fvec_values;
+
+		arma::mat mat_values;
+		arma::fmat fmat_values;
+
 
 		iteration << IT;
 		dn << params->mpi.rank_cart;
 
 		path = params->PATH + "/HDF5/";
-
-#ifdef HDF5_SINGLE_FILE
 		name = path + "file_D" + dn.str() + ".h5";
-#elif defined HDF5_MULTIPLE_FILES
-		name = path + "file_D" + dn.str() + "_" + iteration.str() + ".h5";
-#endif
-
 		const H5std_string	FILE_NAME( name );
 		name.clear();
 
-		H5File *outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
 
-#ifdef HDF5_SINGLE_FILE
 		string group_iteration_name;
 		group_iteration_name = "/" + iteration.str();
-		Group *group_iteration = new Group (outputFile->openGroup( group_iteration_name ));
+		Group * group_iteration = new Group (outputFile->openGroup( group_iteration_name ));
 
-		Group *group_emf = new Group( group_iteration->createGroup( "emf" ) );//Electromagnetic fields
-#elif defined HDF5_MULTIPLE_FILES
-		Group *group_emf = new Group( outputFile->createGroup( "emf" ) );//Electromagnetic fields
-#endif
+		Group * group_fields = new Group( group_iteration->createGroup( "fields" ) );//Electromagnetic fields
 
-		Group *group_emf_E = new Group( group_emf->createGroup( "E" ) );//Electric fields
+		for(int ov=0; ov<params->outputs_variables.size(); ov++){
+			if(params->outputs_variables.at(ov) == "E"){
+				Group * group_field = new Group( group_fields->createGroup( "E" ) );//Electric fields
 
-		H5std_string xElectricField( "Ex" );
+				//x-component of electric field
+				name = "x";
+				#ifdef HDF5_DOUBLE
+				vec_values = 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) );
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) ) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		CPP_TYPE *Ex;
-		VAUX = 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) );
-#ifdef HDF5_DOUBLE
-		Ex = VAUX.memptr();
-#elif defined HDF5_FLOAT
-		armaCastDoubleToFloat(&VAUX, &FVAUX);
-		Ex = FVAUX.memptr();
-#endif
-	   	hsize_t dims_Ex[1] = {(unsigned int)params->meshDim(0)};
-		DataSpace *dataspace_Ex = new DataSpace(1, dims_Ex);
-		DataSet *dataset_Ex = new DataSet(group_emf_E->createDataSet( xElectricField, HDF_TYPE, *dataspace_Ex ));
-		dataset_Ex->write( Ex, HDF_TYPE );
-		delete dataspace_Ex;
-		delete dataset_Ex;
+				//y-component of electric field
+				name = "y";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->eField*EB->E.Y.subvec(iIndex,fIndex);
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Y.subvec(iIndex,fIndex) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		H5std_string yElectricField( "Ey" );
+				//z-component of electric field
+				name = "z";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->eField*EB->E.Z.subvec(iIndex,fIndex);
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Z.subvec(iIndex,fIndex) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		CPP_TYPE *Ey;
-		VAUX = CS->eField*EB->E.Y.subvec(iIndex,fIndex);
-#ifdef HDF5_DOUBLE
-		Ey = VAUX.memptr();
-#elif defined HDF5_FLOAT
-		armaCastDoubleToFloat(&VAUX, &FVAUX);
-		Ey = FVAUX.memptr();
-#endif
-	   	hsize_t dims_Ey[1] = {(unsigned int)params->meshDim(0)};
-		DataSpace *dataspace_Ey = new DataSpace(1, dims_Ey);
-		DataSet *dataset_Ey = new DataSet(group_emf_E->createDataSet( yElectricField, HDF_TYPE, *dataspace_Ey ));
-		dataset_Ey->write( Ey, HDF_TYPE );
-		delete dataspace_Ey;
-		delete dataset_Ey;
+				delete group_field;
+			}if(params->outputs_variables.at(ov) == "B"){
+				Group * group_field = new Group( group_fields->createGroup( "B" ) );//Electric fields
 
-		H5std_string zElectricField( "Ez" );
+				//x-component of magnetic field
+				name = "x";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->bField*EB->B.X.subvec(iIndex,fIndex);
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->bField*EB->B.X.subvec(iIndex,fIndex) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		CPP_TYPE *Ez;
-		VAUX = CS->eField*EB->E.Z.subvec(iIndex,fIndex);
-#ifdef HDF5_DOUBLE
-		Ez = VAUX.memptr();
-#elif defined HDF5_FLOAT
-		armaCastDoubleToFloat(&VAUX, &FVAUX);
-		Ez = FVAUX.memptr();
-#endif
-	   	hsize_t dims_Ez[1] = {(unsigned int)params->meshDim(0)};
-		DataSpace *dataspace_Ez = new DataSpace(1, dims_Ez);
-		DataSet *dataset_Ez = new DataSet(group_emf_E->createDataSet( zElectricField, HDF_TYPE, *dataspace_Ez ));
-		dataset_Ez->write( Ez, HDF_TYPE );
-		delete dataspace_Ez;
-		delete dataset_Ez;
+				//y-component of magnetic field
+				name = "y";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) );
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) ) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
-		delete group_emf_E;//Electric field
+				//z-component of magnetic field
+				name = "z";
+				#ifdef HDF5_DOUBLE
+				vec_values = CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) );
+				saveToHDF5(group_ionSpecies, name, &vec_values);
+				#elif defined HDF5_FLOAT
+				fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) ) );
+				saveToHDF5(group_field, name, &fvec_values);
+				#endif
+				name.clear();
 
+				delete group_field;
+			}
+		}
 
-		Group *group_emf_B = new Group( group_emf->createGroup( "B" ) );//Magnetic fields
+		delete group_fields;//Electromagnetic fields
 
-		H5std_string xMagneticField( "Bx" );
-
-		CPP_TYPE *Bx;
-		VAUX = CS->bField*( 0.5*( EB->B.X.subvec(iIndex,fIndex) + EB->B.X.subvec(iIndex-1,fIndex-1) ) );
-#ifdef HDF5_DOUBLE
-		Bx = VAUX.memptr();
-#elif defined HDF5_FLOAT
-		armaCastDoubleToFloat(&VAUX, &FVAUX);
-		Bx = FVAUX.memptr();
-#endif
-
-	   	hsize_t dims_Bx[1] = {(unsigned int)params->meshDim(0)};
-		DataSpace *dataspace_Bx = new DataSpace(1, dims_Bx);
-		DataSet *dataset_Bx = new DataSet(group_emf_B->createDataSet( xMagneticField, HDF_TYPE, *dataspace_Bx ));
-		dataset_Bx->write( Bx, PredType::NATIVE_DOUBLE );
-		delete dataspace_Bx;
-		delete dataset_Bx;
-
-		H5std_string yMagneticField( "By" );
-
-		CPP_TYPE *By;
-		VAUX = CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) );
-#ifdef HDF5_DOUBLE
-		By = VAUX.memptr();
-#elif defined HDF5_FLOAT
-		armaCastDoubleToFloat(&VAUX, &FVAUX);
-		By = FVAUX.memptr();
-#endif
-	   	hsize_t dims_By[1] = {(unsigned int)params->meshDim(0)};
-		DataSpace *dataspace_By = new DataSpace(1, dims_By);
-		DataSet *dataset_By = new DataSet(group_emf_B->createDataSet( yMagneticField, HDF_TYPE, *dataspace_By ));
-		dataset_By->write( By, HDF_TYPE );
-		delete dataspace_By;
-		delete dataset_By;
-
-		H5std_string zMagneticField( "Bz" );
-
-		CPP_TYPE *Bz;
-		VAUX = CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) );
-#ifdef HDF5_DOUBLE
-		Bz = VAUX.memptr();
-#elif defined HDF5_FLOAT
-		armaCastDoubleToFloat(&VAUX, &FVAUX);
-		Bz = FVAUX.memptr();
-#endif
-	   	hsize_t dims_Bz[1] = {(unsigned int)params->meshDim(0)};
-		DataSpace *dataspace_Bz = new DataSpace(1, dims_Bz);
-		DataSet *dataset_Bz = new DataSet(group_emf_B->createDataSet( zMagneticField, HDF_TYPE, *dataspace_Bz ));
-		dataset_Bz->write( Bz, HDF_TYPE );
-		delete dataspace_Bz;
-		delete dataset_Bz;
-
-		delete group_emf_B;//Electric field
-
-
-		delete group_emf;//Electromagnetic fields
-
-#ifdef HDF5_SINGLE_FILE
 		delete group_iteration;
-#endif
 
 		delete outputFile;
-
 	}
 
 
@@ -710,7 +789,7 @@ void HDF::saveFieldsVariables(const inputParameters * params, threeDimensional::
 
 }
 
-void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, emf * EB, const characteristicScales * CS, const int IT, double totalTime){
+void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime){
 
 
 	try{
@@ -724,19 +803,12 @@ void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> *
 		string name, path;
 		path = params->PATH + "/HDF5/";
 
-#ifdef HDF5_SINGLE_FILE
 		name = path + "file_D" + dn.str() + ".h5";
 		const H5std_string	FILE_NAME( name );
 		name.clear();
-#elif defined HDF5_MULTIPLE_FILES
-		name = path + "file_D" + dn.str() + "_" + iteration.str() + ".h5";
-		const H5std_string	FILE_NAME( name );
-		name.clear();
-#endif
 
 
-#ifdef HDF5_SINGLE_FILE
-		H5File *outputFile;
+		H5File * outputFile;
 
 		if(IT == 0){
 			outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );// Create a new file using the default property lists.
@@ -746,28 +818,16 @@ void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> *
 
 		string group_iteration_name;
 		group_iteration_name = "/" + iteration.str();
-		Group *group_iteration = new Group( outputFile->createGroup( group_iteration_name ) );
-#elif defined HDF5_MULTIPLE_FILES
-		H5File *outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );// Create a new file using the default property lists.
-#endif
+		Group * group_iteration = new Group( outputFile->createGroup( group_iteration_name ) );
 
-		H5std_string time( "time" );
-		CPP_TYPE tm[1] = {(CPP_TYPE)totalTime};
-	   	hsize_t dims_tm[1] = {1};
-		DataSpace *dataspace_tm = new DataSpace(1, dims_tm);
-#ifdef HDF5_SINGLE_FILE
-		DataSet *dataset_tm = new DataSet(group_iteration->createDataSet( time, HDF_TYPE, *dataspace_tm ));
-#elif defined HDF5_MULTIPLE_FILES
-		DataSet *dataset_tm = new DataSet(outputFile->createDataSet( time, HDF_TYPE, *dataspace_tm ));
-#endif
-		dataset_tm->write( tm, HDF_TYPE );
+		CPP_TYPE cpp_type_value;
 
-		delete dataspace_tm;
-		delete dataset_tm;
+		name = "time";
+		cpp_type_value = (CPP_TYPE)totalTime;
+		saveToHDF5(group_iteration, name, &cpp_type_value);
+		name.clear();
 
-#ifdef HDF5_SINGLE_FILE
 		delete group_iteration;
-#endif
 
 		delete outputFile;
 	}//End of try block
@@ -784,7 +844,7 @@ void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> *
 		error.printError();
     }
 
-	saveIonsVariables(params, tmpIONS, IONS, CS, IT);
+	saveIonsVariables(params, IONS_OUT, CS, IT);
 
 	saveFieldsVariables(params, EB, CS, IT);
 

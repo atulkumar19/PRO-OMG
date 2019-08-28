@@ -1,3 +1,21 @@
+// COPYRIGHT 2015-2019 LEOPOLDO CARBAJAL
+
+/*	This file is part of PROMETHEUS++.
+
+    PROMETHEUS++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    PROMETHEUS++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef H_OUTPUTHDF5
 #define H_OUTPUTHDF5
 
@@ -31,13 +49,13 @@ class HDF{
 	#define CPP_TYPE float
 #endif
 
-void siv_1D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void siv_2D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void siv_2D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void siv_3D(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void siv_3D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, const characteristicScales * CS, const int IT);
+void saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
 
 
@@ -53,7 +71,7 @@ public:
 
 HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS);
 
-void saveOutputs(const inputParameters * params, const vector<ionSpecies> * tmpIONS, const vector<ionSpecies> * IONS, emf * EB, const characteristicScales * CS, const int IT, double totalTime);
+void saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
 
 };
 

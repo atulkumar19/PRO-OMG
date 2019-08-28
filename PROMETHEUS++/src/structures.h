@@ -21,9 +21,9 @@ using namespace twoDimensional;
 using namespace threeDimensional;
 #endif
 
-// Zeros
 #define float_zero 1E-7
 #define double_zero 1E-15
+
 
 // Physical constants
 #define F_E 1.602176E-19//Electron charge in C (absolute value)
@@ -103,6 +103,7 @@ struct inputParameters{
 	// List of variables in the outputs
 	std::vector<std::string> outputs_variables;
 
+
 	//Control parameters for the simulation
 	std::string PATH;//Path to save the outputs. It must point to the directory where the folder outputFiles is.
 
@@ -137,7 +138,7 @@ struct inputParameters{
 	int numberOfIonSpecies;
 	int numberOfTracerSpecies;
 
-	double ne;
+	double ne; // Electron number density (input file)
 
 	backgroundParameters BGP;
 

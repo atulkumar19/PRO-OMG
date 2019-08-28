@@ -39,7 +39,7 @@ FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
-% EnergyDiagnostic(ST);
+EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)

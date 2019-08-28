@@ -562,7 +562,6 @@ void INITIALIZE::initializeFields(const inputParameters * params, const meshGeom
 		MPI_Abort(MPI_COMM_WORLD,-123);
 	}else{//The electromagnetic fields are being initialized in the runtime.
 		int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		//int dim(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
 		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
 
         // TEST ExB

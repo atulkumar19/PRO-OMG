@@ -213,7 +213,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->outputCadence = std::stod( parametersStringMap["outputCadence"] );
 
-	params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
+	// params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
 
 	params->meshDim.set_size(3);
 	params->meshDim(0) = (unsigned int)std::stoi( parametersStringMap["NX"] );

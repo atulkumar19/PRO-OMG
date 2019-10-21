@@ -79,7 +79,10 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
             genFun.checkStability(params, mesh, CS, IONS);
         }
 
+/* This function to monitor energy conservation needs to be implemented in a better way*/
 //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);
+/* This function to monitor energy conservation needs to be implemented in a better way*/
+
         if(tt==100){
             t2 = MPI::Wtime();
             if(params->mpi.rank_cart == 0){

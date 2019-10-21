@@ -29,11 +29,11 @@ ST.time = loadTimeVector(ST);
 
 % GC_test_3(ST);
 
-GC_test_4(ST);
+% GC_test_4(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
-% FourierAnalysis(ST,'B','z');
+FourierAnalysis(ST,'B','z');
 
 FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');

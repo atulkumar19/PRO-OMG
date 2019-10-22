@@ -83,4 +83,4 @@ Please report any problem/bug using the "Issues" section on the left panel.
 # RUNNING PROMETHEUS++ #
 
 export OMP_NUM_THREADS=(number of open MP threads per MPI process)
-mpirun -np (even number of MPI processes) bin/PROMETHEUS++ /path/to/input/folder/ (ID of input file [optional])
+mpirun -np (even number of MPI processes) bin/PROMETHEUS++ /path/to/output/folder/ (ID of input file [optional])

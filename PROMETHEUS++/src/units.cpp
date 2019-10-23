@@ -27,6 +27,7 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 
 	double DT(0);
 	double averageB(0);
+	double Wpe(0);
 	double higherIonCyclotronFrequency(0);
 	double ion_vmax(0);
 	double ionMass(0);
@@ -35,8 +36,13 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 	int ionSpecies(0);
 
 	averageB = params->BGP.Bo;
+	Wpe = sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
+
 	if(params->mpi.rank_cart == 0)
-		cout << "Mean magnetic field in simulation domain: " << scientific << averageB << " T\n";
+		cout << "SOME PLASMA PARAMETERS: " << endl;
+		cout << " + Mean magnetic field in simulation domain: " << scientific << averageB << fixed << " T\n";
+		cout << " + Electron skin depth: " << scientific << F_C/Wpe << fixed << " m" << endl;
+		cout << endl;
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species
 		IONS->at(ii).BGP.Wc = IONS->at(ii).Q*averageB/IONS->at(ii).M;
@@ -57,6 +63,8 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 			cout << "+ Perpendicular thermal velocity: " << scientific << IONS->at(ii).BGP.VTper << fixed << " m/s\n";
 			cout << "+ Cyclotron frequency: " << scientific << IONS->at(ii).BGP.Wc << fixed << " Hz\n";
 			cout << "+ Plasma frequency: " << scientific << IONS->at(ii).BGP.Wpi << fixed << " Hz\n";
+			cout << "+ Ions skin depth: " << scientific << F_C/IONS->at(ii).BGP.Wpi << fixed << " m" << endl;
+			cout << "+ Beta: " << scientific << 2.0*F_MU*(IONS->at(ii).BGP.Dn*params->ne)*F_KB*IONS->at(ii).BGP.Tpar/(averageB*averageB) << fixed << endl;
 			cout << "+ Gyroperiod: " << scientific << 2.0*M_PI/IONS->at(ii).BGP.Wc << fixed << " s\n";
 			cout << "+ Larmor radius: " << scientific << IONS->at(ii).BGP.LarmorRadius << fixed << " m\n";
 			cout << "+ Magnetic moment: " << scientific << IONS->at(ii).BGP.mu << fixed << " A*m^2\n\n";

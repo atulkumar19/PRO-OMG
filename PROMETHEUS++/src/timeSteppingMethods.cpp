@@ -45,7 +45,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
     t1 = MPI::Wtime();
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
-
+        // cout << "ITERATION: " << tt << endl;
         if(tt == 0){
             genFun.checkStability(params, mesh, CS, IONS);
             ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT/2); // Initial condition time level V^(1/2)
@@ -91,7 +91,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
         }
     } // Time iterations.
 
-    genFun.saveDiagnosticsVariables(params);
+    // genFun.saveDiagnosticsVariables(params);
 }
 
 

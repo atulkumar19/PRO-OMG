@@ -13,6 +13,7 @@ LOC_OUTPUT_FOLDER="/home/leo/Documents/PRO++/PROMETHEUS++/outputFiles"
 # File identifier
 FILE_ID="warm_plasma"
 # FILE_ID="dispersion_relation"
+# FILE_ID="GC"
 
 rm -r ${LOC_OUTPUT_FOLDER}"/"${FILE_ID}
 

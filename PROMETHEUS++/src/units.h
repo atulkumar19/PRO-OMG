@@ -45,21 +45,25 @@ class UNITS{
 	#define Cmax 1.0f/sqrt(3.0f)
 	#endif
 
-	void dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS);
+	void dimensionlessForm(inputParameters * params, meshGeometry * mesh, vector<ionSpecies> * IONS, fields * EB, const characteristicScales * CS);
 
-	void broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS);
+	void broadcastCharacteristicScales(inputParameters * params, characteristicScales * CS);
 
 public:
 
 	UNITS(){};
 
-	void defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB);
+	void defineTimeStep(inputParameters * params, meshGeometry * mesh, vector<ionSpecies> * IONS, fields * EB);
 
-	void defineCharacteristicScales(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS);
+	void calculateFundamentalScales(inputParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS, meshGeometry * mesh);
 
-	void normalizeVariables(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS);
+	void defineCharacteristicScales(inputParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS);
 
-	void defineCharacteristicScalesAndBcast(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS);
+	void normalizeVariables(inputParameters * params, meshGeometry * mesh, vector<ionSpecies> * IONS, fields * EB, const characteristicScales * CS);
+
+	void defineCharacteristicScalesAndBcast(inputParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS);
+
+	void calculateFundamentalScalesAndBcast(inputParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS, meshGeometry * mesh);
 
 };
 

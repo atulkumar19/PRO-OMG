@@ -55,6 +55,7 @@ int main(int argc, char* argv[]){
 	init.loadIonParameters(&params, &IONS);
 
 	UNITS units;
+
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
 	init.loadMeshGeometry(&params, &CS, &mesh);
@@ -68,6 +69,10 @@ int main(int argc, char* argv[]){
 	ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
 
 	units.defineTimeStep(&params, &mesh, &IONS, &EB);
+
+	fundamentalScales FS(&params);
+
+	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS, &mesh);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
 	units.normalizeVariables(&params, &mesh, &IONS, &EB, &CS);

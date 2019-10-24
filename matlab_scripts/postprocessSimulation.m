@@ -1,10 +1,11 @@
 function ST = postprocessSimulation(path)
 % Example: ST = postprocessSimulation('../PROMETHEUS++/outputFiles/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/dispersion_relation/HDF5/')
+% ST = postprocessSimulation('../PROMETHEUS++/outputFiles/warm_plasma/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/GC/HDF5/')
 % Physical constants
 
-close all
+% close all
 
 ST.kB = 1.38E-23; % Boltzmann constant
 ST.mu0 = (4E-7)*pi; % Magnetic permeability of vacuum
@@ -35,11 +36,11 @@ ST.time = loadTimeVector(ST);
 % FourierAnalysis(ST,'B','y');
 FourierAnalysis(ST,'B','z');
 
-FourierAnalysis(ST,'E','x');
+% FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
-EnergyDiagnostic(ST);
+% EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -636,6 +637,11 @@ wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
 
 ni = ST.params.ions.ne;
 wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
+
+wci = double(wci);
+wce = double(wce);
+wpi = double(wpi);
+
 
 % Lower hybrid frequency
 wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );

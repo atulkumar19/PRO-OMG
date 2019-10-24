@@ -38,11 +38,12 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 	averageB = params->BGP.Bo;
 	Wpe = sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.rank_cart == 0){
 		cout << "SOME PLASMA PARAMETERS: " << endl;
 		cout << " + Mean magnetic field in simulation domain: " << scientific << averageB << fixed << " T\n";
 		cout << " + Electron skin depth: " << scientific << F_C/Wpe << fixed << " m" << endl;
 		cout << endl;
+	}
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species
 		IONS->at(ii).BGP.Wc = IONS->at(ii).Q*averageB/IONS->at(ii).M;
@@ -261,13 +262,47 @@ void UNITS::broadcastCharacteristicScales(inputParameters * params,characteristi
 }
 
 
+void UNITS::calculateFundamentalScales(inputParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS, meshGeometry * mesh){
+
+	cout << "\n* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
+	FS->electronSkinDepth = F_C/sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
+	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bo/F_ME);
+	FS->electronGyroRadius = sqrt(2.0*F_KB*params->BGP.Te/F_ME)/(F_E*params->BGP.Bo/F_ME);
+
+	cout << " + Electron gyro-period: " << scientific << FS->electronGyroPeriod << fixed << " s" << endl;
+	cout << " + Electron skin depth: " << scientific << FS->electronSkinDepth << fixed << " m" << endl;
+	cout << " + Electron gyro-radius: " << scientific << FS->electronGyroRadius << fixed << " m" << endl;
+	cout << endl;
+
+	for(int ss=0; ss<params->numberOfIonSpecies; ss++){
+		FS->ionGyroPeriod[ss] = 2.0*M_PI/IONS->at(ss).BGP.Wc;
+		FS->ionSkinDepth[ss] = F_C/IONS->at(ss).BGP.Wpi;
+		FS->ionGyroRadius[ss] = IONS->at(ss).BGP.LarmorRadius;
+
+		cout << "ION SPECIES: " << ss << endl;
+		cout << " + Ion gyro-period: " << scientific << FS->ionGyroPeriod[ss] << fixed << " s" << endl;
+		cout << " + Ion skin depth: " << scientific << FS->ionSkinDepth[ss] << fixed << " m" << endl;
+		cout << " + Ion gyro-radius: " << scientific << FS->ionGyroRadius[ss] << fixed << " m" << endl;
+		cout << endl;
+	}
+
+	cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
+
+	// Check that DX is larger than the electron skin depth, otherwise, abort simulation.
+	if (mesh->DX <= FS->electronSkinDepth){
+		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
+		cout << "ABORTING SIMULATION..." << endl;
+		MPI_Abort(MPI_COMM_WORLD,-1);
+	}
+	cout << "* * * * * * * * * * * * FUNDAMENTAL SCALES IN SIMULATION CALCULATED  * * * * * * * * * * * * * * * * * *" << endl;
+}
+
 void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
 
-	if(params->mpi.rank_cart == 0)
-		cout << "\n* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *\n";
+	cout << "\n* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *\n";
 
 	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species.
 		CS->mass += IONS->at(ii).M;
@@ -372,11 +407,21 @@ void UNITS::normalizeVariables(inputParameters * params,meshGeometry * mesh,vect
 }
 
 
-void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
+void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS){
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-		defineCharacteristicScales(params,IONS,CS);
+		defineCharacteristicScales(params, IONS, CS);
 	}
 
-	broadcastCharacteristicScales(params,CS);
+	broadcastCharacteristicScales(params, CS);
+}
+
+
+void UNITS::calculateFundamentalScalesAndBcast(inputParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS, meshGeometry * mesh){
+
+	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+		calculateFundamentalScales(params, IONS, FS, mesh);
+	}
+
+	// broadcastCharacteristicScales(params,CS);
 }

@@ -1320,7 +1320,7 @@ void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales 
 
 		crossProduct(&IONS->at(ii).V, &Bp, &VxB);//VxB
 
-		#pragma omp parallel shared(IONS, U, gp, sigma, us, s, VxB, tau, up, t, upxt) firstprivate(A, NSP)
+		#pragma omp parallel shared(IONS, Ep, Bp, U, gp, sigma, us, s, VxB, tau, up, t, upxt) firstprivate(A, NSP)
 		{
 			#pragma omp for
 			for(int ip=0;ip<NSP;ip++){
@@ -1544,7 +1544,7 @@ void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScale
 				IONS->at(ii).V(ip,2) += C3(ip)*( ExB(ip,2) + VB(ip)*Bp(ip,2) );
 				IONS->at(ii).V(ip,2) += C4(ip)*( EB(ip)*Bp(ip,2) );
 			}
-		}//End of the parallel region
+		} //End of the parallel region
 
 		extrapolateIonVelocity(params, mesh, &IONS->at(ii));
 
@@ -1778,47 +1778,68 @@ void PIC_GC::set_to_zero_RK45_variables(){
 }
 
 
-void PIC_GC::set_GC_vars(ionSpecies * IONS, int pp){
-	gcv.Q = IONS->Q;
-	gcv.M = IONS->M;
+void PIC_GC::set_GC_vars(ionSpecies * IONS, PIC_GC::GC_VARS * gcv, int pp){
+	gcv->Q = IONS->Q;
+	gcv->M = IONS->M;
 
-	gcv.wx = { IONS->wxl(pp), IONS->wxc(pp), IONS->wxr(pp) };
-	gcv.B = zeros(3);
-	gcv.Bs = zeros(3);
-	gcv.E = zeros(3);
-	gcv.Es = zeros(3);
-	gcv.b = zeros(3);
+	gcv->wx = { IONS->wxl(pp), IONS->wxc(pp), IONS->wxr(pp) };
+	gcv->B = zeros(3);
+	gcv->Bs = zeros(3);
+	gcv->E = zeros(3);
+	gcv->Es = zeros(3);
+	gcv->b = zeros(3);
 
-	gcv.mn = IONS->meshNode(pp);
-	gcv.mu = IONS->mu(pp);
+	gcv->mn = IONS->meshNode(pp);
+	gcv->mu = IONS->mu(pp);
 
-	gcv.Xo = IONS->X(pp,0);
-	gcv.Pparo = IONS->Ppar(pp);
-	gcv.go = IONS->g(pp);
+	gcv->Xo = IONS->X(pp,0);
+	gcv->Pparo = IONS->Ppar(pp);
+	gcv->go = IONS->g(pp);
 
-	gcv.X = gcv.Xo;
-	gcv.Ppar = gcv.Pparo;
-	gcv.g = gcv.go;
+	gcv->X = gcv->Xo;
+	gcv->Ppar = gcv->Pparo;
+	gcv->g = gcv->go;
 }
 
 
-void PIC_GC::reset_GC_vars(){
-	gcv.wx.fill(0.0);
-	gcv.B.fill(0.0);
-	gcv.Bs.fill(0.0);
-	gcv.E.fill(0.0);
-	gcv.Es.fill(0.0);
-	gcv.b.fill(0.0);
+void PIC_GC::set_to_zero_GC_vars(PIC_GC::GC_VARS * gcv){
+	gcv->wx = zeros(3);
+	gcv->B = zeros(3);
+	gcv->Bs = zeros(3);
+	gcv->b = zeros(3);
+	gcv->E = zeros(3);
+	gcv->Es = zeros(3);
 
-	gcv.mn = 0;
+	gcv->mn = 0;
+	gcv->mu = 0.0;
 
-	gcv.Xo = gcv.Xo_;
-	gcv.Pparo = gcv.Pparo_;
-	gcv.go = gcv.go_;
+	gcv->Xo = 0.0;
+	gcv->Pparo = 0.0;
+	gcv->go = 0.0;
 
-	gcv.X = gcv.Xo;
-	gcv.Ppar = gcv.Pparo;
-	gcv.g = gcv.go;
+	gcv->X = 0.0;
+	gcv->Ppar = 0.0;
+	gcv->g = 0.0;
+}
+
+
+void PIC_GC::reset_GC_vars(PIC_GC::GC_VARS * gcv){
+	gcv->wx.fill(0.0);
+	gcv->B.fill(0.0);
+	gcv->Bs.fill(0.0);
+	gcv->E.fill(0.0);
+	gcv->Es.fill(0.0);
+	gcv->b.fill(0.0);
+
+	gcv->mn = 0;
+
+	gcv->Xo = gcv->Xo_;
+	gcv->Pparo = gcv->Pparo_;
+	gcv->go = gcv->go_;
+
+	gcv->X = gcv->Xo;
+	gcv->Ppar = gcv->Pparo;
+	gcv->g = gcv->go;
 }
 
 
@@ -2435,7 +2456,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 
 
 void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
-	int NX(EB->E.X.n_elem);
+//	int NX(EB->E.X.n_elem);
 
 	MPI_AllgatherField(params, &EB->E);
 	MPI_AllgatherField(params, &EB->B);
@@ -2509,15 +2530,20 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 
 
 	for(int ss=0; ss<IONS->size(); ss++){// Loop over species
-		for(int pp=0; pp<IONS->at(ss).NSP; pp++){// Loop over particles
 
+		int NSP = IONS->at(ss).NSP;
+
+		#pragma omp parallel for shared(params, IONS, mesh, EB_, A, B4, B5) firstprivate(ss, NX, LX, NSP, K1, K2, K3, K4, K5, K6, K7, S4, S5)
+		for(int pp=0; pp<NSP; pp++){// Loop over particles
+
+			PIC_GC::GC_VARS gcv;
 			double DT_RK(params->DT);
 			double TRK(0.0);
 			double TRK_(0.0);
 			double DS45(0.0);
 			double s;
 
-			set_GC_vars(&IONS->at(ss), pp);
+			set_GC_vars(&IONS->at(ss), &gcv, pp);
 
 			set_to_zero_RK45_variables();
 
@@ -2572,7 +2598,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 			if(TRK > params->DT){
 				DT_RK = params->DT - TRK_;
 
-				reset_GC_vars();
+				reset_GC_vars(&gcv);
 
 				set_to_zero_RK45_variables();
 
@@ -2797,6 +2823,7 @@ PIC_GC::PIC_GC(const inputParameters * params, const meshGeometry * mesh){
 	S5 = zeros(4);
 	#endif
 
+/*
 	gcv.wx = zeros(3);
 	gcv.B = zeros(3);
 	gcv.Bs = zeros(3);
@@ -2814,6 +2841,7 @@ PIC_GC::PIC_GC(const inputParameters * params, const meshGeometry * mesh){
 	gcv.X = 0.0;
 	gcv.Ppar = 0.0;
 	gcv.g = 0.0;
+*/
 }
 
 

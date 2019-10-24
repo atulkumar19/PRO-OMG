@@ -219,15 +219,16 @@ protected:
 	arma::vec S4;
 	arma::vec S5;
 
-	GC_VARS gcv;
-
+	// GC_VARS gcv;
 
 	void set_to_zero_RK45_variables();
 
 
-	void set_GC_vars(ionSpecies * IONS, int pp);
+	void set_to_zero_GC_vars(PIC_GC::GC_VARS * gcv);
 
-	void reset_GC_vars();
+	void set_GC_vars(ionSpecies * IONS, PIC_GC::GC_VARS * gcv, int pp);
+
+	void reset_GC_vars(PIC_GC::GC_VARS * gcv);
 
 
 	void depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS);

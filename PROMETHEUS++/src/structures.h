@@ -212,4 +212,22 @@ struct characteristicScales{
 	}
 };
 
+struct fundamentalScales{
+	double electronSkinDepth;
+	double electronGyroPeriod;
+	double electronGyroRadius;
+	double * ionSkinDepth;
+	double * ionGyroPeriod;
+	double * ionGyroRadius;
+
+	fundamentalScales(inputParameters * params){
+		electronSkinDepth = 0.0;
+		electronGyroPeriod = 0.0;
+		electronGyroRadius = 0.0;
+		ionSkinDepth = new double[params->numberOfIonSpecies];
+		ionGyroPeriod = new double[params->numberOfIonSpecies];
+		ionGyroRadius = new double[params->numberOfIonSpecies];
+	}
+};
+
 #endif

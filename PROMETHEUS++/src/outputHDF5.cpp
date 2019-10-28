@@ -264,17 +264,17 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		name.clear();
 
 		name = "NX";
-		int_value = mesh->dim(0);
+		int_value = mesh->NX_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NY";
-		int_value = mesh->dim(1);
+		int_value = mesh->NY_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NZ";
-		int_value = mesh->dim(2);
+		int_value = mesh->NZ_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
@@ -405,8 +405,8 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 #ifdef ONED
 void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	try{
 		string path;
@@ -629,8 +629,8 @@ void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpec
 
 void HDF::saveFieldsVariables(const inputParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	try{
 		// forwardPBC_1D(&EB->E.X);

@@ -46,7 +46,7 @@ QUIETSTART::QUIETSTART(const inputParameters * params, ionSpecies * ions){
 double QUIETSTART::recalculateNumberSuperParticles(const inputParameters * params, ionSpecies *ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
-    exponent = ceil(log(ions->NPC*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
+    exponent = ceil(log(ions->NPC*params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
     ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
 
 	ions->nSupPartOutput = floor( (ions->pctSupPartOutput/100.0)*ions->NSP );

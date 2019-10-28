@@ -95,7 +95,9 @@ typedef electromagneticFields fields;
 struct meshGeometry{
 	vfield_vec nodes;
 
-	arma::uvec dim;
+	int NX_PER_MPI;
+	int NY_PER_MPI;
+	int NZ_PER_MPI;
 
 	double DX;
 	double DY;
@@ -150,7 +152,9 @@ struct inputParameters{
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
 	//Mesh geometry
-	arma::uvec meshDim; //number of nodes in each direction. meshDim(0) = # of nodes along the x axis.
+	int NX_PER_MPI;
+	int NY_PER_MPI;
+	int NZ_PER_MPI;
 
 	//ions properties
 	int numberOfIonSpecies;

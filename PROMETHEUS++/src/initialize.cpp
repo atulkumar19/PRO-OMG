@@ -215,10 +215,9 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	// params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
 
-	params->meshDim.set_size(3);
-	params->meshDim(0) = (unsigned int)std::stoi( parametersStringMap["NX"] );
-	params->meshDim(1) = (unsigned int)std::stoi( parametersStringMap["NY"] );
-	params->meshDim(2) = (unsigned int)std::stoi( parametersStringMap["NZ"] );
+    params->NX_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NX"] );
+    params->NY_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NY"] );
+    params->NZ_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NZ"] );
 
 	params->DrL = std::stod( parametersStringMap["DrL"] );
 
@@ -265,45 +264,43 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 			cout << "Using ION SKIN DEPTH to set up simulation grid.\n";
 	}
 
-	mesh->dim.set_size(3);
-
 	#ifdef ONED
-	mesh->dim(0) = params->meshDim(0);
-	mesh->dim(1) = 1;
-	mesh->dim(2) = 1;
+    mesh->NX_PER_MPI = params->NX_PER_MPI;
+    mesh->NY_PER_MPI = 1;
+    mesh->NZ_PER_MPI = 1;
 	#endif
 
 	#ifdef TWOD
-	mesh->dim(0) = params->meshDim(0);
-	mesh->dim(1) = params->meshDim(1);
-	mesh->dim(2) = 1;
+    mesh->NX_PER_MPI = params->NX_PER_MPI;
+    mesh->NY_PER_MPI = params->NY_PER_MPI;
+    mesh->NZ_PER_MPI = 1;
 	#endif
 
 	#ifdef THREED
-	mesh->dim(0) = params->meshDim(0);
-	mesh->dim(1) = params->meshDim(1);
-	mesh->dim(2) = params->meshDim(2);
+    mesh->NX_PER_MPI = params->NX_PER_MPI;
+    mesh->NY_PER_MPI = params->NY_PER_MPI;
+    mesh->NZ_PER_MPI = params->NZ_PER_MPI;
 	#endif
 
 
-	mesh->nodes.X.set_size(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);
-	mesh->nodes.Y.set_size(mesh->dim(1));
-	mesh->nodes.Z.set_size(mesh->dim(2));
+	mesh->nodes.X.set_size(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	mesh->nodes.Y.set_size(mesh->NY_PER_MPI);
+	mesh->nodes.Z.set_size(mesh->NZ_PER_MPI);
 
-	for(int ii=0;ii<(int)(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);ii++){
+	for(int ii=0;ii<(int)(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);ii++){
 		mesh->nodes.X(ii) = (double)ii*mesh->DX; //entire simulation domain's mesh grid
 	}
-	for(int ii=0;ii<mesh->dim(1);ii++){
+	for(int ii=0;ii<mesh->NY_PER_MPI;ii++){
 		mesh->nodes.Y(ii) = (double)ii*mesh->DY; //
 	}
-	for(int ii=0;ii<mesh->dim(2);ii++){
+	for(int ii=0;ii<mesh->NZ_PER_MPI;ii++){
 		mesh->nodes.Z(ii) = (double)ii*mesh->DZ; //
 	}
 
 	if(params->mpi.rank_cart == 0){
-		cout << "Size of simulation domain along the x-axis: " << mesh->nodes.X(mesh->dim(0)-1) + mesh->DX << " m\n";
-		cout << "Size of simulation domain along the y-axis: " << mesh->nodes.Y(mesh->dim(1)-1) + mesh->DY << " m\n";
-		cout << "Size of simulation domain along the z-axis: " << mesh->nodes.Z(mesh->dim(2)-1) + mesh->DZ << " m\n";
+		cout << "Size of simulation domain along the x-axis: " << mesh->nodes.X(mesh->NX_PER_MPI-1) + mesh->DX << " m\n";
+		cout << "Size of simulation domain along the y-axis: " << mesh->nodes.Y(mesh->NY_PER_MPI-1) + mesh->DY << " m\n";
+		cout << "Size of simulation domain along the z-axis: " << mesh->nodes.Z(mesh->NZ_PER_MPI-1) + mesh->DZ << " m\n";
 		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *\n\n";
 	}
 }
@@ -356,14 +353,14 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 			} // switch
 		} // if(params->restart == 1)
 
-		IONS->at(ii).n.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).n_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).n__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).n___.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n_.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n__.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).n___.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
-		IONS->at(ii).nv.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).nv_.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).nv__.zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv_.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		IONS->at(ii).nv__.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 		// Setting size and value to zero of arrays for ions' variables
 		if(params->mpi.rank_cart == 0)
@@ -400,11 +397,11 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 	if(params->quietStart == 0){
 		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
 			IONS->at(ii).X.col(0) = \
-			(HX*params->meshDim(0))*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
+			(HX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
 		}
 	}else if(params->quietStart == 1){
 		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).X.col(0) *= HX*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+			IONS->at(ii).X.col(0) *= HX*params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
 		}
 	}
 
@@ -415,7 +412,7 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 		chargeDensityPerCell = \
 		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
 
-		IONS->at(ii).NCP = (mesh->DX*(double)mesh->dim(0))*chargeDensityPerCell;
+		IONS->at(ii).NCP = (mesh->DX*(double)mesh->NX_PER_MPI)*chargeDensityPerCell;
 	}
 	#endif
 
@@ -424,7 +421,7 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 		chargeDensityPerCell = \
 		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
 
-		IONS->at(ii).NCP = (mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1))*chargeDensityPerCell;
+		IONS->at(ii).NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
 	}
 	#endif
 
@@ -434,7 +431,7 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = \
-		(mesh->DX*(double)mesh->dim(0)*mesh->DY*(double)mesh->dim(1)*mesh->DZ*(double)mesh->dim(0))*chargeDensityPerCell;
+		(mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI*mesh->DZ*(double)mesh->NZ_PER_MPI)*chargeDensityPerCell;
 	}
 	#endif
 
@@ -552,7 +549,7 @@ void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> *
 		}
 
 		//Definition of the initial total number of superparticles for each species
-		ions.NSP = ceil(ions.NPC*params->meshDim(0));
+		ions.NSP = ceil(ions.NPC*params->NX_PER_MPI);
 		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 
 		IONS->push_back(ions);
@@ -601,11 +598,11 @@ void INITIALIZE::initializeFields(const inputParameters * params, const meshGeom
 			cout << "Loading external electromagnetic fields\n";
 		MPI_Abort(MPI_COMM_WORLD,-123);
 	}else{//The electromagnetic fields are being initialized in the runtime.
-		int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+		int NX(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
 
         // TEST ExB
-        // double LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+        // double LX = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
         // EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 		EB->B.X.fill(params->BGP.Bx);//x

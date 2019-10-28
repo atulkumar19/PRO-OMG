@@ -21,27 +21,27 @@
 
 EMF_SOLVER::EMF_SOLVER(const inputParameters * params, characteristicScales * CS){
 	n_cs = CS->length*CS->density;
-	dim_x = params->meshDim(0) + 2;
+	dim_x = params->NX_PER_MPI + 2;
 
-	ne.zeros(params->meshDim(0) + 2);
-	n.zeros(params->meshDim(0) + 2);
-	n_.zeros(params->meshDim(0) + 2);
-	n__.zeros(params->meshDim(0) + 2);
+	ne.zeros(params->NX_PER_MPI + 2);
+	n.zeros(params->NX_PER_MPI + 2);
+	n_.zeros(params->NX_PER_MPI + 2);
+	n__.zeros(params->NX_PER_MPI + 2);
 
-	U.zeros(params->meshDim(0) + 2);
-	U_.zeros(params->meshDim(0) + 2);
-	U__.zeros(params->meshDim(0) + 2);
+	U.zeros(params->NX_PER_MPI + 2);
+	U_.zeros(params->NX_PER_MPI + 2);
+	U__.zeros(params->NX_PER_MPI + 2);
 
-	Ui.zeros(params->meshDim(0) + 2);
-	Ui_.zeros(params->meshDim(0) + 2);
-	Ui__.zeros(params->meshDim(0) + 2);
+	Ui.zeros(params->NX_PER_MPI + 2);
+	Ui_.zeros(params->NX_PER_MPI + 2);
+	Ui__.zeros(params->NX_PER_MPI + 2);
 }
 
 
 void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * field){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	double sendBuf;
 	double recvBuf;
@@ -77,8 +77,8 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * fiel
 
 void EMF_SOLVER::MPI_passGhosts(const inputParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	double sendBuf;
 	double recvBuf;
@@ -97,12 +97,12 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params, arma::vec * fiel
 
 void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
-	int dim_x = params->meshDim(0) + 2;
+	int dim_x = params->NX_PER_MPI + 2;
 	arma::vec b = zeros(dim_x);
 	double w0(23.0/48.0), w1(0.25), w2(1.0/96.0);//weights
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart + 1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart + 1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart + 1));
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
@@ -140,12 +140,12 @@ void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_mat * vf,doubl
 
 void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
-	int dim_x = params->meshDim(0) + 2;
+	int dim_x = params->NX_PER_MPI + 2;
 	arma::vec b = zeros(dim_x);
 	double w0(0.75), w1(0.125);//weights
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart + 1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart + 1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart + 1));
 
 
 	//Step 1: Averaging process
@@ -182,12 +182,12 @@ void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_mat * vf,doubl
 
 void EMF_SOLVER::smooth(const inputParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
-	int dim_x = params->meshDim(0) + 2;
+	int dim_x = params->NX_PER_MPI + 2;
 	arma::vec b = zeros(dim_x);
 	double w0(0.5), w1(0.25);//weights
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 
 	//Step 1: Averaging process
@@ -232,8 +232,8 @@ void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry *
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 
 	//There is not x-component of curl(B)
@@ -263,7 +263,7 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
-	int NX(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);
+	int NX(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 	// if(params->mpi.rank_cart == 0)
 		// EB->B.Z.print("B");
@@ -373,8 +373,8 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 	// }
 
 	//Definitions
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart + 1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart + 1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart + 1));
 
 	n.zeros();
 	U.zeros();
@@ -552,8 +552,8 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	ne.zeros();
 	n.zeros();

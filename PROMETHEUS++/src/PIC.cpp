@@ -24,11 +24,11 @@ PIC::PIC(){
 
 void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS){
 
-	arma::vec nSend = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
-	arma::vec nRecv = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
+	arma::vec nSend = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
+	arma::vec nRecv = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 	nSend = IONS->n;
 
-	MPI_ARMA_VEC mpi_n(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
+	MPI_ARMA_VEC mpi_n(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 
 	MPI_Barrier(params->mpi.mpi_topo);
 
@@ -44,10 +44,10 @@ void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS){
 
 void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * IONS){
 
-	arma::vec bufSend = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
-	arma::vec bufRecv = zeros(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
+	arma::vec bufSend = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
+	arma::vec bufRecv = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 
-	MPI_ARMA_VEC mpi_n(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS+2);
+	MPI_ARMA_VEC mpi_n(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 
 	MPI_Barrier(params->mpi.mpi_topo);
 
@@ -85,33 +85,33 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ION
 
 void PIC::MPI_AllgatherField(const inputParameters * params, vfield_vec * field){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
-	arma::vec recvBuf(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS);
-	arma::vec sendBuf(params->meshDim(0));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->NX_PER_MPI);
 
-	MPI_ARMA_VEC chunk(params->meshDim(0));
+	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
 
 	MPI_Barrier(params->mpi.mpi_topo);
 
 	//Allgather for x-component
 	sendBuf = field->X.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
-	field->X.subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->X.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.mpi_topo);
 
 	//Allgather for y-component
 	sendBuf = field->Y.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
-	field->Y.subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->Y.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.mpi_topo);
 
 	//Allgather for z-component
 	sendBuf = field->Z.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
-	field->Z.subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->Z.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.mpi_topo);
 }
@@ -119,19 +119,19 @@ void PIC::MPI_AllgatherField(const inputParameters * params, vfield_vec * field)
 
 void PIC::MPI_AllgatherField(const inputParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
-	arma::vec recvBuf(params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS);
-	arma::vec sendBuf(params->meshDim(0));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->NX_PER_MPI);
 
-	MPI_ARMA_VEC chunk(params->meshDim(0));
+	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
 
 	MPI_Barrier(params->mpi.mpi_topo);
 
 	//Allgather for x-component
 	sendBuf = field->subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
-	field->subvec(1, params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.mpi_topo);
 }
@@ -345,7 +345,7 @@ void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * me
 		case(1):{
 			int ii;
 			int NSP(IONS->NSP);//number of superparticles
-			int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS);//number of grid cells
+			int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);//number of grid cells
 			arma::vec X;
 			uvec LOGIC;
 
@@ -452,7 +452,7 @@ void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * me
 				for(ii=0;ii<NSP;ii++)
 					IONS->meshNode(ii) = floor((IONS->X(ii, 0) + 0.5*mesh->DX)/mesh->DX);
 
-				NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+				NC = mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
 
 				#pragma omp single
 				{
@@ -531,7 +531,7 @@ void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * me
 			int aux(0);
 			for(int ii=0;ii<IONS->NSP;ii++){
 				aux = floor(IONS->X(ii, 0)/mesh->DX);
-				if(aux == mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS){
+				if(aux == mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS){
 					IONS->meshNode(ii) = 0;
 					IONS->X(ii) = 0;
 				}else{
@@ -613,7 +613,7 @@ void PIC::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB
 #ifdef ONED
 void PIC::eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
-	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
+	int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
 	vfield_vec nv;
@@ -729,7 +729,7 @@ void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
+	int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
 	vfield_vec nv;
@@ -737,7 +737,7 @@ void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 
 	#pragma omp parallel shared(mesh, IONS) private(ii, NC, nv)
 	{
-		NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;
+		NC = mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;
 		nv.zeros(NC);
 		#pragma omp for
 		for(ii=0;ii<NSP;ii++){
@@ -869,7 +869,7 @@ void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeome
 
 #ifdef ONED
 void PIC::eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
-	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
+	int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
 	arma::vec n;
@@ -933,7 +933,7 @@ void PIC::eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NC(mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
+	int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
 	arma::vec n;
@@ -1063,7 +1063,7 @@ void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * IONS, vf
 	//wxl = (abs(x)/H - 1)*(abs(x)/H - 5/2)*(abs(x)/H + 1/2)/6 + 1/4
 	//wxll = [7/2 - abs(x)/H]*[(2 - abs(x)/H)^2 + 3/4]/12 -1/12
 
-	int N =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
+	int N =  params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
 
@@ -1169,7 +1169,7 @@ void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * IONS, vf
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int N =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
+	int N =  params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
 
@@ -1614,7 +1614,7 @@ void PIC::aiv_Boris_3D(const inputParameters * params, const characteristicScale
 
 void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
-	double lx = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;//
+	double lx = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;//
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
@@ -1677,8 +1677,8 @@ void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vect
 
 void PIC::aip_2D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
-	double lx = mesh->nodes.X(mesh->dim(0)-1) + mesh->DX;//
-	double ly = mesh->nodes.Y(mesh->dim(1)-1) + mesh->DY;//
+	double lx = mesh->nodes.X(mesh->NX_PER_MPI-1) + mesh->DX;//
+	double ly = mesh->nodes.Y(mesh->NY_PER_MPI-1) + mesh->DY;//
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
@@ -2220,7 +2220,7 @@ void PIC_GC::assignCell_TSC(const inputParameters * params, const meshGeometry *
 
 	switch (dim){
 		case(1):{
-			int NC = mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+			int NC = mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
 
 			gcv->mn = floor( (gcv->X + 0.5*mesh->DX)/mesh->DX );
 
@@ -2711,8 +2711,8 @@ void PIC_GC::ai_GC_3D(const inputParameters * params, const characteristicScales
 
 PIC_GC::PIC_GC(const inputParameters * params, const meshGeometry * mesh){
 
-	NX =  params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
-	LX = mesh->DX*mesh->dim(0)*params->mpi.NUMBER_MPI_DOMAINS;
+	NX =  params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
+	LX = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
 
 /*
 	A = { 	{0.0,           0.0,            0.0,        0.0,        0.0,            0.0,    0.0},

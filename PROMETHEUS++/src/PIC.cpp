@@ -1350,7 +1350,7 @@ void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales 
 
 		extrapolateIonVelocity(params, mesh, &IONS->at(ii));
 
-		MPI_BcastBulkVelocity(params, &IONS->at(ii));
+		PIC::MPI_BcastBulkVelocity(params, &IONS->at(ii));
 
 		switch (params->weightingScheme){
 			case(0):{
@@ -1548,7 +1548,7 @@ void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScale
 
 		extrapolateIonVelocity(params, mesh, &IONS->at(ii));
 
-		MPI_BcastBulkVelocity(params, &IONS->at(ii));
+		PIC::MPI_BcastBulkVelocity(params, &IONS->at(ii));
 
 		switch (params->weightingScheme){
 			case(0):{
@@ -1637,7 +1637,7 @@ void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vect
 
 		extrapolateIonDensity(params, mesh, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
 
-		MPI_BcastDensity(params, &IONS->at(ii));
+		PIC::MPI_BcastDensity(params, &IONS->at(ii));
 
 		switch (params->weightingScheme){
 			case(0):{
@@ -2321,7 +2321,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->Bs);
 
@@ -2341,7 +2341,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2361,7 +2361,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2381,7 +2381,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2401,7 +2401,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2421,7 +2421,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2441,7 +2441,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 			PIC_GC::assignCell(params, mesh, gcv, 1);
 
 			// NOTE: The relativistic factor (gamma) is updated within EFF_EMF_TSC_1D, this using the updated magnetic field and Ppar
-			PIC_GC::EFF_EMF_TSC_1D(params->DT, mesh->DX, gcv, EB);
+			PIC_GC::EFF_EMF_TSC_1D(*DT_RK, mesh->DX, gcv, EB);
 
 			double Bspar = dot(gcv->b, gcv->B);
 
@@ -2533,21 +2533,22 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 
 		int NSP = IONS->at(ss).NSP;
 
-		#pragma omp parallel for shared(params, IONS, mesh, EB_, A, B4, B5) firstprivate(ss, NX, LX, NSP, K1, K2, K3, K4, K5, K6, K7, S4, S5)
+		#pragma omp parallel for shared(params, IONS, mesh, EB_, A, B4, B5) firstprivate(DT, ss, NX, LX, NSP, K1, K2, K3, K4, K5, K6, K7, S4, S5)
+		// #pragma omp parallel for shared(params, IONS, mesh, EB_) private(K1, K2, K3, K4, K5, K6, K7, S4, S5) firstprivate(DT, ss, NX, LX, NSP)
 		for(int pp=0; pp<NSP; pp++){// Loop over particles
 
 			PIC_GC::GC_VARS gcv;
-			double DT_RK(params->DT);
-			double TRK(0.0);
-			double TRK_(0.0);
-			double DS45(0.0);
-			double s;
+			double DT_RK = DT;
+			double TRK = 0.0;
+			double TRK_ = 0.0;
+			double DS45 = 0.0;
+			double s = 0.0;
 
 			set_GC_vars(&IONS->at(ss), &gcv, pp);
 
 			set_to_zero_RK45_variables();
 
-			while(TRK < params->DT){ // Sub-cycling time loop
+			while(TRK < DT){ // Sub-cycling time loop
 				for(int stg=1; stg<8; stg++){
 					advanceRungeKutta45Stages_1D(params, mesh, &DT_RK, &gcv, &EB_, stg);
 				}
@@ -2574,7 +2575,7 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 					TRK_ = TRK;
 					TRK += DT_RK;
 
-					DT_RK = (2.0*DT_RK < params->DT) ? 2.0*DT_RK : DT_RK;
+					DT_RK = (2.0*DT_RK < DT) ? 2.0*DT_RK : DT_RK;
 
 					gcv.Xo = S4(0);
 					gcv.Pparo = S4(1);
@@ -2589,14 +2590,9 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 				}
 			} // Sub-cycling time loop
 
-			// cout << "MPI: " << params->mpi.rank_cart << " P: " << pp << endl;
-			// cout << "MPI: " << params->mpi.rank_cart << " P: " << pp << " V_x: " << IONS->at(ss).V.row(pp)(0) << " V_y: " << IONS->at(ss).V.row(pp)(1) << " V_z: " << IONS->at(ss).V.row(pp)(2) << endl;
-			// MPI_Barrier(params->mpi.mpi_topo);
-			// MPI_Abort(params->mpi.mpi_topo, -99999);
-			// if (TRK == params->DT) cout << "MPI: " << params->mpi.rank_cart << " P: " << pp << endl;
 
-			if(TRK > params->DT){
-				DT_RK = params->DT - TRK_;
+			if(TRK > DT){
+				DT_RK = DT - TRK_;
 
 				reset_GC_vars(&gcv);
 
@@ -2621,19 +2617,24 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 			arma::rowvec V(3);
 			// Within the function 'computeFullOrbitVelocity' is calculated the relativistic factor gamma.
 			PIC_GC::computeFullOrbitVelocity(params, mesh, &EB_, &gcv, &V, 1);
+
 			IONS->at(ss).V.row(pp) = V;
 
 			IONS->at(ss).X(pp,0) = gcv.X;
 			IONS->at(ss).Ppar(pp) = gcv.Ppar;
 			IONS->at(ss).g(pp) = gcv.g;
+
 			IONS->at(ss).meshNode(pp) = gcv.mn;
+			IONS->at(ss).wxl(pp) = gcv.wx(0);
+			IONS->at(ss).wxc(pp) = gcv.wx(1);
+			IONS->at(ss).wxr(pp) = gcv.wx(2);
 		} // Loop over particles
 
 		depositIonDensityAndBulkVelocity(params, mesh, &IONS->at(ss));
 
-		MPI_BcastDensity(params, &IONS->at(ss));
+		PIC::MPI_BcastDensity(params, &IONS->at(ss));
 
-		MPI_BcastBulkVelocity(params, &IONS->at(ss));
+		PIC::MPI_BcastBulkVelocity(params, &IONS->at(ss));
 
 		switch (params->weightingScheme){
 			case(0):{

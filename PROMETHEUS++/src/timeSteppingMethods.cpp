@@ -55,6 +55,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
 
         ionsDynamics.advanceIonsPosition(params, mesh, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
 
+        /*
         fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
@@ -64,6 +65,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
              // Using basic velocity extrapolation.
             fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
         }
+        */
 
         currentTime += params->DT*CS->time;
 
@@ -102,9 +104,11 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
     // Initialize density and bulk velocity
     ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
 
+    /*
     fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
     fields_solver.advanceEField(params, mesh, EB, IONS);
+    */
 
     hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 
@@ -117,9 +121,11 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
+        /*
         fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         fields_solver.advanceEField(params, mesh, EB, IONS);
+        */
 
         currentTime += params->DT*CS->time;
 

@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 make clean
 
 make info

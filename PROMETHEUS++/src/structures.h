@@ -87,6 +87,7 @@ struct energyMonitor{
 
 
 typedef ionSpeciesParams ionSpecies;
+typedef GCSpeciesParams GCSpecies;
 
 
 typedef electromagneticFields fields;

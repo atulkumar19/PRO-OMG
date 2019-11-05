@@ -28,13 +28,13 @@ ST.time = loadTimeVector(ST);
 
 % GC_test_2(ST);
 
-% GC_test_3(ST);
+GC_test_3(ST);
 
-% GC_test_4(ST);
+GC_test_4(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
-FourierAnalysis(ST,'B','z');
+% FourierAnalysis(ST,'B','z');
 
 % FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
@@ -391,7 +391,7 @@ LX = DX*double(NX)*double(ND);
 B = ST.params.Bo;
 Bo = sqrt(dot(B,B));
 b = B/Bo;
-Eo = 1.0;
+Eo = 10.0;
 
 ilabels = {};
 
@@ -424,7 +424,7 @@ for ss=1:NSPP
     % Time
     t = ST.time;
     %% Plot test particle position and velocity
-    ii = randi(NPARTICLES);
+    ii = 1000;%randi(NPARTICLES);
     
     v = squeeze(V(ii,:,:));
     x = squeeze(X(ii,:));
@@ -493,8 +493,13 @@ NSPP = int64(ST.params.ions.numberOfIonSpecies);
 time = ST.time;
 xAxis = ST.params.geometry.xAxis;
 
+
 if (NT > 1)
-    IT = 1:NT/4:NT;
+    DT = time(end)/4.0;
+    IT = zeros(1,4);
+    for ii=1:4
+        [~,IT(ii)] = min(abs(time-ii*DT));
+    end
 else
     IT = 1;
 end

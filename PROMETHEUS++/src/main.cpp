@@ -44,6 +44,7 @@ int main(int argc, char* argv[]){
 
 	inputParameters params; 		// Input parameters for the simulation.
 	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	vector<GCSpecies> GCP;
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
 	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	fields EB; 						// Derived type with variables of electromagnetic fields.

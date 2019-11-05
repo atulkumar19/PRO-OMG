@@ -139,6 +139,36 @@ void saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values){
 
 
 // Function to save an Armadillo vec vector
+void saveToHDF5(H5File * file, string name, arma::ivec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( values->memptr(), PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector (to a HDF5 group)
+void saveToHDF5(Group * group, string name, arma::ivec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( values->memptr(), PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector
 void saveToHDF5(H5File * file, string name, arma::vec * values){
 	H5std_string nameSpace( name );
 
@@ -419,6 +449,8 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 		CPP_TYPE cpp_type_value;
 		std::vector<CPP_TYPE> vector_values;
 
+		arma::ivec ivec_values;
+
 		arma::vec vec_values;
 		arma::fvec fvec_values;
 
@@ -527,6 +559,14 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					fvec_values = conv_to<fvec>::from( CS->momentum*IONS_OUT->at(ii).Ppar );
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "mn"){
+
+					//Saving ions species density
+					name = "mn";
+					ivec_values = IONS_OUT->at(ii).meshNode;
+					saveToHDF5(group_ionSpecies, name, &ivec_values);
 					name.clear();
 
 				}else if(params->outputs_variables.at(ov) == "U"){

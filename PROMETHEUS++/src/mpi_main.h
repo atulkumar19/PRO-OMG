@@ -46,11 +46,11 @@ public:
 	//! Constructor of MPI_MAIN
 	MPI_MAIN(){};
 
-	void mpi_function(inputParameters * params);
+	void mpi_function(simulationParameters * params);
 
-	void createMPITopology(inputParameters * params);
+	void createMPITopology(simulationParameters * params);
 
-	void finalizeCommunications(inputParameters * params);
+	void finalizeCommunications(simulationParameters * params);
 
 };
 

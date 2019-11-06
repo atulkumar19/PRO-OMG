@@ -19,7 +19,7 @@
 #include "mpi_main.h"
 
 
-void MPI_MAIN::mpi_function(inputParameters * params){
+void MPI_MAIN::mpi_function(simulationParameters * params){
 
 	int nthreads,thread;
 
@@ -38,7 +38,7 @@ void MPI_MAIN::mpi_function(inputParameters * params){
 }
 
 
-void MPI_MAIN::createMPITopology(inputParameters * params){
+void MPI_MAIN::createMPITopology(simulationParameters * params){
 
 	int ndims(1), dims[1] = {params->mpi.NUMBER_MPI_DOMAINS};
 	int reorder(0), periods[1] = {1};
@@ -63,7 +63,7 @@ void MPI_MAIN::createMPITopology(inputParameters * params){
 }
 
 
-void MPI_MAIN::finalizeCommunications(inputParameters * params){
+void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	bool finalized = false;
 
 	if(params->mpi.rank_cart == 0)

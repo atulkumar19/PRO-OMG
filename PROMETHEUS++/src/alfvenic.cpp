@@ -18,7 +18,7 @@
 
 #include "alfvenic.h"
 
-ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+ALFVENIC::ALFVENIC(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	if(params->numberOfAlfvenicModes > 0){
 		if(params->loadModes == 0){
@@ -29,7 +29,7 @@ ALFVENIC::ALFVENIC(const inputParameters * params,const meshGeometry * mesh,fiel
 	}
 }
 
-void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::generateModes(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	Aw.amp.set_size(params->numberOfAlfvenicModes);
@@ -91,7 +91,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 		Aw.dB.Z += Bz*sin( Aw.wavenumber(ii)*x + Aw.phase(ii) );
 	}
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		mat u_amp(params->numberOfAlfvenicModes,3);
 		if(ii==0){//Protons
 			for(int jj=0;jj<params->numberOfAlfvenicModes;jj++){
@@ -113,7 +113,7 @@ void ALFVENIC::generateModes(const inputParameters * params,const meshGeometry *
 
 }
 
-void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::loadModes(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	mat spectra;
@@ -181,7 +181,7 @@ void ALFVENIC::loadModes(const inputParameters * params,const meshGeometry * mes
 			Aw.dB.Z += Bz*( sin( Aw.wavenumber(ii)*x + Aw.phase(ii) ) - Cx*x );
 		}
 
-		for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+		for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 			mat u_amp(spectra.n_rows,3);
 			if(ii==0){//Protons
 				for(int jj=0;jj<spectra.n_rows;jj++){
@@ -346,11 +346,11 @@ void ALFVENIC::addMagneticPerturbations(fields * EB){
 	EB->B.Z.subvec(1,NX-2) += Aw.dB.Z;
 }
 
-void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<ionSpecies> * IONS){
+void ALFVENIC::addVelocityPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS){
 
 	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
-	for(unsigned int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(unsigned int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		for(int jj=0;jj<params->numberOfAlfvenicModes;jj++){
 			double vx(Aw.Uo[ii](jj,2)*cos(PHI)), vy(Aw.Uo[ii](jj,1)), vz(Aw.Uo[ii](jj,2)*sin(PHI));
 			double Cx, Cy;
@@ -367,7 +367,7 @@ void ALFVENIC::addVelocityPerturbations(const inputParameters * params,vector<io
 
 }
 
-void ALFVENIC::addPerturbations(const inputParameters * params,vector<ionSpecies> * IONS,fields * EB){
+void ALFVENIC::addPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS,fields * EB){
 
 	if(params->numberOfAlfvenicModes > 0){
 		addMagneticPerturbations(EB);

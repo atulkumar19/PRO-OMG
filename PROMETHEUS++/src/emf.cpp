@@ -19,7 +19,7 @@
 #include "emf.h"
 
 
-EMF_SOLVER::EMF_SOLVER(const inputParameters * params, characteristicScales * CS){
+EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
 	n_cs = CS->length*CS->density;
 	dim_x = params->NX_PER_MPI + 2;
 
@@ -38,7 +38,7 @@ EMF_SOLVER::EMF_SOLVER(const inputParameters * params, characteristicScales * CS
 }
 
 
-void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * field){
+void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params,vfield_vec * field){
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
@@ -75,7 +75,7 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params,vfield_vec * fiel
 }
 
 
-void EMF_SOLVER::MPI_passGhosts(const inputParameters * params, arma::vec * field){
+void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec * field){
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
@@ -95,7 +95,7 @@ void EMF_SOLVER::MPI_passGhosts(const inputParameters * params, arma::vec * fiel
 }
 
 
-void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_vec * vf,double as){
+void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->NX_PER_MPI + 2;
 	arma::vec b = zeros(dim_x);
@@ -133,12 +133,12 @@ void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_vec * vf,doubl
 }
 
 
-void EMF_SOLVER::smooth_TOS(const inputParameters * params,vfield_mat * vf,double as){
+void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_mat * vf,double as){
 
 }
 
 
-void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_vec * vf,double as){
+void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->NX_PER_MPI + 2;
 	arma::vec b = zeros(dim_x);
@@ -175,12 +175,12 @@ void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_vec * vf,doubl
 }
 
 
-void EMF_SOLVER::smooth_TSC(const inputParameters * params,vfield_mat * vf,double as){
+void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_mat * vf,double as){
 
 }
 
 
-void EMF_SOLVER::smooth(const inputParameters * params,vfield_vec * vf,double as){
+void EMF_SOLVER::smooth(const simulationParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
 	int dim_x = params->NX_PER_MPI + 2;
 	arma::vec b = zeros(dim_x);
@@ -217,17 +217,17 @@ void EMF_SOLVER::smooth(const inputParameters * params,vfield_vec * vf,double as
 }
 
 
-void EMF_SOLVER::smooth(const inputParameters * params,vfield_mat * vf,double as){
+void EMF_SOLVER::smooth(const simulationParameters * params,vfield_mat * vf,double as){
 
 }
 
 
-void EMF_SOLVER::equilibrium(const inputParameters * params,vector<ionSpecies> * IONS,fields * EB){
+void EMF_SOLVER::equilibrium(const simulationParameters * params,vector<ionSpecies> * IONS,fields * EB){
 
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,fields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeometry * mesh,fields * EB){//This function calculates -culr(EB->E)
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -249,17 +249,17 @@ void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry *
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
 
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
 
 }
 
 
-void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
@@ -362,7 +362,7 @@ void EMF_SOLVER::advanceBField(const inputParameters * params,const meshGeometry
 
 
 #ifdef ONED
-void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
@@ -379,7 +379,7 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 	n.zeros();
 	U.zeros();
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		forwardPBC_1D(&IONS->at(ii).n);
 		forwardPBC_1D(&IONS->at(ii).n_);
 		forwardPBC_1D(&IONS->at(ii).nv.X);
@@ -507,20 +507,20 @@ void EMF_SOLVER::aef_1D(const inputParameters * params,const meshGeometry * mesh
 
 
 #ifdef TWOD
-void EMF_SOLVER::aef_2D(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_2D(const simulationParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void EMF_SOLVER::aef_3D(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_3D(const simulationParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
 
 }
 #endif
 
 
-void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceEField(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	//The ions' density and flow velocities are stored in the integer nodes,we'll use mean values of these quantities in order to calculate the electric field in the staggered grid.
 
@@ -545,7 +545,7 @@ void EMF_SOLVER::advanceEField(const inputParameters * params,const meshGeometry
 	+ IONS_: Ions' variables at time level "l - 1/2"
 	+ IONS: Ions' variables at time level "l + 1/2"
 */
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params, const meshGeometry * mesh,\
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshGeometry * mesh,\
 														oneDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS, const int BAE){
 
 	MPI_passGhosts(params,&EB->E);
@@ -559,7 +559,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	n.zeros();
 	U.zeros();
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 			forwardPBC_1D(&IONS->at(ii).n);
 			forwardPBC_1D(&IONS->at(ii).n_);
 			forwardPBC_1D(&IONS->at(ii).nv.X);
@@ -592,7 +592,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 	n_.zeros();
 	U_.zeros();
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		forwardPBC_1D(&IONS->at(ii).n_);
 		forwardPBC_1D(&IONS->at(ii).n__);
 		forwardPBC_1D(&IONS->at(ii).nv_.X);
@@ -621,7 +621,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 		n__.zeros();
 		U__.fill(0.0);
 
-		for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+		for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 			forwardPBC_1D(&IONS->at(ii).n__);
 			forwardPBC_1D(&IONS->at(ii).nv__.X);
 			forwardPBC_1D(&IONS->at(ii).nv__.Y);
@@ -755,14 +755,14 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * 
 
 
 #ifdef TWOD
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE){
 
 }
 #endif
 
 
 #ifdef THREED
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const inputParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE){
 
 }
 #endif

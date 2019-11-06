@@ -18,14 +18,14 @@
 
 #include "timeSteppingMethods.h"
 
-TIME_STEPPING_METHODS::TIME_STEPPING_METHODS(inputParameters * params){
+TIME_STEPPING_METHODS::TIME_STEPPING_METHODS(simulationParameters * params){
     t1 = 0.0;						//
     t2 = 0.0;
     currentTime = 0.0;
     outputIterator = 0;			//
 }
 
-void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, \
+void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshGeometry * mesh, \
                                 characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
@@ -97,7 +97,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
 }
 
 
-void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
+void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(simulationParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 

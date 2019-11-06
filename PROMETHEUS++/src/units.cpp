@@ -21,7 +21,7 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 */
 #include "units.h"
 
-void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB){
+void UNITS::defineTimeStep(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB){
 	if(params->mpi.rank_cart == 0)
 		cout << "\n* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
@@ -45,11 +45,7 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 		cout << endl;
 	}
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species
-		IONS->at(ii).BGP.Wc = IONS->at(ii).Q*averageB/IONS->at(ii).M;
-		IONS->at(ii).BGP.Wpi = sqrt( IONS->at(ii).BGP.Dn*params->ne*IONS->at(ii).Q*IONS->at(ii).Q/(F_EPSILON*IONS->at(ii).M) );//Check the definition of the plasma freq for each species!
-		IONS->at(ii).BGP.LarmorRadius = IONS->at(ii).BGP.VTper/IONS->at(ii).BGP.Wc;
-
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){//Iterations over the ion species
 		if(params->mpi.rank_cart == 0){
 			cout << "PROPERTIES OF ION SPECIES No. " << ii + 1 << '\n';
 			cout << "+ Charge: " << scientific << IONS->at(ii).Q << fixed << " C\n";//Revisar las cuentas con el factor NCP
@@ -57,23 +53,23 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 			cout << "+ Super-particles: " << IONS->at(ii).NSP << "\n";
 			cout << "+ Particles per cell: " << IONS->at(ii).NPC << "\n";
 			cout << "+ Charged particles per super-particle: " << scientific << IONS->at(ii).NCP << fixed << "\n";
-			cout << "+ Density: " << scientific << IONS->at(ii).BGP.Dn*params->ne << fixed << " m^{-3}\n";
-			cout << "+ Parallel temperature: " << scientific << F_KB*IONS->at(ii).BGP.Tpar/F_E << fixed << " eV\n";
-			cout << "+ Perpendicular temperature: " << scientific << F_KB*IONS->at(ii).BGP.Tper/F_E << fixed << " eV\n";
-			cout << "+ Parallel thermal velocity: " << scientific << IONS->at(ii).BGP.VTpar << fixed << " m/s\n";
-			cout << "+ Perpendicular thermal velocity: " << scientific << IONS->at(ii).BGP.VTper << fixed << " m/s\n";
-			cout << "+ Cyclotron frequency: " << scientific << IONS->at(ii).BGP.Wc << fixed << " Hz\n";
-			cout << "+ Plasma frequency: " << scientific << IONS->at(ii).BGP.Wpi << fixed << " Hz\n";
-			cout << "+ Ions skin depth: " << scientific << F_C/IONS->at(ii).BGP.Wpi << fixed << " m" << endl;
-			cout << "+ Beta: " << scientific << 2.0*F_MU*(IONS->at(ii).BGP.Dn*params->ne)*F_KB*IONS->at(ii).BGP.Tpar/(averageB*averageB) << fixed << endl;
-			cout << "+ Gyroperiod: " << scientific << 2.0*M_PI/IONS->at(ii).BGP.Wc << fixed << " s\n";
-			cout << "+ Larmor radius: " << scientific << IONS->at(ii).BGP.LarmorRadius << fixed << " m\n";
-			cout << "+ Magnetic moment: " << scientific << IONS->at(ii).BGP.mu << fixed << " A*m^2\n\n";
+			cout << "+ Density: " << scientific << IONS->at(ii).Dn*params->ne << fixed << " m^{-3}\n";
+			cout << "+ Parallel temperature: " << scientific << F_KB*IONS->at(ii).Tpar/F_E << fixed << " eV\n";
+			cout << "+ Perpendicular temperature: " << scientific << F_KB*IONS->at(ii).Tper/F_E << fixed << " eV\n";
+			cout << "+ Parallel thermal velocity: " << scientific << IONS->at(ii).VTpar << fixed << " m/s\n";
+			cout << "+ Perpendicular thermal velocity: " << scientific << IONS->at(ii).VTper << fixed << " m/s\n";
+			cout << "+ Cyclotron frequency: " << scientific << IONS->at(ii).Wc << fixed << " Hz\n";
+			cout << "+ Plasma frequency: " << scientific << IONS->at(ii).Wp << fixed << " Hz\n";
+			cout << "+ Ions skin depth: " << scientific << F_C/IONS->at(ii).Wp << fixed << " m" << endl;
+			cout << "+ Beta: " << scientific << 2.0*F_MU*(IONS->at(ii).Dn*params->ne)*F_KB*IONS->at(ii).Tpar/(averageB*averageB) << fixed << endl;
+			cout << "+ Gyroperiod: " << scientific << 2.0*M_PI/IONS->at(ii).Wc << fixed << " s\n";
+			cout << "+ Larmor radius: " << scientific << IONS->at(ii).LarmorRadius << fixed << " m\n";
+			cout << "+ Magnetic moment: " << scientific << IONS->at(ii).avg_mu << fixed << " A*m^2\n\n";
 		}
 
 		//We don't take into account the tracers dynamics of course!
-		if(IONS->at(ii).BGP.Wc > higherIonCyclotronFrequency && (IONS->at(ii).SPECIES != 0))
-			higherIonCyclotronFrequency = IONS->at(ii).BGP.Wc;
+		if(IONS->at(ii).Wc > higherIonCyclotronFrequency && (IONS->at(ii).SPECIES != 0))
+			higherIonCyclotronFrequency = IONS->at(ii).Wc;
 
 		if(IONS->at(ii).SPECIES != 0){
 			ionSpecies++;
@@ -130,7 +126,7 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 
 		B = params->BGP.Bo;
 //		A = params->DrL*sqrt(2*F_KB*params->BGP.Te*params->ne/F_EPSILON)/(M_PI*F_C*B);
-		A = (mesh->DX*IONS->at(0).BGP.Wpi)/(M_PI*F_C);//Ion skin depth is calculated using the background ions.
+		A = (mesh->DX*IONS->at(0).Wp)/(M_PI*F_C);//Ion skin depth is calculated using the background ions.
 
 		#ifdef ONED
 		CFL_w = 0.5*A*A/2.0;
@@ -213,7 +209,7 @@ void UNITS::defineTimeStep(inputParameters * params,meshGeometry * mesh,vector<i
 
 
 
-void UNITS::broadcastCharacteristicScales(inputParameters * params,characteristicScales * CS){
+void UNITS::broadcastCharacteristicScales(simulationParameters * params,characteristicScales * CS){
 
 	// Define MPI type for characteristicScales structure.
 	int numStructElem(13);
@@ -262,7 +258,31 @@ void UNITS::broadcastCharacteristicScales(inputParameters * params,characteristi
 }
 
 
-void UNITS::calculateFundamentalScales(inputParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS, meshGeometry * mesh){
+void UNITS::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	// Electron skin depth
+	MPI_Bcast(&FS->electronSkinDepth, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	// Electron gyro-period
+	MPI_Bcast(&FS->electronGyroPeriod, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	// Electron gyro-radius
+	MPI_Bcast(&FS->electronGyroRadius, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	// Ion skin depth
+	MPI_Bcast(FS->ionSkinDepth, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	// Ion gyro-period
+	MPI_Bcast(FS->ionGyroPeriod, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	// Ion gyro-radius
+	MPI_Bcast(FS->ionGyroRadius, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
+
+
+void UNITS::calculateFundamentalScales(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS){
 
 	cout << "\n* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
 	FS->electronSkinDepth = F_C/sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
@@ -274,10 +294,10 @@ void UNITS::calculateFundamentalScales(inputParameters * params, vector<ionSpeci
 	cout << " + Electron gyro-radius: " << scientific << FS->electronGyroRadius << fixed << " m" << endl;
 	cout << endl;
 
-	for(int ss=0; ss<params->numberOfIonSpecies; ss++){
-		FS->ionGyroPeriod[ss] = 2.0*M_PI/IONS->at(ss).BGP.Wc;
-		FS->ionSkinDepth[ss] = F_C/IONS->at(ss).BGP.Wpi;
-		FS->ionGyroRadius[ss] = IONS->at(ss).BGP.LarmorRadius;
+	for(int ss=0; ss<params->numberOfParticleSpecies; ss++){
+		FS->ionGyroPeriod[ss] = 2.0*M_PI/IONS->at(ss).Wc;
+		FS->ionSkinDepth[ss] = F_C/IONS->at(ss).Wp;
+		FS->ionGyroRadius[ss] = IONS->at(ss).LarmorRadius;
 
 		cout << "ION SPECIES: " << ss << endl;
 		cout << " + Ion gyro-period: " << scientific << FS->ionGyroPeriod[ss] << fixed << " s" << endl;
@@ -286,31 +306,39 @@ void UNITS::calculateFundamentalScales(inputParameters * params, vector<ionSpeci
 		cout << endl;
 	}
 
+	cout << "* * * * * * * * * * * * FUNDAMENTAL SCALES IN SIMULATION CALCULATED  * * * * * * * * * * * * * * * * * *" << endl;
+}
+
+
+void UNITS::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshGeometry * mesh){
+	cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
+
 	cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
 
 	// Check that DX is larger than the electron skin depth, otherwise, abort simulation.
 	if (mesh->DX <= FS->electronSkinDepth){
 		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
 		cout << "ABORTING SIMULATION..." << endl;
-		MPI_Abort(MPI_COMM_WORLD,-1);
+		MPI_Abort(MPI_COMM_WORLD,-1000);
 	}
-	cout << "* * * * * * * * * * * * FUNDAMENTAL SCALES IN SIMULATION CALCULATED  * * * * * * * * * * * * * * * * * *" << endl;
+	cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
 }
 
-void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
+
+void UNITS::defineCharacteristicScales(simulationParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
 
 	cout << "\n* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *\n";
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iterations over the ion species.
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){//Iterations over the ion species.
 		CS->mass += IONS->at(ii).M;
 		CS->charge += fabs(IONS->at(ii).Q);
 	}//Iterations over the ion species.
 
-	CS->mass /= params->numberOfIonSpecies;
-	CS->charge /= params->numberOfIonSpecies;
+	CS->mass /= params->numberOfParticleSpecies;
+	CS->charge /= params->numberOfParticleSpecies;
 	CS->density = params->ne;
 
 	double characteristicPlasmaFrequency(0);//Background ion-plasma frequency.
@@ -346,7 +374,7 @@ void UNITS::defineCharacteristicScales(inputParameters * params,vector<ionSpecie
 }
 
 
-void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
+void UNITS::dimensionlessForm(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; // Dimensionless vacuum permittivity
@@ -376,13 +404,13 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 	for(int ii=0;ii<IONS->size();ii++){//Iterations over the ion species.
 		IONS->at(ii).Q /= CS->charge;
 		IONS->at(ii).M /= CS->mass;
-		IONS->at(ii).BGP.Tpar /= CS->temperature;
-		IONS->at(ii).BGP.Tper /= CS->temperature;
-		IONS->at(ii).BGP.LarmorRadius /= CS->length;
-		IONS->at(ii).BGP.VTpar /= CS->velocity;
-		IONS->at(ii).BGP.VTper /= CS->velocity;
-		IONS->at(ii).BGP.Wc *= CS->time;
-		IONS->at(ii).BGP.Wpi *= CS->time;//IMPORTANT: Not normalized before!!
+		IONS->at(ii).Tpar /= CS->temperature;
+		IONS->at(ii).Tper /= CS->temperature;
+		IONS->at(ii).LarmorRadius /= CS->length;
+		IONS->at(ii).VTpar /= CS->velocity;
+		IONS->at(ii).VTper /= CS->velocity;
+		IONS->at(ii).Wc *= CS->time;
+		IONS->at(ii).Wp *= CS->time;//IMPORTANT: Not normalized before!!
 		IONS->at(ii).X = IONS->at(ii).X/CS->length;
 		IONS->at(ii).V = IONS->at(ii).V/CS->velocity;
 		IONS->at(ii).P = IONS->at(ii).P/CS->momentum;
@@ -401,13 +429,13 @@ void UNITS::dimensionlessForm(inputParameters * params,meshGeometry * mesh,vecto
 }
 
 
-void UNITS::normalizeVariables(inputParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
+void UNITS::normalizeVariables(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }
 
 
-void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS){
+void UNITS::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS){
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
 		defineCharacteristicScales(params, IONS, CS);
@@ -417,11 +445,11 @@ void UNITS::defineCharacteristicScalesAndBcast(inputParameters * params, vector<
 }
 
 
-void UNITS::calculateFundamentalScalesAndBcast(inputParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS, meshGeometry * mesh){
+void UNITS::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS){
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-		calculateFundamentalScales(params, IONS, FS, mesh);
+		calculateFundamentalScales(params, IONS, FS);
 	}
 
-	// broadcastCharacteristicScales(params,CS);
+	broadcastFundamentalScales(params, FS);
 }

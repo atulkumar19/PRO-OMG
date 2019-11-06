@@ -49,29 +49,29 @@ class HDF{
 	#define CPP_TYPE float
 #endif
 
-void siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+void siv_1D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void siv_2D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+void siv_2D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void siv_3D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+void siv_3D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
-void saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+void saveIonsVariables(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
 
 
-void saveFieldsVariables(const inputParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
+void saveFieldsVariables(const simulationParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
 
-void saveFieldsVariables(const inputParameters * params, twoDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
+void saveFieldsVariables(const simulationParameters * params, twoDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
 
-void saveFieldsVariables(const inputParameters * params, threeDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
+void saveFieldsVariables(const simulationParameters * params, threeDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
 
 void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
 
 public:
 
-HDF(inputParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS);
+HDF(simulationParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS);
 
-void saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
+void saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
 
 };
 

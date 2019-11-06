@@ -86,7 +86,7 @@ map<string,string> INITIALIZE::loadParametersString(string * inputFile){
 }
 
 
-INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
+INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
 	MPI_Comm_size(MPI_COMM_WORLD,&params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
 
@@ -191,7 +191,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->transient = (unsigned int)std::stoi( parametersStringMap["transient"] );
 
-	params->numberOfIonSpecies = std::stoi( parametersStringMap["numberOfIonSpecies"] );
+	params->numberOfParticleSpecies = std::stoi( parametersStringMap["numberOfParticleSpecies"] );
 
 	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
@@ -213,7 +213,7 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 
 	params->outputCadence = std::stod( parametersStringMap["outputCadence"] );
 
-	// params->em = new energyMonitor((int)params->numberOfIonSpecies,(int)params->timeIterations);
+	// params->em = new energyMonitor((int)params->numberOfParticleSpecies,(int)params->timeIterations);
 
     params->NX_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NX"] );
     params->NY_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NY"] );
@@ -242,26 +242,36 @@ INITIALIZE::INITIALIZE(inputParameters * params,int argc,char* argv[]){
 }
 
 
-void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicScales * CS,meshGeometry * mesh){
+void INITIALIZE::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshGeometry * mesh){
+
+    INITIALIZE::LarmorRadius = FS->ionGyroRadius[0];
+    INITIALIZE::ionSkinDepth = FS->ionSkinDepth[0];
+    if (params->numberOfParticleSpecies > 1){
+        for (int ss=1; ss<params->numberOfParticleSpecies; ss++){
+            INITIALIZE::LarmorRadius = (INITIALIZE::LarmorRadius < FS->ionGyroRadius[ss]) ? FS->ionGyroRadius[ss] : INITIALIZE::LarmorRadius;
+            INITIALIZE::ionSkinDepth = (INITIALIZE::ionSkinDepth < FS->ionSkinDepth[ss]) ? FS->ionSkinDepth[ss] : INITIALIZE::ionSkinDepth;
+        }
+    }
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
-	if(params->mpi.rank_cart == 0)
-		cout << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
+	if (params->mpi.rank_cart == 0)
+		cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
 
 	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
 		mesh->DX = params->DrL*INITIALIZE::LarmorRadius;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
 		if(params->mpi.rank_cart == 0)
-			cout << "Using LARMOR RADIUS to set up simulation grid.\n";
+			cout << "Using LARMOR RADIUS to set up simulation grid." << endl;
+
 	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
 		mesh->DX = params->dp*INITIALIZE::ionSkinDepth;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
 		if(params->mpi.rank_cart == 0)
-			cout << "Using ION SKIN DEPTH to set up simulation grid.\n";
+			cout << "Using ION SKIN DEPTH to set up simulation grid." << endl;
 	}
 
 	#ifdef ONED
@@ -306,13 +316,13 @@ void INITIALIZE::loadMeshGeometry(const inputParameters * params,characteristicS
 }
 
 
-void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const characteristicScales * CS,\
+void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS,\
 	const meshGeometry * mesh,vector<ionSpecies> * IONS){
 
 	if(params->mpi.rank_cart == 0){
 		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
 	}
-	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
+	int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		if(params->restart == 1){
@@ -408,27 +418,27 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 	double chargeDensityPerCell;
 
 	#ifdef ONED
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
+		IONS->at(ii).Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = (mesh->DX*(double)mesh->NX_PER_MPI)*chargeDensityPerCell;
 	}
 	#endif
 
 	#ifdef TWOD
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
+		IONS->at(ii).Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
 	}
 	#endif
 
 	#ifdef THREED
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		chargeDensityPerCell = \
-		IONS->at(ii).BGP.Dn*params->ne/IONS->at(ii).NSP;
+		IONS->at(ii).Dn*params->ne/IONS->at(ii).NSP;
 
 		IONS->at(ii).NCP = \
 		(mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI*mesh->DZ*(double)mesh->NZ_PER_MPI)*chargeDensityPerCell;
@@ -446,14 +456,14 @@ void INITIALIZE::setupIonsInitialCondition(const inputParameters * params,const 
 }
 
 
-void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> * IONS){
+void INITIALIZE::loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP){
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
 	if(params->mpi.rank_cart == 0){
 		cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
-		cout << "Number of ion species: " << params->numberOfIonSpecies << "\n";
-		cout << "Number of tracer species: " << params->numberOfTracerSpecies << "\n";
+		cout << "Number of ion species: " << params->numberOfParticleSpecies << endl;
+		cout << "Number of tracer species: " << params->numberOfTracerSpecies << endl;
 	}
 
 
@@ -468,115 +478,158 @@ void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> *
 	std::map<string,float> parametersMap;
 	parametersMap = loadParameters(&name);
 
-	int totalNumSpecies(params->numberOfIonSpecies + params->numberOfTracerSpecies);
+	int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		string name;
 		ionSpecies ions;
+        GCSpecies gcp;
+        int SPECIES;
 		stringstream ss;
 
 		ss << ii + 1;
 
-		name = "SPECIES" + ss.str();
-		ions.SPECIES = (int)parametersMap[name];
-		name.clear();
+        name = "SPECIES" + ss.str();
+        SPECIES = (int)parametersMap[name];
+        name.clear();
 
-		name = "NPC" + ss.str();
-		ions.NPC = parametersMap[name];
-		name.clear();
+        if (SPECIES == 0 || SPECIES == 1){
+            ions.SPECIES = SPECIES;
 
-		name = "IC" + ss.str();
-		ions.IC = (int)parametersMap[name];
-		name.clear();
+            name = "NPC" + ss.str();
+    		ions.NPC = parametersMap[name];
+    		name.clear();
 
-		name = "Tper" + ss.str();
-		ions.BGP.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
-		name.clear();
+    		name = "IC" + ss.str();
+    		ions.IC = (int)parametersMap[name];
+    		name.clear();
 
-		name = "Tpar" + ss.str();
-		ions.BGP.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
-		name.clear();
+    		name = "Tper" + ss.str();
+    		ions.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+    		name.clear();
 
-		name = "Dn" + ss.str();
-		ions.BGP.Dn = parametersMap[name];
-		name.clear();
+    		name = "Tpar" + ss.str();
+    		ions.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+    		name.clear();
 
-		name = "pctSupPartOutput" + ss.str();
-		ions.pctSupPartOutput = parametersMap[name];
-		name.clear();
+    		name = "Dn" + ss.str();
+    		ions.Dn = parametersMap[name];
+    		name.clear();
 
-		if(ions.SPECIES == 0){//Tracers
-			//The number of charged particles per super-particle (NCP) is defined in
-			name = "NCP" + ss.str();
-			ions.NCP = parametersMap[name];
-			name.clear();
-			name = "Z" + ss.str();
-			ions.Z = parametersMap[name];//parametersMap[name] = Atomic number.
-			ions.Q = F_E*ions.Z;
-			name.clear();
-			name = "M" + ss.str();
-			ions.M = F_U*parametersMap[name]; //parametersMap[name] times the proton mass.
+    		name = "pctSupPartOutput" + ss.str();
+    		ions.pctSupPartOutput = parametersMap[name];
+    		name.clear();
 
-			if(params->mpi.rank_cart == 0)
-				cout << "Species No "  << ii + 1 << " are tracers\n";
-		}else if(ions.SPECIES == 1){ //Electrons
-			ions.Q = -F_E;
-//			ions.Z = ? //What to do in this case?! Modify later.
-			ions.M = F_ME;
-
-			if(params->mpi.rank_cart == 0)
-				cout << "Species No "  << ii + 1 << " are electrons\n";
-		}else if(ions.SPECIES == 2){ //Protons
-			ions.Z = 1.0;
-			ions.Q = F_E;
-			ions.M = F_MP;
-
-			if(params->mpi.rank_cart == 0)
-				cout << "Species No "  << ii + 1 << " are protons\n";
-		}else{
-			name = "Z" + ss.str();
+            name = "Z" + ss.str();
 			ions.Z = parametersMap[name]; //parametersMap[name] = Atomic number.
-			ions.Q = F_E*ions.Z;
-			name.clear();
+            name.clear();
+
+            ions.Q = F_E*ions.Z;
+
 			name = "M" + ss.str();
 			ions.M = F_U*parametersMap[name]; //parametersMap[name] times the atomic mass unit.
+            name.clear();
 
-			if(params->mpi.rank_cart == 0){
-				cout << "Species No "  << ii + 1 << " are ions with the following parameters:\n";
-				cout << "Ion atomic number: " << ions.Z << "\n";
-				cout << "Ion mass: " << ions.M << " kg\n";
-			}
-		}
+            ions.Wc = ions.Q*params->BGP.Bo/ions.M;
 
-		//Definition of the initial total number of superparticles for each species
-		ions.NSP = ceil(ions.NPC*params->NX_PER_MPI);
-		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
+            ions.Wp = sqrt( ions.Dn*params->ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
 
-		IONS->push_back(ions);
+            ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
+        	ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
+
+            ions.LarmorRadius = ions.VTper/ions.Wc;
+
+            //Definition of the initial total number of superparticles for each species
+    		ions.NSP = ceil(ions.NPC*params->NX_PER_MPI);
+    		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
+
+    		IONS->push_back(ions);
+
+            if(params->mpi.rank_cart == 0){
+                if (ions.SPECIES == 0){
+                    cout << endl << "Species No "  << ii + 1 << " are tracers with the following parameters:" << endl;
+                }else{
+                    cout << endl << "Species No "  << ii + 1 << " are full-orbit particles with the following parameters:" << endl;
+                }
+                cout << "Atomic number: " << ions.Z << endl;
+                cout << "Mass: " << ions.M << " kg" << endl;
+                cout << "Parallel temperature: " << ions.Tpar*F_KB/F_E << " eV" << endl;
+                cout << "Perpendicular temperature: " << ions.Tper*F_KB/F_E << " eV" << endl;
+                cout << "Cyclotron frequency: " << ions.Wc << " Hz" << endl;
+                cout << "Plasma frequency: " << ions.Wp << " Hz" << endl;
+                cout << "Parallel thermal velocity: " << ions.VTpar << " m/s" << endl;
+                cout << "Perpendicular thermal velocity: " << ions.VTper << " m/s" << endl;
+                cout << "Larmor radius: " << ions.LarmorRadius << " m" << endl;
+            }
+        }else if (SPECIES == -1){
+            gcp.SPECIES = SPECIES;
+
+            name = "NPC" + ss.str();
+    		gcp.NPC = parametersMap[name];
+    		name.clear();
+
+    		name = "IC" + ss.str();
+    		gcp.IC = (int)parametersMap[name];
+    		name.clear();
+
+    		name = "Tper" + ss.str();
+    		gcp.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+    		name.clear();
+
+    		name = "Tpar" + ss.str();
+    		gcp.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+    		name.clear();
+
+    		name = "Dn" + ss.str();
+    		gcp.Dn = parametersMap[name];
+    		name.clear();
+
+    		name = "pctSupPartOutput" + ss.str();
+    		gcp.pctSupPartOutput = parametersMap[name];
+    		name.clear();
+
+            name = "Z" + ss.str();
+			gcp.Z = parametersMap[name]; //parametersMap[name] = Atomic number.
+            name.clear();
+
+            gcp.Q = F_E*gcp.Z;
+
+			name = "M" + ss.str();
+			gcp.M = F_U*parametersMap[name]; //parametersMap[name] times the atomic mass unit.
+            name.clear();
+
+            ions.Wc = ions.Q*params->BGP.Bo/ions.M;
+
+            ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
+        	ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
+
+            ions.LarmorRadius = ions.VTper/ions.Wc;
+
+            //Definition of the initial total number of superparticles for each species
+    		gcp.NSP = ceil(gcp.NPC*params->NX_PER_MPI);
+    		gcp.nSupPartOutput = floor( (gcp.pctSupPartOutput/100.0)*gcp.NSP );
+
+    		GCP->push_back(gcp);
+
+            if(params->mpi.rank_cart == 0){
+                cout << endl << "Species No "  << ii + 1 << " are guiding-center particles with the following parameters:" << endl;
+                cout << "Atomic number: " << gcp.Z << endl;
+                cout << "Mass: " << gcp.M << " kg" << endl;
+                cout << "Parallel temperature: " << gcp.Tpar*F_KB/F_E << " eV" << endl;
+                cout << "Perpendicular temperature: " << gcp.Tper*F_KB/F_E << " eV" << endl;
+                cout << "Cyclotron frequency: " << gcp.Wc << " Hz" << endl;
+                cout << "Parallel thermal velocity: " << gcp.VTpar << " m/s" << endl;
+                cout << "Perpendicular thermal velocity: " << gcp.VTper << " m/s" << endl;
+                cout << "Larmor radius: " << gcp.LarmorRadius << " m" << endl;
+            }
+        }else{
+            if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+    			cout << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = full orbit, -1 = guiding center";
+    		}
+    		MPI_Abort(MPI_COMM_WORLD,-123);
+        }
+
 	}//Iteration over ion species
-
-	//The ion skin depth is calculated using the set of values of species No 1, which is assumed to be the backgroud population.
-	INITIALIZE::ionSkinDepth =\
-	sqrt(IONS->at(0).M/(F_MU*(IONS->at(0).BGP.Dn*params->ne)))/IONS->at(0).Q;
-
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iteration over ion species
-		double rL;
-
-		rL = sqrt( 2.0*F_KB*IONS->at(ii).BGP.Tper*IONS->at(ii).M )/( IONS->at(ii).Q*params->BGP.Bo );
-
-		if(ii == 0){
-			INITIALIZE::LarmorRadius = rL;
-		}else if(rL < INITIALIZE::LarmorRadius){
-			INITIALIZE::LarmorRadius = rL;
-		}
-		if(params->mpi.rank_cart == 0)
-			cout <<"Larmor radius of species " << ii+1 << ": "<< rL << " m\n";
-	}//Iteration over ion species
-
-	if(params->mpi.rank_cart == 0){
-		cout <<"Larmor radius used in simulation " << INITIALIZE::LarmorRadius <<" m\n";
-		cout <<"Ion skin depth used in simulation " << INITIALIZE::ionSkinDepth <<" m\n";
-	}
 
 	if(params->mpi.rank_cart == 0)
 		cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
@@ -585,7 +638,7 @@ void INITIALIZE::loadIonParameters(inputParameters * params,vector<ionSpecies> *
 }
 
 
-void INITIALIZE::initializeFields(const inputParameters * params, const meshGeometry * mesh, fields * EB){
+void INITIALIZE::initializeFields(const simulationParameters * params, const meshGeometry * mesh, fields * EB){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;

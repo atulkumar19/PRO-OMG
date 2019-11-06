@@ -74,10 +74,10 @@ struct energyMonitor{
 	arma::mat B_fieldEnergy;//(time,components)
 	arma::mat totalEnergy;
 	energyMonitor(){};
-	energyMonitor(int numberOfIonSpecies,int timeIterations){
+	energyMonitor(int numberOfParticleSpecies,int timeIterations){
 		it = 0;
 		refEnergy = 0.0;
-		ionsEnergy = arma::zeros(timeIterations,numberOfIonSpecies);
+		ionsEnergy = arma::zeros(timeIterations,numberOfParticleSpecies);
 		E_fieldEnergy = arma::zeros(timeIterations,3);
 		B_fieldEnergy  = arma::zeros(timeIterations,3);
 		totalEnergy = arma::zeros(timeIterations,2);
@@ -120,7 +120,7 @@ struct backgroundParameters{
 };
 
 
-struct inputParameters{
+struct simulationParameters{
 	// List of variables in the outputs
 	std::vector<std::string> outputs_variables;
 
@@ -158,7 +158,7 @@ struct inputParameters{
 	int NZ_PER_MPI;
 
 	//ions properties
-	int numberOfIonSpecies;
+	int numberOfParticleSpecies;
 	int numberOfTracerSpecies;
 
 	double ne; // Electron number density (input file)
@@ -168,6 +168,9 @@ struct inputParameters{
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
 	int checkSmoothParameter;
+
+	double LarmorRadius;
+	double ionSkinDepth;
 
 	double DrL;
 	double dp;
@@ -225,13 +228,13 @@ struct fundamentalScales{
 	double * ionGyroPeriod;
 	double * ionGyroRadius;
 
-	fundamentalScales(inputParameters * params){
+	fundamentalScales(simulationParameters * params){
 		electronSkinDepth = 0.0;
 		electronGyroPeriod = 0.0;
 		electronGyroRadius = 0.0;
-		ionSkinDepth = new double[params->numberOfIonSpecies];
-		ionGyroPeriod = new double[params->numberOfIonSpecies];
-		ionGyroRadius = new double[params->numberOfIonSpecies];
+		ionSkinDepth = new double[params->numberOfParticleSpecies];
+		ionGyroPeriod = new double[params->numberOfParticleSpecies];
+		ionGyroRadius = new double[params->numberOfParticleSpecies];
 	}
 };
 

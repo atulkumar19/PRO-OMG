@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
 
-	inputParameters params; 		// Input parameters for the simulation.
+	simulationParameters params; 		// Input parameters for the simulation.
 	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	vector<GCSpecies> GCP;
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
@@ -53,13 +53,19 @@ int main(int argc, char* argv[]){
 
 	mpi_main.createMPITopology(&params);
 
-	init.loadIonParameters(&params, &IONS);
+	init.loadIonParameters(&params, &IONS, &GCP);
 
 	UNITS units;
 
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
-	init.loadMeshGeometry(&params, &CS, &mesh);
+	fundamentalScales FS(&params);
+
+	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
+
+	init.loadMeshGeometry(&params, &FS, &mesh);
+	
+	units.spatialScalesSanityCheck(&params, &FS, &mesh);
 
 	init.initializeFields(&params, &mesh, &EB);
 
@@ -70,10 +76,6 @@ int main(int argc, char* argv[]){
 	ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
 
 	units.defineTimeStep(&params, &mesh, &IONS, &EB);
-
-	fundamentalScales FS(&params);
-
-	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS, &mesh);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
 	units.normalizeVariables(&params, &mesh, &IONS, &EB, &CS);

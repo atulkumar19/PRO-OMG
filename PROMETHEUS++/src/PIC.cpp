@@ -22,7 +22,7 @@ PIC::PIC(){
 
 }
 
-void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS){
+void PIC::MPI_BcastDensity(const simulationParameters * params, ionSpecies * IONS){
 
 	arma::vec nSend = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 	arma::vec nRecv = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
@@ -42,7 +42,7 @@ void PIC::MPI_BcastDensity(const inputParameters * params, ionSpecies * IONS){
 }
 
 
-void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * IONS){
+void PIC::MPI_BcastBulkVelocity(const simulationParameters * params, ionSpecies * IONS){
 
 	arma::vec bufSend = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 	arma::vec bufRecv = zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
@@ -83,7 +83,7 @@ void PIC::MPI_BcastBulkVelocity(const inputParameters * params, ionSpecies * ION
 }
 
 
-void PIC::MPI_AllgatherField(const inputParameters * params, vfield_vec * field){
+void PIC::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
@@ -117,7 +117,7 @@ void PIC::MPI_AllgatherField(const inputParameters * params, vfield_vec * field)
 }
 
 
-void PIC::MPI_AllgatherField(const inputParameters * params, arma::vec * field){
+void PIC::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
@@ -322,7 +322,7 @@ void PIC::smooth(vfield_mat * vf, double as){
 }
 
 
-void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
+void PIC::assignCell_TOS(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -428,7 +428,7 @@ void PIC::assignCell_TOS(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
+void PIC::assignCell_TSC(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -523,7 +523,7 @@ void PIC::assignCell_TSC(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
+void PIC::assignCell_NNS(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 
 	switch (dim){
 		case(1):{
@@ -567,7 +567,7 @@ void PIC::assignCell_NNS(const inputParameters * params, const meshGeometry * me
 }
 
 
-void PIC::assignCell(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
+void PIC::assignCell(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim){
 	switch (params->weightingScheme){
 		case(0):{
 				PIC::assignCell_TOS(params, mesh, IONS, dim);
@@ -611,7 +611,7 @@ void PIC::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB
 
 
 #ifdef ONED
-void PIC::eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eivTOS_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
@@ -719,7 +719,7 @@ void PIC::eivTOS_1D(const inputParameters * params, const meshGeometry * mesh, i
 
 
 #ifdef ONED
-void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eivTSC_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -787,20 +787,20 @@ void PIC::eivTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 
 
 #ifdef TWOD
-void PIC::eivTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eivTSC_2D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::eivTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eivTSC_3D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
-void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::extrapolateIonVelocity(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	IONS->nv__ = IONS->nv_;
 	IONS->nv_ = IONS->nv;
@@ -868,7 +868,7 @@ void PIC::extrapolateIonVelocity(const inputParameters * params, const meshGeome
 
 
 #ifdef ONED
-void PIC::eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eidTOS_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 	int NC(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	int ii(0);
@@ -923,7 +923,7 @@ void PIC::eidTOS_1D(const inputParameters * params, const meshGeometry * mesh, i
 
 
 #ifdef ONED
-void PIC::eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eidTSC_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -973,20 +973,20 @@ void PIC::eidTSC_1D(const inputParameters * params, const meshGeometry * mesh, i
 
 
 #ifdef TWOD
-void PIC::eidTSC_2D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eidTSC_2D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::eidTSC_3D(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::eidTSC_3D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 }
 #endif
 
 
-void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC::extrapolateIonDensity(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	IONS->n___ = IONS->n__;
 	IONS->n__ = IONS->n_;
@@ -1055,7 +1055,7 @@ void PIC::extrapolateIonDensity(const inputParameters * params, const meshGeomet
 
 
 #ifdef ONED
-void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * IONS, vfield_vec * EMF, arma::mat * F){
+void PIC::EMF_TOS_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * EMF, arma::mat * F){
 
 	//wxc = 23/48 - (x/H)^2/4
 	//wxr = (abs(x)/H - 1)*(abs(x)/H - 5/2)*(abs(x)/H + 1/2)/6 + 1/4
@@ -1160,7 +1160,7 @@ void PIC::EMF_TOS_1D(const inputParameters * params, const ionSpecies * IONS, vf
 
 
 #ifdef ONED
-void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * IONS, vfield_vec * emf, arma::mat * F){
+void PIC::EMF_TSC_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * emf, arma::mat * F){
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
 	//				    0       x
@@ -1209,7 +1209,7 @@ void PIC::EMF_TSC_1D(const inputParameters * params, const ionSpecies * IONS, vf
 #endif
 
 
-void PIC::interpolateElectromagneticFields_1D(const inputParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B){
+void PIC::interpolateElectromagneticFields_1D(const simulationParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B){
 	switch (params->weightingScheme){
 		case(0):{
 				EMF_TOS_1D(params, IONS, &EB->E, E);
@@ -1260,7 +1260,7 @@ void PIC::EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_
 
 
 #ifdef ONED
-void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Vay_1D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 
 	MPI_AllgatherField(params, &EB->E);
@@ -1401,21 +1401,21 @@ void PIC::aiv_Vay_1D(const inputParameters * params, const characteristicScales 
 
 
 #ifdef TWOD
-void PIC::aiv_Vay_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Vay_2D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::aiv_Vay_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Vay_3D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
 #ifdef ONED
-void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Boris_1D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	MPI_AllgatherField(params, &EB->E);
 	MPI_AllgatherField(params, &EB->B);
@@ -1599,20 +1599,20 @@ void PIC::aiv_Boris_1D(const inputParameters * params, const characteristicScale
 
 
 #ifdef TWOD
-void PIC::aiv_Boris_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Boris_2D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
 #ifdef THREED
-void PIC::aiv_Boris_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::aiv_Boris_3D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 #endif
 
 
-void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
+void PIC::aip_1D(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
 	double lx = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;//
 
@@ -1675,7 +1675,7 @@ void PIC::aip_1D(const inputParameters * params, const meshGeometry * mesh, vect
 }
 
 
-void PIC::aip_2D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
+void PIC::aip_2D(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
 	double lx = mesh->nodes.X(mesh->NX_PER_MPI-1) + mesh->DX;//
 	double ly = mesh->nodes.Y(mesh->NY_PER_MPI-1) + mesh->DY;//
@@ -1705,12 +1705,12 @@ void PIC::aip_2D(const inputParameters * params, const meshGeometry * mesh, vect
 }
 
 
-void PIC::aip_3D(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
+void PIC::aip_3D(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
 }
 
 
-void PIC::advanceIonsVelocity(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	//cout << "Status: Advancing the ions' velocity...\n";
 
@@ -1744,7 +1744,7 @@ void PIC::advanceIonsVelocity(const inputParameters * params, const characterist
 }
 
 
-void PIC::advanceIonsPosition(const inputParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsPosition(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT){
 
 	//cout << "Status: Advancing the ions' position...\n";
 
@@ -1843,7 +1843,7 @@ void PIC_GC::reset_GC_vars(PIC_GC::GC_VARS * gcv){
 }
 
 
-void PIC_GC::depositIonDensityAndBulkVelocity(const inputParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
+void PIC_GC::depositIonDensityAndBulkVelocity(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS){
 
 	IONS->n___ = IONS->n__;
 	IONS->n__ = IONS->n_;
@@ -2207,7 +2207,7 @@ void PIC_GC::EFF_EMF_TSC_1D(const double DT, const double DX, GC_VARS * gcv, con
 }
 
 
-void PIC_GC::assignCell_TSC(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim){
+void PIC_GC::assignCell_TSC(const simulationParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -2265,7 +2265,7 @@ void PIC_GC::assignCell_TSC(const inputParameters * params, const meshGeometry *
 }
 
 
-void PIC_GC::assignCell(const inputParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim){
+void PIC_GC::assignCell(const simulationParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim){
 	switch (params->weightingScheme){
 		case(0):{
 				//assignCell_TOS(params, mesh, gcv, 1);
@@ -2294,7 +2294,7 @@ void PIC_GC::assignCell(const inputParameters * params, const meshGeometry * mes
 }
 
 
-void PIC_GC::computeFullOrbitVelocity(const inputParameters * params, const meshGeometry * mesh, const fields * EB, GC_VARS * gcv, arma::rowvec * V, int dim){
+void PIC_GC::computeFullOrbitVelocity(const simulationParameters * params, const meshGeometry * mesh, const fields * EB, GC_VARS * gcv, arma::rowvec * V, int dim){
 
 	PIC_GC::assignCell(params, mesh, gcv, dim);
 
@@ -2309,7 +2309,7 @@ void PIC_GC::computeFullOrbitVelocity(const inputParameters * params, const mesh
 }
 
 
-void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG){
+void PIC_GC::advanceRungeKutta45Stages_1D(const simulationParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG){
 	// We interpolate the effective fields to GC particles position
 	switch (STG) {
 		case(1):{
@@ -2455,7 +2455,7 @@ void PIC_GC::advanceRungeKutta45Stages_1D(const inputParameters * params, const 
 }
 
 
-void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::ai_GC_1D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 //	int NX(EB->E.X.n_elem);
 
 	MPI_AllgatherField(params, &EB->E);
@@ -2700,17 +2700,17 @@ void PIC_GC::ai_GC_1D(const inputParameters * params, const characteristicScales
 }
 
 
-void PIC_GC::ai_GC_2D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::ai_GC_2D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 
 
-void PIC_GC::ai_GC_3D(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::ai_GC_3D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 }
 
 
-PIC_GC::PIC_GC(const inputParameters * params, const meshGeometry * mesh){
+PIC_GC::PIC_GC(const simulationParameters * params, const meshGeometry * mesh){
 
 	NX =  params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;//Mesh size along the X axis (considering the gosht cell)
 	LX = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
@@ -2846,7 +2846,7 @@ PIC_GC::PIC_GC(const inputParameters * params, const meshGeometry * mesh){
 }
 
 
-void PIC_GC::advanceGCIons(const inputParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
+void PIC_GC::advanceGCIons(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	#ifdef ONED
 	ai_GC_1D(params, CS, mesh, EB, IONS, DT);

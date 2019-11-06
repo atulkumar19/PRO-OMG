@@ -64,17 +64,17 @@ class GENERAL_FUNCTIONS{
 	vector<int> appliedFilters;
 	vector<double> smoothingParameter;
 
-	void bCastTimestep(inputParameters * params, int logicVariable);
+	void bCastTimestep(simulationParameters * params, int logicVariable);
 
 	public:
 
 	GENERAL_FUNCTIONS(){};
 
-	void checkStability(inputParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS);
+	void checkStability(simulationParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS);
 
-	void checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT);
+	void checkEnergy(simulationParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT);
 
-	void saveDiagnosticsVariables(inputParameters * params);
+	void saveDiagnosticsVariables(simulationParameters * params);
 
 };
 

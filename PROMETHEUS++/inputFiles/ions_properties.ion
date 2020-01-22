@@ -1,4 +1,4 @@
-SPECIES1                    3
+SPECIES1                    1
 NPC1                        1000
 IC1                         1
 Tper1                       1.0E3
@@ -10,7 +10,7 @@ replenishRate1              0
 replenishPercentage1        0
 newParticlesPerIteration1   0
 pctSupPartOutput1           100
-SPECIES2                    3
+SPECIES2                    1
 NPC2                        1000
 IC2                         2
 Tper2                       3.5E6

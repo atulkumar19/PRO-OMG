@@ -10,10 +10,10 @@ filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              10.0
-outputCadence               0.03
+simulationTime              5.0
+outputCadence               0.01
 transient                   0
-numberOfIonSpecies          2
+numberOfParticleSpecies     2
 numberOfTracerSpecies       0
 loadModes                   0
 shuffleModes                0

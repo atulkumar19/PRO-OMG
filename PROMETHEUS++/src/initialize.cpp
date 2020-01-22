@@ -46,8 +46,10 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
 	reader.open(inputFile->data(),ifstream::in);
 
     if (!reader){
-    	cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
-    	MPI_Abort(MPI_COMM_WORLD,-123);
+        MPI_Barrier(MPI_COMM_WORLD);
+
+    	cerr << "PRO++ ERROR: The input file couldn't be opened." << endl;
+    	MPI_Abort(MPI_COMM_WORLD,-101);
     }
 
     while ( reader >> key >> value ){
@@ -70,8 +72,10 @@ map<string,string> INITIALIZE::loadParametersString(string * inputFile){
 	reader.open(inputFile->data(),ifstream::in);
 
     if (!reader){
-    	cerr << "PRO++ ERROR: The input file couldn't be opened.\n";
-    	MPI_Abort(MPI_COMM_WORLD,-123);
+        MPI_Barrier(MPI_COMM_WORLD);
+
+    	cerr << "PRO++ ERROR: The input file couldn't be opened." << endl;
+    	MPI_Abort(MPI_COMM_WORLD,-102);
     }
 
     while ( reader >> key >> value ){
@@ -113,11 +117,13 @@ INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
     MPI_Barrier(MPI_COMM_WORLD);
 
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS,2.0 ) > 0.0 ){
+        MPI_Barrier(MPI_COMM_WORLD);
+
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-			cout << "PRO++ ERROR: The number of MPI processes must be an even number.\n";
+			cerr << "PRO++ ERROR: The number of MPI processes must be an even number." << endl;
 		}
 
-		MPI_Abort(MPI_COMM_WORLD,-123);
+		MPI_Abort(MPI_COMM_WORLD,-103);
 	}
 
     if(params->mpi.MPI_DOMAIN_NUMBER == 0){
@@ -383,14 +389,18 @@ void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,c
 
 		//Checking the integrity of the initial condition
 		if((int)IONS->at(ii).V.n_elem != (int)(3*IONS->at(ii).NSP)){
-			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << '\n';
-			MPI_Abort(MPI_COMM_WORLD,-123);
+            MPI_Barrier(MPI_COMM_WORLD);
+
+			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << endl;
+			MPI_Abort(MPI_COMM_WORLD,-104);
 		 	// The velocity array contains a number of elements that it should not have
 
 		}
 		if((int)IONS->at(ii).X.n_elem != (int)(3*IONS->at(ii).NSP)){
-			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << '\n';
-			MPI_Abort(MPI_COMM_WORLD,-123);
+            MPI_Barrier(MPI_COMM_WORLD);
+
+			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << endl;
+			MPI_Abort(MPI_COMM_WORLD,-105);
 			// The position array contains a number of elements that it should not have
 		}
 		//Checking integrity of the initial condition
@@ -623,10 +633,12 @@ void INITIALIZE::loadIonParameters(simulationParameters * params, vector<ionSpec
                 cout << "Larmor radius: " << gcp.LarmorRadius << " m" << endl;
             }
         }else{
+            MPI_Barrier(MPI_COMM_WORLD);
+
             if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-    			cout << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = full orbit, -1 = guiding center";
+    			cerr << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = full orbit, -1 = guiding center" << endl;
     		}
-    		MPI_Abort(MPI_COMM_WORLD,-123);
+    		MPI_Abort(MPI_COMM_WORLD,-106);
         }
 
 	}//Iteration over ion species
@@ -649,7 +661,7 @@ void INITIALIZE::initializeFields(const simulationParameters * params, const mes
 	if(params->loadFields==1){//The electromagnetic fields are loaded from external files.
 		if(params->mpi.rank_cart == 0)
 			cout << "Loading external electromagnetic fields\n";
-		MPI_Abort(MPI_COMM_WORLD,-123);
+		MPI_Abort(MPI_COMM_WORLD,-107);
 	}else{//The electromagnetic fields are being initialized in the runtime.
 		int NX(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization

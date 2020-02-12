@@ -132,6 +132,7 @@ struct simulationParameters{
 	char **argv;
 
 	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
+	int includeElectronInertia;
 	int quietStart; // Flag for using a quiet start
 
 	int restart;

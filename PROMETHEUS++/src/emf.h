@@ -42,33 +42,27 @@ class EMF_SOLVER{
 
 	double dt;//Time step for the RK4 function
 
-	fields AUX, K1, K2, K3, K4;
+	fields AUX;
+	fields  K1, K2, K3, K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-	int dim_x;
+	int dim_x; // Number of grid cells per subdomain including ghost cells.
 
 	double n_cs;
 
 	arma::vec ne;			// Electron plasma density at time level "l + 1"
-
 	arma::vec n; 			// Total plasma density at time level "l + 1"
-
 	arma::vec n_; 		// Total plasma density at time level "l - 1/2"
-
 	arma::vec n__; 		// Total plasma density at time level "l - 3/2"
 
 	vfield_vec V; 	// Extrapolated ions' bulk velocity at time level "l + 1"
-
 	vfield_vec U; 	// Ions' bulk velocity at time level "l + 1/2"
-
 	vfield_vec U_; 	// Ions' bulk velocity at time level "l - 1/2"
-
 	vfield_vec U__; // Ions' bulk velocity at time level "l - 3/2"
-
 	vfield_vec Ui; // Ions' bulk velocity at time level "l - 3/2"
-
 	vfield_vec Ui_; // Ions' bulk velocity at time level "l - 3/2"
-
 	vfield_vec Ui__; // Ions' bulk velocity at time level "l - 3/2"
+
+	vfield_vec curlB; // Vector field keeping the values of curl(B) used in the electric field calculation.
 
 	void FaradaysLaw(const simulationParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB);
 

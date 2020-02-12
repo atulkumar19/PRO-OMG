@@ -1762,6 +1762,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, const meshGeo
 }
 
 
+
 /* * * * * * * * CLASS PIC_GC OBJECTS * * * * * * * */
 
 void PIC_GC::set_to_zero_RK45_variables(){

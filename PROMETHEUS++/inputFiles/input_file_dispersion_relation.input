@@ -1,4 +1,5 @@
-particleIntegrator          2
+particleIntegrator          1
+includeElectronInertia      1
 quietStart                  1
 restart                     0
 weightingScheme             1
@@ -13,7 +14,7 @@ DTc                         5.0E-3
 simulationTime              10.0
 outputCadence               0.01
 transient                   0
-numberOfIonSpecies          1
+numberOfParticleSpecies     1
 numberOfTracerSpecies       0
 loadModes                   0
 shuffleModes                0

@@ -48,7 +48,6 @@ class EMF_SOLVER{
 	int dim_x; // Number of grid cells per subdomain including ghost cells.
 
 	double n_cs;
-
 	arma::vec ne;			// Electron plasma density at time level "l + 1"
 	arma::vec n; 			// Total plasma density at time level "l + 1"
 	arma::vec n_; 		// Total plasma density at time level "l - 1/2"
@@ -61,8 +60,6 @@ class EMF_SOLVER{
 	vfield_vec Ui; // Ions' bulk velocity at time level "l - 3/2"
 	vfield_vec Ui_; // Ions' bulk velocity at time level "l - 3/2"
 	vfield_vec Ui__; // Ions' bulk velocity at time level "l - 3/2"
-
-	vfield_vec curlB; // Vector field keeping the values of curl(B) used in the electric field calculation.
 
 	void FaradaysLaw(const simulationParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB);
 

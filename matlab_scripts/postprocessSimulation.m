@@ -3,9 +3,12 @@ function ST = postprocessSimulation(path)
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/dispersion_relation/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/warm_plasma/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/GC/HDF5/')
+% ST = postprocessSimulation('../PROMETHEUS++/Tests/warm_plasma/HDF5/')
+
+
 % Physical constants
 
-% close all
+close all
 
 ST.kB = 1.38E-23; % Boltzmann constant
 ST.mu0 = (4E-7)*pi; % Magnetic permeability of vacuum
@@ -28,19 +31,19 @@ ST.time = loadTimeVector(ST);
 
 % GC_test_2(ST);
 
-GC_test_3(ST);
+% GC_test_3(ST);
 
-GC_test_4(ST);
+% GC_test_4(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
 % FourierAnalysis(ST,'B','z');
 
-% FourierAnalysis(ST,'E','x');
+FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
-% EnergyDiagnostic(ST);
+EnergyDiagnostic(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -154,7 +157,7 @@ function GC_test_1(ST)
 % Function for testing ExB drift of a GC particle in constant perpendicular
 % electric and magnetic fields.
 NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = int64(ST.params.geometry.DX);
 
@@ -284,7 +287,7 @@ function GC_test_2(ST)
 % EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = ST.params.geometry.DX;
 NX = int64(ST.params.geometry.NX);
@@ -378,7 +381,7 @@ function GC_test_3(ST)
 % EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = ST.params.geometry.DX;
 NX = int64(ST.params.geometry.NX);
@@ -488,7 +491,7 @@ NT = int64(ST.numberOfOutputs); % Number of snapshots
 ND = int64(ST.params.numOfDomains); % Number of domains
 NXPD = int64(ST.params.geometry.NX); % Number of cells per domain
 NXTD = ND*NXPD; % Number of cells in the whole domain
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 
 time = ST.time;
 xAxis = ST.params.geometry.xAxis;
@@ -717,7 +720,7 @@ end
 function EnergyDiagnostic(ST)
 % Diagnostic to monitor energy transfer/conservation
 NT = ST.numberOfOutputs;
-NSPP = ST.params.ions.numberOfIonSpecies;
+NSPP = ST.params.ions.numberOfParticleSpecies;
 ND = ST.params.numOfDomains;
 DX = ST.params.geometry.DX;
 

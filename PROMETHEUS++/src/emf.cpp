@@ -21,7 +21,8 @@
 
 EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
 	n_cs = CS->length*CS->density;
-	dim_x = params->NX_PER_MPI + 2;
+	NX_S = params->NX_PER_MPI + 2;
+	NX_T = params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;
 
 	ne.zeros(params->NX_PER_MPI + 2);
 	n.zeros(params->NX_PER_MPI + 2);
@@ -97,8 +98,8 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec *
 
 void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
-	int dim_x = params->NX_PER_MPI + 2;
-	arma::vec b = zeros(dim_x);
+	int NX_S = params->NX_PER_MPI + 2;
+	arma::vec b = zeros(NX_S);
 	double w0(23.0/48.0), w1(0.25), w2(1.0/96.0);//weights
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
@@ -106,28 +107,28 @@ void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_vec * vf,
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(2,dim_x-3) = w0*b.subvec(2,dim_x-3) + w1*b.subvec(3,dim_x-2) + w1*b.subvec(1,dim_x-4) + w2*b.subvec(4,dim_x-1) + w2*b.subvec(0,dim_x-5);
+	b.subvec(2,NX_S-3) = w0*b.subvec(2,NX_S-3) + w1*b.subvec(3,NX_S-2) + w1*b.subvec(1,NX_S-4) + w2*b.subvec(4,NX_S-1) + w2*b.subvec(0,NX_S-5);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(2,dim_x-3);
+	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(2,NX_S-3);
 
 	b.fill(0);
 
 	//Step 1: Averaging process
 	b = vf->Y.subvec(iIndex-1,fIndex+1);
-	b.subvec(2,dim_x-3) = w0*b.subvec(2,dim_x-3) + w1*b.subvec(3,dim_x-2) + w1*b.subvec(1,dim_x-4) + w2*b.subvec(4,dim_x-1) + w2*b.subvec(0,dim_x-5);
+	b.subvec(2,NX_S-3) = w0*b.subvec(2,NX_S-3) + w1*b.subvec(3,NX_S-2) + w1*b.subvec(1,NX_S-4) + w2*b.subvec(4,NX_S-1) + w2*b.subvec(0,NX_S-5);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(2,dim_x-3);
+	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(2,NX_S-3);
 
 	b.fill(0);
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(2,dim_x-3) = w0*b.subvec(2,dim_x-3) + w1*b.subvec(3,dim_x-2) + w1*b.subvec(1,dim_x-4) + w2*b.subvec(4,dim_x-1) + w2*b.subvec(0,dim_x-5);
+	b.subvec(2,NX_S-3) = w0*b.subvec(2,NX_S-3) + w1*b.subvec(3,NX_S-2) + w1*b.subvec(1,NX_S-4) + w2*b.subvec(4,NX_S-1) + w2*b.subvec(0,NX_S-5);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(2,dim_x-3);
+	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(2,NX_S-3);
 
 	b.fill(0);
 }
@@ -140,8 +141,8 @@ void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_mat * vf,
 
 void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
-	int dim_x = params->NX_PER_MPI + 2;
-	arma::vec b = zeros(dim_x);
+	int NX_S = params->NX_PER_MPI + 2;
+	arma::vec b = zeros(NX_S);
 	double w0(0.75), w1(0.125);//weights
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
@@ -150,28 +151,28 @@ void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_vec * vf,
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,dim_x-2) = w0*b.subvec(1,dim_x-2)+ w1*b.subvec(2,dim_x-1) + w1*b.subvec(0,dim_x-3);
+	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2)+ w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(1,dim_x-2);
+	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
 
 	b.fill(0);
 
 	//Step 1: Averaging process
 	b = vf->Y.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,dim_x-2) = w0*b.subvec(1,dim_x-2) + w1*b.subvec(2,dim_x-1) + w1*b.subvec(0,dim_x-3);
+	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(1,dim_x-2);
+	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
 
 	b.fill(0);
 
 	//Step 1: Averaging process
 	b = vf->Z.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,dim_x-2) = w0*b.subvec(1,dim_x-2) + w1*b.subvec(2,dim_x-1) + w1*b.subvec(0,dim_x-3);
+	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,dim_x-2);
+	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
 }
 
 
@@ -182,8 +183,8 @@ void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_mat * vf,
 
 void EMF_SOLVER::smooth(const simulationParameters * params,vfield_vec * vf,double as){
 	MPI_passGhosts(params,vf);
-	int dim_x = params->NX_PER_MPI + 2;
-	arma::vec b = zeros(dim_x);
+	int NX_S = params->NX_PER_MPI + 2;
+	arma::vec b = zeros(NX_S);
 	double w0(0.5), w1(0.25);//weights
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
@@ -192,28 +193,28 @@ void EMF_SOLVER::smooth(const simulationParameters * params,vfield_vec * vf,doub
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,dim_x-2) = w0*b.subvec(1,dim_x-2)+ w1*b.subvec(2,dim_x-1) + w1*b.subvec(0,dim_x-3);
+	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2)+ w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(1,dim_x-2);
+	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
 
 	b.fill(0);
 
 	//Step 1: Averaging process
 	b = vf->Y.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,dim_x-2) = w0*b.subvec(1,dim_x-2) + w1*b.subvec(2,dim_x-1) + w1*b.subvec(0,dim_x-3);
+	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(1,dim_x-2);
+	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
 
 	b.fill(0);
 
 	//Step 1: Averaging process
 	b = vf->Z.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,dim_x-2) = w0*b.subvec(1,dim_x-2) + w1*b.subvec(2,dim_x-1) + w1*b.subvec(0,dim_x-3);
+	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
 
 	//Step 2: Averaged weighted vector field estimation.
-	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,dim_x-2);
+	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
 }
 
 
@@ -402,7 +403,7 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 
 	//Definitions
 
-	vfield_vec curlB(dim_x - 2);
+	vfield_vec curlB(NX_T);
 
 	EB->E.fill(0);
 
@@ -410,17 +411,19 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 
 	// x-component
 
-	curlB.Y = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/mesh->DX;
+	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/mesh->DX;
 
-	curlB.Z = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/mesh->DX;
+	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/mesh->DX;
 
-	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,dim_x-2) + n.subvec(2,dim_x-1) ) ) );
+	// MPI_passGhosts(params,&curlB);
 
-	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( U.Y.subvec(1,dim_x-2) + U.Y.subvec(2,dim_x-1) ) % EB->B.Z.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) ) );
 
-	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,dim_x-2) + U.Z.subvec(2,dim_x-1) ) % EB->B.Y.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( U.Y.subvec(1,NX_S-2) + U.Y.subvec(2,NX_S-1) ) % EB->B.Z.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,dim_x-1) - n.subvec(1,dim_x-2))/mesh->DX )/(0.5*( n.subvec(1,dim_x-2) + n.subvec(2,dim_x-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,NX_S-2) + U.Z.subvec(2,NX_S-1) ) % EB->B.Y.subvec(iIndex,fIndex);
+
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,NX_S-1) - n.subvec(1,NX_S-2))/mesh->DX )/(0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) );
 
 
 	curlB.fill(0);
@@ -428,24 +431,24 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 
 	//y-component
 
-	curlB.Z = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
+	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,dim_x-2));
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2));
 
-	EB->E.Y.subvec(iIndex,fIndex) += - U.Z.subvec(1,dim_x-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Y.subvec(iIndex,fIndex) += - U.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
-	EB->E.Y.subvec(iIndex,fIndex) += U.X.subvec(1,dim_x-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Y.subvec(iIndex,fIndex) += U.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
 
 
 	//z-component
 
-	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
+	curlB.Y.subvec(iIndex,fIndex) = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
 
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,dim_x-2));
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2));
 
-	EB->E.Z.subvec(iIndex,fIndex) += - U.X.subvec(1,dim_x-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Z.subvec(iIndex,fIndex) += - U.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
 
-	EB->E.Z.subvec(iIndex,fIndex) += U.Y.subvec(1,dim_x-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Z.subvec(iIndex,fIndex) += U.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
 
 #ifdef CHECKS_ON
@@ -635,7 +638,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	}
 
 
-	vfield_vec curlB(dim_x-2);
+	vfield_vec curlB(NX_S-2);
 
 	EB->E.fill(0);
 
@@ -645,13 +648,13 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 	curlB.Z = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/mesh->DX;
 
-	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( ne.subvec(1,dim_x-2) + ne.subvec(2,dim_x-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) ) );
 
-	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( V.Y.subvec(1,dim_x-2) + V.Y.subvec(2,dim_x-1) ) % EB->B.Z.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( V.Y.subvec(1,NX_S-2) + V.Y.subvec(2,NX_S-1) ) % EB->B.Z.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.Z.subvec(1,dim_x-2) + V.Z.subvec(2,dim_x-1) ) % EB->B.Y.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.Z.subvec(1,NX_S-2) + V.Z.subvec(2,NX_S-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,dim_x-1) - ne.subvec(1,dim_x-2))/mesh->DX )/(0.5*( ne.subvec(1,dim_x-2) + ne.subvec(2,dim_x-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,NX_S-1) - ne.subvec(1,NX_S-2))/mesh->DX )/(0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) );
 
 
 	curlB.fill(0);
@@ -661,22 +664,22 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 	curlB.Z = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,dim_x-2));
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,NX_S-2));
 
-	EB->E.Y.subvec(iIndex,fIndex) += - V.Z.subvec(1,dim_x-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Y.subvec(iIndex,fIndex) += - V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
-	EB->E.Y.subvec(iIndex,fIndex) += V.X.subvec(1,dim_x-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Y.subvec(iIndex,fIndex) += V.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
 
 
 	//z-component
 
 	curlB.Y = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
 
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,dim_x-2));
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,NX_S-2));
 
-	EB->E.Z.subvec(iIndex,fIndex) += - V.X.subvec(1,dim_x-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Z.subvec(iIndex,fIndex) += - V.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
 
-	EB->E.Z.subvec(iIndex,fIndex) += V.Y.subvec(1,dim_x-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Z.subvec(iIndex,fIndex) += V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
 
 #ifdef CHECKS_ON

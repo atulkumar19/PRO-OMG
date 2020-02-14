@@ -45,7 +45,8 @@ class EMF_SOLVER{
 	fields AUX;
 	fields  K1, K2, K3, K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-	int dim_x; // Number of grid cells per subdomain including ghost cells.
+	int NX_S; // Number of grid cells per subdomain including 2 ghost cells.
+	int NX_T; // Number of grid cells in entire simulation domain.
 
 	double n_cs;
 	arma::vec ne;			// Electron plasma density at time level "l + 1"

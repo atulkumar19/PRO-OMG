@@ -54,6 +54,7 @@ using namespace threeDimensional;
 #define F_MU (4*M_PI)*1E-7 //Vacuum permeability in N/A^2
 extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
 extern double F_E_DS; // Dimensionless vacuum permittivity
+extern double F_ME_DS; // Dimensionless vacuum permittivity
 extern double F_MU_DS; // Dimensionless vacuum permittivity
 extern double F_C_DS; // Dimensionless vacuum permittivity
 
@@ -132,7 +133,7 @@ struct simulationParameters{
 	char **argv;
 
 	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
-	int includeElectronInertia;
+	bool includeElectronInertia;
 	int quietStart; // Flag for using a quiet start
 
 	int restart;

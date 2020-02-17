@@ -173,7 +173,11 @@ INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
 
 	params->particleIntegrator = std::stoi( parametersStringMap["particleIntegrator"] );
 
-    params->includeElectronInertia = std::stoi( parametersStringMap["includeElectronInertia"] );
+    if (std::stoi( parametersStringMap["includeElectronInertia"] ) == 1){
+        params->includeElectronInertia = true;
+    }else{
+        params->includeElectronInertia = false;
+    }
 
 	params->quietStart = std::stod( parametersStringMap["quietStart"] );
 

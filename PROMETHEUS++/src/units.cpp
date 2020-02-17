@@ -377,6 +377,7 @@ void UNITS::defineCharacteristicScales(simulationParameters * params,vector<ionS
 void UNITS::dimensionlessForm(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
+	F_ME_DS /= CS->mass; // Dimensionless electron charge
 	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; // Dimensionless vacuum permittivity
 	F_C_DS /= CS->velocity; // Dimensionless speed of light
 

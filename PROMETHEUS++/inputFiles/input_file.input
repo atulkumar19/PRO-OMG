@@ -1,5 +1,5 @@
 particleIntegrator          1
-includeElectronInertia      1
+includeElectronInertia      0
 quietStart                  1
 restart                     0
 weightingScheme             1

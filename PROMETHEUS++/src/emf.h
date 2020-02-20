@@ -36,17 +36,14 @@ using namespace arma;
 
 class EMF_SOLVER{
 
-	void MPI_passGhosts(const simulationParameters * params, vfield_vec * field);
-
-	void MPI_passGhosts(const simulationParameters * params, arma::vec * field);
-
 	double dt;//Time step for the RK4 function
 
 	fields AUX;
 	fields  K1, K2, K3, K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-	int NX_S; // Number of grid cells per subdomain including 2 ghost cells.
-	int NX_T; // Number of grid cells in entire simulation domain.
+	int NX_S; // Number of grid cells per subdomain, including 2 ghost cells.
+	int NX_T; // Number of grid cells in entire simulation domain, including 2 ghost cells.
+	int NX_R; // Number of grid cells in entire simulation domain, not including ghost cells.
 
 	double n_cs;
 	arma::vec ne;			// Electron plasma density at time level "l + 1"
@@ -61,6 +58,16 @@ class EMF_SOLVER{
 	vfield_vec Ui; // Ions' bulk velocity at time level "l - 3/2"
 	vfield_vec Ui_; // Ions' bulk velocity at time level "l - 3/2"
 	vfield_vec Ui__; // Ions' bulk velocity at time level "l - 3/2"
+
+
+	void MPI_AllgatherField(const simulationParameters * params, arma::vec * field);
+
+	void MPI_AllgatherField(const simulationParameters * params, vfield_vec * field);
+
+	void MPI_passGhosts(const simulationParameters * params, vfield_vec * field);
+
+	void MPI_passGhosts(const simulationParameters * params, arma::vec * field);
+
 
 	void FaradaysLaw(const simulationParameters * params, const meshGeometry * mesh, oneDimensional::electromagneticFields * EB);
 

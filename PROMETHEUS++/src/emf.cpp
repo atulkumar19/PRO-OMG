@@ -18,11 +18,11 @@
 
 #include "emf.h"
 
-
 EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
 	n_cs = CS->length*CS->density;
 	NX_S = params->NX_PER_MPI + 2;
 	NX_T = params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;
+	NX_R = params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
 
 	ne.zeros(NX_S);
 	n.zeros(NX_S);
@@ -36,6 +36,62 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 	Ui.zeros(NX_S);
 	Ui_.zeros(NX_S);
 	Ui__.zeros(NX_S);
+}
+
+
+void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
+
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+
+	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->NX_PER_MPI);
+
+	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
+
+	MPI_Barrier(params->mpi.mpi_topo);
+
+	//Allgather for x-component
+	sendBuf = field->subvec(iIndex, fIndex);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	field->subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
+}
+
+
+void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
+
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+
+	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->NX_PER_MPI);
+
+	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
+
+	MPI_Barrier(params->mpi.mpi_topo);
+
+	//Allgather for x-component
+	sendBuf = field->X.subvec(iIndex, fIndex);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	field->X.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
+
+	//Allgather for y-component
+	sendBuf = field->Y.subvec(iIndex, fIndex);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	field->Y.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
+
+	//Allgather for z-component
+	sendBuf = field->Z.subvec(iIndex, fIndex);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	field->Z.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+
+	MPI_Barrier(params->mpi.mpi_topo);
 }
 
 
@@ -267,7 +323,6 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeo
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
-	int NX(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 	// if(params->mpi.rank_cart == 0)
 		// EB->B.Z.print("B");
@@ -301,6 +356,49 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeo
 
 		EB->B += (dt/6)*( K1.B + 2*K2.B + 2*K3.B + K4.B );
 	}//Runge-Kutta iterations
+
+
+	if (params->includeElectronInertia){
+		MPI_AllgatherField(params, &EB->B);
+
+		// arma::vec n
+		arma::mat M(NX_R, NX_R, fill::zeros);	// Matrix to be inverted to calculate the actual magnetic field
+		arma::vec S(NX_R, fill::zeros);			// Modified magnetic field
+		double de; 									// Electron skin depth
+
+		de = (F_C_DS/F_E_DS)*sqrt( F_ME_DS*F_EPSILON_DS/params->ne );
+
+		// Elements for first node in mesh
+		M(0,0) = 1.0 + 2.0*pow(de,2.0)/pow(mesh->DX,2.0);
+		M(0,1) = -pow(de,2.0)/pow(mesh->DX,2.0);
+
+
+		// Elements for last node in mesh
+		M(NX_R-1,NX_R-1) = 1.0 + 2.0*pow(de,2.0)/pow(mesh->DX,2.0);
+		M(NX_R-1,NX_R-2) = -pow(de,2.0)/pow(mesh->DX,2.0);
+
+		for(int ii=1; ii<NX_R-1; ii++){
+			M(ii,ii-1) = -pow(de,2.0)/pow(mesh->DX,2.0);
+			M(ii,ii) = 1.0 + 2.0*pow(de,2.0)/pow(mesh->DX,2.0);
+			M(ii,ii+1) = -pow(de,2.0)/pow(mesh->DX,2.0);
+		}
+
+		// x-component of magnetic field
+		S = EB->B.X.subvec(1,NX_T-2);
+
+		EB->B.X.subvec(1,NX_T-2) = arma::solve(M,S);
+
+		// y-component of magnetic field
+		S = EB->B.Y.subvec(1,NX_T-2);
+
+		EB->B.Y.subvec(1,NX_T-2) = arma::solve(M,S);
+
+		// z-component of magnetic field
+		S = EB->B.Z.subvec(1,NX_T-2);
+
+		EB->B.Z.subvec(1,NX_T-2) = arma::solve(M,S);
+	}
+
 
 #ifdef CHECKS_ON
 	if(!EB->B.X.is_finite()){
@@ -347,15 +445,15 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeo
 	MPI_passGhosts(params,&EB->B);
 	MPI_passGhosts(params,&EB->b_);
 
-	EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
-					+ 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
-					+ 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
+	EB->_B.X.subvec(1,NX_T-2) = sqrt( EB->B.X.subvec(1,NX_T-2) % EB->B.X.subvec(1,NX_T-2) \
+					+ 0.25*( ( EB->B.Y.subvec(1,NX_T-2) + EB->B.Y.subvec(0,NX_T-3) ) % ( EB->B.Y.subvec(1,NX_T-2) + EB->B.Y.subvec(0,NX_T-3) ) ) \
+					+ 0.25*( ( EB->B.Z.subvec(1,NX_T-2) + EB->B.Z.subvec(0,NX_T-3) ) % ( EB->B.Z.subvec(1,NX_T-2) + EB->B.Z.subvec(0,NX_T-3) ) ) );
 
-	EB->_B.Y.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
-					+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+	EB->_B.Y.subvec(1,NX_T-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX_T-2) + EB->B.X.subvec(0,NX_T-3) ) % ( EB->B.X.subvec(1,NX_T-2) + EB->B.X.subvec(0,NX_T-3) ) ) \
+					+ EB->B.Y.subvec(1,NX_T-2) % EB->B.Y.subvec(1,NX_T-2) + EB->B.Z.subvec(1,NX_T-2) % EB->B.Z.subvec(1,NX_T-2) );
 
-	EB->_B.Z.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
-					+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+	EB->_B.Z.subvec(1,NX_T-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX_T-2) + EB->B.X.subvec(0,NX_T-3) ) % ( EB->B.X.subvec(1,NX_T-2) + EB->B.X.subvec(0,NX_T-3) ) ) \
+					+ EB->B.Y.subvec(1,NX_T-2) % EB->B.Y.subvec(1,NX_T-2) + EB->B.Z.subvec(1,NX_T-2) % EB->B.Z.subvec(1,NX_T-2) );
 
 	EB->b = EB->B/EB->_B;
 
@@ -426,12 +524,29 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 
 	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,NX_S-1) - n.subvec(1,NX_S-2))/mesh->DX )/(0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) );
 
+
+/*
+	if (params->mpi.rank_cart == 0){
+		EB->E.X.print("Before");
+		cout << F_ME_DS << "\t" << F_E_DS << endl;
+	}
+*/
+
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFD with DX/2
-		EB->E.X.subvec(iIndex,fIndex) += 0.5*(F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2) + U.X.subvec(2,NX_S-1) ) % ( (U.X.subvec(2,NX_S-1) - U.X.subvec(1,NX_S-2))/mesh->DX );
+		EB->E.X.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*0.5*( U.X.subvec(1,NX_S-2) + U.X.subvec(2,NX_S-1) ) % ( (U.X.subvec(2,NX_S-1) - U.X.subvec(1,NX_S-2))/mesh->DX );
 	}
 
+/*
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if (params->mpi.rank_cart == 0)
+		EB->E.X.print("After");
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Abort(MPI_COMM_WORLD,-200);
+*/
 
 	curlB.fill(0);
 
@@ -455,11 +570,11 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFDs with DX
-		EB->E.Y.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Y.subvec(2,NX_S-1) - U.Y.subvec(0,NX_S-3))/mesh->DX );
+		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Y.subvec(2,NX_S-1) - U.Y.subvec(0,NX_S-3))/mesh->DX );
 
-		EB->E.Y.subvec(iIndex,fIndex) -= ( 1.0/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Y.subvec(iIndex+1,fIndex+1) - curlB.Y.subvec(iIndex-1,fIndex-1))/mesh->DX );
+		EB->E.Y.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Y.subvec(iIndex+1,fIndex+1) - curlB.Y.subvec(iIndex-1,fIndex-1))/mesh->DX );
 
-		EB->E.Y.subvec(iIndex,fIndex) += ( 1.0/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/mesh->DX ) % curlB.Y.subvec(iIndex,fIndex);
+		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/mesh->DX ) % curlB.Y.subvec(iIndex,fIndex);
 	}
 
 
@@ -477,15 +592,16 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFDs with DX
-		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Z.subvec(2,NX_S-1) - U.Z.subvec(0,NX_S-3))/mesh->DX );
+		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Z.subvec(2,NX_S-1) - U.Z.subvec(0,NX_S-3))/mesh->DX );
 
-		EB->E.Z.subvec(iIndex,fIndex) -= ( 1.0/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/mesh->DX );
+		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/mesh->DX );
 
-		EB->E.Z.subvec(iIndex,fIndex) += ( 1.0/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/mesh->DX ) % curlB.Z.subvec(iIndex,fIndex);
+		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/mesh->DX ) % curlB.Z.subvec(iIndex,fIndex);
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Abort(MPI_COMM_WORLD,-200);
+	//MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Abort(MPI_COMM_WORLD,-200);
+
 
 #ifdef CHECKS_ON
 	if(!EB->E.X.is_finite()){

@@ -44,19 +44,19 @@ using namespace threeDimensional;
 
 
 // Physical constants
-#define F_E 1.602176E-19//Electron charge in C (absolute value)
-#define F_ME 9.109382E-31//Electron mass in kg
-#define F_MP 1.672621E-27//Proton mass in kg
-#define F_U 1.660538E-27//Atomic mass unit in kg
-#define F_KB 1.380650E-23//Boltzmann constant in Joules/Kelvin
-#define F_EPSILON 8.854E-12 //Vacuum permittivity in C^2/(N*m^2)
-#define F_C 299792458.0 //Light speed in m/s
-#define F_MU (4*M_PI)*1E-7 //Vacuum permeability in N/A^2
+#define F_E 1.602176E-19	// Electron charge in C (absolute value)
+#define F_ME 9.109382E-31	// Electron mass in kg
+#define F_MP 1.672621E-27	// Proton mass in kg
+#define F_U 1.660538E-27	// Atomic mass unit in kg
+#define F_KB 1.380650E-23	// Boltzmann constant in Joules/Kelvin
+#define F_EPSILON 8.854E-12 // Vacuum permittivity in C^2/(N*m^2)
+#define F_C 299792458.0 	// Light speed in m/s
+#define F_MU (4*M_PI)*1E-7 	// Vacuum permeability in N/A^2
 extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
-extern double F_E_DS; // Dimensionless vacuum permittivity
-extern double F_ME_DS; // Dimensionless vacuum permittivity
-extern double F_MU_DS; // Dimensionless vacuum permittivity
-extern double F_C_DS; // Dimensionless vacuum permittivity
+extern double F_E_DS; 		// Dimensionless vacuum permittivity
+extern double F_ME_DS; 		// Dimensionless vacuum permittivity
+extern double F_MU_DS; 		// Dimensionless vacuum permittivity
+extern double F_C_DS; 		// Dimensionless vacuum permittivity
 
 
 struct mpiStruct{

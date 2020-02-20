@@ -1,4 +1,4 @@
-particleIntegrator          1
+particleIntegrator          2
 includeElectronInertia      0
 quietStart                  1
 restart                     0
@@ -31,6 +31,6 @@ phi                         0.0
 NX                          64
 NY                          1
 NZ                          1
-DrL                         1.0
+DrL                         0.015
 dp                          -1
-outputs_variables           {X,V,g}
+outputs_variables           {B,E,X,V,g}

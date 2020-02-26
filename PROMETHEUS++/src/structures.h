@@ -44,18 +44,19 @@ using namespace threeDimensional;
 
 
 // Physical constants
-#define F_E 1.602176E-19//Electron charge in C (absolute value)
-#define F_ME 9.109382E-31//Electron mass in kg
-#define F_MP 1.672621E-27//Proton mass in kg
-#define F_U 1.660538E-27//Atomic mass unit in kg
-#define F_KB 1.380650E-23//Boltzmann constant in Joules/Kelvin
-#define F_EPSILON 8.854E-12 //Vacuum permittivity in C^2/(N*m^2)
-#define F_C 299792458.0 //Light speed in m/s
-#define F_MU (4*M_PI)*1E-7 //Vacuum permeability in N/A^2
+#define F_E 1.602176E-19	// Electron charge in C (absolute value)
+#define F_ME 9.109382E-31	// Electron mass in kg
+#define F_MP 1.672621E-27	// Proton mass in kg
+#define F_U 1.660538E-27	// Atomic mass unit in kg
+#define F_KB 1.380650E-23	// Boltzmann constant in Joules/Kelvin
+#define F_EPSILON 8.854E-12 // Vacuum permittivity in C^2/(N*m^2)
+#define F_C 299792458.0 	// Light speed in m/s
+#define F_MU (4*M_PI)*1E-7 	// Vacuum permeability in N/A^2
 extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
-extern double F_E_DS; // Dimensionless vacuum permittivity
-extern double F_MU_DS; // Dimensionless vacuum permittivity
-extern double F_C_DS; // Dimensionless vacuum permittivity
+extern double F_E_DS; 		// Dimensionless vacuum permittivity
+extern double F_ME_DS; 		// Dimensionless vacuum permittivity
+extern double F_MU_DS; 		// Dimensionless vacuum permittivity
+extern double F_C_DS; 		// Dimensionless vacuum permittivity
 
 
 struct mpiStruct{
@@ -74,10 +75,10 @@ struct energyMonitor{
 	arma::mat B_fieldEnergy;//(time,components)
 	arma::mat totalEnergy;
 	energyMonitor(){};
-	energyMonitor(int numberOfIonSpecies,int timeIterations){
+	energyMonitor(int numberOfParticleSpecies,int timeIterations){
 		it = 0;
 		refEnergy = 0.0;
-		ionsEnergy = arma::zeros(timeIterations,numberOfIonSpecies);
+		ionsEnergy = arma::zeros(timeIterations,numberOfParticleSpecies);
 		E_fieldEnergy = arma::zeros(timeIterations,3);
 		B_fieldEnergy  = arma::zeros(timeIterations,3);
 		totalEnergy = arma::zeros(timeIterations,2);
@@ -87,6 +88,7 @@ struct energyMonitor{
 
 
 typedef ionSpeciesParams ionSpecies;
+typedef GCSpeciesParams GCSpecies;
 
 
 typedef electromagneticFields fields;
@@ -95,7 +97,9 @@ typedef electromagneticFields fields;
 struct meshGeometry{
 	vfield_vec nodes;
 
-	arma::uvec dim;
+	int NX_PER_MPI;
+	int NY_PER_MPI;
+	int NZ_PER_MPI;
 
 	double DX;
 	double DY;
@@ -117,7 +121,7 @@ struct backgroundParameters{
 };
 
 
-struct inputParameters{
+struct simulationParameters{
 	// List of variables in the outputs
 	std::vector<std::string> outputs_variables;
 
@@ -129,6 +133,7 @@ struct inputParameters{
 	char **argv;
 
 	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
+	bool includeElectronInertia;
 	int quietStart; // Flag for using a quiet start
 
 	int restart;
@@ -150,10 +155,12 @@ struct inputParameters{
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
 	//Mesh geometry
-	arma::uvec meshDim; //number of nodes in each direction. meshDim(0) = # of nodes along the x axis.
+	int NX_PER_MPI;
+	int NY_PER_MPI;
+	int NZ_PER_MPI;
 
 	//ions properties
-	int numberOfIonSpecies;
+	int numberOfParticleSpecies;
 	int numberOfTracerSpecies;
 
 	double ne; // Electron number density (input file)
@@ -163,6 +170,9 @@ struct inputParameters{
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
 	int checkSmoothParameter;
+
+	double LarmorRadius;
+	double ionSkinDepth;
 
 	double DrL;
 	double dp;
@@ -209,6 +219,24 @@ struct characteristicScales{
 		bField = 0.0;
 		pressure = 0.0;
 		magneticMoment = 0.0;
+	}
+};
+
+struct fundamentalScales{
+	double electronSkinDepth;
+	double electronGyroPeriod;
+	double electronGyroRadius;
+	double * ionSkinDepth;
+	double * ionGyroPeriod;
+	double * ionGyroRadius;
+
+	fundamentalScales(simulationParameters * params){
+		electronSkinDepth = 0.0;
+		electronGyroPeriod = 0.0;
+		electronGyroRadius = 0.0;
+		ionSkinDepth = new double[params->numberOfParticleSpecies];
+		ionGyroPeriod = new double[params->numberOfParticleSpecies];
+		ionGyroRadius = new double[params->numberOfParticleSpecies];
 	}
 };
 

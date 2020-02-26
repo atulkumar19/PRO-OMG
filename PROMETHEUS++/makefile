@@ -32,11 +32,14 @@ ifeq ($(UNAME), Darwin)
 	CCFLAGS = $(CCXXFLAGS)    -fopenmp    -O2
 
 	HDF_INSTALL = ../HDF5
+	# ARMA_LIBS_INSTALL = ../arma_libs_9
+	ARMA_LIBS_INSTALL = ../arma_libs/usr
+
 	INCLUDE_HDF5 = -I$(HDF_INSTALL)/include
-	INCLUDES =	-I../arma_libs/usr/include	-I../arma_libs/usr/lib
+	INCLUDES =	-I$(ARMA_LIBS_INSTALL)/include	-I$(ARMA_LIBS_INSTALL)/lib
 	EXTLIB = -L$(HDF_INSTALL)/lib
 	LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
-	LIB_FLAGS =	-L../arma_libs/usr/lib
+	LIB_FLAGS =	-L$(ARMA_LIBS_INSTALL)/lib
 	LIB	=	-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo -lgfortran
 	OMP_LIB_FLAGS =	-lgomp
 endif
@@ -49,12 +52,14 @@ ifeq ($(UNAME), Linux)
 	CCFLAGS =	$(CCXXFLAGS)	-fopenmp	-O2
 
 	HDF_INSTALL = ../HDF5
+	# ARMA_LIBS_INSTALL = ../arma_libs_9
+	ARMA_LIBS_INSTALL = ../arma_libs/usr
 
 	INCLUDE_HDF5	=	-I$(HDF_INSTALL)/include
-	INCLUDES =	-I../arma_libs/usr/include	-I../arma_libs/usr/lib	-I../arma_libs/usr/lib64
+	INCLUDES =	-I$(ARMA_LIBS_INSTALL)/include	-I$(ARMA_LIBS_INSTALL)/lib	-I$(ARMA_LIBS_INSTALL)/lib64
 	EXTLIB	= -L$(HDF_INSTALL)/lib
 	LIBSHDF	= $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
-	LIB_FLAGS =	-L../arma_libs/usr/lib -L../arma_libs/usr/lib64
+	LIB_FLAGS =	-L$(ARMA_LIBS_INSTALL)/lib -L$(ARMA_LIBS_INSTALL)/lib64
 	LIB	=	-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo
 	OMP_LIB_FLAGS =	-lgomp
 endif

@@ -42,8 +42,9 @@ int main(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
 
-	inputParameters params; 		// Input parameters for the simulation.
+	simulationParameters params; 		// Input parameters for the simulation.
 	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	vector<GCSpecies> GCP;
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
 	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	fields EB; 						// Derived type with variables of electromagnetic fields.
@@ -52,12 +53,19 @@ int main(int argc, char* argv[]){
 
 	mpi_main.createMPITopology(&params);
 
-	init.loadIonParameters(&params, &IONS);
+	init.loadIonParameters(&params, &IONS, &GCP);
 
 	UNITS units;
+
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
-	init.loadMeshGeometry(&params, &CS, &mesh);
+	fundamentalScales FS(&params);
+
+	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
+
+	init.loadMeshGeometry(&params, &FS, &mesh);
+
+	units.spatialScalesSanityCheck(&params, &FS, &mesh);
 
 	init.initializeFields(&params, &mesh, &EB);
 

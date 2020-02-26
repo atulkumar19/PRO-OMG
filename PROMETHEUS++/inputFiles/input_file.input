@@ -1,5 +1,6 @@
 particleIntegrator          1
-quietStart                  1
+includeElectronInertia      0
+quietStart                  0
 restart                     0
 weightingScheme             1
 BC                          1
@@ -10,10 +11,10 @@ filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              10.0
-outputCadence               0.03
+simulationTime              5.0
+outputCadence               0.01
 transient                   0
-numberOfIonSpecies          2
+numberOfParticleSpecies     2
 numberOfTracerSpecies       0
 loadModes                   0
 shuffleModes                0
@@ -27,9 +28,9 @@ Te                          1.0E3
 Bo                          2.1
 theta                       0.0
 phi                         0.0
-NX                          128
+NX                          64
 NY                          1
 NZ                          1
-DrL                         1.0
+DrL                         0.015
 dp                          -1
-outputs_variables           {X,V,g}
+outputs_variables           {B,E,X,V,g}

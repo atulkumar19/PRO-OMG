@@ -18,7 +18,7 @@
 
 #include "quietStart.h"
 
-QUIETSTART::QUIETSTART(const inputParameters * params, ionSpecies * ions){
+QUIETSTART::QUIETSTART(const simulationParameters * params, ionSpecies * ions){
 
     // Unitary vector along B field
 	b1 = {sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0), \
@@ -43,10 +43,10 @@ QUIETSTART::QUIETSTART(const inputParameters * params, ionSpecies * ions){
 }
 
 
-double QUIETSTART::recalculateNumberSuperParticles(const inputParameters * params, ionSpecies *ions){
+double QUIETSTART::recalculateNumberSuperParticles(const simulationParameters * params, ionSpecies *ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
-    exponent = ceil(log(ions->NPC*params->meshDim(0)*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
+    exponent = ceil(log(ions->NPC*params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
     ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
 
 	ions->nSupPartOutput = floor( (ions->pctSupPartOutput/100.0)*ions->NSP );
@@ -73,7 +73,7 @@ vector<int> QUIETSTART::dec2b3(int dec){
 }
 
 
-void QUIETSTART::bit_reversedFractions_base2(const inputParameters * params, ionSpecies * ions, vec * b2fr){
+void QUIETSTART::bit_reversedFractions_base2(const simulationParameters * params, ionSpecies * ions, vec * b2fr){
     const unsigned int sf(50);
     vec fracs = zeros(sf);
     for(unsigned int ii=0;ii<sf;ii++)
@@ -98,7 +98,7 @@ void QUIETSTART::bit_reversedFractions_base2(const inputParameters * params, ion
 }
 
 
-void QUIETSTART::bit_reversedFractions_base3(const inputParameters * params, ionSpecies * ions, vec * b3fr){
+void QUIETSTART::bit_reversedFractions_base3(const simulationParameters * params, ionSpecies * ions, vec * b3fr){
     const unsigned int sf(50);
     vec fracs = zeros(sf);
     for(unsigned int ii=0;ii<sf;ii++)
@@ -124,15 +124,15 @@ void QUIETSTART::bit_reversedFractions_base3(const inputParameters * params, ion
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
-void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions){
+void QUIETSTART::maxwellianVelocityDistribution(const simulationParameters * params, ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
     ions->g = zeros(ions->NSP);
     ions->mu = zeros(ions->NSP);
 
-	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
-	ions->BGP.VTpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
+	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
+	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
 
     // Initialising positions
     vec b2fr = zeros(ions->NSP);
@@ -151,17 +151,17 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
     for(int ii=0;ii<ions->NSP;ii++)
         R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
 
-	arma::vec V2 = ions->BGP.VTper*sqrt( -log( R ) ) % cos(b3fr);
-	arma::vec V3 = ions->BGP.VTper*sqrt( -log( R ) ) % sin(b3fr);
+	arma::vec V2 = ions->VTper*sqrt( -log( R ) ) % cos(b3fr);
+	arma::vec V3 = ions->VTper*sqrt( -log( R ) ) % sin(b3fr);
 
     /*
     srand(time(NULL));
     double randPhase( (int)(rand()%100)/100.0);
     randPhase *= 2.0*M_PI;
 
-    arma::vec V1 = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
+    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
     */
-	arma::vec V1 = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(b3fr);
+	arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b3fr);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -173,19 +173,19 @@ void QUIETSTART::maxwellianVelocityDistribution(const inputParameters * params, 
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
-    ions->BGP.mu = mean(ions->mu);
+    ions->avg_mu = mean(ions->mu);
 }
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
-void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions){
+void QUIETSTART::ringLikeVelocityDistribution(const simulationParameters * params, ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->g = zeros(ions->NSP);
     ions->Ppar = zeros(ions->NSP);
     ions->mu = zeros(ions->NSP);
 
-	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
-	ions->BGP.VTpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
+	//ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
+	//ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
 
     // Initialising positions
     vec b2fr = zeros(ions->NSP);
@@ -210,17 +210,17 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
 
 	vec phi = 2.0*M_PI*tmp.subvec(iInd,fInd);
 
-    arma::vec V2 = ions->BGP.VTper*cos(phi);
-	arma::vec V3 = ions->BGP.VTper*sin(phi);
+    arma::vec V2 = ions->VTper*cos(phi);
+	arma::vec V3 = ions->VTper*sin(phi);
 
     /*
     srand(time(NULL));
     double randPhase( (int)(rand()%100)/100.0);
     randPhase *= 2.0*M_PI;
 
-    arma::vec V1 = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(phi + randPhase);
+    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(phi + randPhase);
     */
-    arma::vec V1 = ions->BGP.VTpar*sqrt( -log( R ) ) % sin(phi);
+    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(phi);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -232,5 +232,5 @@ void QUIETSTART::ringLikeVelocityDistribution(const inputParameters * params, io
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
-    ions->BGP.mu = mean(ions->mu);
+    ions->avg_mu = mean(ions->mu);
 }

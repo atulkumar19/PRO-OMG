@@ -18,14 +18,14 @@
 
 #include "timeSteppingMethods.h"
 
-TIME_STEPPING_METHODS::TIME_STEPPING_METHODS(inputParameters * params){
+TIME_STEPPING_METHODS::TIME_STEPPING_METHODS(simulationParameters * params){
     t1 = 0.0;						//
     t2 = 0.0;
     currentTime = 0.0;
     outputIterator = 0;			//
 }
 
-void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, \
+void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshGeometry * mesh, \
                                 characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
@@ -45,7 +45,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
     t1 = MPI::Wtime();
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
-
+        // cout << "ITERATION: " << tt << endl;
         if(tt == 0){
             // genFun.checkStability(params, mesh, CS, IONS);
             ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT/2); // Initial condition time level V^(1/2)
@@ -54,6 +54,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
         }
 
         ionsDynamics.advanceIonsPosition(params, mesh, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
+
 
         fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
@@ -79,7 +80,10 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
             // genFun.checkStability(params, mesh, CS, IONS);
         }
 
+/* This function to monitor energy conservation needs to be implemented in a better way*/
 //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);
+/* This function to monitor energy conservation needs to be implemented in a better way*/
+
         if(tt==100){
             t2 = MPI::Wtime();
             if(params->mpi.rank_cart == 0){
@@ -92,16 +96,18 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
 }
 
 
-void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
+void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(simulationParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 
     // Initialize density and bulk velocity
     ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
 
+    /*
     fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
     fields_solver.advanceEField(params, mesh, EB, IONS);
+    */
 
     hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 
@@ -114,9 +120,11 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(inputParameters * 
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
+        /*
         fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         fields_solver.advanceEField(params, mesh, EB, IONS);
+        */
 
         currentTime += params->DT*CS->time;
 

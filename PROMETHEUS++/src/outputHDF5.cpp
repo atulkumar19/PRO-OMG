@@ -139,6 +139,36 @@ void saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values){
 
 
 // Function to save an Armadillo vec vector
+void saveToHDF5(H5File * file, string name, arma::ivec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( values->memptr(), PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector (to a HDF5 group)
+void saveToHDF5(Group * group, string name, arma::ivec * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[1] = {(hsize_t)values->n_elem};
+	DataSpace * dataspace = new DataSpace(1, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( values->memptr(), PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo vec vector
 void saveToHDF5(H5File * file, string name, arma::vec * values){
 	H5std_string nameSpace( name );
 
@@ -214,7 +244,7 @@ void saveToHDF5(Group * group, string name, arma::fmat * values){
 
 
 //Constructor of HDF5Obj class
-HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
+HDF::HDF(simulationParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 
 	try{
 		stringstream dn;
@@ -264,17 +294,17 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		name.clear();
 
 		name = "NX";
-		int_value = mesh->dim(0);
+		int_value = mesh->NX_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NY";
-		int_value = mesh->dim(1);
+		int_value = mesh->NY_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NZ";
-		int_value = mesh->dim(2);
+		int_value = mesh->NZ_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
@@ -305,8 +335,8 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		//Ions
 		Group * group_ions = new Group( outputFile->createGroup( "/ions" ) );
 
-		name = "numberOfIonSpecies";
-		int_value = params->numberOfIonSpecies;
+		name = "numberOfParticleSpecies";
+		int_value = params->numberOfParticleSpecies;
 		saveToHDF5(group_ions, name, &int_value);
 		name.clear();
 
@@ -315,7 +345,7 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 		saveToHDF5(group_ions, name, &cpp_type_value);
 		name.clear();
 
-		for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+		for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 			stringstream ionSpec;
 			ionSpec << (ii+1);
 			name = "/ions/spp_" + ionSpec.str();
@@ -323,7 +353,7 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 			name.clear();
 
 			name = "Dn";
-			cpp_type_value = (CPP_TYPE)IONS->at(ii).BGP.Dn;
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).Dn;
 			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
 			name.clear();
 
@@ -343,12 +373,12 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 			name.clear();
 
 			name = "Tpar";
-			cpp_type_value = (CPP_TYPE)IONS->at(ii).BGP.Tpar;
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).Tpar;
 			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
 			name.clear();
 
 			name = "Tper";
-			cpp_type_value = (CPP_TYPE)IONS->at(ii).BGP.Tper;
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).Tper;
 			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
 			name.clear();
 
@@ -403,10 +433,10 @@ HDF::HDF(inputParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
 
 
 #ifdef ONED
-void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
+void HDF::siv_1D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	try{
 		string path;
@@ -418,6 +448,8 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 		int int_value;
 		CPP_TYPE cpp_type_value;
 		std::vector<CPP_TYPE> vector_values;
+
+		arma::ivec ivec_values;
 
 		arma::vec vec_values;
 		arma::fvec fvec_values;
@@ -529,6 +561,14 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 					#endif
 					name.clear();
 
+				}else if(params->outputs_variables.at(ov) == "mn"){
+
+					//Saving ions species density
+					name = "mn";
+					ivec_values = IONS_OUT->at(ii).meshNode;
+					saveToHDF5(group_ionSpecies, name, &ivec_values);
+					name.clear();
+
 				}else if(params->outputs_variables.at(ov) == "U"){
 
 					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
@@ -598,19 +638,19 @@ void HDF::siv_1D(const inputParameters * params, const vector<ionSpecies> * IONS
 #endif
 
 #ifdef TWOD
-void HDF::siv_2D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
+void HDF::siv_2D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 }
 #endif
 
 #ifdef THREED
-void HDF::siv_3D(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
+void HDF::siv_3D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 }
 #endif
 
 
-void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
+void HDF::saveIonsVariables(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
 	#ifdef ONED
 		siv_1D(params, IONS_OUT, CS, IT);
@@ -627,10 +667,10 @@ void HDF::saveIonsVariables(const inputParameters * params, const vector<ionSpec
 }
 
 
-void HDF::saveFieldsVariables(const inputParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
+void HDF::saveFieldsVariables(const simulationParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->meshDim(0)*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->meshDim(0)*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
 
 	try{
 		// forwardPBC_1D(&EB->E.X);
@@ -781,15 +821,15 @@ void HDF::saveFieldsVariables(const inputParameters * params, oneDimensional::el
 
 }
 
-void HDF::saveFieldsVariables(const inputParameters * params, twoDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
+void HDF::saveFieldsVariables(const simulationParameters * params, twoDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
 
 }
 
-void HDF::saveFieldsVariables(const inputParameters * params, threeDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
+void HDF::saveFieldsVariables(const simulationParameters * params, threeDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
 
 }
 
-void HDF::saveOutputs(const inputParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime){
+void HDF::saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime){
 
 
 	try{

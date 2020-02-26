@@ -1,7 +1,12 @@
 function ST = postprocessSimulation(path)
 % Example: ST = postprocessSimulation('../PROMETHEUS++/outputFiles/HDF5/')
+% ST = postprocessSimulation('../PROMETHEUS++/outputFiles/test2/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/dispersion_relation/HDF5/')
+% ST = postprocessSimulation('../PROMETHEUS++/outputFiles/warm_plasma/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/GC/HDF5/')
+% ST = postprocessSimulation('../PROMETHEUS++/Tests/warm_plasma/HDF5/')
+
+
 % Physical constants
 
 close all
@@ -29,13 +34,13 @@ ST.time = loadTimeVector(ST);
 
 % GC_test_3(ST);
 
-GC_test_4(ST);
+% GC_test_4(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
-% FourierAnalysis(ST,'B','z');
+FourierAnalysis(ST,'B','z');
 
-FourierAnalysis(ST,'E','x');
+% FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
@@ -153,7 +158,7 @@ function GC_test_1(ST)
 % Function for testing ExB drift of a GC particle in constant perpendicular
 % electric and magnetic fields.
 NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = int64(ST.params.geometry.DX);
 
@@ -283,7 +288,7 @@ function GC_test_2(ST)
 % EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = ST.params.geometry.DX;
 NX = int64(ST.params.geometry.NX);
@@ -377,7 +382,7 @@ function GC_test_3(ST)
 % EB->E.Y.subvec(1,NX-2) = square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 ND = int64(ST.params.numOfDomains);
 DX = ST.params.geometry.DX;
 NX = int64(ST.params.geometry.NX);
@@ -390,7 +395,7 @@ LX = DX*double(NX)*double(ND);
 B = ST.params.Bo;
 Bo = sqrt(dot(B,B));
 b = B/Bo;
-Eo = 1.0;
+Eo = 10.0;
 
 ilabels = {};
 
@@ -423,6 +428,7 @@ for ss=1:NSPP
     % Time
     t = ST.time;
     %% Plot test particle position and velocity
+    
     ii = randi(NPARTICLES);
 
     v = squeeze(V(ii,:,:));
@@ -487,13 +493,18 @@ NT = int64(ST.numberOfOutputs); % Number of snapshots
 ND = int64(ST.params.numOfDomains); % Number of domains
 NXPD = int64(ST.params.geometry.NX); % Number of cells per domain
 NXTD = ND*NXPD; % Number of cells in the whole domain
-NSPP = int64(ST.params.ions.numberOfIonSpecies);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
 
 time = ST.time;
 xAxis = ST.params.geometry.xAxis;
 
+
 if (NT > 1)
-    IT = 1:NT/4:NT;
+    DT = time(end)/4.0;
+    IT = zeros(1,4);
+    for ii=1:4
+        [~,IT(ii)] = min(abs(time-ii*DT));
+    end
 else
     IT = 1;
 end
@@ -637,6 +648,11 @@ wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
 ni = ST.params.ions.ne;
 wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
 
+wci = double(wci);
+wce = double(wce);
+wpi = double(wpi);
+
+
 % Lower hybrid frequency
 wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );
 wlh = wlh/wci;
@@ -706,7 +722,7 @@ end
 function EnergyDiagnostic(ST)
 % Diagnostic to monitor energy transfer/conservation
 NT = ST.numberOfOutputs;
-NSPP = ST.params.ions.numberOfIonSpecies;
+NSPP = ST.params.ions.numberOfParticleSpecies;
 ND = ST.params.numOfDomains;
 DX = ST.params.geometry.DX;
 

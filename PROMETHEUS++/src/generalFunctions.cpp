@@ -18,7 +18,7 @@
 
 #include "generalFunctions.h"
 
-void GENERAL_FUNCTIONS::bCastTimestep(inputParameters * params, int logicVariable){
+void GENERAL_FUNCTIONS::bCastTimestep(simulationParameters * params, int logicVariable){
 	int changeTimestep;
 	double * timeSteps;
 	int * logic;
@@ -53,7 +53,7 @@ void GENERAL_FUNCTIONS::bCastTimestep(inputParameters * params, int logicVariabl
 
 }
 
-void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS){
+void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS){
 
 /*	#ifdef ONED
 	double Cmax(1);
@@ -73,7 +73,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	double aux(0);
 
 	#ifdef ONED
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0);
 			vec tmp = IONS->at(ii).V.col(0);
@@ -86,7 +86,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	#endif
 
 	#ifdef TWOD
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0), vyTmp(0);
 			vec tmp = IONS->at(ii).V.col(0);
@@ -103,7 +103,7 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 	#endif
 
 	#ifdef THREED
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		if(IONS->at(ii).SPECIES != 0){
 			double vxTmp(0), vyTmp(0), vzTmp(0);
 			vec tmp = IONS->at(ii).V.col(0);
@@ -136,9 +136,9 @@ void GENERAL_FUNCTIONS::checkStability(inputParameters * params, const meshGeome
 
 }
 
-void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
+void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++){//Iteration over the ions' species
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){//Iteration over the ions' species
 		int NSP(IONS->at(ii).NSP);
 		int jj;
 		#pragma omp parallel shared(NSP, IONS, ii) private(jj)
@@ -214,7 +214,7 @@ void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh
 
 	}//end of the parallel region
 
-	for(int ii=0;ii<params->numberOfIonSpecies;ii++)//Iteration over the ions' species
+	for(int ii=0;ii<params->numberOfParticleSpecies;ii++)//Iteration over the ions' species
 		params->em->totalEnergy(IT,0) += params->em->ionsEnergy(IT,ii);
 
 	params->em->totalEnergy(IT,0) += params->em->E_fieldEnergy(IT,0) + params->em->E_fieldEnergy(IT,1) //
@@ -239,7 +239,7 @@ void GENERAL_FUNCTIONS::checkEnergy(inputParameters * params, meshGeometry *mesh
 }
 
 
-void GENERAL_FUNCTIONS::saveDiagnosticsVariables(inputParameters * params){
+void GENERAL_FUNCTIONS::saveDiagnosticsVariables(simulationParameters * params){
 
 	string name, path;
 

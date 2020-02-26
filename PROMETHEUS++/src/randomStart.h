@@ -49,11 +49,11 @@ class RANDOMSTART{
 
 public:
 
-    RANDOMSTART(const inputParameters * params);
+    RANDOMSTART(const simulationParameters * params);
 
-	void ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions);
+	void ringLikeVelocityDistribution(const simulationParameters * params, ionSpecies * ions);
 
-	void maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions);
+	void maxwellianVelocityDistribution(const simulationParameters * params, ionSpecies * ions);
 };
 
 #endif

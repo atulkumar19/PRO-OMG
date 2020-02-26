@@ -18,7 +18,7 @@
 
 #include "randomStart.h"
 
-RANDOMSTART::RANDOMSTART(const inputParameters * params){
+RANDOMSTART::RANDOMSTART(const simulationParameters * params){
 	// Unitary vector along B field
 	b1 = {sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0), \
 	      sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0),\
@@ -32,7 +32,7 @@ RANDOMSTART::RANDOMSTART(const inputParameters * params){
 }
 
 
-void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, ionSpecies * ions){
+void RANDOMSTART::ringLikeVelocityDistribution(const simulationParameters * params, ionSpecies * ions){
 
 	ions->X = randu<mat>(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);
@@ -40,20 +40,20 @@ void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, i
 	ions->g = zeros(ions->NSP);
 	ions->mu = zeros(ions->NSP);
 
-	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
-	ions->BGP.VTpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
+	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
+	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
 
 	arma::vec R = randu(ions->NSP);
 	arma_rng::set_seed_random();
 	arma::vec phi = 2.0*M_PI*randu<vec>(ions->NSP);
 
-	arma::vec V2 = ions->BGP.VTper*cos(phi);
-	arma::vec V3 = ions->BGP.VTper*sin(phi);
+	arma::vec V2 = ions->VTper*cos(phi);
+	arma::vec V3 = ions->VTper*sin(phi);
 
 	arma_rng::set_seed_random();
 	phi = 2.0*M_PI*randu<vec>(ions->NSP);
 
-	arma::vec V1 = ions->BGP.VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
+	arma::vec V1 = ions->VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -65,12 +65,12 @@ void RANDOMSTART::ringLikeVelocityDistribution(const inputParameters * params, i
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
-	ions->BGP.mu = mean(ions->mu);
+	ions->avg_mu = mean(ions->mu);
 }
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
-void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params, ionSpecies * ions){
+void RANDOMSTART::maxwellianVelocityDistribution(const simulationParameters * params, ionSpecies * ions){
 
 	ions->X = randu<mat>(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);
@@ -78,22 +78,22 @@ void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params,
 	ions->g = zeros(ions->NSP);
 	ions->mu = zeros(ions->NSP);
 
-	ions->BGP.VTper = sqrt(2.0*F_KB*ions->BGP.Tper/ions->M);
-	ions->BGP.VTpar = sqrt(2.0*F_KB*ions->BGP.Tpar/ions->M);
+	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
+	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
 
 	arma::vec R = randu(ions->NSP);
 	arma_rng::set_seed_random();
 	arma::vec phi = 2.0*M_PI*randu<vec>(ions->NSP);
 
-	arma::vec V2 = ions->BGP.VTper*sqrt( -log(1.0 - R) ) % cos(phi);
-	arma::vec V3 = ions->BGP.VTper*sqrt( -log(1.0 - R) ) % sin(phi);
+	arma::vec V2 = ions->VTper*sqrt( -log(1.0 - R) ) % cos(phi);
+	arma::vec V3 = ions->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
 
 	arma_rng::set_seed_random();
 	R = randu<vec>(ions->NSP);
 	arma_rng::set_seed_random();
 	phi = 2.0*M_PI*randu<vec>(ions->NSP);
 
-	arma::vec V1 = ions->BGP.VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
+	arma::vec V1 = ions->VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -105,5 +105,5 @@ void RANDOMSTART::maxwellianVelocityDistribution(const inputParameters * params,
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
-	ions->BGP.mu = mean(ions->mu);
+	ions->avg_mu = mean(ions->mu);
 }

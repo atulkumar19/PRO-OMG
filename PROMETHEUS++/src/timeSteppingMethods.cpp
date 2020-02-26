@@ -29,7 +29,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
                                 characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
-    GENERAL_FUNCTIONS genFun;
+    // GENERAL_FUNCTIONS genFun;
 
     // Repeat 3 times
     for(int tt=0;tt<3;tt++){
@@ -47,7 +47,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
 
         if(tt == 0){
-            genFun.checkStability(params, mesh, CS, IONS);
+            // genFun.checkStability(params, mesh, CS, IONS);
             ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT/2); // Initial condition time level V^(1/2)
         }else{
             ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT); // Advance ions' velocity V^(N+1/2).
@@ -76,7 +76,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
         }
 
         if( (params->checkStability == 1) && fmod((double)(tt+1), params->rateOfChecking) == 0 ){
-            genFun.checkStability(params, mesh, CS, IONS);
+            // genFun.checkStability(params, mesh, CS, IONS);
         }
 
 //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);
@@ -88,7 +88,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(inputParame
         }
     } // Time iterations.
 
-    genFun.saveDiagnosticsVariables(params);
+    // genFun.saveDiagnosticsVariables(params);
 }
 
 

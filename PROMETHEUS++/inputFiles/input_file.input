@@ -1,6 +1,6 @@
-particleIntegrator          2
+particleIntegrator          1
 includeElectronInertia      0
-quietStart                  1
+quietStart                  0
 restart                     0
 weightingScheme             1
 BC                          1

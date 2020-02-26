@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
 	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
 
 	init.loadMeshGeometry(&params, &FS, &mesh);
-	
+
 	units.spatialScalesSanityCheck(&params, &FS, &mesh);
 
 	init.initializeFields(&params, &mesh, &EB);

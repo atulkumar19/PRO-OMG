@@ -674,7 +674,7 @@ void INITIALIZE::initializeFields(const simulationParameters * params, const mes
 
         // TEST ExB
         double LX = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
-        EB->E.Y.subvec(1,NX-2) = 10.0*square( cos(2*M_PI*mesh->nodes.X/LX) );
+        //EB->E.Y.subvec(1,NX-2) = 10.0*square( cos(2*M_PI*mesh->nodes.X/LX) );
 
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y

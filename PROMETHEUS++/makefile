@@ -32,8 +32,8 @@ ifeq ($(UNAME), Darwin)
 	CCFLAGS = $(CCXXFLAGS)    -fopenmp    -O2
 
 	HDF_INSTALL = ../HDF5
-	ARMA_LIBS_INSTALL = ../arma_libs_9
-	# ARMA_LIBS_INSTALL = ../arma_libs/usr
+	# ARMA_LIBS_INSTALL = ../arma_libs_9
+	ARMA_LIBS_INSTALL = ../arma_libs/usr
 
 	INCLUDE_HDF5 = -I$(HDF_INSTALL)/include
 	INCLUDES =	-I$(ARMA_LIBS_INSTALL)/include	-I$(ARMA_LIBS_INSTALL)/lib
@@ -52,8 +52,8 @@ ifeq ($(UNAME), Linux)
 	CCFLAGS =	$(CCXXFLAGS)	-fopenmp	-O2
 
 	HDF_INSTALL = ../HDF5
-	ARMA_LIBS_INSTALL = ../arma_libs_9
 	# ARMA_LIBS_INSTALL = ../arma_libs_9
+	ARMA_LIBS_INSTALL = ../arma_libs/usr
 
 	INCLUDE_HDF5	=	-I$(HDF_INSTALL)/include
 	INCLUDES =	-I$(ARMA_LIBS_INSTALL)/include	-I$(ARMA_LIBS_INSTALL)/lib	-I$(ARMA_LIBS_INSTALL)/lib64

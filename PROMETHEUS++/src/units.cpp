@@ -285,6 +285,12 @@ void UNITS::broadcastFundamentalScales(simulationParameters * params, fundamenta
 void UNITS::calculateFundamentalScales(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS){
 
 	cout << "\n* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
+	if (params->includeElectronInertia == true){
+        cout << " + Including electron inertia: YES" << endl << endl;
+    }else{
+        cout << " + Including electron inertia: NO" << endl << endl;
+    }
+
 	FS->electronSkinDepth = F_C/sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
 	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bo/F_ME);
 	FS->electronGyroRadius = sqrt(2.0*F_KB*params->BGP.Te/F_ME)/(F_E*params->BGP.Bo/F_ME);
@@ -319,7 +325,7 @@ void UNITS::spatialScalesSanityCheck(simulationParameters * params, fundamentalS
 	if (mesh->DX <= FS->electronSkinDepth){
 		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
 		cout << "ABORTING SIMULATION..." << endl;
-		MPI_Abort(MPI_COMM_WORLD,-1000);
+		//MPI_Abort(MPI_COMM_WORLD,-1000);
 	}
 	cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
 }

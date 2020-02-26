@@ -358,6 +358,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeo
 	}//Runge-Kutta iterations
 
 
+
 	if (params->includeElectronInertia){
 		MPI_AllgatherField(params, &EB->B);
 
@@ -524,29 +525,13 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 
 	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,NX_S-1) - n.subvec(1,NX_S-2))/mesh->DX )/(0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) );
 
-
-/*
-	if (params->mpi.rank_cart == 0){
-		EB->E.X.print("Before");
-		cout << F_ME_DS << "\t" << F_E_DS << endl;
-	}
-*/
-
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFD with DX/2
+
 		EB->E.X.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*0.5*( U.X.subvec(1,NX_S-2) + U.X.subvec(2,NX_S-1) ) % ( (U.X.subvec(2,NX_S-1) - U.X.subvec(1,NX_S-2))/mesh->DX );
 	}
 
-/*
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	if (params->mpi.rank_cart == 0)
-		EB->E.X.print("After");
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Abort(MPI_COMM_WORLD,-200);
-*/
 
 	curlB.fill(0);
 
@@ -595,12 +580,7 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Z.subvec(2,NX_S-1) - U.Z.subvec(0,NX_S-3))/mesh->DX );
 
 		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/mesh->DX );
-
-		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/mesh->DX ) % curlB.Z.subvec(iIndex,fIndex);
 	}
-
-	//MPI_Barrier(MPI_COMM_WORLD);
-	//MPI_Abort(MPI_COMM_WORLD,-200);
 
 
 #ifdef CHECKS_ON

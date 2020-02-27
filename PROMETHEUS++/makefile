@@ -89,6 +89,22 @@ $(BIN)/PROMETHEUS++: $(BINARIES)
 	$(CC)	$(BINARIES)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
 
 
+
+BINARIES = $(addprefix $(OBJ)/,structures.o\
+main_dev_test.o	\
+dev_test_2D.o \
+types.o	\
+mpi_main.o)
+
+test: $(BIN)/PRO++TEST
+
+$(OBJ)/%.o : $(SRC)/%.cpp
+	$(CC)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
+
+$(BIN)/PRO++TEST: $(BINARIES)
+	$(CC)	$(BINARIES)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
+
+
 info:
 	@echo	"COMPILING IN: "$(UNAME)
 

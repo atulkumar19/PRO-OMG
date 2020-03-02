@@ -59,11 +59,17 @@ extern double F_MU_DS; 		// Dimensionless vacuum permittivity
 extern double F_C_DS; 		// Dimensionless vacuum permittivity
 
 
-struct mpiStruct{
+struct mpiParams{
 	int NUMBER_MPI_DOMAINS;
 	int MPI_DOMAIN_NUMBER;
-	MPI_Comm mpi_topo;
-	int rank_cart, lRank, rRank;
+
+	MPI_Comm MPI_TOPO;
+
+	int rank_cart;
+	int lRank;
+	int rRank;
+	int uRank;
+	int dRank;
 };
 
 
@@ -87,14 +93,7 @@ struct energyMonitor{
 };
 
 
-typedef ionSpeciesParams ionSpecies;
-typedef GCSpeciesParams GCSpecies;
-
-
-typedef electromagneticFields fields;
-
-
-struct meshGeometry{
+struct meshParams{
 	vfield_vec nodes;
 
 	int NX_PER_MPI;
@@ -107,7 +106,7 @@ struct meshGeometry{
 };
 
 
-struct backgroundParameters{
+struct backgroundPlasmaParameters{
 	double Te;
 	double Bo;
 	double Bx;
@@ -125,7 +124,6 @@ struct simulationParameters{
 	// List of variables in the outputs
 	std::vector<std::string> outputs_variables;
 
-
 	//Control parameters for the simulation
 	std::string PATH;//Path to save the outputs. It must point to the directory where the folder outputFiles is.
 
@@ -134,11 +132,11 @@ struct simulationParameters{
 
 	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
 	bool includeElectronInertia;
-	int quietStart; // Flag for using a quiet start
+	bool quietStart; // Flag for using a quiet start
 
-	int restart;
-	int weightingScheme; //TSP = 1, CIC(volume weighting) = 2
-	int BC;//BC = 1 full periodic, BC = 2
+	bool restart;
+	int weightingScheme; // TOS = 1; TSC (DEFAULT) = 1; NNS = 2; TOS = 3; TSC = 4;
+	int BC; // BC = 1 full periodic, BC = 2
 	int numberOfRKIterations;
 	double smoothingParameter;
 	int timeIterations;
@@ -154,18 +152,17 @@ struct simulationParameters{
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
-	//Mesh geometry
-	int NX_PER_MPI;
-	int NY_PER_MPI;
-	int NZ_PER_MPI;
+	int NX_PER_MPI; // Number of mesh nodes along x-axis
+	int NY_PER_MPI; // Number of mesh nodes along y-axis
+	int NZ_PER_MPI; // Number of mesh nodes along z-axis
 
 	//ions properties
-	int numberOfParticleSpecies;
-	int numberOfTracerSpecies;
+	int numberOfParticleSpecies; // This species are evolved self-consistently with the fields
+	int numberOfTracerSpecies; // This species are not self-consistently evolved with the fields
 
 	double ne; // Electron number density (input file)
 
-	backgroundParameters BGP;
+	backgroundPlasmaParameters BGP;
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
@@ -180,7 +177,7 @@ struct simulationParameters{
 	int checkStability;
 	int rateOfChecking;//Each 'rateOfChecking' iterations we use the CLF criteria for the particles to stabilize the simulation
 
-	energyMonitor * em;//Energy monitor
+	energyMonitor * em; // Structure to monitor energy conservation
 
 	unsigned int loadModes;
 	unsigned int numberOfAlfvenicModes;//Number of Alfvenic waves for the initial condition
@@ -189,7 +186,7 @@ struct simulationParameters{
 	double fracMagEnerInj;//Fraction of background magnetic energy injected
 	unsigned int shuffleModes;
 
-	mpiStruct mpi;
+	mpiParams mpi;
 };
 
 

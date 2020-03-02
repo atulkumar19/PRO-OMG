@@ -99,14 +99,14 @@ class ALFVENIC{
 
 	void addVelocityPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS);
 
-	void generateModes(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS);
+	void generateModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS);
 
-	void loadModes(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS);
+	void loadModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS);
 
 
 public:
 
-	ALFVENIC(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS);
+	ALFVENIC(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS);
 
 	void normalize(const characteristicScales * CS);
 

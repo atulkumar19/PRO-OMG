@@ -173,17 +173,27 @@ INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
 
 	params->particleIntegrator = std::stoi( parametersStringMap["particleIntegrator"] );
 
-    if (std::stoi( parametersStringMap["includeElectronInertia"] ) == 1){
+    if(std::stoi( parametersStringMap["includeElectronInertia"] ) == 1){
         params->includeElectronInertia = true;
     }else{
         params->includeElectronInertia = false;
     }
 
-	params->quietStart = std::stod( parametersStringMap["quietStart"] );
+    if(std::stoi( parametersStringMap["quietStart"] ) == 1){
+        params->quietStart = true;
+    }else{
+        params->quietStart = false;
+    }
+
 
 	params->DTc = std::stod( parametersStringMap["DTc"] );
 
-	params->restart = std::stoi( parametersStringMap["restart"] );
+
+    if(std::stoi( parametersStringMap["restart"] ) == 1){
+        params->restart = true;
+    }else{
+        params->restart = false;
+    }
 
 	params->weightingScheme = std::stoi( parametersStringMap["weightingScheme"] );
 
@@ -254,7 +264,7 @@ INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
 }
 
 
-void INITIALIZE::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshGeometry * mesh){
+void INITIALIZE::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 
     INITIALIZE::LarmorRadius = FS->ionGyroRadius[0];
     INITIALIZE::ionSkinDepth = FS->ionSkinDepth[0];
@@ -329,7 +339,7 @@ void INITIALIZE::loadMeshGeometry(const simulationParameters * params, fundament
 
 
 void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS,\
-	const meshGeometry * mesh,vector<ionSpecies> * IONS){
+	const meshParams * mesh,vector<ionSpecies> * IONS){
 
 	if(params->mpi.rank_cart == 0){
 		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
@@ -337,43 +347,47 @@ void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,c
 	int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
-		if(params->restart == 1){
+		if(params->restart){
 			if(params->mpi.rank_cart == 0)
 				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
 			MPI_Abort(MPI_COMM_WORLD,-1);
 		}else{
 			switch (IONS->at(ii).IC) {
 				case(1):{
-						if(params->quietStart == 0){
-							RANDOMSTART rs(params);
-							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
-						}else if(params->quietStart == 1){
-							QUIETSTART qs(params,&IONS->at(ii));
+						if(params->quietStart){
+                            QUIETSTART qs(params,&IONS->at(ii));
 							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+
+						}else{
+                            RANDOMSTART rs(params);
+							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
 						}
+
 						break;
 						}
 				case(2):{
-						if(params->quietStart == 0){
-							RANDOMSTART rs(params);
-							rs.ringLikeVelocityDistribution(params,&IONS->at(ii));
-						}else if(params->quietStart == 1){
-							QUIETSTART qs(params,&IONS->at(ii));
+						if(params->quietStart){
+                            QUIETSTART qs(params,&IONS->at(ii));
 							qs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+						}else{
+                            RANDOMSTART rs(params);
+							rs.ringLikeVelocityDistribution(params,&IONS->at(ii));
 						}
+
 						break;
 						}
 				default:{
-						if(params->quietStart == 0){
-							RANDOMSTART rs(params);
-							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
-						}else if(params->quietStart == 1){
-							QUIETSTART qs(params,&IONS->at(ii));
-							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
-						}
+                        if(params->quietStart){
+                            QUIETSTART qs(params,&IONS->at(ii));
+                            qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+
+                        }else{
+                            RANDOMSTART rs(params);
+                            rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+                        }
 						}
 			} // switch
-		} // if(params->restart == 1)
+		} // if(params->restart)
 
 		IONS->at(ii).n.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		IONS->at(ii).n_.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
@@ -420,15 +434,15 @@ void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,c
 		HX = params->dp*INITIALIZE::ionSkinDepth;
 	}
 
-	if(params->quietStart == 0){
-		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).X.col(0) = \
-			(HX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
-		}
-	}else if(params->quietStart == 1){
-		for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
+	if(params->quietStart){
+        for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
 			IONS->at(ii).X.col(0) *= HX*params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
 		}
+	}else{
+        for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
+            IONS->at(ii).X.col(0) = \
+            (HX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
+        }
 	}
 
 	double chargeDensityPerCell;
@@ -656,7 +670,7 @@ void INITIALIZE::loadIonParameters(simulationParameters * params, vector<ionSpec
 }
 
 
-void INITIALIZE::initializeFields(const simulationParameters * params, const meshGeometry * mesh, fields * EB){
+void INITIALIZE::initializeFields(const simulationParameters * params, const meshParams * mesh, fields * EB){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
@@ -672,13 +686,6 @@ void INITIALIZE::initializeFields(const simulationParameters * params, const mes
 		int NX(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
 
-<<<<<<< HEAD
-=======
-        // TEST ExB
-        double LX = mesh->DX*mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
-        //EB->E.Y.subvec(1,NX-2) = 10.0*square( cos(2*M_PI*mesh->nodes.X/LX) );
-
->>>>>>> GC
 		EB->B.X.fill(params->BGP.Bx);//x
 		EB->B.Y.fill(params->BGP.By);//y
 		EB->B.Z.fill(params->BGP.Bz);//z

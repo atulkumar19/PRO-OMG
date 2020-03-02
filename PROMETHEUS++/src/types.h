@@ -24,19 +24,20 @@
 
 // * * * * * * * * NAMESPACES  * * * * * * * * //
 namespace oneDimensional{
-	class electromagneticFields;
-	class ionSpeciesParams;
-	class GCSpeciesParams;
+	class fields;
+	class ionSpecies;
+	class GCSpecies;
 }
 
 
 namespace twoDimensional{
-	class electromagneticFields;
+	class fields;
+	class ionSpecies;
 }
 
 
 namespace threeDimensional{
-	class electromagneticFields;
+	class fields;
 }
 // * * * * * * * * NAMESPACES  * * * * * * * * //
 
@@ -132,63 +133,120 @@ public:
 
 
 // * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
-class oneDimensional::ionSpeciesParams : public vfield_vec{
+
+class oneDimensional::ionSpecies : public vfield_vec{
 
 public:
 	int SPECIES;
-	int IC; // Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
-	double NSP; // Initial number of superparticles for the given ion species.
-	double NCP; // Number of charged particles per superparticle.
-	double NPC; // Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
-	double Q; 	// Charge.
-	double Z; 	// Atomic number.
-	double M; 	// Mass
+	int IC; 					// Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
+	double NSP; 				// Initial number of superparticles for the given ion species.
+	double NCP; 				// Number of charged particles per superparticle.
+	double NPC; 				// Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
+	double Q; 					// Charge.
+	double Z; 					// Atomic number.
+	double M; 					// Mass
 
 	// variables for controlling super-particles' outputs
-	double pctSupPartOutput;
-	unsigned int nSupPartOutput;
+	double pctSupPartOutput; 	//
+	unsigned int nSupPartOutput;//
 
-	double Dn;
+	double Dn;					//
 
-	double go;			// Initial relativistic gamma
-	double Tpar;		// Parallel temperature.
-	double Tper;		// Perpendicular temperature.
-	double LarmorRadius;// Larmor radius.
-	double VTper;		// Thermal velocity.
-	double VTpar;		// Thermal velocity.
-	double Wc;			// Average cyclotron frequency.
-	double Wp;			// Plasma frequency.
-	double avg_mu; 		// Average magnetic moment
+	double go;					// Initial relativistic gamma
+	double Tpar;				// Parallel temperature.
+	double Tper;				// Perpendicular temperature.
+	double LarmorRadius;		// Larmor radius.
+	double VTper;				// Thermal velocity.
+	double VTpar;				// Thermal velocity.
+	double Wc;					// Average cyclotron frequency.
+	double Wp;					// Plasma frequency.
+	double avg_mu; 				// Average magnetic moment
 
-	arma::mat X; 		// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat P; 		// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::vec g; 		// Ions' relativistic gamma factor.
-	arma::ivec meshNode; // Position of each particle in the discrete mesh.
+	arma::mat X; 				// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::vec g; 				// Ions' relativistic gamma factor.
+	arma::ivec meshNode; 		// Ions' position in terms of the index of mesh node
 
 	// Guiding-center variables
-	arma::vec mu; 	// Ions' magnetic moment.
-	arma::vec Ppar; // Parallel momentum used in guiding-center orbits
+	arma::vec mu; 				// Ions' magnetic moment.
+	arma::vec Ppar; 			// Parallel momentum used in guiding-center orbits
 
 	//These weights are used in the charge extrapolation and the force interpolation
-	arma::vec wxl, wxc, wxr;	// Particles' weights w.r.t. the vertices of the grid cells
-	arma::vec wxll, wxrr;		// Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
+	arma::vec wxl;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxc;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxr;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxll;				// Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
+	arma::vec wxrr;				// Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
 
-	arma::vec wyl, wyc, wyr;
-	arma::vec wzl, wzc, wzr;
+	arma::vec n; 				// Ion density at time level "l + 1"
+	arma::vec n_; 				// Ion density at time level "l - 1;
+	arma::vec n__; 				// Ion density at time level "l - 2;
+	arma::vec n___; 			// Ion density at time level "l - 3;
+	vfield_vec nv; 				// Ion bulk velocity at time level "l + 1/2"
+	vfield_vec nv_; 			// Ion bulk velocity at time level "l - 1/2"
+	vfield_vec nv__; 			// Ion bulk velocity at time level "l - 3/2"
+};
 
-	arma::vec n; 		// Ion density at time level "l + 1"
-	arma::vec n_; 		// Ion density at time level "l - 1;
-	arma::vec n__; 		// Ion density at time level "l - 2;
-	arma::vec n___; 		// Ion density at time level "l - 3;
-	vfield_vec nv; 		// Ion bulk velocity at time level "l + 1/2"
-	vfield_vec nv_; 	// Ion bulk velocity at time level "l - 1/2"
-	vfield_vec nv__; 	// Ion bulk velocity at time level "l - 3/2"
+
+class twoDimensional::ionSpecies : public vfield_mat{
+
+public:
+	int SPECIES;
+	int IC; 					// Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
+	double NSP; 				// Initial number of superparticles for the given ion species.
+	double NCP; 				// Number of charged particles per superparticle.
+	double NPC; 				// Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
+	double Q; 					// Charge.
+	double Z; 					// Atomic number.
+	double M; 					// Mass
+
+	// variables for controlling super-particles' outputs
+	double pctSupPartOutput; 	//
+	unsigned int nSupPartOutput;//
+
+	double Dn;					//
+
+	double go;					// Initial relativistic gamma
+	double Tpar;				// Parallel temperature.
+	double Tper;				// Perpendicular temperature.
+	double LarmorRadius;		// Larmor radius.
+	double VTper;				// Thermal velocity.
+	double VTpar;				// Thermal velocity.
+	double Wc;					// Average cyclotron frequency.
+	double Wp;					// Plasma frequency.
+	double avg_mu; 				// Average magnetic moment
+
+	arma::mat X; 				// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
+	arma::vec g; 				// Ions' relativistic gamma factor.
+	arma::imat meshNode; 		// Ions' position in terms of the index of mesh node
+
+	// Guiding-center variables
+	arma::vec mu; 				// Ions' magnetic moment.
+	arma::vec Ppar; 			// Parallel momentum used in guiding-center orbits
+
+	//These weights are used in the charge extrapolation and the force interpolation
+	arma::vec wxl;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxc;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxr;				// Particles' weights w.r.t. the vertices of the grid cells
+
+	arma::vec wyl;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wyc;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wyr;				// Particles' weights w.r.t. the vertices of the grid cells
+
+	arma::mat n; 		// Ion density at time level "l + 1"
+	arma::mat n_; 		// Ion density at time level "l - 1;
+	arma::mat n__; 		// Ion density at time level "l - 2;
+	arma::mat n___; 		// Ion density at time level "l - 3;
+	vfield_mat nv; 		// Ion bulk velocity at time level "l + 1/2"
+	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
+	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"
 };
 // * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
-
-class oneDimensional::GCSpeciesParams : public vfield_vec{
+class oneDimensional::GCSpecies : public vfield_vec{
 
 public:
 	int SPECIES;
@@ -231,7 +289,7 @@ public:
 
 
 // * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //
-class oneDimensional::electromagneticFields : public vfield_vec{
+class oneDimensional::fields : public vfield_vec{
 
 
 public:
@@ -241,14 +299,14 @@ public:
 	vfield_vec b;
 	vfield_vec b_;
 
-	electromagneticFields(){};
-	electromagneticFields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
+	fields(){};
+	fields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
 	void zeros(unsigned int N);
 	void fill(double A);
 };
 
 
-class twoDimensional::electromagneticFields : public vfield_mat{
+class twoDimensional::fields : public vfield_mat{
 
 public:
 	vfield_mat E;
@@ -257,13 +315,13 @@ public:
 	vfield_mat b_;
 	arma::mat _B;
 
-	electromagneticFields(){};
-	electromagneticFields(unsigned int N, unsigned int M) : E(N,M), B(N,M), b(N,M), b_(N,M), _B(N,M){};
+	fields(){};
+	fields(unsigned int N, unsigned int M) : E(N,M), B(N,M), b(N,M), b_(N,M), _B(N,M){};
 	void zeros(unsigned int N, unsigned int M);
 };
 
 
-class threeDimensional::electromagneticFields : public vfield_cube{
+class threeDimensional::fields : public vfield_cube{
 
 public:
 	vfield_cube E;
@@ -272,8 +330,8 @@ public:
 	vfield_cube b_;
 	arma::cube _B;
 
-	electromagneticFields(){};
-	electromagneticFields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P), _B(N,M,P){};
+	fields(){};
+	fields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P), _B(N,M,P){};
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
 // * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //

@@ -26,9 +26,9 @@ void GENERAL_FUNCTIONS::bCastTimestep(simulationParameters * params, int logicVa
 
 	logic = (int*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(int));
 
-	MPI_Allgather(&logicVariable, 1, MPI_INT, logic, 1, MPI_INT, params->mpi.mpi_topo);
+	MPI_Allgather(&logicVariable, 1, MPI_INT, logic, 1, MPI_INT, params->mpi.MPI_TOPO);
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	for(int ii=0; ii<params->mpi.NUMBER_MPI_DOMAINS; ii++){
 		if(*(logic + ii) == 1)
@@ -37,7 +37,7 @@ void GENERAL_FUNCTIONS::bCastTimestep(simulationParameters * params, int logicVa
 
 	if(changeTimestep == 1){
 		timeSteps = (double*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(double));
-		MPI_Allgather(&params->DT, 1, MPI_DOUBLE, timeSteps, 1, MPI_DOUBLE, params->mpi.mpi_topo);
+		MPI_Allgather(&params->DT, 1, MPI_DOUBLE, timeSteps, 1, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
 		ststep = *timeSteps;
 		for(int ii=1; ii<params->mpi.NUMBER_MPI_DOMAINS; ii++){//Notice 'ii' starts at 1 instead of 0
@@ -53,7 +53,7 @@ void GENERAL_FUNCTIONS::bCastTimestep(simulationParameters * params, int logicVa
 
 }
 
-void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const meshGeometry *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS){
+void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const meshParams *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS){
 
 /*	#ifdef ONED
 	double Cmax(1);
@@ -136,7 +136,7 @@ void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const mesh
 
 }
 
-void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshGeometry *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
+void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){//Iteration over the ions' species
 		int NSP(IONS->at(ii).NSP);

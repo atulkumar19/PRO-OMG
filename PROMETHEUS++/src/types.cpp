@@ -330,7 +330,7 @@ void vfield_cube::zeros(unsigned int N, unsigned int M, unsigned int P){
 	Z.zeros(N,M,P);
 }
 
-void oneDimensional::electromagneticFields::zeros(unsigned int N){
+void oneDimensional::fields::zeros(unsigned int N){
 	E.zeros(N);
 	B.zeros(N);
 	b.zeros(N);
@@ -338,7 +338,7 @@ void oneDimensional::electromagneticFields::zeros(unsigned int N){
 	_B.zeros(N);
 }
 
-void twoDimensional::electromagneticFields::zeros(unsigned int N, unsigned int M){
+void twoDimensional::fields::zeros(unsigned int N, unsigned int M){
 	E.zeros(N,M);
 	B.zeros(N,M);
 	b.zeros(N,M);
@@ -346,7 +346,7 @@ void twoDimensional::electromagneticFields::zeros(unsigned int N, unsigned int M
 	_B.zeros(N,M);
 }
 
-void threeDimensional::electromagneticFields::zeros(unsigned int N, unsigned int M, unsigned int P){
+void threeDimensional::fields::zeros(unsigned int N, unsigned int M, unsigned int P){
 	E.zeros(N,M,P);
 	B.zeros(N,M,P);
 	b.zeros(N,M,P);

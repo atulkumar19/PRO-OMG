@@ -42,12 +42,12 @@ int main(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
 
-	simulationParameters params; 		// Input parameters for the simulation.
-	vector<ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
-	vector<GCSpecies> GCP;
+	simulationParameters params; 	// Input parameters for the simulation.
+	vector<oneDimensional::ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	vector<oneDimensional::GCSpecies> GCP;
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
-	meshGeometry mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
-	fields EB; 						// Derived type with variables of electromagnetic fields.
+	meshParams mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
+	oneDimensional::fields EB; 						// Derived type with variables of electromagnetic fields.
 
 	INITIALIZE init(&params, argc, argv);
 

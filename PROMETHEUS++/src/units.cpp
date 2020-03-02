@@ -21,7 +21,7 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 */
 #include "units.h"
 
-void UNITS::defineTimeStep(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB){
+void UNITS::defineTimeStep(simulationParameters * params,meshParams * mesh,vector<ionSpecies> * IONS,fields * EB){
 	if(params->mpi.rank_cart == 0)
 		cout << "\n* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
@@ -178,7 +178,7 @@ void UNITS::defineTimeStep(simulationParameters * params,meshGeometry * mesh,vec
 
 	DTs = (double*)malloc(params->mpi.NUMBER_MPI_DOMAINS*sizeof(double));
 
-	MPI_Allgather(&DT, 1, MPI_DOUBLE, DTs, 1, MPI_DOUBLE, params->mpi.mpi_topo);
+	MPI_Allgather(&DT, 1, MPI_DOUBLE, DTs, 1, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
 	smallest_DT = *DTs;
 	for(int ii=1; ii<params->mpi.NUMBER_MPI_DOMAINS; ii++){//Notice 'ii' starts at 1 instead of 0
@@ -316,7 +316,7 @@ void UNITS::calculateFundamentalScales(simulationParameters * params, vector<ion
 }
 
 
-void UNITS::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshGeometry * mesh){
+void UNITS::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 	cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
 
 	cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
@@ -380,7 +380,7 @@ void UNITS::defineCharacteristicScales(simulationParameters * params,vector<ionS
 }
 
 
-void UNITS::dimensionlessForm(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
+void UNITS::dimensionlessForm(simulationParameters * params,meshParams * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_ME_DS /= CS->mass; // Dimensionless electron charge
@@ -436,7 +436,7 @@ void UNITS::dimensionlessForm(simulationParameters * params,meshGeometry * mesh,
 }
 
 
-void UNITS::normalizeVariables(simulationParameters * params,meshGeometry * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
+void UNITS::normalizeVariables(simulationParameters * params,meshParams * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }

@@ -58,13 +58,13 @@ public:
 
 	void loadInputParameters(simulationParameters * params, int argc, char* argv[]);
 
-	void loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshGeometry * mesh);
+	void loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh);
 
 	void loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP);
 
-	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, vector<ionSpecies> * IONS);
+	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<ionSpecies> * IONS);
 
-	void initializeFields(const simulationParameters * params,  const meshGeometry * mesh,  fields * EB);
+	void initializeFields(const simulationParameters * params,  const meshParams * mesh,  fields * EB);
 
 };
 

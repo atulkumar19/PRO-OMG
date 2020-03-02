@@ -59,17 +59,17 @@ void saveIonsVariables(const simulationParameters * params, const vector<ionSpec
 
 
 
-void saveFieldsVariables(const simulationParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
+void saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int IT);
 
-void saveFieldsVariables(const simulationParameters * params, twoDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
+void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int IT);
 
-void saveFieldsVariables(const simulationParameters * params, threeDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT);
+void saveFieldsVariables(const simulationParameters * params, threeDimensional::fields * EB, const characteristicScales * CS, const int IT);
 
 void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
 
 public:
 
-HDF(simulationParameters *params,meshGeometry *mesh,vector<ionSpecies> *IONS);
+HDF(simulationParameters *params,meshParams *mesh,vector<ionSpecies> *IONS);
 
 void saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
 

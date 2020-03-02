@@ -90,7 +90,7 @@ $(BIN)/PROMETHEUS++: $(BINARIES)
 
 
 
-BINARIES = $(addprefix $(OBJ)/,structures.o\
+BINARIES_DEV = $(addprefix $(OBJ)/,structures.o\
 main_dev_test.o	\
 dev_test_2D.o \
 types.o	\
@@ -101,8 +101,8 @@ test: $(BIN)/PRO++TEST
 $(OBJ)/%.o : $(SRC)/%.cpp
 	$(CC)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
 
-$(BIN)/PRO++TEST: $(BINARIES)
-	$(CC)	$(BINARIES)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
+$(BIN)/PRO++TEST: $(BINARIES_DEV)
+	$(CC)	$(BINARIES_DEV)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
 
 
 info:

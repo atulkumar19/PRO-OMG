@@ -91,33 +91,33 @@ protected:
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
 
-	void assignCell_TOS(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
+	void assignCell_TOS(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS, int dim);
 
-	void assignCell_TSC(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
+	void assignCell_TSC(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS, int dim);
 
-	void assignCell_NNS(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
-
-
-	void eivTOS_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
-
-	void eivTSC_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
-
-	void eivTSC_2D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
-
-	void eivTSC_3D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
-
-	void extrapolateIonVelocity(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void assignCell_NNS(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS, int dim);
 
 
-	void eidTOS_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void eivTOS_1D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
 
-	void eidTSC_1D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void eivTSC_1D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
 
-	void eidTSC_2D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void eivTSC_2D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
 
-	void eidTSC_3D(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void eivTSC_3D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
 
-	void extrapolateIonDensity(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void extrapolateIonVelocity(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
+
+
+	void eidTOS_1D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
+
+	void eidTSC_1D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
+
+	void eidTSC_2D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
+
+	void eidTSC_3D(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
+
+	void extrapolateIonDensity(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
 
 
 	void EMF_TOS_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * fields, arma::mat * F);
@@ -127,41 +127,41 @@ protected:
 	void interpolateElectromagneticFields_1D(const simulationParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B);
 
 
-	void EMF_TSC_2D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
+	void EMF_TSC_2D(const meshParams * mesh, const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
 
-	void EMF_TSC_3D(const meshGeometry * mesh, const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
-
-
-
-	void aiv_Vay_1D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
-
-	void aiv_Vay_2D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
-
-	void aiv_Vay_3D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void EMF_TSC_3D(const meshParams * mesh, const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
 
 
-	void aiv_Boris_1D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void aiv_Boris_2D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void aiv_Vay_1D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void aiv_Boris_3D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void aiv_Vay_2D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+
+	void aiv_Vay_3D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
 
-	void aip_1D(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
+	void aiv_Boris_1D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void aip_2D(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
+	void aiv_Boris_2D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void aip_3D(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
+	void aiv_Boris_3D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+
+
+	void aip_1D(const simulationParameters * params, const meshParams * mesh, vector<ionSpecies> * IONS, const double DT);
+
+	void aip_2D(const simulationParameters * params, const meshParams * mesh, vector<ionSpecies> * IONS, const double DT);
+
+	void aip_3D(const simulationParameters * params, const meshParams * mesh, vector<ionSpecies> * IONS, const double DT);
 
   public:
 
 	PIC();
 
-	void assignCell(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS, int dim);
+	void assignCell(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS, int dim);
 
-	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void advanceIonsPosition(const simulationParameters * params, const meshGeometry * mesh, vector<ionSpecies> * IONS, const double DT);
+	void advanceIonsPosition(const simulationParameters * params, const meshParams * mesh, vector<ionSpecies> * IONS, const double DT);
 };
 
 
@@ -231,34 +231,34 @@ protected:
 	void reset_GC_vars(PIC_GC::GC_VARS * gcv);
 
 
-	void depositIonDensityAndBulkVelocity(const simulationParameters * params, const meshGeometry * mesh, ionSpecies * IONS);
+	void depositIonDensityAndBulkVelocity(const simulationParameters * params, const meshParams * mesh, ionSpecies * IONS);
 
 
 	void EFF_EMF_TSC_1D(const double DT, const double DX, GC_VARS * gcv, const fields * EB);
 
 
-	void assignCell_TSC(const simulationParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim);
+	void assignCell_TSC(const simulationParameters * params, const meshParams * mesh, GC_VARS * gcv, int dim);
 
 
-	void computeFullOrbitVelocity(const simulationParameters * params, const meshGeometry * mesh, const fields * EB, GC_VARS * gcv, arma::rowvec * V, int dim);
+	void computeFullOrbitVelocity(const simulationParameters * params, const meshParams * mesh, const fields * EB, GC_VARS * gcv, arma::rowvec * V, int dim);
 
 
-	void advanceRungeKutta45Stages_1D(const simulationParameters * params, const meshGeometry * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG);
+	void advanceRungeKutta45Stages_1D(const simulationParameters * params, const meshParams * mesh, double * DT_RK, GC_VARS * gcv, const fields * EB, int STG);
 
 
-	void ai_GC_1D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void ai_GC_1D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void ai_GC_2D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void ai_GC_2D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
-	void ai_GC_3D(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void ai_GC_3D(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 
 public:
 
-	PIC_GC(const simulationParameters * params, const meshGeometry * mesh);
+	PIC_GC(const simulationParameters * params, const meshParams * mesh);
 
-	void assignCell(const simulationParameters * params, const meshGeometry * mesh, GC_VARS * gcv, int dim);
+	void assignCell(const simulationParameters * params, const meshParams * mesh, GC_VARS * gcv, int dim);
 
-	void advanceGCIons(const simulationParameters * params, const characteristicScales * CS, const meshGeometry * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
+	void advanceGCIons(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS, const double DT);
 };
 
 #endif

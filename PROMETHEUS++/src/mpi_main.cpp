@@ -18,7 +18,6 @@
 
 #include "mpi_main.h"
 
-
 void MPI_MAIN::mpi_function(simulationParameters * params){
 
 	int nthreads,thread;
@@ -33,8 +32,8 @@ void MPI_MAIN::mpi_function(simulationParameters * params){
 	}
 	}
 
-	MPI_Barrier(params->mpi.mpi_topo);
-	MPI_Abort(params->mpi.mpi_topo,-7);
+	MPI_Barrier(params->mpi.MPI_TOPO);
+	MPI_Abort(params->mpi.MPI_TOPO,-7);
 }
 
 
@@ -44,17 +43,17 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 	int reorder(0), periods[1] = {1};
 	int src, coord, topo_status;
 
-	MPI_Cart_create(MPI_COMM_WORLD,ndims,dims,periods,reorder,&params->mpi.mpi_topo);
+	MPI_Cart_create(MPI_COMM_WORLD,ndims,dims,periods,reorder,&params->mpi.MPI_TOPO);
 
-	MPI_Topo_test(params->mpi.mpi_topo,&topo_status);
+	MPI_Topo_test(params->mpi.MPI_TOPO,&topo_status);
 
 	if(topo_status == MPI_CART){
-		MPI_Comm_rank(params->mpi.mpi_topo,&params->mpi.rank_cart);
-		MPI_Cart_coords(params->mpi.mpi_topo,params->mpi.rank_cart,ndims,&coord);
+		MPI_Comm_rank(params->mpi.MPI_TOPO,&params->mpi.rank_cart);
+		MPI_Cart_coords(params->mpi.MPI_TOPO,params->mpi.rank_cart,ndims,&coord);
 		src = params->mpi.rank_cart;
-		MPI_Cart_shift(params->mpi.mpi_topo,0,1,&src,&params->mpi.rRank);
+		MPI_Cart_shift(params->mpi.MPI_TOPO,0,1,&src,&params->mpi.rRank);
 		src = params->mpi.rank_cart;
-		MPI_Cart_shift(params->mpi.mpi_topo,0,-1,&src,&params->mpi.lRank);
+		MPI_Cart_shift(params->mpi.MPI_TOPO,0,-1,&src,&params->mpi.lRank);
 /*		cout << "Coordinate and rank " << params->mpi.MPI_DOMAIN_NUMBER << '\t' \
 		<< params->mpi.rank_cart << " coordinate " << coord << " left & right " \
 		<< params->mpi.lRank << '\t' << params->mpi.rRank << '\n';
@@ -69,7 +68,7 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	if(params->mpi.rank_cart == 0)
 		cout << "\n* * * * * * * * * * * * FINALIZING MPI COMMUNICATIONS * * * * * * * * * * * * * * * * * *\n";
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	MPI_Finalize();
 

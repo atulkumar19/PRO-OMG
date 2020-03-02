@@ -18,7 +18,7 @@
 
 #include "alfvenic.h"
 
-ALFVENIC::ALFVENIC(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+ALFVENIC::ALFVENIC(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	if(params->numberOfAlfvenicModes > 0){
 		if(params->loadModes == 0){
@@ -29,7 +29,7 @@ ALFVENIC::ALFVENIC(const simulationParameters * params,const meshGeometry * mesh
 	}
 }
 
-void ALFVENIC::generateModes(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::generateModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	Aw.amp.set_size(params->numberOfAlfvenicModes);
@@ -79,7 +79,7 @@ void ALFVENIC::generateModes(const simulationParameters * params,const meshGeome
 	if(params->mpi.rank_cart == 0)
 		Aw.phase = (2*M_PI*params->maxAngle/360)*randu<vec>(params->numberOfAlfvenicModes);
 	MPI_ARMA_VEC mpi_phase(params->numberOfAlfvenicModes);
-	MPI_Bcast(Aw.phase.memptr(),1,mpi_phase.type,0,params->mpi.mpi_topo);
+	MPI_Bcast(Aw.phase.memptr(),1,mpi_phase.type,0,params->mpi.MPI_TOPO);
 
 	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
@@ -113,7 +113,7 @@ void ALFVENIC::generateModes(const simulationParameters * params,const meshGeome
 
 }
 
-void ALFVENIC::loadModes(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::loadModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	mat spectra;

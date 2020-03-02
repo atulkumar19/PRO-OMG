@@ -244,7 +244,7 @@ void saveToHDF5(Group * group, string name, arma::fmat * values){
 
 
 //Constructor of HDF5Obj class
-HDF::HDF(simulationParameters *params, meshGeometry *mesh, vector<ionSpecies> *IONS){
+HDF::HDF(simulationParameters *params, meshParams *mesh, vector<ionSpecies> *IONS){
 
 	try{
 		stringstream dn;
@@ -667,7 +667,7 @@ void HDF::saveIonsVariables(const simulationParameters * params, const vector<io
 }
 
 
-void HDF::saveFieldsVariables(const simulationParameters * params, oneDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
+void HDF::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int IT){
 
 	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
 	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
@@ -821,11 +821,11 @@ void HDF::saveFieldsVariables(const simulationParameters * params, oneDimensiona
 
 }
 
-void HDF::saveFieldsVariables(const simulationParameters * params, twoDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
+void HDF::saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int IT){
 
 }
 
-void HDF::saveFieldsVariables(const simulationParameters * params, threeDimensional::electromagneticFields * EB, const characteristicScales * CS, const int IT){
+void HDF::saveFieldsVariables(const simulationParameters * params, threeDimensional::fields * EB, const characteristicScales * CS, const int IT){
 
 }
 

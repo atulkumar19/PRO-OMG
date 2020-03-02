@@ -46,9 +46,9 @@ public:
 
     TIME_STEPPING_METHODS(simulationParameters * params);
 
-    void advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
+    void advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
 
-    void advanceGCIonsAndMasslessElectrons(simulationParameters * params, meshGeometry * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
+    void advanceGCIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
 
 };
 

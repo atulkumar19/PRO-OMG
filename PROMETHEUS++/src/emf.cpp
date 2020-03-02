@@ -49,14 +49,14 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::v
 
 	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for x-component
 	sendBuf = field->subvec(iIndex, fIndex);
-	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
 	field->subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 }
 
 
@@ -70,28 +70,28 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_
 
 	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for x-component
 	sendBuf = field->X.subvec(iIndex, fIndex);
-	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
 	field->X.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for y-component
 	sendBuf = field->Y.subvec(iIndex, fIndex);
-	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
 	field->Y.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for z-component
 	sendBuf = field->Z.subvec(iIndex, fIndex);
-	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.mpi_topo);
+	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
 	field->Z.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 }
 
 
@@ -104,31 +104,31 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params,vfield_vec *
 	double recvBuf;
 
 	sendBuf = field->X(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->X(iIndex-1) = recvBuf;
 
 	sendBuf = field->X(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->X(fIndex+1) = recvBuf;
 
 	sendBuf = field->Y(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,2,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,2,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,2,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,2,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Y(iIndex-1) = recvBuf;
 
 	sendBuf = field->Y(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,3,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,3,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,3,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,3,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Y(fIndex+1) = recvBuf;
 
 	sendBuf = field->Z(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,4,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,4,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,4,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,4,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Z(iIndex-1) = recvBuf;
 
 	sendBuf = field->Z(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,5,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,5,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,5,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,5,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Z(fIndex+1) = recvBuf;
 
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 }
 
 
@@ -141,14 +141,14 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec *
 	double recvBuf;
 
 	sendBuf = (*field)(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	(*field)(iIndex-1) = recvBuf;
 
 	sendBuf = (*field)(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.mpi_topo,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	(*field)(fIndex+1) = recvBuf;
 
-	MPI_Barrier(params->mpi.mpi_topo);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 }
 
 
@@ -287,7 +287,7 @@ void EMF_SOLVER::equilibrium(const simulationParameters * params,vector<ionSpeci
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeometry * mesh,fields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParams * mesh,fields * EB){//This function calculates -culr(EB->E)
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -309,17 +309,17 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeome
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB){
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParams * mesh,twoDimensional::fields * EB){
 
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParams * mesh,threeDimensional::fields * EB){//This function calculates -culr(EB->E)
 
 }
 
 
-void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
@@ -404,13 +404,13 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeo
 #ifdef CHECKS_ON
 	if(!EB->B.X.is_finite()){
 		cout << "ERROR: Non finite values in Bx" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}else if(!EB->B.Y.is_finite()){
 		cout << "ERROR: Non finite values in By" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}else if(!EB->B.Z.is_finite()){
 		cout << "ERROR: Non finite values in Bz" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}
 #endif
 
@@ -465,7 +465,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshGeo
 
 
 #ifdef ONED
-void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry * mesh,oneDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * mesh,oneDimensional::fields * EB,vector<ionSpecies> * IONS){
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
@@ -586,13 +586,13 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 #ifdef CHECKS_ON
 	if(!EB->E.X.is_finite()){
 		cout << "ERROR: Non finite values in Ex" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}else if(!EB->E.Y.is_finite()){
 		cout << "ERROR: Non finite values in Ey" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}else if(!EB->E.Z.is_finite()){
 		cout << "ERROR: Non finite values in Ez" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}
 #endif
 
@@ -626,20 +626,20 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshGeometry *
 
 
 #ifdef TWOD
-void EMF_SOLVER::aef_2D(const simulationParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_2D(const simulationParameters * params,const meshParams * mesh,twoDimensional::fields * EB,vector<ionSpecies> * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void EMF_SOLVER::aef_3D(const simulationParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_3D(const simulationParameters * params,const meshParams * mesh,threeDimensional::fields * EB,vector<ionSpecies> * IONS){
 
 }
 #endif
 
 
-void EMF_SOLVER::advanceEField(const simulationParameters * params,const meshGeometry * mesh,fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceEField(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
 
 	//The ions' density and flow velocities are stored in the integer nodes,we'll use mean values of these quantities in order to calculate the electric field in the staggered grid.
 
@@ -664,8 +664,8 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params,const meshGeo
 	+ IONS_: Ions' variables at time level "l - 1/2"
 	+ IONS: Ions' variables at time level "l + 1/2"
 */
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshGeometry * mesh,\
-														oneDimensional::electromagneticFields * EB, vector<ionSpecies> * IONS, const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshParams * mesh,\
+														oneDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE){
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
@@ -817,13 +817,13 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 #ifdef CHECKS_ON
 	if(!EB->E.X.is_finite()){
 		cout << "ERROR: Non finite values in Ex" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}else if(!EB->E.Y.is_finite()){
 		cout << "ERROR: Non finite values in Ey" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}else if(!EB->E.Z.is_finite()){
 		cout << "ERROR: Non finite values in Ez" << endl;
-		MPI_Abort(params->mpi.mpi_topo, -2);
+		MPI_Abort(params->mpi.MPI_TOPO, -2);
 	}
 #endif
 
@@ -859,14 +859,14 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 
 #ifdef TWOD
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshGeometry * mesh,twoDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshParams * mesh,twoDimensional::fields * EB,vector<ionSpecies> * IONS,const int BAE){
 
 }
 #endif
 
 
 #ifdef THREED
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshGeometry * mesh,threeDimensional::electromagneticFields * EB,vector<ionSpecies> * IONS,const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshParams * mesh,threeDimensional::fields * EB,vector<ionSpecies> * IONS,const int BAE){
 
 }
 #endif

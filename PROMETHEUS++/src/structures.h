@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include "armadillo"
 #include "types.h"
 
@@ -130,6 +131,7 @@ struct simulationParameters{
 	int argc;
 	char **argv;
 
+	int dimensionality; // Dimensionality of the simulation domain 1-D = 1; 2-D = 2
 	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
 	bool includeElectronInertia;
 	bool quietStart; // Flag for using a quiet start
@@ -187,6 +189,9 @@ struct simulationParameters{
 	unsigned int shuffleModes;
 
 	mpiParams mpi;
+
+	// Error codes
+	std::map<int, std::string> errorCodes;
 };
 
 

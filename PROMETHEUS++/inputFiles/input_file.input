@@ -1,3 +1,4 @@
+dimensionality              1
 particleIntegrator          1
 includeElectronInertia      0
 quietStart                  0
@@ -29,7 +30,7 @@ Bo                          2.1
 theta                       0.0
 phi                         0.0
 NX                          64
-NY                          1
+NY                          8
 NZ                          1
 DrL                         0.015
 dp                          -1

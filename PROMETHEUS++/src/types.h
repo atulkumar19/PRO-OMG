@@ -311,13 +311,13 @@ class twoDimensional::fields : public vfield_mat{
 public:
 	vfield_mat E;
 	vfield_mat B;
+	vfield_mat _B;
 	vfield_mat b;
 	vfield_mat b_;
-	arma::mat _B;
 
 	fields(){};
-	fields(unsigned int N, unsigned int M) : E(N,M), B(N,M), b(N,M), b_(N,M), _B(N,M){};
-	void zeros(unsigned int N, unsigned int M);
+	fields(unsigned int NX, unsigned int NY) : E(NX,NY), B(NX,NY), b(NX,NY), b_(NX,NY), _B(NX,NY){};
+	void zeros(unsigned int NX, unsigned int NY);
 };
 
 

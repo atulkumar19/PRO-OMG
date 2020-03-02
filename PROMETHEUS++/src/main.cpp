@@ -49,6 +49,9 @@ int main(int argc, char* argv[]){
 	meshParams mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	oneDimensional::fields EB; 						// Derived type with variables of electromagnetic fields.
 
+	vector<twoDimensional::ionSpecies> IONS_2D; //*** @todelete
+	twoDimensional::fields EB_2D; //*** @todelete
+
 	INITIALIZE init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);

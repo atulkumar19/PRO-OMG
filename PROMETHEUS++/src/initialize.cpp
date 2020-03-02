@@ -75,13 +75,11 @@ map<string,string> INITIALIZE::loadParametersString(string * inputFile){
         MPI_Barrier(MPI_COMM_WORLD);
 
     	cerr << "PRO++ ERROR: The input file couldn't be opened." << endl;
-    	MPI_Abort(MPI_COMM_WORLD,-102);
+    	MPI_Abort(MPI_COMM_WORLD, -101);
     }
 
     while ( reader >> key >> value ){
       	readMap[ key ] = value;
-		// cout << key << "\t" << std::stod(value) << "\n";
-		 //cout << key << "\t" << value << "\n";
     }
 
     reader.close();
@@ -90,12 +88,16 @@ map<string,string> INITIALIZE::loadParametersString(string * inputFile){
 }
 
 
-INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
-	MPI_Comm_size(MPI_COMM_WORLD,&params->mpi.NUMBER_MPI_DOMAINS);
-	MPI_Comm_rank(MPI_COMM_WORLD,&params->mpi.MPI_DOMAIN_NUMBER);
+INITIALIZE::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
+    // Error codes
+    params->errorCodes[-100] = "Odd number of MPI processes";
+    params->errorCodes[-101] = "Input file could not be opened";
+
+	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
+	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
 
     // Copyright and Licence Info
-    if (params->mpi.MPI_DOMAIN_NUMBER){
+    if (params->mpi.MPI_DOMAIN_NUMBER == 0){
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
         cout << "* PROMETHEUS++ Copyright (C) 2015-2019  Leopoldo Carbajal               *" << endl;
         cout << "*                                                                       *" << endl;
@@ -114,16 +116,17 @@ INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
         cout << endl;
     }
+
     MPI_Barrier(MPI_COMM_WORLD);
 
-	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS,2.0 ) > 0.0 ){
+	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 ){
         MPI_Barrier(MPI_COMM_WORLD);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0){
 			cerr << "PRO++ ERROR: The number of MPI processes must be an even number." << endl;
 		}
 
-		MPI_Abort(MPI_COMM_WORLD,-103);
+		MPI_Abort(MPI_COMM_WORLD,-100);
 	}
 
     if(params->mpi.MPI_DOMAIN_NUMBER == 0){
@@ -166,10 +169,14 @@ INITIALIZE::INITIALIZE(simulationParameters * params,int argc,char* argv[]){
 		sys = mkdir_outputs_dir_HDF5.c_str();
 		rsys = system(sys);
 
-		string mkdir_outputs_dir_diagnostics = mkdir_outputs_dir + "/diagnostics";
+		/*
+        string mkdir_outputs_dir_diagnostics = mkdir_outputs_dir + "/diagnostics";
 		sys = mkdir_outputs_dir_diagnostics.c_str();
 		rsys = system(sys);
+        */
 	}
+
+    params->dimensionality = std::stoi( parametersStringMap["dimensionality"] );
 
 	params->particleIntegrator = std::stoi( parametersStringMap["particleIntegrator"] );
 

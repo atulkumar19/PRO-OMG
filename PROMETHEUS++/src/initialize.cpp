@@ -92,6 +92,7 @@ INITIALIZE::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
     // Error codes
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
+    params->errorCodes[-102] = "MPI's Cartesian topology could not be created";
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);

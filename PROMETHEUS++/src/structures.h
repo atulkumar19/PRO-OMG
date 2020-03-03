@@ -66,6 +66,7 @@ struct mpiParams{
 
 	MPI_Comm MPI_TOPO;
 
+	int rank;
 	int rank_cart;
 	int lRank;
 	int rRank;

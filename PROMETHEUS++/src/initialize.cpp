@@ -18,7 +18,7 @@
 
 #include "initialize.h"
 
-vector<string> INITIALIZE::split(const string& str, const string& delim)
+template <class T> vector<string> INITIALIZE<T>::split(const string& str, const string& delim)
 {
     vector<string> tokens;
     size_t prev = 0, pos = 0;
@@ -36,7 +36,7 @@ vector<string> INITIALIZE::split(const string& str, const string& delim)
 }
 
 
-map<string,float> INITIALIZE::loadParameters(string * inputFile){
+template <class T> map<string,float> INITIALIZE<T>::loadParameters(string * inputFile){
 	string key;
 	float value;
 	fstream reader;
@@ -62,7 +62,7 @@ map<string,float> INITIALIZE::loadParameters(string * inputFile){
 }
 
 
-map<string,string> INITIALIZE::loadParametersString(string * inputFile){
+template <class T> map<string,string>INITIALIZE<T>::loadParametersString(string * inputFile){
 	string key;
 	string value;
 	fstream reader;
@@ -87,8 +87,7 @@ map<string,string> INITIALIZE::loadParametersString(string * inputFile){
     return readMap;
 }
 
-
-INITIALIZE::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
+template <class T> INITIALIZE<T>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
     // Error codes
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
@@ -272,7 +271,7 @@ INITIALIZE::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
 }
 
 
-void INITIALIZE::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
+template <class T> void INITIALIZE<T>::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 
     INITIALIZE::LarmorRadius = FS->ionGyroRadius[0];
     INITIALIZE::ionSkinDepth = FS->ionSkinDepth[0];
@@ -346,7 +345,7 @@ void INITIALIZE::loadMeshGeometry(const simulationParameters * params, fundament
 }
 
 
-void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS,\
+template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS,\
 	const meshParams * mesh,vector<ionSpecies> * IONS){
 
 	if(params->mpi.rank_cart == 0){
@@ -494,7 +493,7 @@ void INITIALIZE::setupIonsInitialCondition(const simulationParameters * params,c
 }
 
 
-void INITIALIZE::loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP){
+template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP){
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
@@ -678,7 +677,7 @@ void INITIALIZE::loadIonParameters(simulationParameters * params, vector<ionSpec
 }
 
 
-void INITIALIZE::initializeFields(const simulationParameters * params, const meshParams * mesh, fields * EB){
+template <class T> void INITIALIZE<T>::initializeFields(const simulationParameters * params, const meshParams * mesh, fields * EB){
 
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
@@ -723,3 +722,6 @@ void INITIALIZE::initializeFields(const simulationParameters * params, const mes
 	if(params->mpi.rank_cart == 0)
 		cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
 }
+
+
+template class INITIALIZE<int>;

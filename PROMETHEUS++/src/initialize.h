@@ -42,9 +42,10 @@ using namespace arma;
 
 using namespace oneDimensional;
 
-class INITIALIZE{
+template <class T> class INITIALIZE{
 
-	double ionSkinDepth, LarmorRadius;
+	double ionSkinDepth;
+	double LarmorRadius;
 
 	vector<string> split(const string& str, const string& delim);
 

@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 	vector<twoDimensional::ionSpecies> IONS_2D; //*** @todelete
 	twoDimensional::fields EB_2D; //*** @todelete
 
-	INITIALIZE init(&params, argc, argv);
+	INITIALIZE<int> init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 

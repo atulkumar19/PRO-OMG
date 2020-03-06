@@ -193,6 +193,10 @@ struct simulationParameters{
 
 	// Error codes
 	std::map<int, std::string> errorCodes;
+
+	types_info typesInfo;
+
+	simulationParameters();
 };
 
 

@@ -493,7 +493,7 @@ template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulatio
 }
 
 
-template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP){
+template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP){
 	stringstream domainNumber;
 	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
@@ -519,7 +519,7 @@ template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * 
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		string name;
-		ionSpecies ions;
+		T ions;
         GCSpecies gcp;
         int SPECIES;
 		stringstream ss;
@@ -724,4 +724,5 @@ template <class T> void INITIALIZE<T>::initializeFields(const simulationParamete
 }
 
 
-template class INITIALIZE<int>;
+template class INITIALIZE<oneDimensional::ionSpecies>;
+template class INITIALIZE<twoDimensional::ionSpecies>;

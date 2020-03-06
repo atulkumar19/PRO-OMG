@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <typeinfo>
 
 #include <armadillo>
 
@@ -61,7 +62,7 @@ public:
 
 	void loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh);
 
-	void loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP);
+	void loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP);
 
 	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<ionSpecies> * IONS);
 

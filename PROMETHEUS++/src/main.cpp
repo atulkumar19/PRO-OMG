@@ -21,6 +21,7 @@
 #include <armadillo>
 #include <cmath>
 #include <ctime>
+#include <typeinfo>
 
 #include "structures.h"
 #include "initialize.h"
@@ -49,16 +50,24 @@ int main(int argc, char* argv[]){
 	meshParams mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	oneDimensional::fields EB; 						// Derived type with variables of electromagnetic fields.
 
-	vector<twoDimensional::ionSpecies> IONS_2D; //*** @todelete
-	twoDimensional::fields EB_2D; //*** @todelete
-
-	INITIALIZE<int> init(&params, argc, argv);
+	INITIALIZE<oneDimensional::ionSpecies> init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 
 	init.loadIonParameters(&params, &IONS, &GCP); //*** @tomodify
 
-	UNITS units;
+/*
+	vector<twoDimensional::ionSpecies> IONS_2D; //*** @todelete
+	twoDimensional::fields EB_2D; //*** @todelete
+
+	INITIALIZE<twoDimensional::ionSpecies> init_2D(&params, argc, argv); //*** @todelete
+	init_2D.loadIonParameters(&params, &IONS_2D, &GCP); //*** @todelete
+*/
+
+	UNITS<oneDimensional::ionSpecies> units;
+
+	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
+	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
 
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 

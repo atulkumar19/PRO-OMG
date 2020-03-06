@@ -21,7 +21,7 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 */
 #include "units.h"
 
-void UNITS::defineTimeStep(simulationParameters * params,meshParams * mesh,vector<ionSpecies> * IONS,fields * EB){
+template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,meshParams * mesh,vector<T> * IONS,fields * EB){
 	if(params->mpi.rank_cart == 0)
 		cout << "\n* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
@@ -209,7 +209,7 @@ void UNITS::defineTimeStep(simulationParameters * params,meshParams * mesh,vecto
 
 
 
-void UNITS::broadcastCharacteristicScales(simulationParameters * params,characteristicScales * CS){
+template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParameters * params,characteristicScales * CS){
 
 	// Define MPI type for characteristicScales structure.
 	int numStructElem(13);
@@ -258,7 +258,7 @@ void UNITS::broadcastCharacteristicScales(simulationParameters * params,characte
 }
 
 
-void UNITS::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
+template <class T> void UNITS<T>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -282,7 +282,7 @@ void UNITS::broadcastFundamentalScales(simulationParameters * params, fundamenta
 }
 
 
-void UNITS::calculateFundamentalScales(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS){
+template <class T> void UNITS<T>::calculateFundamentalScales(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
 
 	cout << "\n* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
 	if (params->includeElectronInertia == true){
@@ -316,7 +316,7 @@ void UNITS::calculateFundamentalScales(simulationParameters * params, vector<ion
 }
 
 
-void UNITS::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
+template <class T> void UNITS<T>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 	cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
 
 	cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
@@ -325,13 +325,13 @@ void UNITS::spatialScalesSanityCheck(simulationParameters * params, fundamentalS
 	if (mesh->DX <= FS->electronSkinDepth){
 		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
 		cout << "ABORTING SIMULATION..." << endl;
-		//MPI_Abort(MPI_COMM_WORLD,-1000);
+		MPI_Abort(MPI_COMM_WORLD,-1000);
 	}
 	cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
 }
 
 
-void UNITS::defineCharacteristicScales(simulationParameters * params,vector<ionSpecies> * IONS,characteristicScales * CS){
+template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameters * params,vector<T> * IONS,characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
@@ -380,7 +380,7 @@ void UNITS::defineCharacteristicScales(simulationParameters * params,vector<ionS
 }
 
 
-void UNITS::dimensionlessForm(simulationParameters * params,meshParams * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
+template <class T> void UNITS<T>::dimensionlessForm(simulationParameters * params,meshParams * mesh,vector<T> * IONS,fields * EB,const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_ME_DS /= CS->mass; // Dimensionless electron charge
@@ -436,13 +436,13 @@ void UNITS::dimensionlessForm(simulationParameters * params,meshParams * mesh,ve
 }
 
 
-void UNITS::normalizeVariables(simulationParameters * params,meshParams * mesh,vector<ionSpecies> * IONS,fields * EB,const characteristicScales * CS){
+template <class T> void UNITS<T>::normalizeVariables(simulationParameters * params,meshParams * mesh,vector<T> * IONS,fields * EB,const characteristicScales * CS){
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }
 
 
-void UNITS::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS){
+template <class T> void UNITS<T>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
 		defineCharacteristicScales(params, IONS, CS);
@@ -452,7 +452,7 @@ void UNITS::defineCharacteristicScalesAndBcast(simulationParameters * params, ve
 }
 
 
-void UNITS::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS){
+template <class T> void UNITS<T>::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
 		calculateFundamentalScales(params, IONS, FS);
@@ -460,3 +460,6 @@ void UNITS::calculateFundamentalScalesAndBcast(simulationParameters * params, ve
 
 	broadcastFundamentalScales(params, FS);
 }
+
+template class UNITS<oneDimensional::ionSpecies>;
+template class UNITS<twoDimensional::ionSpecies>;

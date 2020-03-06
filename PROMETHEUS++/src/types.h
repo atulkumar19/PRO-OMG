@@ -19,6 +19,7 @@
 #ifndef H_TYPES
 #define H_TYPES
 
+#include <typeinfo>
 #include <vector>
 #include <armadillo>
 
@@ -42,6 +43,24 @@ namespace threeDimensional{
 // * * * * * * * * NAMESPACES  * * * * * * * * //
 
 
+// * * * * * * * * TYPES IDENTIFIERS  * * * * * * * * //
+class types_info{
+
+public:
+	types_info(){};
+	~types_info(){};
+
+	const std::type_info * ionSpecies_1D_type;
+	const std::type_info * ionSpecies_2D_type;
+
+	const std::type_info * GCSpecies_1D_type;
+
+	const std::type_info * fields_1D_type;
+	const std::type_info * fields_2D_type;
+};
+// * * * * * * * * TYPES IDENTIFIERS  * * * * * * * * //
+
+
 // * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
 class vfield_vec{
 
@@ -52,6 +71,8 @@ public:
 
 	vfield_vec(){};
 	vfield_vec(unsigned int N) : X(N), Y(N), Z(N) {}
+
+	~vfield_vec(){};
 
 	vfield_vec operator + (vfield_vec R);
 	vfield_vec operator += (vfield_vec R);
@@ -83,6 +104,8 @@ public:
 	vfield_mat(){};
 	vfield_mat(unsigned int N, unsigned int M) : X(N,M), Y(N,M), Z(N,M) {}
 
+	~vfield_mat(){};
+
 	vfield_mat operator + (vfield_mat R);
 	vfield_mat operator += (vfield_mat R);
 	vfield_mat operator - (vfield_mat R);
@@ -111,6 +134,8 @@ public:
 
 	vfield_cube(){};
 	vfield_cube(unsigned int N, unsigned int M, unsigned int P) : X(N,M,P), Y(N,M,P), Z(N,M,P) {}
+
+	~vfield_cube(){};
 
 	vfield_cube operator + (vfield_cube R);
 	vfield_cube operator += (vfield_cube R);
@@ -186,6 +211,9 @@ public:
 	vfield_vec nv; 				// Ion bulk velocity at time level "l + 1/2"
 	vfield_vec nv_; 			// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 			// Ion bulk velocity at time level "l - 3/2"
+
+	ionSpecies(){};
+	~ionSpecies(){};
 };
 
 
@@ -243,6 +271,9 @@ public:
 	vfield_mat nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"
+
+	ionSpecies(){};
+	~ionSpecies(){};
 };
 // * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
@@ -284,6 +315,9 @@ public:
 
 	//These weights are used in the charge extrapolation and the force interpolation
 	arma::vec wxl, wxc, wxr;	// Particles' weights w.r.t. the vertices of the grid cells
+
+	GCSpecies(){};
+	~GCSpecies(){};
 };
 // * * * * * * * * GC VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
@@ -301,6 +335,9 @@ public:
 
 	fields(){};
 	fields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
+
+	~fields(){};
+
 	void zeros(unsigned int N);
 	void fill(double A);
 };
@@ -317,6 +354,9 @@ public:
 
 	fields(){};
 	fields(unsigned int NX, unsigned int NY) : E(NX,NY), B(NX,NY), b(NX,NY), b_(NX,NY), _B(NX,NY){};
+
+	~fields(){};
+
 	void zeros(unsigned int NX, unsigned int NY);
 };
 
@@ -332,6 +372,9 @@ public:
 
 	fields(){};
 	fields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P), _B(N,M,P){};
+
+	~fields(){};
+
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
 // * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //

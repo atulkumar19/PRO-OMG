@@ -38,112 +38,26 @@ void MPI_MAIN::mpi_function(simulationParameters * params){
 
 
 void MPI_MAIN::createMPITopology(simulationParameters * params){
-	int ndims;
-	int dims_1D[1];
-	int dims_2D[2];
-	int * dims_ptr;
-	int reorder(0);
-	int periods_1D[1] = {1};
-	int periods_2D[2] = {1, 1};
-	int * periods_ptr;
-	// int coord_1D[1]; //*** @tocheck
-	// int coord_2D[2]; //*** @tocheck
-	// int * coord_prt; //*** @tocheck
-	// int coords; //*** @tocheck
-	int topo_status;
 
-	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.rank); // Get MPI rank in new topology
+	int ndims(1), dims[1] = {params->mpi.NUMBER_MPI_DOMAINS};
+	int reorder(0), periods[1] = {1};
+	int src, coord, topo_status;
 
-	// A Cartesian, periodic topology is generated in 1-D or 2-D
-	// In this Cartesian topology direction 0 is along the x-axis, and direction 1 is along
-	// the y-axis. Left and right are along the x-axis, and up and down along the y-direction.
-	if(params->dimensionality == 1){
-		ndims = 1;
-		dims_ptr = dims_1D;
-		periods_ptr = periods_1D;
-		// coord_prt = coord_1D; //*** @tocheck
+	MPI_Cart_create(MPI_COMM_WORLD,ndims,dims,periods,reorder,&params->mpi.MPI_TOPO);
 
-		dims_1D[0] = params->mpi.NUMBER_MPI_DOMAINS;
-	}else{
-		double n(0.0); // Exponent of 2^n
-		double x;
-
-		ndims = 2;
-		dims_ptr = dims_2D;
-		periods_ptr = periods_2D;
-		// coord_prt = coord_2D; //*** @tocheck
-
-		do{
-			x = ((double)params->mpi.NUMBER_MPI_DOMAINS)/2.0;
-			n += 1.0;
-		} while(x > 1.0);
-
-		// We check whether n is a even number or an odd number
-		if( fmod(n, 2.0) > 0.0 ){	// n is an odd number
-			// The Cartesian topology of MPIs will be of size 2 x 2^(n-1),
-			// where 2 MPI processes are used along the direction with less nodes.
-			if(params->NX_PER_MPI > params->NY_PER_MPI){
-				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
-					dims_2D[0] = (int)pow(2.0, n-1.0); 	// x-axis
-					dims_2D[1] = 2;						// y-axis
-				}else{
-					dims_2D[0] = 2; 	// x-axis
-					dims_2D[1] = 1;						// y-axis
-				}
-			}else{
-				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
-					dims_2D[0] = 2;						// x-axis
-					dims_2D[1] = (int)pow(2.0, n-1.0);	// y-axis
-				}else{
-					dims_2D[0] = 1;						// x-axis
-					dims_2D[1] = 2;	// y-axis
-				}
-
-			}
-		}else{ // n is an even number
-			// The Cartesian topology of MPIs will be of size 2^(n/2) x 2^(n/2).
-			dims_2D[0] = (int)pow(2.0, n/2.0); 	// x-axis
-			dims_2D[1] = (int)pow(2.0, n/2.0); 	// y-axis
-		}
-	}
-
-	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_ptr, periods_ptr, reorder, &params->mpi.MPI_TOPO);
-
-	MPI_Topo_test(params->mpi.MPI_TOPO, &topo_status);
+	MPI_Topo_test(params->mpi.MPI_TOPO,&topo_status);
 
 	if(topo_status == MPI_CART){
-		MPI_Comm_rank(params->mpi.MPI_TOPO, &params->mpi.rank_cart); // Get MPI rank in new topology
-
-		// MPI_Cart_coords(params->mpi.MPI_TOPO, params->mpi.rank_cart, ndims, &coords); // Get MPI rank in new topology
-
-		MPI_Cart_shift(params->mpi.MPI_TOPO, 0, 1, &params->mpi.rank_cart, &params->mpi.rRank);
-
-		MPI_Cart_shift(params->mpi.MPI_TOPO, 0, -1, &params->mpi.rank_cart, &params->mpi.lRank);
-
-		if(ndims == 2){
-			MPI_Cart_shift(params->mpi.MPI_TOPO, 1, 1, &params->mpi.rank_cart, &params->mpi.uRank);
-
-			MPI_Cart_shift(params->mpi.MPI_TOPO, 1, -1, &params->mpi.rank_cart, &params->mpi.dRank);
-		}
-
-		//cout << "+ MPI: " << params->mpi.rank_cart << " | L: " << params->mpi.lRank << " | R: " << params->mpi.rRank \
-		//		<< " | U: " << params->mpi.uRank << " | D: " << params->mpi.dRank << endl;
-
-		if (params->mpi.rank_cart == 0){
-			cout << endl << "* * * * * * * * * * * * GENERATING MPI TOPOLOGY * * * * * * * * * * * * * * * * * *" << endl;
-			if(params->dimensionality == 1){
-				cout << "+ Number of MPI processes along the x-axis: " << dims_1D[0] << endl;
-			}else{
-				cout << "+ Number of MPI processes along the x-axis: " << dims_2D[0] << endl;
-				cout << "+ Number of MPI processes along the y-axis: " << dims_2D[1] << endl;
-			}
-			cout << "* * * * * * * * * * * * MPI TOPOLOGY GENERATED  * * * * * * * * * * * * * * * * * *" << endl << endl;
-		}
-	}else{
-		cerr << "ERROR: MPI topology could not be created!" << endl;
-
-		MPI_Barrier(MPI_COMM_WORLD);
-		MPI_Abort(MPI_COMM_WORLD,-102);
+		MPI_Comm_rank(params->mpi.MPI_TOPO,&params->mpi.rank_cart);
+		MPI_Cart_coords(params->mpi.MPI_TOPO,params->mpi.rank_cart,ndims,&coord);
+		src = params->mpi.rank_cart;
+		MPI_Cart_shift(params->mpi.MPI_TOPO,0,1,&src,&params->mpi.rRank);
+		src = params->mpi.rank_cart;
+		MPI_Cart_shift(params->mpi.MPI_TOPO,0,-1,&src,&params->mpi.lRank);
+/*		cout << "Coordinate and rank " << params->mpi.MPI_DOMAIN_NUMBER << '\t' \
+		<< params->mpi.rank_cart << " coordinate " << coord << " left & right " \
+		<< params->mpi.lRank << '\t' << params->mpi.rRank << '\n';
+*/
 	}
 }
 

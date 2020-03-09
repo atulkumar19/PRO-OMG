@@ -33,7 +33,7 @@ void PIC::MPI_BcastDensity(const simulationParameters * params, ionSpecies * ION
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(nSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, nRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(nSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, nRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
 		IONS->n += nRecv;
 		nSend = nRecv;
 	}
@@ -54,7 +54,7 @@ void PIC::MPI_BcastBulkVelocity(const simulationParameters * params, ionSpecies 
 	//x-component
 	bufSend = IONS->nv.X;
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
 		IONS->nv.X += bufRecv;
 		bufSend = bufRecv;
 	}
@@ -64,7 +64,7 @@ void PIC::MPI_BcastBulkVelocity(const simulationParameters * params, ionSpecies 
 	//x-component
 	bufSend = IONS->nv.Y;
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
 		IONS->nv.Y += bufRecv;
 		bufSend = bufRecv;
 	}
@@ -74,7 +74,7 @@ void PIC::MPI_BcastBulkVelocity(const simulationParameters * params, ionSpecies 
 	//x-component
 	bufSend = IONS->nv.Z;
 	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.rRank, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.lRank, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
 		IONS->nv.Z += bufRecv;
 		bufSend = bufRecv;
 	}
@@ -85,8 +85,8 @@ void PIC::MPI_BcastBulkVelocity(const simulationParameters * params, ionSpecies 
 
 void PIC::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 	arma::vec sendBuf(params->NX_PER_MPI);
 
@@ -119,8 +119,8 @@ void PIC::MPI_AllgatherField(const simulationParameters * params, vfield_vec * f
 
 void PIC::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 	arma::vec sendBuf(params->NX_PER_MPI);
 

@@ -66,12 +66,15 @@ struct mpiParams{
 
 	MPI_Comm MPI_TOPO;
 
-	int rank;
-	int rank_cart;
-	int lRank;
-	int rRank;
-	int uRank;
-	int dRank;
+	int MPI_DOMAINS_ALONG_X_AXIS;
+	int MPI_DOMAINS_ALONG_Y_AXIS;
+	int MPI_DOMAINS_ALONG_Z_AXIS;
+
+	int MPI_DOMAIN_NUMBER_CART;
+	int LEFT_MPI_DOMAIN_NUMBER_CART;
+	int RIGHT_MPI_DOMAIN_NUMBER_CART;
+	int UP_MPI_DOMAIN_NUMBER_CART;
+	int DOWN_MPI_DOMAIN_NUMBER_CART;
 };
 
 

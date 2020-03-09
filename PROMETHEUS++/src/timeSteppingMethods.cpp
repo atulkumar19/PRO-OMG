@@ -86,7 +86,7 @@ void TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationP
 
         if(tt==100){
             t2 = MPI::Wtime();
-            if(params->mpi.rank_cart == 0){
+            if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
                 cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
             }
         }
@@ -113,10 +113,10 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(simulationParamete
 
     t1 = MPI::Wtime();
 
-    // cout << "MPI: " << params->mpi.rank_cart << " TI: " << params->timeIterations << endl;
+    // cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " TI: " << params->timeIterations << endl;
 
     for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
-        // cout << "MPI: " << params->mpi.rank_cart << " | ITERATION: " << tt + 1 << endl;
+        // cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | ITERATION: " << tt + 1 << endl;
 
         ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
 
@@ -136,7 +136,7 @@ void TIME_STEPPING_METHODS::advanceGCIonsAndMasslessElectrons(simulationParamete
 
         if(tt == 100){
             t2 = MPI::Wtime();
-            if(params->mpi.rank_cart == 0){
+            if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
                 cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
             }
         }

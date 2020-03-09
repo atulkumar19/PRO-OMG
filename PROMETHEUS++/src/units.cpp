@@ -21,8 +21,8 @@ temperature the units are Coulombs (C) and Kelvins (K). The
 */
 #include "units.h"
 
-template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,meshParams * mesh,vector<T> * IONS,fields * EB){
-	if(params->mpi.rank_cart == 0)
+template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params, meshParams * mesh, vector<T> * IONS, fields * EB){
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "\n* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
 
 	double DT(0);
@@ -38,7 +38,7 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 	averageB = params->BGP.Bo;
 	Wpe = sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
 
-	if(params->mpi.rank_cart == 0){
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "SOME PLASMA PARAMETERS: " << endl;
 		cout << " + Mean magnetic field in simulation domain: " << scientific << averageB << fixed << " T\n";
 		cout << " + Electron skin depth: " << scientific << F_C/Wpe << fixed << " m" << endl;
@@ -46,7 +46,7 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 	}
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){//Iterations over the ion species
-		if(params->mpi.rank_cart == 0){
+		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 			cout << "PROPERTIES OF ION SPECIES No. " << ii + 1 << '\n';
 			cout << "+ Charge: " << scientific << IONS->at(ii).Q << fixed << " C\n";//Revisar las cuentas con el factor NCP
 			cout << "+ Mass: " << scientific << IONS->at(ii).M << fixed << " kg\n";
@@ -113,11 +113,11 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 		DT = 0.5*Cmax*mesh->DX/ion_vmax;
 
 		if(params->DTc*params->shorterIonGyroperiod > DT){
-			if(params->mpi.rank_cart == 0)
+			if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 				cout << "Time step defined by Courant–Friedrichs–Lewy condition for ions: " << scientific << DT << fixed << " s\n";
 		}else{
 			DT = params->DTc*params->shorterIonGyroperiod;
-			if(params->mpi.rank_cart == 0)
+			if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 				cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 		}
 	}else{
@@ -149,11 +149,11 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 			params->rateOfChecking = 100;
 			if(CFL_w < params->DTc){
 				DT = CFL_w*params->shorterIonGyroperiod;
-				if(params->mpi.rank_cart == 0)
+				if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 					cout << "Time step defined by Courant–Friedrichs–Lewy condition for whistler waves: " << scientific << DT << fixed << " s\n";
 			}else{
 				DT = params->DTc*params->shorterIonGyroperiod;
-				if(params->mpi.rank_cart == 0)
+				if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 					cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 			}
 		}else{
@@ -162,11 +162,11 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 			DT = CFL_ions*params->shorterIonGyroperiod;
 
 			if(params->DTc*params->shorterIonGyroperiod > DT){
-				if(params->mpi.rank_cart == 0)
+				if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 					cout << "Time step defined by Courant–Friedrichs–Lewy condition for ions: " << scientific << DT << fixed << " s\n";
 			}else{
 				DT = params->DTc*params->shorterIonGyroperiod;
-				if(params->mpi.rank_cart == 0)
+				if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 					cout << "Time step defined by user: " << scientific << DT << fixed << " s\n";
 			}
 		}
@@ -196,7 +196,7 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 
 	params->outputCadenceIterations = (int)ceil( params->outputCadence*params->shorterIonGyroperiod/params->DT);
 
-	if(params->mpi.rank_cart == 0){
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "Time steps in simulation: " << params->timeIterations << "\n";
 		cout << "Simulation time: " << scientific << params->DT*params->timeIterations << fixed << " s\n";
 		cout << "Simulation time: " << scientific << params->DT*params->timeIterations/params->shorterIonGyroperiod << fixed << " gyroperiods\n";
@@ -209,7 +209,7 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params,m
 
 
 
-template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParameters * params,characteristicScales * CS){
+template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS){
 
 	// Define MPI type for characteristicScales structure.
 	int numStructElem(13);
@@ -250,9 +250,9 @@ template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParame
 	MPI_Type_create_struct(numStructElem,structLength,displ,csTypes,&MPI_CS);
 	MPI_Type_commit(&MPI_CS);
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
-	MPI_Bcast(CS,1,MPI_CS,0,MPI_COMM_WORLD);
+	MPI_Bcast(CS, 1, MPI_CS, 0, params->mpi.MPI_TOPO);
 
 	MPI_Type_free(&MPI_CS);
 }
@@ -260,25 +260,25 @@ template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParame
 
 template <class T> void UNITS<T>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	// Electron skin depth
-	MPI_Bcast(&FS->electronSkinDepth, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&FS->electronSkinDepth, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 
 	// Electron gyro-period
-	MPI_Bcast(&FS->electronGyroPeriod, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&FS->electronGyroPeriod, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 
 	// Electron gyro-radius
-	MPI_Bcast(&FS->electronGyroRadius, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&FS->electronGyroRadius, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 
 	// Ion skin depth
-	MPI_Bcast(FS->ionSkinDepth, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(FS->ionSkinDepth, params->numberOfParticleSpecies, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 
 	// Ion gyro-period
-	MPI_Bcast(FS->ionGyroPeriod, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(FS->ionGyroPeriod, params->numberOfParticleSpecies, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 
 	// Ion gyro-radius
-	MPI_Bcast(FS->ionGyroRadius, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(FS->ionGyroRadius, params->numberOfParticleSpecies, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 }
 
 
@@ -317,21 +317,29 @@ template <class T> void UNITS<T>::calculateFundamentalScales(simulationParameter
 
 
 template <class T> void UNITS<T>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
-	cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
 
-	cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
+		cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
+		cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
+		cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
+	}
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	// Check that DX is larger than the electron skin depth, otherwise, abort simulation.
 	if (mesh->DX <= FS->electronSkinDepth){
 		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
 		cout << "ABORTING SIMULATION..." << endl;
-		MPI_Abort(MPI_COMM_WORLD,-1000);
+
+		MPI_Abort(params->mpi.MPI_TOPO,-103);
 	}
-	cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
+
 }
 
 
-template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameters * params,vector<T> * IONS,characteristicScales * CS){
+template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
@@ -361,7 +369,7 @@ template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameter
 	CS->resistivity = CS->bField/(CS->charge*CS->density);
 	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
 
-	if(params->mpi.rank_cart == 0){
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "Average mass: " << scientific << CS->mass << fixed << " kg\n";
 		cout << "Average charge: " << scientific << CS->charge << fixed << " C\n";
 		cout << "Density: " << scientific << CS->density << fixed << " m^(-3)\n";
@@ -380,7 +388,7 @@ template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameter
 }
 
 
-template <class T> void UNITS<T>::dimensionlessForm(simulationParameters * params,meshParams * mesh,vector<T> * IONS,fields * EB,const characteristicScales * CS){
+template <class T> void UNITS<T>::dimensionlessForm(simulationParameters * params, meshParams * mesh, vector<T> * IONS, fields * EB, const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_ME_DS /= CS->mass; // Dimensionless electron charge
@@ -436,7 +444,7 @@ template <class T> void UNITS<T>::dimensionlessForm(simulationParameters * param
 }
 
 
-template <class T> void UNITS<T>::normalizeVariables(simulationParameters * params,meshParams * mesh,vector<T> * IONS,fields * EB,const characteristicScales * CS){
+template <class T> void UNITS<T>::normalizeVariables(simulationParameters * params, meshParams * mesh, vector<T> * IONS, fields * EB, const characteristicScales * CS){
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }
@@ -444,7 +452,9 @@ template <class T> void UNITS<T>::normalizeVariables(simulationParameters * para
 
 template <class T> void UNITS<T>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
 
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		defineCharacteristicScales(params, IONS, CS);
 	}
 
@@ -454,7 +464,9 @@ template <class T> void UNITS<T>::defineCharacteristicScalesAndBcast(simulationP
 
 template <class T> void UNITS<T>::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
 
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		calculateFundamentalScales(params, IONS, FS);
 	}
 

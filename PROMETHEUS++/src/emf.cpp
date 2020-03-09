@@ -41,8 +41,8 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 
 void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 	arma::vec sendBuf(params->NX_PER_MPI);
@@ -62,8 +62,8 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::v
 
 void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 	arma::vec sendBuf(params->NX_PER_MPI);
@@ -97,34 +97,34 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_
 
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params,vfield_vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	double sendBuf;
 	double recvBuf;
 
 	sendBuf = field->X(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,0,&recvBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,0,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->X(iIndex-1) = recvBuf;
 
 	sendBuf = field->X(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,1,&recvBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,1,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->X(fIndex+1) = recvBuf;
 
 	sendBuf = field->Y(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,2,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,2,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,2,&recvBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,2,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Y(iIndex-1) = recvBuf;
 
 	sendBuf = field->Y(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,3,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,3,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,3,&recvBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,3,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Y(fIndex+1) = recvBuf;
 
 	sendBuf = field->Z(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,4,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,4,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,4,&recvBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,4,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Z(iIndex-1) = recvBuf;
 
 	sendBuf = field->Z(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,5,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,5,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,5,&recvBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,5,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	field->Z(fIndex+1) = recvBuf;
 
 
@@ -134,18 +134,18 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params,vfield_vec *
 
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	double sendBuf;
 	double recvBuf;
 
 	sendBuf = (*field)(fIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.rRank,0,&recvBuf,1,MPI_DOUBLE,params->mpi.lRank,0,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,0,&recvBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,0,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	(*field)(iIndex-1) = recvBuf;
 
 	sendBuf = (*field)(iIndex);
-	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.lRank,1,&recvBuf,1,MPI_DOUBLE,params->mpi.rRank,1,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&sendBuf,1,MPI_DOUBLE,params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART,1,&recvBuf,1,MPI_DOUBLE,params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART,1,params->mpi.MPI_TOPO,MPI_STATUS_IGNORE);
 	(*field)(fIndex+1) = recvBuf;
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
@@ -159,8 +159,8 @@ void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_vec * vf,
 
 	double w0(23.0/48.0), w1(0.25), w2(1.0/96.0);//weights
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart + 1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
@@ -203,8 +203,8 @@ void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_vec * vf,
 
 	double w0(0.75), w1(0.125);//weights
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart + 1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
 
 	//Step 1: Averaging process
@@ -246,8 +246,8 @@ void EMF_SOLVER::smooth(const simulationParameters * params,vfield_vec * vf,doub
 
 	double w0(0.5), w1(0.25);//weights
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 
 	//Step 1: Averaging process
@@ -292,8 +292,8 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParam
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 
 	//There is not x-component of curl(B)
@@ -324,7 +324,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshPar
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
 
-	// if(params->mpi.rank_cart == 0)
+	// if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		// EB->B.Z.print("B");
 
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
@@ -471,8 +471,8 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart + 1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart + 1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
 	// n and U are armadillo vectors initialized in the EMF_SOLVER class constructor.
 	n.zeros();
@@ -671,8 +671,8 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	ne.zeros();
 	n.zeros();

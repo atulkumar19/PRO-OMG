@@ -79,8 +79,8 @@ void QUIETSTART::bit_reversedFractions_base2(const simulationParameters * params
     for(unsigned int ii=0;ii<sf;ii++)
         fracs(ii) = 1.0/pow(2.0,(double)(ii+1));
 
-	if(params->mpi.rank_cart != 0){
-		unsigned int iInd = ions->NSP*params->mpi.rank_cart;
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART != 0){
+		unsigned int iInd = ions->NSP*params->mpi.MPI_DOMAIN_NUMBER_CART;
 		for(unsigned int ii=0;ii<ions->NSP;ii++){
 			vector<int> bin = dec2bin(QUIETSTART::dec(ii + iInd));
 	    	for(unsigned int jj=0;jj<bin.size();jj++){
@@ -104,8 +104,8 @@ void QUIETSTART::bit_reversedFractions_base3(const simulationParameters * params
     for(unsigned int ii=0;ii<sf;ii++)
         fracs(ii) = 1.0/pow(3.0,(double)(ii+1));
 
-	if(params->mpi.rank_cart != 0){
-		unsigned int iInd = ions->NSP*params->mpi.rank_cart;
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART != 0){
+		unsigned int iInd = ions->NSP*params->mpi.MPI_DOMAIN_NUMBER_CART;
 		for(unsigned int ii=0;ii<ions->NSP;ii++){
 		    vector<int> b3 = dec2b3(QUIETSTART::dec(ii + iInd));
 		    for(unsigned int jj=0;jj<b3.size();jj++){
@@ -205,7 +205,7 @@ void QUIETSTART::ringLikeVelocityDistribution(const simulationParameters * param
         R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
 
 	vec tmp = randu<vec>(ions->NSP*params->mpi.NUMBER_MPI_DOMAINS);
-	unsigned int iInd = ions->NSP*params->mpi.rank_cart;
+	unsigned int iInd = ions->NSP*params->mpi.MPI_DOMAIN_NUMBER_CART;
 	unsigned int fInd = iInd + ions->NSP - 1;
 
 	vec phi = 2.0*M_PI*tmp.subvec(iInd,fInd);

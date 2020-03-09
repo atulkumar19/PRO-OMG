@@ -66,9 +66,6 @@ int main(int argc, char* argv[]){
 
 	UNITS<oneDimensional::ionSpecies> units;
 
-	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
-	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
-
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
 	fundamentalScales FS(&params);
@@ -78,6 +75,9 @@ int main(int argc, char* argv[]){
 	init.loadMeshGeometry(&params, &FS, &mesh);
 
 	units.spatialScalesSanityCheck(&params, &FS, &mesh);
+
+	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
+	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
 
 	init.initializeFields(&params, &mesh, &EB);
 

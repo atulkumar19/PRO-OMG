@@ -38,26 +38,107 @@ void MPI_MAIN::mpi_function(simulationParameters * params){
 
 
 void MPI_MAIN::createMPITopology(simulationParameters * params){
+	int ndims;
+	int dims_1D[1] = {params->mpi.NUMBER_MPI_DOMAINS};
+	int dims_2D[2];
+	int reorder(0);
+	int periods_1D[1] = {1};
+	int periods_2D[2] = {1, 1};
+	int src;
+	int coord;
+	int topo_status;
 
-	int ndims(1), dims[1] = {params->mpi.NUMBER_MPI_DOMAINS};
-	int reorder(0), periods[1] = {1};
-	int src, coord, topo_status;
+	if(params->dimensionality == 1){
+		ndims = 1;
 
-	MPI_Cart_create(MPI_COMM_WORLD,ndims,dims,periods,reorder,&params->mpi.MPI_TOPO);
+		params->mpi.MPI_DOMAINS_ALONG_X_AXIS = params->mpi.NUMBER_MPI_DOMAINS;
+		params->mpi.MPI_DOMAINS_ALONG_Y_AXIS = 1;
+		params->mpi.MPI_DOMAINS_ALONG_Z_AXIS = 1;
 
-	MPI_Topo_test(params->mpi.MPI_TOPO,&topo_status);
+		MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_1D, periods_1D, reorder, &params->mpi.MPI_TOPO);
+	}else{
+		ndims = 2;
+
+		double n(0.0); // Exponent of 2^n
+		double x;
+
+		do{
+			x = ((double)params->mpi.NUMBER_MPI_DOMAINS)/2.0;
+			n += 1.0;
+		} while(x > 1.0);
+
+		// We check whether n is a even number or an odd number
+		if( fmod(n, 2.0) > 0.0 ){	// n is an odd number
+			// The Cartesian topology of MPIs will be of size 2 x 2^(n-1),
+			// where 2 MPI processes are used along the direction with less nodes.
+			if(params->NX_PER_MPI > params->NY_PER_MPI){
+				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
+					dims_2D[0] = (int)pow(2.0, n-1.0); 	// x-axis
+					dims_2D[1] = 2;						// y-axis
+				}else{
+					dims_2D[0] = 2; 	// x-axis
+					dims_2D[1] = 1;						// y-axis
+				}
+			}else{
+				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
+					dims_2D[0] = 2;						// x-axis
+					dims_2D[1] = (int)pow(2.0, n-1.0);	// y-axis
+				}else{
+					dims_2D[0] = 1;						// x-axis
+					dims_2D[1] = 2;	// y-axis
+				}
+
+			}
+		}else{ // n is an even number
+			// The Cartesian topology of MPIs will be of size 2^(n/2) x 2^(n/2).
+			dims_2D[0] = (int)pow(2.0, n/2.0); 	// x-axis
+			dims_2D[1] = (int)pow(2.0, n/2.0); 	// y-axis
+		}
+
+		params->mpi.MPI_DOMAINS_ALONG_X_AXIS = dims_2D[0];
+		params->mpi.MPI_DOMAINS_ALONG_Y_AXIS = dims_2D[1];
+		params->mpi.MPI_DOMAINS_ALONG_Z_AXIS = 1;
+
+		MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_2D, periods_2D, reorder, &params->mpi.MPI_TOPO);
+	}
+
+
+	MPI_Topo_test(params->mpi.MPI_TOPO, &topo_status);
 
 	if(topo_status == MPI_CART){
-		MPI_Comm_rank(params->mpi.MPI_TOPO,&params->mpi.rank_cart);
-		MPI_Cart_coords(params->mpi.MPI_TOPO,params->mpi.rank_cart,ndims,&coord);
-		src = params->mpi.rank_cart;
-		MPI_Cart_shift(params->mpi.MPI_TOPO,0,1,&src,&params->mpi.rRank);
-		src = params->mpi.rank_cart;
-		MPI_Cart_shift(params->mpi.MPI_TOPO,0,-1,&src,&params->mpi.lRank);
-/*		cout << "Coordinate and rank " << params->mpi.MPI_DOMAIN_NUMBER << '\t' \
-		<< params->mpi.rank_cart << " coordinate " << coord << " left & right " \
-		<< params->mpi.lRank << '\t' << params->mpi.rRank << '\n';
-*/
+		MPI_Comm_rank(params->mpi.MPI_TOPO, &params->mpi.MPI_DOMAIN_NUMBER_CART);
+
+		MPI_Cart_coords(params->mpi.MPI_TOPO, params->mpi.MPI_DOMAIN_NUMBER_CART, ndims, &coord);
+
+		src = params->mpi.MPI_DOMAIN_NUMBER_CART;
+		MPI_Cart_shift(params->mpi.MPI_TOPO, 0, 1, &src, &params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART);
+
+		src = params->mpi.MPI_DOMAIN_NUMBER_CART;
+		MPI_Cart_shift(params->mpi.MPI_TOPO, 0, -1, &src, &params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART);
+
+		if(params->dimensionality == 2){
+			src = params->mpi.MPI_DOMAIN_NUMBER_CART;
+			MPI_Cart_shift(params->mpi.MPI_TOPO, 1, 1, &src, &params->mpi.UP_MPI_DOMAIN_NUMBER_CART);
+
+			src = params->mpi.MPI_DOMAIN_NUMBER_CART;
+			MPI_Cart_shift(params->mpi.MPI_TOPO, 1, -1, &src, &params->mpi.DOWN_MPI_DOMAIN_NUMBER_CART);
+		}
+
+		if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
+			cout << endl << "* * * * * * * * * * * * GENERATING MPI TOPOLOGY * * * * * * * * * * * * * * * * * *" << endl;
+			if(params->dimensionality == 1){
+				cout << "+ Number of MPI processes along the x-axis: " << dims_1D[0] << endl;
+			}else{
+				cout << "+ Number of MPI processes along the x-axis: " << dims_2D[0] << endl;
+				cout << "+ Number of MPI processes along the y-axis: " << dims_2D[1] << endl;
+			}
+			cout << "* * * * * * * * * * * * MPI TOPOLOGY GENERATED  * * * * * * * * * * * * * * * * * *" << endl << endl;
+		}
+	}else{
+		cerr << "ERROR: MPI topology could not be created!" << endl;
+
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,-102);
 	}
 }
 
@@ -65,7 +146,7 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	bool finalized = false;
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "\n* * * * * * * * * * * * FINALIZING MPI COMMUNICATIONS * * * * * * * * * * * * * * * * * *\n";
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
@@ -75,10 +156,10 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	finalized = MPI::Is_finalized();
 
 	if(finalized)
-		cout << "MPI process: " << params->mpi.rank_cart << " FINALIZED\n";
+		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " FINALIZED\n";
 	else
-		cout << "MPI process: " << params->mpi.rank_cart << " NOT FINALIZED - ERROR\n";
+		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " NOT FINALIZED - ERROR\n";
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "* * * * * * * * * * * * MPI COMMUNICATIONS FINALIZED * * * * * * * * * * * * * * * * * *\n";
 }

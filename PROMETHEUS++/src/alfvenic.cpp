@@ -76,7 +76,7 @@ void ALFVENIC::generateModes(const simulationParameters * params,const meshParam
 	Aw.amp = params->BGP.Bo*sqrt( params->fracMagEnerInj*Aw.amp/sum(Aw.amp) );
 
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		Aw.phase = (2*M_PI*params->maxAngle/360)*randu<vec>(params->numberOfAlfvenicModes);
 	MPI_ARMA_VEC mpi_phase(params->numberOfAlfvenicModes);
 	MPI_Bcast(Aw.phase.memptr(),1,mpi_phase.type,0,params->mpi.MPI_TOPO);

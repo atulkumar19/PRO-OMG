@@ -248,7 +248,7 @@ HDF::HDF(simulationParameters *params, meshParams *mesh, vector<ionSpecies> *ION
 
 	try{
 		stringstream dn;
-		dn << params->mpi.rank_cart;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		string name;
 		string path;
@@ -435,8 +435,8 @@ HDF::HDF(simulationParameters *params, meshParams *mesh, vector<ionSpecies> *ION
 #ifdef ONED
 void HDF::siv_1D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	try{
 		string path;
@@ -458,7 +458,7 @@ void HDF::siv_1D(const simulationParameters * params, const vector<ionSpecies> *
 		arma::fmat fmat_values;
 
 		iteration << IT;
-		dn << params->mpi.rank_cart;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		path = params->PATH + "/HDF5/";
 		name = path + "file_D" + dn.str() + ".h5";
@@ -669,8 +669,8 @@ void HDF::saveIonsVariables(const simulationParameters * params, const vector<io
 
 void HDF::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.rank_cart+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.rank_cart+1));
+	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	try{
 		// forwardPBC_1D(&EB->E.X);
@@ -698,7 +698,7 @@ void HDF::saveFieldsVariables(const simulationParameters * params, oneDimensiona
 
 
 		iteration << IT;
-		dn << params->mpi.rank_cart;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		path = params->PATH + "/HDF5/";
 		name = path + "file_D" + dn.str() + ".h5";
@@ -835,7 +835,7 @@ void HDF::saveOutputs(const simulationParameters * params, const vector<ionSpeci
 	try{
 
 		stringstream dn;
-		dn << params->mpi.rank_cart;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		stringstream iteration;
 		iteration << IT;

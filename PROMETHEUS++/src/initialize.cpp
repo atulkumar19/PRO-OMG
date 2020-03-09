@@ -92,6 +92,7 @@ template <class T> INITIALIZE<T>::INITIALIZE(simulationParameters * params, int 
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
     params->errorCodes[-102] = "MPI's Cartesian topology could not be created";
+    params->errorCodes[-103] = "Grid size violates assumptions of hybrid model for the plasma -- DX smaller than the electron skind depth can not be resolved.";
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -273,6 +274,8 @@ template <class T> INITIALIZE<T>::INITIALIZE(simulationParameters * params, int 
 
 template <class T> void INITIALIZE<T>::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 
+    MPI_Barrier(params->mpi.MPI_TOPO);
+
     INITIALIZE::LarmorRadius = FS->ionGyroRadius[0];
     INITIALIZE::ionSkinDepth = FS->ionSkinDepth[0];
     if (params->numberOfParticleSpecies > 1){
@@ -282,61 +285,70 @@ template <class T> void INITIALIZE<T>::loadMeshGeometry(const simulationParamete
         }
     }
 
-	stringstream domainNumber;
-	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
-
-	if (params->mpi.rank_cart == 0)
+	if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
 
 	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
 		mesh->DX = params->DrL*INITIALIZE::LarmorRadius;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
-		if(params->mpi.rank_cart == 0)
+		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Using LARMOR RADIUS to set up simulation grid." << endl;
 
 	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
 		mesh->DX = params->dp*INITIALIZE::ionSkinDepth;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
-		if(params->mpi.rank_cart == 0)
+		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Using ION SKIN DEPTH to set up simulation grid." << endl;
 	}
 
-	#ifdef ONED
-    mesh->NX_PER_MPI = params->NX_PER_MPI;
-    mesh->NY_PER_MPI = 1;
-    mesh->NZ_PER_MPI = 1;
-	#endif
+    switch (params->dimensionality){
+        case(1):{
+            mesh->NX_PER_MPI = params->NX_PER_MPI;
+            mesh->NY_PER_MPI = 1;
+            mesh->NZ_PER_MPI = 1;
 
-	#ifdef TWOD
-    mesh->NX_PER_MPI = params->NX_PER_MPI;
-    mesh->NY_PER_MPI = params->NY_PER_MPI;
-    mesh->NZ_PER_MPI = 1;
-	#endif
+            break;
+        }
+        case(2):{
+            mesh->NX_PER_MPI = params->NX_PER_MPI;
+            mesh->NY_PER_MPI = params->NY_PER_MPI;
+            mesh->NZ_PER_MPI = 1;
 
-	#ifdef THREED
-    mesh->NX_PER_MPI = params->NX_PER_MPI;
-    mesh->NY_PER_MPI = params->NY_PER_MPI;
-    mesh->NZ_PER_MPI = params->NZ_PER_MPI;
-	#endif
+            break;
+        }
+        case(3):{
+            mesh->NX_PER_MPI = params->NX_PER_MPI;
+            mesh->NY_PER_MPI = params->NY_PER_MPI;
+            mesh->NZ_PER_MPI = params->NZ_PER_MPI;
 
+            break;
+        }
+        default:{
+            mesh->NX_PER_MPI = params->NX_PER_MPI;
+            mesh->NY_PER_MPI = 1;
+            mesh->NZ_PER_MPI = 1;
+        }
+    }
 
-	mesh->nodes.X.set_size(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
-	mesh->nodes.Y.set_size(mesh->NY_PER_MPI);
-	mesh->nodes.Z.set_size(mesh->NZ_PER_MPI);
+	mesh->nodes.X.set_size(mesh->NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);
+	mesh->nodes.Y.set_size(mesh->NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);
+	mesh->nodes.Z.set_size(mesh->NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);
 
-	for(int ii=0;ii<(int)(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);ii++){
+    //cout << params->mpi.MPI_DOMAIN_NUMBER_CART << " | NX:" << params->mpi.MPI_DOMAINS_ALONG_X_AXIS << " | NY:" << params->mpi.MPI_DOMAINS_ALONG_Y_AXIS << " | NZ:" << params->mpi.MPI_DOMAINS_ALONG_Z_AXIS << endl;
+
+	for(int ii=0;ii<(int)(mesh->NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);ii++){
 		mesh->nodes.X(ii) = (double)ii*mesh->DX; //entire simulation domain's mesh grid
 	}
-	for(int ii=0;ii<mesh->NY_PER_MPI;ii++){
+	for(int ii=0;ii<(int)(mesh->NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);ii++){
 		mesh->nodes.Y(ii) = (double)ii*mesh->DY; //
 	}
-	for(int ii=0;ii<mesh->NZ_PER_MPI;ii++){
+	for(int ii=0;ii<(int)(mesh->NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);ii++){
 		mesh->nodes.Z(ii) = (double)ii*mesh->DZ; //
 	}
 
-	if(params->mpi.rank_cart == 0){
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "Size of simulation domain along the x-axis: " << mesh->nodes.X(mesh->NX_PER_MPI-1) + mesh->DX << " m\n";
 		cout << "Size of simulation domain along the y-axis: " << mesh->nodes.Y(mesh->NY_PER_MPI-1) + mesh->DY << " m\n";
 		cout << "Size of simulation domain along the z-axis: " << mesh->nodes.Z(mesh->NZ_PER_MPI-1) + mesh->DZ << " m\n";
@@ -348,14 +360,14 @@ template <class T> void INITIALIZE<T>::loadMeshGeometry(const simulationParamete
 template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS,\
 	const meshParams * mesh,vector<ionSpecies> * IONS){
 
-	if(params->mpi.rank_cart == 0){
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
 	}
 	int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		if(params->restart){
-			if(params->mpi.rank_cart == 0)
+			if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
 			MPI_Abort(MPI_COMM_WORLD,-1);
 		}else{
@@ -406,7 +418,7 @@ template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulatio
 		IONS->at(ii).nv__.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
 
 		// Setting size and value to zero of arrays for ions' variables
-		if(params->mpi.rank_cart == 0)
+		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
 
 		IONS->at(ii).meshNode.zeros(IONS->at(ii).NSP);
@@ -487,17 +499,17 @@ template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulatio
 		pic.assignCell(params, mesh, &IONS->at(ii), 1);
 	}
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *\n";
 
 }
 
 
 template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP){
-	stringstream domainNumber;
-	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
 
-	if(params->mpi.rank_cart == 0){
+    MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
 		cout << "Number of ion species: " << params->numberOfParticleSpecies << endl;
 		cout << "Number of tracer species: " << params->numberOfTracerSpecies << endl;
@@ -582,7 +594,7 @@ template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * 
 
     		IONS->push_back(ions);
 
-            if(params->mpi.rank_cart == 0){
+            if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
                 if (ions.SPECIES == 0){
                     cout << endl << "Species No "  << ii + 1 << " are tracers with the following parameters:" << endl;
                 }else{
@@ -648,7 +660,7 @@ template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * 
 
     		GCP->push_back(gcp);
 
-            if(params->mpi.rank_cart == 0){
+            if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
                 cout << endl << "Species No "  << ii + 1 << " are guiding-center particles with the following parameters:" << endl;
                 cout << "Atomic number: " << gcp.Z << endl;
                 cout << "Mass: " << gcp.M << " kg" << endl;
@@ -670,7 +682,7 @@ template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * 
 
 	}//Iteration over ion species
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -679,14 +691,13 @@ template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * 
 
 template <class T> void INITIALIZE<T>::initializeFields(const simulationParameters * params, const meshParams * mesh, fields * EB){
 
-	stringstream domainNumber;
-	domainNumber << params->mpi.MPI_DOMAIN_NUMBER;
+    MPI_Barrier(params->mpi.MPI_TOPO);
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *\n";
 
 	if(params->loadFields==1){//The electromagnetic fields are loaded from external files.
-		if(params->mpi.rank_cart == 0)
+		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Loading external electromagnetic fields\n";
 		MPI_Abort(MPI_COMM_WORLD,-107);
 	}else{//The electromagnetic fields are being initialized in the runtime.
@@ -711,7 +722,7 @@ template <class T> void INITIALIZE<T>::initializeFields(const simulationParamete
 
 		EB->b_ = EB->b;
 
-		if(params->mpi.rank_cart == 0){
+		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 			cout << "Initializing electromagnetic fields within simulation\n";
 			cout << "Magnetic field component along simulation domain (x-axis): " << scientific << params->BGP.Bx << fixed << " T\n";
 			cout << "Magnetic field component perpendicular to simulation domain (y-axis): " << scientific << params->BGP.By << fixed << " T\n";
@@ -719,7 +730,7 @@ template <class T> void INITIALIZE<T>::initializeFields(const simulationParamete
 		}
 	}
 
-	if(params->mpi.rank_cart == 0)
+	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
 }
 

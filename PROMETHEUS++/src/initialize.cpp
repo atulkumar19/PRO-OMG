@@ -376,10 +376,10 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 			switch (IONS->at(ii).IC) {
 				case(1):{
 						if(params->quietStart){
-                            QUIETSTART qs(params,&IONS->at(ii));
-							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+                            QUIETSTART<T> qs(params, &IONS->at(ii));
+							qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
 						}else{
-                            RANDOMSTART rs(params);
+                            RANDOMSTART<T> rs(params);
 							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
 						}
 
@@ -387,23 +387,23 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 						}
 				case(2):{
 						if(params->quietStart){
-                            QUIETSTART qs(params,&IONS->at(ii));
-							qs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+                            QUIETSTART<T> qs(params, &IONS->at(ii));
+							qs.ringLikeVelocityDistribution(params, &IONS->at(ii));
 						}else{
-                            RANDOMSTART rs(params);
-							rs.ringLikeVelocityDistribution(params,&IONS->at(ii));
+                            RANDOMSTART<T> rs(params);
+							rs.ringLikeVelocityDistribution(params, &IONS->at(ii));
 						}
 
 						break;
 						}
 				default:{
                         if(params->quietStart){
-                            QUIETSTART qs(params,&IONS->at(ii));
-                            qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+                            QUIETSTART<T> qs(params, &IONS->at(ii));
+                            qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
 
                         }else{
-                            RANDOMSTART rs(params);
-                            rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
+                            RANDOMSTART<T> rs(params);
+                            rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
                         }
 						}
 			} // switch
@@ -754,4 +754,4 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulat
 
 
 template class INITIALIZE<oneDimensional::ionSpecies, oneDimensional::fields>;
-template class INITIALIZE<twoDimensional::ionSpecies, twoDimensional::fields>;
+// template class INITIALIZE<twoDimensional::ionSpecies, twoDimensional::fields>;

@@ -35,8 +35,7 @@
 using namespace std;
 using namespace arma;
 
-class RANDOMSTART{
-
+template <class T> class RANDOMSTART{
     // Cartesian  unitary vectors
 	arma::vec x = {1.0, 0.0, 0.0};
 	arma::vec y = {0.0, 1.0, 0.0};
@@ -51,9 +50,9 @@ public:
 
     RANDOMSTART(const simulationParameters * params);
 
-	void ringLikeVelocityDistribution(const simulationParameters * params, ionSpecies * ions);
+	void ringLikeVelocityDistribution(const simulationParameters * params, T * ions);
 
-	void maxwellianVelocityDistribution(const simulationParameters * params, ionSpecies * ions);
+	void maxwellianVelocityDistribution(const simulationParameters * params, T * ions);
 };
 
 #endif

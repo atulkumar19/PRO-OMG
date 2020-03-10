@@ -80,23 +80,26 @@ int main(int argc, char* argv[]){
 
 	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
 
+	HDF hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
+
 	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
 	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
 
-	HDF hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
-
-	ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
+	//*** @tomodify
+	// ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
 
 	units.defineTimeStep(&params, &mesh, &IONS, &EB);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
 	units.normalizeVariables(&params, &mesh, &IONS, &EB, &CS);
 
-	alfvenPerturbations.normalize(&CS);
+	//*** @tomodify
+	// alfvenPerturbations.normalize(&CS);
 
 	/**************** All the quantities below are dimensionless ****************/
 
-	alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
+	//*** @tomodify
+	// alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
 	TIME_STEPPING_METHODS timeStepping(&params);
 

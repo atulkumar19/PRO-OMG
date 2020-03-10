@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
 	meshParams mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	oneDimensional::fields EB; 						// Derived type with variables of electromagnetic fields.
 
-	INITIALIZE<oneDimensional::ionSpecies> init(&params, argc, argv);
+	INITIALIZE<oneDimensional::ionSpecies, oneDimensional::fields> init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 
@@ -76,12 +76,12 @@ int main(int argc, char* argv[]){
 
 	units.spatialScalesSanityCheck(&params, &FS, &mesh);
 
-	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
-	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
-
 	init.initializeFields(&params, &mesh, &EB);
 
 	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
+
+	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
+	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
 
 	HDF hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
 

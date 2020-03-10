@@ -18,7 +18,7 @@
 
 #include "initialize.h"
 
-template <class T> vector<string> INITIALIZE<T>::split(const string& str, const string& delim)
+template <class T, class Y> vector<string> INITIALIZE<T,Y>::split(const string& str, const string& delim)
 {
     vector<string> tokens;
     size_t prev = 0, pos = 0;
@@ -36,7 +36,7 @@ template <class T> vector<string> INITIALIZE<T>::split(const string& str, const 
 }
 
 
-template <class T> map<string,float> INITIALIZE<T>::loadParameters(string * inputFile){
+template <class T, class Y> map<string,float> INITIALIZE<T,Y>::loadParameters(string * inputFile){
 	string key;
 	float value;
 	fstream reader;
@@ -62,7 +62,7 @@ template <class T> map<string,float> INITIALIZE<T>::loadParameters(string * inpu
 }
 
 
-template <class T> map<string,string>INITIALIZE<T>::loadParametersString(string * inputFile){
+template <class T, class Y> map<string,string>INITIALIZE<T,Y>::loadParametersString(string * inputFile){
 	string key;
 	string value;
 	fstream reader;
@@ -87,12 +87,14 @@ template <class T> map<string,string>INITIALIZE<T>::loadParametersString(string 
     return readMap;
 }
 
-template <class T> INITIALIZE<T>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
+template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
     // Error codes
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
     params->errorCodes[-102] = "MPI's Cartesian topology could not be created";
-    params->errorCodes[-103] = "Grid size violates assumptions of hybrid model for the plasma -- DX smaller than the electron skind depth can not be resolved.";
+    params->errorCodes[-103] = "Grid size violates assumptions of hybrid model for the plasma -- DX smaller than the electron skind depth can not be resolved";
+    params->errorCodes[-104] = "Loading external electromagnetic fields not implemented yet";
+    params->errorCodes[-105] = "Restart not implemented yet";
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -272,7 +274,7 @@ template <class T> INITIALIZE<T>::INITIALIZE(simulationParameters * params, int 
 }
 
 
-template <class T> void INITIALIZE<T>::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
+template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -357,26 +359,25 @@ template <class T> void INITIALIZE<T>::loadMeshGeometry(const simulationParamete
 }
 
 
-template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS,\
-	const meshParams * mesh,vector<ionSpecies> * IONS){
+template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS, const meshParams * mesh, vector<T> * IONS){
 
-	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *\n";
-	}
-	int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
+    int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
-	for(int ii=0;ii<totalNumSpecies;ii++){
+    if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
+		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *" << endl;
+
+	for(int ii=0; ii<totalNumSpecies; ii++){
 		if(params->restart){
 			if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-				cout << "PRO++ MESSAGE: Restarting simulation, loading ions";
-			MPI_Abort(MPI_COMM_WORLD,-1);
+				cout << "Restart not implemented yet" << endl;
+
+			MPI_Abort(MPI_COMM_WORLD,-105);
 		}else{
 			switch (IONS->at(ii).IC) {
 				case(1):{
 						if(params->quietStart){
                             QUIETSTART qs(params,&IONS->at(ii));
 							qs.maxwellianVelocityDistribution(params,&IONS->at(ii));
-
 						}else{
                             RANDOMSTART rs(params);
 							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
@@ -505,7 +506,7 @@ template <class T> void INITIALIZE<T>::setupIonsInitialCondition(const simulatio
 }
 
 
-template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP){
+template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -688,8 +689,43 @@ template <class T> void INITIALIZE<T>::loadIonParameters(simulationParameters * 
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
+template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB){
+    int NX(params->NX_IN_SIM + 2); // Ghost mesh points (+2) included
 
-template <class T> void INITIALIZE<T>::initializeFields(const simulationParameters * params, const meshParams * mesh, fields * EB){
+    EB->zeros(NX);
+
+    EB->B.X.fill(params->BGP.Bx);//x
+    EB->B.Y.fill(params->BGP.By);//y
+    EB->B.Z.fill(params->BGP.Bz);//z
+
+    EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
+                    + 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
+                    + 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
+
+    EB->_B.Y.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+                    + EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+    EB->_B.Z.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
+                    + EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
+
+    EB->b = EB->B/EB->_B;
+
+    EB->b_ = EB->b;
+}
+
+template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB){
+    int NX(params->NX_IN_SIM + 2); // Ghost mesh points (+2) included
+    int NY(params->NY_IN_SIM + 2); // Ghost mesh points (+2) included
+
+    EB->zeros(NX,NY);
+
+    EB->B.X.fill(params->BGP.Bx);//x
+    EB->B.Y.fill(params->BGP.By);//y
+    EB->B.Z.fill(params->BGP.Bz);//z
+}
+
+
+template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulationParameters * params, const meshParams * mesh, Y * EB){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -697,30 +733,12 @@ template <class T> void INITIALIZE<T>::initializeFields(const simulationParamete
 		cout << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *\n";
 
 	if(params->loadFields==1){//The electromagnetic fields are loaded from external files.
-		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-			cout << "Loading external electromagnetic fields\n";
-		MPI_Abort(MPI_COMM_WORLD,-107);
+        if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
+			cout << "Loading external electromagnetic fields..." << endl;
+
+		MPI_Abort(params->mpi.MPI_TOPO,-104);
 	}else{//The electromagnetic fields are being initialized in the runtime.
-		int NX(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		EB->zeros(NX);//We include the ghost mesh points (+2) in the initialization
-
-		EB->B.X.fill(params->BGP.Bx);//x
-		EB->B.Y.fill(params->BGP.By);//y
-		EB->B.Z.fill(params->BGP.Bz);//z
-
-		EB->_B.X.subvec(1,NX-2) = sqrt( EB->B.X.subvec(1,NX-2) % EB->B.X.subvec(1,NX-2) \
-						+ 0.25*( ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) % ( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) ) \
-						+ 0.25*( ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) % ( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) ) );
-
-		EB->_B.Y.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
-						+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
-
-		EB->_B.Z.subvec(1,NX-2) = sqrt( 0.25*( ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) % ( EB->B.X.subvec(1,NX-2) + EB->B.X.subvec(0,NX-3) ) ) \
-						+ EB->B.Y.subvec(1,NX-2) % EB->B.Y.subvec(1,NX-2) + EB->B.Z.subvec(1,NX-2) % EB->B.Z.subvec(1,NX-2) );
-
-		EB->b = EB->B/EB->_B;
-
-		EB->b_ = EB->b;
+        initializeFieldsSizeAndValue(params, mesh, EB);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 			cout << "Initializing electromagnetic fields within simulation\n";
@@ -735,5 +753,5 @@ template <class T> void INITIALIZE<T>::initializeFields(const simulationParamete
 }
 
 
-template class INITIALIZE<oneDimensional::ionSpecies>;
-template class INITIALIZE<twoDimensional::ionSpecies>;
+template class INITIALIZE<oneDimensional::ionSpecies, oneDimensional::fields>;
+template class INITIALIZE<twoDimensional::ionSpecies, twoDimensional::fields>;

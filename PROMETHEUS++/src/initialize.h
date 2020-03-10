@@ -41,9 +41,9 @@
 using namespace std;
 using namespace arma;
 
-using namespace oneDimensional;
+// using namespace oneDimensional;
 
-template <class T> class INITIALIZE{
+template <class T, class Y> class INITIALIZE{
 
 	double ionSkinDepth;
 	double LarmorRadius;
@@ -64,9 +64,14 @@ public:
 
 	void loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP);
 
-	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<ionSpecies> * IONS);
+	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<T> * IONS);
 
-	void initializeFields(const simulationParameters * params,  const meshParams * mesh,  fields * EB);
+
+	void initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB);
+
+	void initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB);
+
+	void initializeFields(const simulationParameters * params,  const meshParams * mesh,  Y * EB);
 
 };
 

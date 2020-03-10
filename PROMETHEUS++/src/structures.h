@@ -158,9 +158,13 @@ struct simulationParameters{
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
-	int NX_PER_MPI; // Number of mesh nodes along x-axis
-	int NY_PER_MPI; // Number of mesh nodes along y-axis
-	int NZ_PER_MPI; // Number of mesh nodes along z-axis
+	int NX_PER_MPI; // Number of mesh nodes along x-axis in subdomain (no ghost nodes considered)
+	int NY_PER_MPI; // Number of mesh nodes along y-axis in subdomain (no ghost nodes considered)
+	int NZ_PER_MPI; // Number of mesh nodes along z-axis in subdomain (no ghost nodes considered)
+
+	int NX_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	int NY_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	int NZ_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 
 	//ions properties
 	int numberOfParticleSpecies; // This species are evolved self-consistently with the fields

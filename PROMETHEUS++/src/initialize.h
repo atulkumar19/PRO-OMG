@@ -54,6 +54,10 @@ template <class T, class Y> class INITIALIZE{
 
 	map<string, string> loadParametersString(string *  inputFile);
 
+	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS, double HX);
+
+	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS, double HX);
+
 public:
 
 	INITIALIZE(simulationParameters * params, int argc, char* argv[]);

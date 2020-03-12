@@ -95,6 +95,8 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
     params->errorCodes[-103] = "Grid size violates assumptions of hybrid model for the plasma -- DX smaller than the electron skind depth can not be resolved";
     params->errorCodes[-104] = "Loading external electromagnetic fields not implemented yet";
     params->errorCodes[-105] = "Restart not implemented yet";
+    params->errorCodes[-106] = "Inconsistency in iniital ion's velocity distribution function";
+    params->errorCodes[-107] = "Inconsistency in iniital ion's spatial distribution function";
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -359,7 +361,121 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(const simulat
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(const simulationParameters * params,const characteristicScales * CS, const meshParams * mesh, vector<T> * IONS){
+template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS, double HX){
+    IONS->n.zeros(params->NX_IN_SIM + 2);       // Ghost cells are included (+2)
+    IONS->n_.zeros(params->NX_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->n__.zeros(params->NX_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->n___.zeros(params->NX_IN_SIM + 2);    // Ghost cells are included (+2)
+
+    IONS->nv.zeros(params->NX_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->nv_.zeros(params->NX_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->nv__.zeros(params->NX_IN_SIM + 2);    // Ghost cells are included (+2)
+
+    // Setting size and value to zero of arrays for ions' variables
+    IONS->meshNode.zeros(IONS->NSP);
+    IONS->wxc.zeros(IONS->NSP);
+    IONS->wxl.zeros(IONS->NSP);
+    IONS->wxr.zeros(IONS->NSP);
+
+    //Checking the integrity of the initial condition
+    if((int)IONS->V.n_elem != (int)(3*IONS->NSP)){
+        MPI_Barrier(params->mpi.MPI_TOPO);
+        MPI_Abort(params->mpi.MPI_TOPO,-106);
+        // The velocity array contains a number of elements that it should not have
+    }
+
+    if((int)IONS->X.n_elem != (int)(3*IONS->NSP)){
+        MPI_Barrier(params->mpi.MPI_TOPO);
+        MPI_Abort(params->mpi.MPI_TOPO,-107);
+        // The position array contains a number of elements that it should not have
+    }
+    //Checking integrity of the initial condition
+
+    if(params->quietStart){
+        IONS->X.col(0) *= HX*params->NX_IN_SIM;
+    }else{
+        IONS->X.col(0) = (HX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
+    }
+
+    double chargeDensityPerCell;
+
+    // #ifdef ONED
+    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
+    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI)*chargeDensityPerCell;
+    // #endif
+
+    /*
+    #ifdef TWOD
+    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
+    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
+    #endif
+
+    #ifdef THREED
+    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
+    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI*mesh->DZ*(double)mesh->NZ_PER_MPI)*chargeDensityPerCell;
+    #endif
+    */
+
+    PIC pic;
+    pic.assignCell(params, mesh, IONS, 1);
+}
+
+
+template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS, double HX){
+    IONS->n.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);       // Ghost cells are included (+2)
+    IONS->n_.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->n__.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->n___.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);    // Ghost cells are included (+2)
+
+    IONS->nv.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->nv_.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->nv__.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);    // Ghost cells are included (+2)
+
+    // Setting size and value to zero of arrays for ions' variables
+    IONS->meshNode.zeros(IONS->NSP, 2);
+
+    IONS->wxc.zeros(IONS->NSP);
+    IONS->wxl.zeros(IONS->NSP);
+    IONS->wxr.zeros(IONS->NSP);
+
+    IONS->wyc.zeros(IONS->NSP);
+    IONS->wyl.zeros(IONS->NSP);
+    IONS->wyr.zeros(IONS->NSP);
+
+    //Checking the integrity of the initial condition
+    if((int)IONS->V.n_elem != (int)(3*IONS->NSP)){
+        MPI_Barrier(params->mpi.MPI_TOPO);
+        MPI_Abort(params->mpi.MPI_TOPO,-106);
+        // The velocity array contains a number of elements that it should not have
+    }
+
+    if((int)IONS->X.n_elem != (int)(3*IONS->NSP)){
+        MPI_Barrier(params->mpi.MPI_TOPO);
+        MPI_Abort(params->mpi.MPI_TOPO,-107);
+        // The position array contains a number of elements that it should not have
+    }
+    //Checking integrity of the initial condition
+
+    if(params->quietStart){
+        IONS->X.col(0) *= HX*params->NX_IN_SIM;
+        IONS->X.col(1) *= HX*params->NY_IN_SIM;
+    }else{
+        IONS->X.col(0) = (HX*params->NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0)); //*** @tomodify
+        IONS->X.col(1) = (HX*params->NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
+    }
+
+    double chargeDensityPerCell;
+
+    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
+    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
+
+
+//    PIC pic;                                  //*** @tomodify
+//    pic.assignCell(params, mesh, IONS, 1);    //*** @tomodify
+}
+
+
+template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<T> * IONS){
 
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
@@ -409,96 +525,18 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 			} // switch
 		} // if(params->restart)
 
-		IONS->at(ii).n.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).n_.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).n__.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).n___.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
-		IONS->at(ii).nv.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).nv_.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-		IONS->at(ii).nv__.zeros(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);
-
-		// Setting size and value to zero of arrays for ions' variables
-		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
+        if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
 
-		IONS->at(ii).meshNode.zeros(IONS->at(ii).NSP);
-		IONS->at(ii).wxc.zeros(IONS->at(ii).NSP);
-		IONS->at(ii).wxl.zeros(IONS->at(ii).NSP);
-		IONS->at(ii).wxr.zeros(IONS->at(ii).NSP);
-
-		//Checking the integrity of the initial condition
-		if((int)IONS->at(ii).V.n_elem != (int)(3*IONS->at(ii).NSP)){
-            MPI_Barrier(MPI_COMM_WORLD);
-
-			cerr << "PRO++ ERROR: in velocity initial condition of species: " << ii + 1 << endl;
-			MPI_Abort(MPI_COMM_WORLD,-104);
-		 	// The velocity array contains a number of elements that it should not have
-
-		}
-		if((int)IONS->at(ii).X.n_elem != (int)(3*IONS->at(ii).NSP)){
-            MPI_Barrier(MPI_COMM_WORLD);
-
-			cerr << "PRO++ ERROR: in spatial initial condition of species: " << ii + 1 << endl;
-			MPI_Abort(MPI_COMM_WORLD,-105);
-			// The position array contains a number of elements that it should not have
-		}
-		//Checking integrity of the initial condition
-	}//Iteration over ion species
-
-
-	double HX;
-	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-		HX = params->DrL*INITIALIZE::LarmorRadius;
-	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-		HX = params->dp*INITIALIZE::ionSkinDepth;
-	}
-
-	if(params->quietStart){
-        for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-			IONS->at(ii).X.col(0) *= HX*params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
-		}
-	}else{
-        for(int ii=0;ii<IONS->size();ii++){//Iteration over ion species
-            IONS->at(ii).X.col(0) = \
-            (HX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->at(ii).X.col(0));
+        double HX;
+        if( (params->DrL > 0.0) && (params->dp < 0.0) ){
+            HX = params->DrL*INITIALIZE::LarmorRadius;
+        }else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
+            HX = params->dp*INITIALIZE::ionSkinDepth;
         }
-	}
 
-	double chargeDensityPerCell;
-
-	#ifdef ONED
-	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-		chargeDensityPerCell = \
-		IONS->at(ii).Dn*params->ne/IONS->at(ii).NSP;
-
-		IONS->at(ii).NCP = (mesh->DX*(double)mesh->NX_PER_MPI)*chargeDensityPerCell;
-	}
-	#endif
-
-	#ifdef TWOD
-	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-		chargeDensityPerCell = \
-		IONS->at(ii).Dn*params->ne/IONS->at(ii).NSP;
-
-		IONS->at(ii).NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
-	}
-	#endif
-
-	#ifdef THREED
-	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-		chargeDensityPerCell = \
-		IONS->at(ii).Dn*params->ne/IONS->at(ii).NSP;
-
-		IONS->at(ii).NCP = \
-		(mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI*mesh->DZ*(double)mesh->NZ_PER_MPI)*chargeDensityPerCell;
-	}
-	#endif
-
-	PIC pic;
-	for(int ii=0;ii<totalNumSpecies;ii++){
-		pic.assignCell(params, mesh, &IONS->at(ii), 1);
-	}
+        initializeIonsArrays(params, mesh, &IONS->at(ii), HX);
+    }//Iteration over ion species
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *\n";
@@ -754,4 +792,4 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulat
 
 
 template class INITIALIZE<oneDimensional::ionSpecies, oneDimensional::fields>;
-// template class INITIALIZE<twoDimensional::ionSpecies, twoDimensional::fields>;
+template class INITIALIZE<twoDimensional::ionSpecies, twoDimensional::fields>;

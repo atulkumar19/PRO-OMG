@@ -46,6 +46,8 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 	int periods_2D[2] = {1, 1};
 	int src;
 	int coord;
+	int coords_1D[1];
+	int coords_2D[2];
 	int topo_status;
 
 	if(params->dimensionality == 1){
@@ -113,10 +115,16 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 
 	MPI_Topo_test(params->mpi.MPI_TOPO, &topo_status);
 
-	if(topo_status == MPI_CART){
+	if (topo_status == MPI_CART){
 		MPI_Comm_rank(params->mpi.MPI_TOPO, &params->mpi.MPI_DOMAIN_NUMBER_CART);
 
-		MPI_Cart_coords(params->mpi.MPI_TOPO, params->mpi.MPI_DOMAIN_NUMBER_CART, ndims, &coord);
+		if (params->dimensionality == 1){ // 1-D
+			MPI_Cart_coords(params->mpi.MPI_TOPO, params->mpi.MPI_DOMAIN_NUMBER_CART, ndims, params->mpi.MPI_CART_COORDS_1D);
+			// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | COORDS: " << params->mpi.MPI_CART_COORDS_1D[0] << endl; //*** @todelete
+		}else{ // 2-D
+			MPI_Cart_coords(params->mpi.MPI_TOPO, params->mpi.MPI_DOMAIN_NUMBER_CART, ndims, params->mpi.MPI_CART_COORDS_2D);
+			// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | COORDS: " << params->mpi.MPI_CART_COORDS_2D[0] << " " << params->mpi.MPI_CART_COORDS_2D[1] << endl; //*** @todelete
+		}
 
 		src = params->mpi.MPI_DOMAIN_NUMBER_CART;
 		MPI_Cart_shift(params->mpi.MPI_TOPO, 0, 1, &src, &params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART);

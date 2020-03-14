@@ -428,14 +428,6 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshPar
 				smooth(params,&EB->B,params->smoothingParameter);//Just added!
 				break;
 				}
-		case(3):{
-				smooth_TOS(params,&EB->B,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(4):{
-				smooth_TSC(params,&EB->B,params->smoothingParameter);//Just added!
-				break;
-				}
 		default:{
 				smooth_TSC(params,&EB->B,params->smoothingParameter);//Just added!
 				}
@@ -607,14 +599,6 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 				}
 		case(2):{
 				smooth(params,&EB->E,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(3):{
-				smooth_TOS(params,&EB->E,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(4):{
-				smooth_TSC(params,&EB->E,params->smoothingParameter);//Just added!
 				break;
 				}
 		default:{
@@ -838,14 +822,6 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 					}
 			case(2):{
 					smooth(params,&EB->E,params->smoothingParameter);//Just added!
-					break;
-					}
-			case(3):{
-					smooth_TOS(params,&EB->E,params->smoothingParameter);//Just added!
-					break;
-					}
-			case(4):{
-					smooth_TSC(params,&EB->E,params->smoothingParameter);//Just added!
 					break;
 					}
 			default:{

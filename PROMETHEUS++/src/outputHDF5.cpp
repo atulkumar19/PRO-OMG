@@ -270,10 +270,13 @@ HDF::HDF(simulationParameters *params, meshParams *mesh, vector<ionSpecies> *ION
 		// Create a new file using the default property lists.
 		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
 
+		name = "dimensionality";
+		saveToHDF5(outputFile, name, &params->dimensionality);
+		name.clear();
+
 		name = "numOfDomains";
 		saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
 		name.clear();
-
 
 		//Geometry of the mesh
 		Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );

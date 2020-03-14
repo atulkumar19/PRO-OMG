@@ -416,8 +416,8 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     #endif
     */
 
-    PIC pic;
-    pic.assignCell(params, mesh, IONS, 1);
+    PIC<oneDimensional::ionSpecies, oneDimensional::fields> pic;
+    pic.assignCell(params, mesh, IONS);
 }
 
 
@@ -470,8 +470,8 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
 
 
-//    PIC pic;                                  //*** @tomodify
-//    pic.assignCell(params, mesh, IONS, 1);    //*** @tomodify
+    // PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;                                  //*** @tomodify
+    // pic.assignCell(params, mesh, IONS, 1);    //*** @tomodify
 }
 
 

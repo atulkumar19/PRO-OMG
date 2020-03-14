@@ -80,8 +80,8 @@ template <class T> void QUIETSTART<T>::bit_reversedFractions_base2(const simulat
     for(unsigned int ii=0;ii<sf;ii++)
         fracs(ii) = 1.0/pow(2.0,(double)(ii+1));
 
-
-	unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_CART_COORDS_1D[0]);
+	// unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_CART_COORDS_1D[0]);
+	unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
 	for(unsigned int ii=0;ii<NSP;ii++){
 		vector<int> bin = dec2bin(QUIETSTART::dec(ii + iInd));
 		for(unsigned int jj=0;jj<bin.size();jj++){
@@ -99,7 +99,8 @@ template <class T> void QUIETSTART<T>::bit_reversedFractions_base3(const simulat
     for(unsigned int ii=0;ii<sf;ii++)
         fracs(ii) = 1.0/pow(3.0,(double)(ii+1));
 
-	unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_CART_COORDS_1D[0]);
+	// unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_CART_COORDS_1D[0]);
+	unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
 	for(unsigned int ii=0;ii<NSP;ii++){
 		vector<int> b3 = dec2b3(QUIETSTART::dec(ii + iInd));
 		for(unsigned int jj=0;jj<b3.size();jj++){

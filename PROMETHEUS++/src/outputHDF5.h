@@ -39,7 +39,7 @@ using namespace H5;
 using namespace std;
 using namespace arma;
 
-class HDF{
+template <class T, class Y> class HDF{
 
 #ifdef HDF5_DOUBLE
 	#define HDF_TYPE PredType::NATIVE_DOUBLE
@@ -48,6 +48,34 @@ class HDF{
 	#define HDF_TYPE PredType::NATIVE_FLOAT
 	#define CPP_TYPE float
 #endif
+
+
+void saveToHDF5(H5File * file, string name, int * value);
+
+void saveToHDF5(H5File * file, string name, CPP_TYPE * value);
+
+void saveToHDF5(Group * group, string name, int * value);
+
+void saveToHDF5(Group * group, string name, CPP_TYPE * value);
+
+void saveToHDF5(H5File * file, string name, std::vector<int> * values);
+
+void saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values);
+
+void saveToHDF5(H5File * file, string name, arma::ivec * values);
+
+void saveToHDF5(Group * group, string name, arma::ivec * values);
+
+void saveToHDF5(H5File * file, string name, arma::vec * values);
+
+void saveToHDF5(Group * group, string name, arma::vec * values);
+
+void saveToHDF5(Group * group, string name, arma::fvec * values);
+
+void saveToHDF5(Group * group, string name, arma::mat * values);
+
+void saveToHDF5(Group * group, string name, arma::fmat * values);
+
 
 void siv_1D(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
 
@@ -69,7 +97,7 @@ void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
 
 public:
 
-HDF(simulationParameters *params,meshParams *mesh,vector<ionSpecies> *IONS);
+HDF(simulationParameters *params,meshParams *mesh,vector<T> *IONS);
 
 void saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
 

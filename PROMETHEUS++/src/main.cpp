@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
 
 	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
 
-	HDF hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
+	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
 
 	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
 	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
 	//*** @tomodify
 	// alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
-	TIME_STEPPING_METHODS timeStepping(&params);
+	TIME_STEPPING_METHODS<oneDimensional::ionSpecies, oneDimensional::fields> timeStepping(&params);
 
 	switch (params.particleIntegrator){
 		case(1):{

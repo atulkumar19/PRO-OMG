@@ -246,7 +246,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 //
 // CLASS CONSTRUCTOR //
 //
-template <class T, class Y> HDF<T,Y>::HDF(simulationParameters *params, meshParams *mesh, vector<T> *IONS){
+template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundamentalScales * FS, meshParams * mesh, vector<T> *IONS){
 
 	try{
 		stringstream dn;
@@ -279,6 +279,68 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters *params, meshPara
 		name = "numOfDomains";
 		saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
 		name.clear();
+
+		// Fundamental scales group
+		Group * group_scales = new Group( outputFile->createGroup( "/scales" ) );
+
+		name = "electronSkinDepth";
+		cpp_type_value = FS->electronSkinDepth;
+		saveToHDF5(group_scales, name, &cpp_type_value);
+		name.clear();
+
+		name = "electronGyroPeriod";
+		cpp_type_value = FS->electronGyroPeriod;
+		saveToHDF5(group_scales, name, &cpp_type_value);
+		name.clear();
+
+		name = "electronGyroRadius";
+		cpp_type_value = FS->electronGyroRadius;
+		saveToHDF5(group_scales, name, &cpp_type_value);
+		name.clear();
+
+		name = "ionGyroRadius";
+		#ifdef HDF5_DOUBLE
+		vec_values = zeros(params->numberOfParticleSpecies);
+		for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+			vec_values(ss) = FS->ionGyroRadius[ss];
+		saveToHDF5(group_scales, name, &vec_values);
+		#elif defined HDF5_FLOAT
+		fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
+		for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+			fvec_values(ss) = (float)FS->ionGyroRadius[ss];
+		saveToHDF5(group_scales, name, &fvec_values);
+		#endif
+		name.clear();
+
+		name = "ionGyroPeriod";
+		#ifdef HDF5_DOUBLE
+		vec_values = zeros(params->numberOfParticleSpecies);
+		for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+			vec_values(ss) = FS->ionGyroPeriod[ss];
+		saveToHDF5(group_scales, name, &vec_values);
+		#elif defined HDF5_FLOAT
+		fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
+		for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+			fvec_values(ss) = (float)FS->ionGyroPeriod[ss];
+		saveToHDF5(group_scales, name, &fvec_values);
+		#endif
+		name.clear();
+
+		name = "ionSkinDepth";
+		#ifdef HDF5_DOUBLE
+		vec_values = zeros(params->numberOfParticleSpecies);
+		for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+			vec_values(ss) = FS->ionSkinDepth[ss];
+		saveToHDF5(group_scales, name, &vec_values);
+		#elif defined HDF5_FLOAT
+		fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
+		for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+			fvec_values(ss) = (float)FS->ionSkinDepth[ss];
+		saveToHDF5(group_scales, name, &fvec_values);
+		#endif
+		name.clear();
+
+		delete group_scales;
 
 		//Geometry of the mesh
 		Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );

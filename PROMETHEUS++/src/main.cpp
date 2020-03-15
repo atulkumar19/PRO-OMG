@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
 	init_2D.loadIonParameters(&params, &IONS_2D, &GCP); //*** @todelete
 */
 
-	UNITS<oneDimensional::ionSpecies> units;
+	UNITS<oneDimensional::ionSpecies, oneDimensional::fields> units;
 
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
 
 	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
 
-	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &mesh, &IONS); // Outputs in HDF5 format
+	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &FS, &mesh, &IONS); // Outputs in HDF5 format
 
 	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
 	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete

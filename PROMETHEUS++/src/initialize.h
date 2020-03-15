@@ -45,18 +45,15 @@ using namespace arma;
 
 template <class T, class Y> class INITIALIZE{
 
-	double ionSkinDepth;
-	double LarmorRadius;
-
 	vector<string> split(const string& str, const string& delim);
 
 	map<string, float> loadParameters(string *  inputFile);
 
 	map<string, string> loadParametersString(string *  inputFile);
 
-	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS, double HX);
+	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS);
 
-	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS, double HX);
+	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS);
 
 public:
 

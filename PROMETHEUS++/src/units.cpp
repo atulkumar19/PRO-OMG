@@ -16,14 +16,13 @@
     along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-/*All the variables MUST be expresed using the SI units (mks). The charge and
-temperature the units are Coulombs (C) and Kelvins (K). The
-*/
+
 #include "units.h"
 
-template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params, meshParams * mesh, vector<T> * IONS, fields * EB){
+// For details on the theory behind the restrictions on the time step please see: P. Pritchett, IEEE Transactions on plasma science 28, 1976 (2000).
+template <class T, class Y> void UNITS<T,Y>::defineTimeStep(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB){
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		cout << "\n* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *\n";
+		cout << endl << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *" << endl;
 
 	double DT(0);
 	double averageB(0);
@@ -68,7 +67,7 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params, 
 		}
 
 		//We don't take into account the tracers dynamics of course!
-		if(IONS->at(ii).Wc > higherIonCyclotronFrequency && (IONS->at(ii).SPECIES != 0))
+		if(IONS->at(ii).Wc > higherIonCyclotronFrequency && (IONS->at(ii).SPECIES > 0))
 			higherIonCyclotronFrequency = IONS->at(ii).Wc;
 
 		if(IONS->at(ii).SPECIES != 0){
@@ -209,7 +208,7 @@ template <class T> void UNITS<T>::defineTimeStep(simulationParameters * params, 
 
 
 
-template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS){
 
 	// Define MPI type for characteristicScales structure.
 	int numStructElem(13);
@@ -258,7 +257,7 @@ template <class T> void UNITS<T>::broadcastCharacteristicScales(simulationParame
 }
 
 
-template <class T> void UNITS<T>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
+template <class T, class Y> void UNITS<T,Y>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -282,7 +281,7 @@ template <class T> void UNITS<T>::broadcastFundamentalScales(simulationParameter
 }
 
 
-template <class T> void UNITS<T>::calculateFundamentalScales(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
+template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScales(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
 
 	cout << "\n* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
 	if (params->includeElectronInertia == true){
@@ -316,7 +315,7 @@ template <class T> void UNITS<T>::calculateFundamentalScales(simulationParameter
 }
 
 
-template <class T> void UNITS<T>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
+template <class T, class Y> void UNITS<T,Y>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -339,7 +338,7 @@ template <class T> void UNITS<T>::spatialScalesSanityCheck(simulationParameters 
 }
 
 
-template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScales(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
@@ -388,7 +387,7 @@ template <class T> void UNITS<T>::defineCharacteristicScales(simulationParameter
 }
 
 
-template <class T> void UNITS<T>::dimensionlessForm(simulationParameters * params, meshParams * mesh, vector<T> * IONS, fields * EB, const characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB, const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_ME_DS /= CS->mass; // Dimensionless electron charge
@@ -444,13 +443,13 @@ template <class T> void UNITS<T>::dimensionlessForm(simulationParameters * param
 }
 
 
-template <class T> void UNITS<T>::normalizeVariables(simulationParameters * params, meshParams * mesh, vector<T> * IONS, fields * EB, const characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::normalizeVariables(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB, const characteristicScales * CS){
 
 	dimensionlessForm(params,mesh,IONS,EB,CS);
 }
 
 
-template <class T> void UNITS<T>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -462,7 +461,7 @@ template <class T> void UNITS<T>::defineCharacteristicScalesAndBcast(simulationP
 }
 
 
-template <class T> void UNITS<T>::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
+template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -471,7 +470,12 @@ template <class T> void UNITS<T>::calculateFundamentalScalesAndBcast(simulationP
 	}
 
 	broadcastFundamentalScales(params, FS);
+
+	// It is assumed that species 0 is the majority species
+	params->ionLarmorRadius = FS->ionGyroRadius[0];
+	params->ionSkinDepth = FS->ionSkinDepth[0];
+	params->ionGyroPeriod = FS->ionGyroPeriod[0];
 }
 
-template class UNITS<oneDimensional::ionSpecies>;
-template class UNITS<twoDimensional::ionSpecies>;
+template class UNITS<oneDimensional::ionSpecies, oneDimensional::fields>;
+template class UNITS<twoDimensional::ionSpecies, twoDimensional::fields>;

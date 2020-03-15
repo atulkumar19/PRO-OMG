@@ -141,10 +141,6 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
     }
 
-	//Initialize to zero the variables of the class
-	INITIALIZE::ionSkinDepth = 0.0;
-	INITIALIZE::LarmorRadius = 0.0;
-
 	params->PATH = argv[1];
 
 	params->argc = argc;
@@ -280,27 +276,18 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(const simulat
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
-    INITIALIZE::LarmorRadius = FS->ionGyroRadius[0];
-    INITIALIZE::ionSkinDepth = FS->ionSkinDepth[0];
-    if (params->numberOfParticleSpecies > 1){
-        for (int ss=1; ss<params->numberOfParticleSpecies; ss++){
-            INITIALIZE::LarmorRadius = (INITIALIZE::LarmorRadius < FS->ionGyroRadius[ss]) ? FS->ionGyroRadius[ss] : INITIALIZE::LarmorRadius;
-            INITIALIZE::ionSkinDepth = (INITIALIZE::ionSkinDepth < FS->ionSkinDepth[ss]) ? FS->ionSkinDepth[ss] : INITIALIZE::ionSkinDepth;
-        }
-    }
-
 	if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 		cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
 
 	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-		mesh->DX = params->DrL*INITIALIZE::LarmorRadius;
+		mesh->DX = params->DrL*params->ionLarmorRadius;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Using LARMOR RADIUS to set up simulation grid." << endl;
 
 	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-		mesh->DX = params->dp*INITIALIZE::ionSkinDepth;
+		mesh->DX = params->dp*params->ionSkinDepth;
 		mesh->DY = mesh->DX;
 		mesh->DZ = mesh->DX;
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
@@ -361,7 +348,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(const simulat
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS, double HX){
+template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS){
     IONS->n.zeros(params->NX_IN_SIM + 2);       // Ghost cells are included (+2)
     IONS->n_.zeros(params->NX_IN_SIM + 2);      // Ghost cells are included (+2)
     IONS->n__.zeros(params->NX_IN_SIM + 2);     // Ghost cells are included (+2)
@@ -392,9 +379,9 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     //Checking integrity of the initial condition
 
     if(params->quietStart){
-        IONS->X.col(0) *= HX*params->NX_IN_SIM;
+        IONS->X.col(0) *= mesh->DX*params->NX_IN_SIM;
     }else{
-        IONS->X.col(0) = (HX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
+        IONS->X.col(0) = (mesh->DX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
     }
 
     double chargeDensityPerCell;
@@ -421,7 +408,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS, double HX){
+template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS){
     IONS->n.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);       // Ghost cells are included (+2)
     IONS->n_.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);      // Ghost cells are included (+2)
     IONS->n__.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);     // Ghost cells are included (+2)
@@ -457,11 +444,11 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     //Checking integrity of the initial condition
 
     if(params->quietStart){
-        IONS->X.col(0) *= HX*params->NX_IN_SIM;
-        IONS->X.col(1) *= HX*params->NY_IN_SIM;
+        IONS->X.col(0) *= mesh->DX*params->NX_IN_SIM;
+        IONS->X.col(1) *= mesh->DY*params->NY_IN_SIM;
     }else{
-        IONS->X.col(0) = (HX*params->NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0)); //*** @tomodify
-        IONS->X.col(1) = (HX*params->NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
+        IONS->X.col(0) = (mesh->DX*params->NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0)); //*** @tomodify
+        IONS->X.col(1) = (mesh->DY*params->NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
     }
 
     double chargeDensityPerCell;
@@ -528,14 +515,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
         if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
 
-        double HX;
-        if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-            HX = params->DrL*INITIALIZE::LarmorRadius;
-        }else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-            HX = params->dp*INITIALIZE::ionSkinDepth;
-        }
-
-        initializeIonsArrays(params, mesh, &IONS->at(ii), HX);
+        initializeIonsArrays(params, mesh, &IONS->at(ii));
     }//Iteration over ion species
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)

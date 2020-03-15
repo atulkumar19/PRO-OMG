@@ -181,8 +181,9 @@ struct simulationParameters{
 	int filtersPerIterationIons;
 	int checkSmoothParameter;
 
-	double LarmorRadius;
+	double ionLarmorRadius;
 	double ionSkinDepth;
+	double ionGyroPeriod;
 
 	double DrL;
 	double dp;

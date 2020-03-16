@@ -153,7 +153,6 @@ struct simulationParameters{
 	int transient;//Transient time (in number of iterations).
 	double DT;//Time step
 	double DTc;//Ciclotron period fraction.
-	double shorterIonGyroperiod;//Shorter ion cycloperiod.
 	int loadFields;
 	int loadGrid;
 	int usingHDF5;

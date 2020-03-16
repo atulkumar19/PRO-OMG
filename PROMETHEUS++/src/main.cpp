@@ -82,13 +82,10 @@ int main(int argc, char* argv[]){
 
 	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &FS, &mesh, &IONS); // Outputs in HDF5 format
 
-	// MPI_Barrier(MPI_COMM_WORLD); //*** @todelete
-	// MPI_Abort(MPI_COMM_WORLD,-200); //*** @todelete
-
 	//*** @tomodify
 	// ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
 
-	units.defineTimeStep(&params, &mesh, &IONS, &EB);
+	units.defineTimeStep(&params, &mesh, &IONS);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
 	units.normalizeVariables(&params, &mesh, &IONS, &EB, &CS);

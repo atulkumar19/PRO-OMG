@@ -467,7 +467,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
     if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		cout << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *" << endl;
+		cout << endl << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *" << endl;
 
 	for(int ii=0; ii<totalNumSpecies; ii++){
 		if(params->restart){
@@ -530,8 +530,8 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
-		cout << "Number of ion species: " << params->numberOfParticleSpecies << endl;
-		cout << "Number of tracer species: " << params->numberOfTracerSpecies << endl;
+		cout << "+ Number of ion species: " << params->numberOfParticleSpecies << endl;
+		cout << "+ Number of tracer species: " << params->numberOfTracerSpecies << endl;
 	}
 
 
@@ -619,15 +619,15 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
                 }else{
                     cout << endl << "Species No "  << ii + 1 << " are full-orbit particles with the following parameters:" << endl;
                 }
-                cout << "Atomic number: " << ions.Z << endl;
-                cout << "Mass: " << ions.M << " kg" << endl;
-                cout << "Parallel temperature: " << ions.Tpar*F_KB/F_E << " eV" << endl;
-                cout << "Perpendicular temperature: " << ions.Tper*F_KB/F_E << " eV" << endl;
-                cout << "Cyclotron frequency: " << ions.Wc << " Hz" << endl;
-                cout << "Plasma frequency: " << ions.Wp << " Hz" << endl;
-                cout << "Parallel thermal velocity: " << ions.VTpar << " m/s" << endl;
-                cout << "Perpendicular thermal velocity: " << ions.VTper << " m/s" << endl;
-                cout << "Larmor radius: " << ions.LarmorRadius << " m" << endl;
+                cout << "+ Atomic number: " << ions.Z << endl;
+                cout << "+ Mass: " << ions.M << " kg" << endl;
+                cout << "+ Parallel temperature: " << ions.Tpar*F_KB/F_E << " eV" << endl;
+                cout << "+ Perpendicular temperature: " << ions.Tper*F_KB/F_E << " eV" << endl;
+                cout << "+ Cyclotron frequency: " << ions.Wc << " Hz" << endl;
+                cout << "+ Plasma frequency: " << ions.Wp << " Hz" << endl;
+                cout << "+ Parallel thermal velocity: " << ions.VTpar << " m/s" << endl;
+                cout << "+ Perpendicular thermal velocity: " << ions.VTper << " m/s" << endl;
+                cout << "+ Larmor radius: " << ions.LarmorRadius << " m" << endl;
             }
         }else if (SPECIES == -1){
             gcp.SPECIES = SPECIES;
@@ -681,14 +681,14 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
 
             if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
                 cout << endl << "Species No "  << ii + 1 << " are guiding-center particles with the following parameters:" << endl;
-                cout << "Atomic number: " << gcp.Z << endl;
-                cout << "Mass: " << gcp.M << " kg" << endl;
-                cout << "Parallel temperature: " << gcp.Tpar*F_KB/F_E << " eV" << endl;
-                cout << "Perpendicular temperature: " << gcp.Tper*F_KB/F_E << " eV" << endl;
-                cout << "Cyclotron frequency: " << gcp.Wc << " Hz" << endl;
-                cout << "Parallel thermal velocity: " << gcp.VTpar << " m/s" << endl;
-                cout << "Perpendicular thermal velocity: " << gcp.VTper << " m/s" << endl;
-                cout << "Larmor radius: " << gcp.LarmorRadius << " m" << endl;
+                cout << "+ Atomic number: " << gcp.Z << endl;
+                cout << "+ Mass: " << gcp.M << " kg" << endl;
+                cout << "+ Parallel temperature: " << gcp.Tpar*F_KB/F_E << " eV" << endl;
+                cout << "+ Perpendicular temperature: " << gcp.Tper*F_KB/F_E << " eV" << endl;
+                cout << "+ Cyclotron frequency: " << gcp.Wc << " Hz" << endl;
+                cout << "+ Parallel thermal velocity: " << gcp.VTpar << " m/s" << endl;
+                cout << "+ Perpendicular thermal velocity: " << gcp.VTper << " m/s" << endl;
+                cout << "+ Larmor radius: " << gcp.LarmorRadius << " m" << endl;
             }
         }else{
             MPI_Barrier(MPI_COMM_WORLD);
@@ -748,7 +748,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulat
     MPI_Barrier(params->mpi.MPI_TOPO);
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		cout << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *\n";
+		cout << endl << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *" << endl;
 
 	if(params->loadFields==1){//The electromagnetic fields are loaded from external files.
         if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
@@ -759,15 +759,15 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulat
         initializeFieldsSizeAndValue(params, mesh, EB);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-			cout << "Initializing electromagnetic fields within simulation\n";
-			cout << "Magnetic field component along simulation domain (x-axis): " << scientific << params->BGP.Bx << fixed << " T\n";
-			cout << "Magnetic field component perpendicular to simulation domain (y-axis): " << scientific << params->BGP.By << fixed << " T\n";
-			cout << "Magnetic field component perpendicular to simulation domain (z-axis): " << scientific << params->BGP.Bz << fixed << " T\n";
+			cout << "Initializing electromagnetic fields within simulation" << endl;
+			cout << "+ Magnetic field along x-axis: " << scientific << params->BGP.Bx << fixed << " T" << endl;
+			cout << "+ Magnetic field along y-axis: " << scientific << params->BGP.By << fixed << " T" << endl;
+			cout << "+ Magnetic field along z-axis: " << scientific << params->BGP.Bz << fixed << " T" << endl;
 		}
 	}
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *\n\n";
+		cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *" << endl;
 }
 
 

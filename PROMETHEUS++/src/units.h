@@ -33,18 +33,6 @@ using namespace arma;
 
 template <class T, class Y> class UNITS{
 
-	#ifdef ONED
-	#define Cmax 1.0f
-	#endif
-
-	#ifdef TWOD
-	#define Cmax 1.0f/sqrt(2.0f)
-	#endif
-
-	#ifdef THREED
-	#define Cmax 1.0f/sqrt(3.0f)
-	#endif
-
 	void dimensionlessForm(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB, const characteristicScales * CS);
 
 	void broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS);
@@ -57,7 +45,7 @@ public:
 
 	void spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh);
 
-	void defineTimeStep(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB);
+	void defineTimeStep(simulationParameters * params, meshParams * mesh, vector<T> * IONS);
 
 	void calculateFundamentalScales(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS);
 

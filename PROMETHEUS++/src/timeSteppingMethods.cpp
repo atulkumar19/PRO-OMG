@@ -28,7 +28,7 @@ template <class T, class Y> TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS(si
 template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, \
                                 characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
-	PIC<T, Y> ionsDynamics; // Initializing the PIC class object.
+	PIC<T,Y> ionsDynamics; // Initializing the PIC class object.
     // GENERAL_FUNCTIONS genFun;
 
     // Repeat 3 times
@@ -76,9 +76,12 @@ template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHO
             outputIterator++;
         }
 
+        //*** @tomodiify
+        /*
         if( (params->checkStability == 1) && fmod((double)(tt+1), params->rateOfChecking) == 0 ){
-            // genFun.checkStability(params, mesh, CS, IONS);
+            genFun.checkStability(params, mesh, CS, IONS);
         }
+        */
 
 /* This function to monitor energy conservation needs to be implemented in a better way*/
 //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);

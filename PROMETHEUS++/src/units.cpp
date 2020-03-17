@@ -20,7 +20,7 @@
 #include "units.h"
 
 // For details on the theory behind the restrictions on the time step please see: P. Pritchett, IEEE Transactions on plasma science 28, 1976 (2000).
-template <class T, class Y> void UNITS<T,Y>::defineTimeStep(simulationParameters * params, meshParams * mesh, vector<T> * IONS){
+template <class T, class Y> void UNITS<T,Y>::defineTimeStep(simulationParameters * params, vector<T> * IONS){
 	// Algorithm for defining time step in simulation:
 	// 1) Check whether initial time step satisfies CFL condition for ions.
 	// 		1b) If CFL condition for ions is not satisfaced, define new time step.
@@ -52,10 +52,10 @@ template <class T, class Y> void UNITS<T,Y>::defineTimeStep(simulationParameters
 	DT = params->DTc*params->ionGyroPeriod;
 
 	// Minimum time step required by CFL condition for ions
-	DT_CFL_I = mesh->DX/( ionsMaxVel*sqrt((double)params->dimensionality) );
+	DT_CFL_I = params->mesh.DX/( ionsMaxVel*sqrt((double)params->dimensionality) );
 
 	// Minimum time step defined by CFL condition for whistler waves
-	DT_CFL_W = 0.5*pow(mesh->DX/params->ionSkinDepth, 2.0)*params->ionGyroPeriod/( M_PI*M_PI*sqrt((double)params->dimensionality) );
+	DT_CFL_W = 0.5*pow(params->mesh.DX/params->ionSkinDepth, 2.0)*params->ionGyroPeriod/( M_PI*M_PI*sqrt((double)params->dimensionality) );
 
 	//*** @todelete
 	cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | DT: "   << scientific << params->DTc*params->ionGyroPeriod << " | DT_I: "  << DT_CFL_I << " | DT_W: "  << DT_CFL_W << fixed << endl;
@@ -219,7 +219,7 @@ template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScales(simulati
         cout << " + Including electron inertia: NO" << endl << endl;
     }
 
-	FS->electronSkinDepth = F_C/sqrt( params->ne*F_E*F_E/(F_EPSILON*F_ME) );
+	FS->electronSkinDepth = F_C/sqrt( params->BGP.ne*F_E*F_E/(F_EPSILON*F_ME) );
 	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bo/F_ME);
 	FS->electronGyroRadius = sqrt(2.0*F_KB*params->BGP.Te/F_ME)/(F_E*params->BGP.Bo/F_ME);
 
@@ -244,20 +244,20 @@ template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScales(simulati
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
+template <class T, class Y> void UNITS<T,Y>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
-		cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/mesh->DX << fixed << endl;
+		cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/params->mesh.DX << fixed << endl;
 		cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
 	}
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	// Check that DX is larger than the electron skin depth, otherwise, abort simulation.
-	if (mesh->DX <= FS->electronSkinDepth){
+	if (params->mesh.DX <= FS->electronSkinDepth){
 		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
 		cout << "ABORTING SIMULATION..." << endl;
 
@@ -281,7 +281,7 @@ template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScales(simulati
 
 	CS->mass /= params->numberOfParticleSpecies;
 	CS->charge /= params->numberOfParticleSpecies;
-	CS->density = params->ne;
+	CS->density = params->BGP.ne;
 
 	double characteristicPlasmaFrequency(0);//Background ion-plasma frequency.
 	characteristicPlasmaFrequency = sqrt( CS->density*CS->charge*CS->charge/(CS->mass*F_EPSILON) );
@@ -316,7 +316,7 @@ template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScales(simulati
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB, const characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParameters * params, vector<T> * IONS, Y * EB, const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_ME_DS /= CS->mass; // Dimensionless electron charge
@@ -325,25 +325,25 @@ template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParamet
 
 	//Normalizing simulation parameters.
 	params->DT /= CS->time;
-	params->ne /= CS->density;
+	params->BGP.ne /= CS->density;
 	params->BGP.Te /= CS->temperature;
 	params->BGP.Bo /= CS->bField;
 	params->BGP.Bx /= CS->bField;
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
 
-	params->ionLarmorRadius /= CS->lenght;
-	params->ionSkinDepth /= CS->lenght;
+	params->ionLarmorRadius /= CS->length;
+	params->ionSkinDepth /= CS->length;
 	params->ionGyroPeriod /= CS->time;
 	//Normalizing simulation parameters.
 
 	//Normalizing the mesh.
-	mesh->nodes.X = mesh->nodes.X/CS->length;
-	mesh->nodes.Y = mesh->nodes.Y/CS->length;
-	mesh->nodes.Z = mesh->nodes.Z/CS->length;
-	mesh->DX /= CS->length;
-	mesh->DY /= CS->length;
-	mesh->DZ /= CS->length;
+	params->mesh.nodes.X = params->mesh.nodes.X/CS->length;
+	params->mesh.nodes.Y = params->mesh.nodes.Y/CS->length;
+	params->mesh.nodes.Z = params->mesh.nodes.Z/CS->length;
+	params->mesh.DX /= CS->length;
+	params->mesh.DY /= CS->length;
+	params->mesh.DZ /= CS->length;
 	//Normalizing the mesh.
 
 	//Normalizing ions' properties.
@@ -375,9 +375,9 @@ template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParamet
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::normalizeVariables(simulationParameters * params, meshParams * mesh, vector<T> * IONS, Y * EB, const characteristicScales * CS){
+template <class T, class Y> void UNITS<T,Y>::normalizeVariables(simulationParameters * params, vector<T> * IONS, Y * EB, const characteristicScales * CS){
 
-	dimensionlessForm(params,mesh,IONS,EB,CS);
+	dimensionlessForm(params, IONS, EB, CS);
 }
 
 

@@ -25,17 +25,16 @@ template <class T, class Y> TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS(si
     outputIterator = 0;			//
 }
 
-template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, \
-                                characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
+template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC<T,Y> ionsDynamics; // Initializing the PIC class object.
     // GENERAL_FUNCTIONS genFun;
 
     // Repeat 3 times
     for(int tt=0;tt<3;tt++){
-        ionsDynamics.advanceIonsPosition(params, mesh, IONS, 0);
+        ionsDynamics.advanceIonsPosition(params, IONS, 0);
 
-        ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, 0);
+        ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
     }
 
     // Repeat 3 times
@@ -48,22 +47,22 @@ template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHO
         // cout << "ITERATION: " << tt << endl;
         if(tt == 0){
             // genFun.checkStability(params, mesh, CS, IONS);
-            ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT/2); // Initial condition time level V^(1/2)
+            ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, params->DT/2); // Initial condition time level V^(1/2)
         }else{
-            ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, IONS, params->DT); // Advance ions' velocity V^(N+1/2).
+            ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, params->DT); // Advance ions' velocity V^(N+1/2).
         }
 
-        ionsDynamics.advanceIonsPosition(params, mesh, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
+        ionsDynamics.advanceIonsPosition(params, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
 
 
-        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        fields_solver.advanceBField(params, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
              // Using the Bashford-Adams extrapolation.
-            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 1);
+            fields_solver.advanceEFieldWithVelocityExtrapolation(params, EB, IONS, 1);
         }else{
              // Using basic velocity extrapolation.
-            fields_solver.advanceEFieldWithVelocityExtrapolation(params, mesh, EB, IONS, 0);
+            fields_solver.advanceEFieldWithVelocityExtrapolation(params, EB, IONS, 0);
         }
 
         currentTime += params->DT*CS->time;
@@ -71,7 +70,7 @@ template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHO
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
             vector<ionSpecies> IONS_OUT = *IONS;
             // The ions' velocity is advanced in time in order to obtain V^(N+1)
-            ionsDynamics.advanceIonsVelocity(params, CS, mesh, EB, &IONS_OUT, params->DT/2);
+            ionsDynamics.advanceIonsVelocity(params, CS, EB, &IONS_OUT, params->DT/2);
             hdfObj->saveOutputs(params, &IONS_OUT, EB, CS, outputIterator+1, currentTime);
             outputIterator++;
         }
@@ -99,7 +98,7 @@ template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHO
 }
 
 
-template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::advanceGCIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
+template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::advanceGCIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
     // EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     // PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 

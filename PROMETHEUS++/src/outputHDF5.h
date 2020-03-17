@@ -97,7 +97,7 @@ void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
 
 public:
 
-HDF(simulationParameters * params, fundamentalScales * FS, meshParams * mesh, vector<T> * IONS);
+HDF(simulationParameters * params, fundamentalScales * FS, vector<T> * IONS);
 
 void saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
 

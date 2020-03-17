@@ -13,7 +13,7 @@ filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
 simulationTime              5.0
-outputCadence               0.005
+outputCadence               0.02
 transient                   0
 numberOfParticleSpecies     1
 numberOfTracerSpecies       0
@@ -27,7 +27,7 @@ propVectorAngle             0.0
 ne                          1.0E19
 Te                          1.0E3
 Bo                          2.1
-theta                       90.0
+theta                       0.0
 phi                         0.0
 NX                          32
 NY                          1

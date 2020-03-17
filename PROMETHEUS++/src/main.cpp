@@ -47,7 +47,6 @@ int main(int argc, char* argv[]){
 	vector<oneDimensional::ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	vector<oneDimensional::GCSpecies> GCP;
 	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
-	meshParams mesh; 				// Derived type with info of geometry of the simulation mesh (initially with units).
 	oneDimensional::fields EB; 						// Derived type with variables of electromagnetic fields.
 
 	INITIALIZE<oneDimensional::ionSpecies, oneDimensional::fields> init(&params, argc, argv);
@@ -72,23 +71,23 @@ int main(int argc, char* argv[]){
 
 	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
 
-	init.loadMeshGeometry(&params, &FS, &mesh);
+	init.loadMeshGeometry(&params, &FS);
 
-	units.spatialScalesSanityCheck(&params, &FS, &mesh);
+	units.spatialScalesSanityCheck(&params, &FS);
 
-	init.initializeFields(&params, &mesh, &EB);
+	init.initializeFields(&params, &EB);
 
-	init.setupIonsInitialCondition(&params, &CS, &mesh, &IONS); // Calculation of IONS[ii].NCP for each species
+	init.setupIonsInitialCondition(&params, &CS, &IONS); // Calculation of IONS[ii].NCP for each species
 
-	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &FS, &mesh, &IONS); // Outputs in HDF5 format
+	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
 
 	//*** @tomodify
 	// ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
 
-	units.defineTimeStep(&params, &mesh, &IONS);
+	units.defineTimeStep(&params, &IONS);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
-	units.normalizeVariables(&params, &mesh, &IONS, &EB, &CS);
+	units.normalizeVariables(&params, &IONS, &EB, &CS);
 
 	//*** @tomodify
 	// alfvenPerturbations.normalize(&CS);
@@ -102,19 +101,19 @@ int main(int argc, char* argv[]){
 
 	switch (params.particleIntegrator){
 		case(1):{
-				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				break;
 				}
 		case(2):{
-				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				break;
 				}
 		case(3):{
-				timeStepping.advanceGCIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				timeStepping.advanceGCIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				break;
 				}
 		default:{
-				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &mesh, &CS, &hdfObj, &IONS, &EB);
+				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				}
 	}
 

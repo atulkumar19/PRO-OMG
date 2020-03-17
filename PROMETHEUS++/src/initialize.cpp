@@ -237,7 +237,7 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
 
 	params->fracMagEnerInj = std::stod( parametersStringMap["fracMagEnerInj"] );
 
-	params->ne = std::stod( parametersStringMap["ne"] );
+	params->BGP.ne = std::stod( parametersStringMap["ne"] );
 
 	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
 
@@ -245,9 +245,9 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
 
 	// params->em = new energyMonitor((int)params->numberOfParticleSpecies,(int)params->timeIterations);
 
-    params->NX_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NX"] );
-    params->NY_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NY"] );
-    params->NZ_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NZ"] );
+    params->mesh.NX_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NX"] );
+    params->mesh.NY_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NY"] );
+    params->mesh.NZ_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NZ"] );
 
 	params->DrL = std::stod( parametersStringMap["DrL"] );
 
@@ -272,7 +272,7 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh){
+template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(simulationParameters * params, fundamentalScales * FS){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -280,83 +280,86 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(const simulat
 		cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
 
 	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-		mesh->DX = params->DrL*params->ionLarmorRadius;
-		mesh->DY = mesh->DX;
-		mesh->DZ = mesh->DX;
+		params->mesh.DX = params->DrL*params->ionLarmorRadius;
+		params->mesh.DY = params->mesh.DX;
+		params->mesh.DZ = params->mesh.DX;
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Using LARMOR RADIUS to set up simulation grid." << endl;
 
 	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-		mesh->DX = params->dp*params->ionSkinDepth;
-		mesh->DY = mesh->DX;
-		mesh->DZ = mesh->DX;
+		params->mesh.DX = params->dp*params->ionSkinDepth;
+		params->mesh.DY = params->mesh.DX;
+		params->mesh.DZ = params->mesh.DX;
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Using ION SKIN DEPTH to set up simulation grid." << endl;
 	}
 
+    //*** @tomodify
+    /*
     switch (params->dimensionality){
         case(1):{
-            mesh->NX_PER_MPI = params->NX_PER_MPI;
-            mesh->NY_PER_MPI = 1;
-            mesh->NZ_PER_MPI = 1;
+            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
+            params->mesh.NY_PER_MPI = 1;
+            params->mesh.NZ_PER_MPI = 1;
 
             break;
         }
         case(2):{
-            mesh->NX_PER_MPI = params->NX_PER_MPI;
-            mesh->NY_PER_MPI = params->NY_PER_MPI;
-            mesh->NZ_PER_MPI = 1;
+            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
+            params->mesh.NY_PER_MPI = params->NY_PER_MPI;
+            params->mesh.NZ_PER_MPI = 1;
 
             break;
         }
         case(3):{
-            mesh->NX_PER_MPI = params->NX_PER_MPI;
-            mesh->NY_PER_MPI = params->NY_PER_MPI;
-            mesh->NZ_PER_MPI = params->NZ_PER_MPI;
+            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
+            params->mesh.NY_PER_MPI = params->NY_PER_MPI;
+            params->mesh.NZ_PER_MPI = params->NZ_PER_MPI;
 
             break;
         }
         default:{
-            mesh->NX_PER_MPI = params->NX_PER_MPI;
-            mesh->NY_PER_MPI = 1;
-            mesh->NZ_PER_MPI = 1;
+            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
+            params->mesh.NY_PER_MPI = 1;
+            params->mesh.NZ_PER_MPI = 1;
         }
     }
+    */
 
-	mesh->nodes.X.set_size(mesh->NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);
-	mesh->nodes.Y.set_size(mesh->NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);
-	mesh->nodes.Z.set_size(mesh->NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);
+	params->mesh.nodes.X.set_size(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);
+	params->mesh.nodes.Y.set_size(params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);
+	params->mesh.nodes.Z.set_size(params->mesh.NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);
 
     //cout << params->mpi.MPI_DOMAIN_NUMBER_CART << " | NX:" << params->mpi.MPI_DOMAINS_ALONG_X_AXIS << " | NY:" << params->mpi.MPI_DOMAINS_ALONG_Y_AXIS << " | NZ:" << params->mpi.MPI_DOMAINS_ALONG_Z_AXIS << endl;
 
-	for(int ii=0;ii<(int)(mesh->NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);ii++){
-		mesh->nodes.X(ii) = (double)ii*mesh->DX; //entire simulation domain's mesh grid
+	for(int ii=0;ii<(int)(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);ii++){
+		params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX; //entire simulation domain's mesh grid
 	}
-	for(int ii=0;ii<(int)(mesh->NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);ii++){
-		mesh->nodes.Y(ii) = (double)ii*mesh->DY; //
+	for(int ii=0;ii<(int)(params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);ii++){
+		params->mesh.nodes.Y(ii) = (double)ii*params->mesh.DY; //
 	}
-	for(int ii=0;ii<(int)(mesh->NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);ii++){
-		mesh->nodes.Z(ii) = (double)ii*mesh->DZ; //
+	for(int ii=0;ii<(int)(params->mesh.NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);ii++){
+		params->mesh.nodes.Z(ii) = (double)ii*params->mesh.DZ; //
 	}
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-		cout << "Size of simulation domain along the x-axis: " << mesh->nodes.X(mesh->NX_PER_MPI-1) + mesh->DX << " m\n";
-		cout << "Size of simulation domain along the y-axis: " << mesh->nodes.Y(mesh->NY_PER_MPI-1) + mesh->DY << " m\n";
-		cout << "Size of simulation domain along the z-axis: " << mesh->nodes.Z(mesh->NZ_PER_MPI-1) + mesh->DZ << " m\n";
+		cout << "Size of simulation domain along the x-axis: " << params->mesh.nodes.X(params->mesh.NX_PER_MPI-1) + params->mesh.DX << " m\n";
+		cout << "Size of simulation domain along the y-axis: " << params->mesh.nodes.Y(params->mesh.NY_PER_MPI-1) + params->mesh.DY << " m\n";
+		cout << "Size of simulation domain along the z-axis: " << params->mesh.nodes.Z(params->mesh.NZ_PER_MPI-1) + params->mesh.DZ << " m\n";
 		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *\n\n";
 	}
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS){
-    IONS->n.zeros(params->NX_IN_SIM + 2);       // Ghost cells are included (+2)
-    IONS->n_.zeros(params->NX_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->n__.zeros(params->NX_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->n___.zeros(params->NX_IN_SIM + 2);    // Ghost cells are included (+2)
+template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+    IONS->n.zeros(params->mesh.NX_IN_SIM + 2);       // Ghost cells are included (+2)
+    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2);    // Ghost cells are included (+2)
 
-    IONS->nv.zeros(params->NX_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->nv_.zeros(params->NX_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->nv__.zeros(params->NX_IN_SIM + 2);    // Ghost cells are included (+2)
+    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);    // Ghost cells are included (+2)
 
     // Setting size and value to zero of arrays for ions' variables
     IONS->meshNode.zeros(IONS->NSP);
@@ -379,44 +382,44 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     //Checking integrity of the initial condition
 
     if(params->quietStart){
-        IONS->X.col(0) *= mesh->DX*params->NX_IN_SIM;
+        IONS->X.col(0) *= params->mesh.DX*params->mesh.NX_IN_SIM;
     }else{
-        IONS->X.col(0) = (mesh->DX*params->NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
+        IONS->X.col(0) = (params->mesh.DX*params->mesh.NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
     }
 
     double chargeDensityPerCell;
 
     // #ifdef ONED
-    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
-    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI)*chargeDensityPerCell;
+    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
+    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI)*chargeDensityPerCell;
     // #endif
 
     /*
     #ifdef TWOD
-    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
-    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
+    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
+    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
     #endif
 
     #ifdef THREED
-    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
-    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI*mesh->DZ*(double)mesh->NZ_PER_MPI)*chargeDensityPerCell;
+    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
+    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI*params->mesh.DZ*(double)params->mesh.NZ_PER_MPI)*chargeDensityPerCell;
     #endif
     */
 
     PIC<oneDimensional::ionSpecies, oneDimensional::fields> pic;
-    pic.assignCell(params, mesh, IONS);
+    pic.assignCell(params, IONS);
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS){
-    IONS->n.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);       // Ghost cells are included (+2)
-    IONS->n_.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->n__.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->n___.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);    // Ghost cells are included (+2)
+template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+    IONS->n.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);       // Ghost cells are included (+2)
+    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);    // Ghost cells are included (+2)
 
-    IONS->nv.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->nv_.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->nv__.zeros(params->NX_IN_SIM + 2, params->NY_IN_SIM + 2);    // Ghost cells are included (+2)
+    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);      // Ghost cells are included (+2)
+    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);     // Ghost cells are included (+2)
+    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);    // Ghost cells are included (+2)
 
     // Setting size and value to zero of arrays for ions' variables
     IONS->meshNode.zeros(IONS->NSP, 2);
@@ -444,17 +447,17 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     //Checking integrity of the initial condition
 
     if(params->quietStart){
-        IONS->X.col(0) *= mesh->DX*params->NX_IN_SIM;
-        IONS->X.col(1) *= mesh->DY*params->NY_IN_SIM;
+        IONS->X.col(0) *= params->mesh.DX*params->mesh.NX_IN_SIM;
+        IONS->X.col(1) *= params->mesh.DY*params->mesh.NY_IN_SIM;
     }else{
-        IONS->X.col(0) = (mesh->DX*params->NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0)); //*** @tomodify
-        IONS->X.col(1) = (mesh->DY*params->NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
+        IONS->X.col(0) = (params->mesh.DX*params->mesh.NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0)); //*** @tomodify
+        IONS->X.col(1) = (params->mesh.DY*params->mesh.NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
     }
 
     double chargeDensityPerCell;
 
-    chargeDensityPerCell = IONS->Dn*params->ne/IONS->NSP;
-    IONS->NCP = (mesh->DX*(double)mesh->NX_PER_MPI*mesh->DY*(double)mesh->NY_PER_MPI)*chargeDensityPerCell;
+    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
+    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
 
 
     // PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;                                  //*** @tomodify
@@ -462,7 +465,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<T> * IONS){
+template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<T> * IONS){
 
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
@@ -515,7 +518,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
         if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
 			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
 
-        initializeIonsArrays(params, mesh, &IONS->at(ii));
+        initializeIonsArrays(params, &IONS->at(ii));
     }//Iteration over ion species
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
@@ -600,7 +603,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
 
             ions.Wc = ions.Q*params->BGP.Bo/ions.M;
 
-            ions.Wp = sqrt( ions.Dn*params->ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
+            ions.Wp = sqrt( ions.Dn*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
 
             ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
         	ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
@@ -608,7 +611,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
             ions.LarmorRadius = ions.VTper/ions.Wc;
 
             //Definition of the initial total number of superparticles for each species
-    		ions.NSP = ceil(ions.NPC*params->NX_PER_MPI);
+    		ions.NSP = ceil(ions.NPC*params->mesh.NX_PER_MPI);
     		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 
     		IONS->push_back(ions);
@@ -674,7 +677,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
             ions.LarmorRadius = ions.VTper/ions.Wc;
 
             //Definition of the initial total number of superparticles for each species
-    		gcp.NSP = ceil(gcp.NPC*params->NX_PER_MPI);
+    		gcp.NSP = ceil(gcp.NPC*params->mesh.NX_PER_MPI);
     		gcp.nSupPartOutput = floor( (gcp.pctSupPartOutput/100.0)*gcp.NSP );
 
     		GCP->push_back(gcp);
@@ -707,8 +710,8 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB){
-    int NX(params->NX_IN_SIM + 2); // Ghost mesh points (+2) included
+template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
+    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
 
     EB->zeros(NX);
 
@@ -731,9 +734,9 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(c
     EB->b_ = EB->b;
 }
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB){
-    int NX(params->NX_IN_SIM + 2); // Ghost mesh points (+2) included
-    int NY(params->NY_IN_SIM + 2); // Ghost mesh points (+2) included
+template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB){
+    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
+    int NY(params->mesh.NY_IN_SIM + 2); // Ghost mesh points (+2) included
 
     EB->zeros(NX,NY);
 
@@ -743,7 +746,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(c
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulationParameters * params, const meshParams * mesh, Y * EB){
+template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulationParameters * params, Y * EB){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -756,7 +759,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulat
 
 		MPI_Abort(params->mpi.MPI_TOPO,-104);
 	}else{//The electromagnetic fields are being initialized in the runtime.
-        initializeFieldsSizeAndValue(params, mesh, EB);
+        initializeFieldsSizeAndValue(params, EB);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 			cout << "Initializing electromagnetic fields within simulation" << endl;

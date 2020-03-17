@@ -246,7 +246,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 //
 // CLASS CONSTRUCTOR //
 //
-template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundamentalScales * FS, meshParams * mesh, vector<T> *IONS){
+template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundamentalScales * FS, vector<T> *IONS){
 
 	try{
 		stringstream dn;
@@ -346,47 +346,47 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundame
 		Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
 
 		name = "DX";
-		cpp_type_value = mesh->DX;
+		cpp_type_value = params->mesh.DX;
 		saveToHDF5(group_geo, name, &cpp_type_value);
 		name.clear();
 
 		name = "DY";
-		cpp_type_value = mesh->DY;
+		cpp_type_value = params->mesh.DY;
 		saveToHDF5(group_geo, name, &cpp_type_value);
 		name.clear();
 
 		name = "DZ";
-		cpp_type_value = mesh->DZ;
+		cpp_type_value = params->mesh.DZ;
 		saveToHDF5(group_geo, name, &cpp_type_value);
 		name.clear();
 
 		name = "NX";
-		int_value = mesh->NX_PER_MPI;
+		int_value = params->mesh.NX_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NY";
-		int_value = mesh->NY_PER_MPI;
+		int_value = params->mesh.NY_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NZ";
-		int_value = mesh->NZ_PER_MPI;
+		int_value = params->mesh.NZ_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NX_IN_SIM";
-		int_value = params->NX_IN_SIM;
+		int_value = params->mesh.NX_IN_SIM;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NY_IN_SIMNY";
-		int_value = params->NY_IN_SIM;
+		int_value = params->mesh.NY_IN_SIM;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
 		name = "NZ_IN_SIM";
-		int_value = params->NZ_IN_SIM;
+		int_value = params->mesh.NZ_IN_SIM;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
@@ -411,10 +411,10 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundame
 		name = "xAxis";
 
 		#ifdef HDF5_DOUBLE
-		vec_values = mesh->nodes.X;
+		vec_values = params->mesh.nodes.X;
 		saveToHDF5(group_geo, name, &vec_values);
 		#elif defined HDF5_FLOAT
-		fvec_values = conv_to<fvec>::from(mesh->nodes.X);
+		fvec_values = conv_to<fvec>::from(params->mesh.nodes.X);
 		saveToHDF5(group_geo, name, &fvec_values);
 		#endif
 
@@ -424,10 +424,10 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundame
 			name = "yAxis";
 
 			#ifdef HDF5_DOUBLE
-			vec_values = mesh->nodes.X;
+			vec_values = params->mesh.nodes.X;
 			saveToHDF5(group_geo, name, &vec_values);
 			#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(mesh->nodes.X);
+			fvec_values = conv_to<fvec>::from(params->mesh.nodes.X);
 			saveToHDF5(group_geo, name, &fvec_values);
 			#endif
 
@@ -452,7 +452,7 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundame
 		name.clear();
 
 		name = "ne";
-		cpp_type_value = (CPP_TYPE)params->ne;
+		cpp_type_value = (CPP_TYPE)params->BGP.ne;
 		saveToHDF5(group_ions, name, &cpp_type_value);
 		name.clear();
 
@@ -546,8 +546,8 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundame
 #ifdef ONED
 template <class T, class Y> void HDF<T,Y>::siv_1D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	try{
 		string path;
@@ -780,8 +780,8 @@ template <class T, class Y> void HDF<T,Y>::saveIonsVariables(const simulationPar
 
 template <class T, class Y> void HDF<T,Y>::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int IT){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	try{
 		// forwardPBC_1D(&EB->E.X);

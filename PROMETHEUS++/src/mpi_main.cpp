@@ -57,9 +57,9 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 		params->mpi.MPI_DOMAINS_ALONG_Y_AXIS = 1;
 		params->mpi.MPI_DOMAINS_ALONG_Z_AXIS = 1;
 
-		params->NX_IN_SIM = params->NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS;
-		params->NY_IN_SIM = 1;
-		params->NZ_IN_SIM = 1;
+		params->mesh.NX_IN_SIM = params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS;
+		params->mesh.NY_IN_SIM = 1;
+		params->mesh.NZ_IN_SIM = 1;
 
 		MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_1D, periods_1D, reorder, &params->mpi.MPI_TOPO);
 	}else{
@@ -77,7 +77,7 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 		if( fmod(n, 2.0) > 0.0 ){	// n is an odd number
 			// The Cartesian topology of MPIs will be of size 2 x 2^(n-1),
 			// where 2 MPI processes are used along the direction with less nodes.
-			if(params->NX_PER_MPI > params->NY_PER_MPI){
+			if(params->mesh.NX_PER_MPI > params->mesh.NY_PER_MPI){
 				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
 					dims_2D[0] = (int)pow(2.0, n-1.0); 	// x-axis
 					dims_2D[1] = 2;						// y-axis
@@ -105,9 +105,9 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 		params->mpi.MPI_DOMAINS_ALONG_Y_AXIS = dims_2D[1];
 		params->mpi.MPI_DOMAINS_ALONG_Z_AXIS = 1;
 
-		params->NX_IN_SIM = params->NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS;
-		params->NY_IN_SIM = params->NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS;
-		params->NZ_IN_SIM = 1;
+		params->mesh.NX_IN_SIM = params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS;
+		params->mesh.NY_IN_SIM = params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS;
+		params->mesh.NZ_IN_SIM = 1;
 
 		MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_2D, periods_2D, reorder, &params->mpi.MPI_TOPO);
 	}
@@ -144,12 +144,12 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 			cout << endl << "* * * * * * * * * * * * GENERATING MPI TOPOLOGY * * * * * * * * * * * * * * * * * *" << endl;
 			if(params->dimensionality == 1){
 				cout << "+ Number of MPI processes along the x-axis: " << dims_1D[0] << endl;
-				cout << "+ Number of mesh nodes along x-axis: " << params->NX_IN_SIM << endl;
+				cout << "+ Number of mesh nodes along x-axis: " << params->mesh.NX_IN_SIM << endl;
 			}else{
 				cout << "+ Number of MPI processes along the x-axis: " << dims_2D[0] << endl;
-				cout << "+ Number of mesh nodes along x-axis: " << params->NX_IN_SIM << endl;
+				cout << "+ Number of mesh nodes along x-axis: " << params->mesh.NX_IN_SIM << endl;
 				cout << "+ Number of MPI processes along the y-axis: " << dims_2D[1] << endl;
-				cout << "+ Number of mesh nodes along y-axis: " << params->NY_IN_SIM << endl;
+				cout << "+ Number of mesh nodes along y-axis: " << params->mesh.NY_IN_SIM << endl;
 			}
 			cout << "* * * * * * * * * * * * MPI TOPOLOGY GENERATED  * * * * * * * * * * * * * * * * * *" << endl << endl;
 		}

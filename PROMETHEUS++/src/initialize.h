@@ -51,9 +51,9 @@ template <class T, class Y> class INITIALIZE{
 
 	map<string, string> loadParametersString(string *  inputFile);
 
-	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, oneDimensional::ionSpecies * IONS);
+	void initializeIonsArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
-	void initializeIonsArrays(const simulationParameters * params, const meshParams * mesh, twoDimensional::ionSpecies * IONS);
+	void initializeIonsArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
 public:
 
@@ -61,18 +61,18 @@ public:
 
 	void loadInputParameters(simulationParameters * params, int argc, char* argv[]);
 
-	void loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh);
+	void loadMeshGeometry(simulationParameters * params, fundamentalScales * FS);
 
 	void loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP);
 
-	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<T> * IONS);
+	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<T> * IONS);
 
 
-	void initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB);
+	void initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB);
 
-	void initializeFieldsSizeAndValue(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB);
+	void initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB);
 
-	void initializeFields(const simulationParameters * params,  const meshParams * mesh,  Y * EB);
+	void initializeFields(const simulationParameters * params, Y * EB);
 
 };
 

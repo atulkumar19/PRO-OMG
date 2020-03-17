@@ -36,7 +36,7 @@ void ALFVENIC::generateModes(const simulationParameters * params,const meshParam
 	Aw.wavenumber.set_size(params->numberOfAlfvenicModes);
 	Aw.angularFreq.set_size(params->numberOfAlfvenicModes);
 	Aw.phase.set_size(params->numberOfAlfvenicModes);
-	Aw.dB.zeros(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	Aw.dB.zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 
 	Aw.numberOfTestModes = params->numberOfTestModes;
 	Aw.kappa.set_size(Aw.numberOfTestModes);
@@ -44,8 +44,8 @@ void ALFVENIC::generateModes(const simulationParameters * params,const meshParam
 
 	mat afBrackets(Aw.numberOfTestModes,2);//angular frequency brackets (limits) for the root finding
 
-	Aw.L = mesh->nodes.X(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS-1) + mesh->DX;
-	vec x = (mesh->nodes.X + mesh->DX/2);
+	Aw.L = params->mesh.nodes.X(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS-1) + params->mesh.DX;
+	vec x = (params->mesh.nodes.X + params->mesh.DX/2);
 
 	for(int ii=0;ii<Aw.numberOfTestModes;ii++){
 		Aw.kappa(ii) = 2*M_PI*(double)(ii+1)/(Aw.L/3);// In meters! in the dispertion relation it must be cm!
@@ -129,14 +129,14 @@ void ALFVENIC::loadModes(const simulationParameters * params,const meshParams * 
 
 	if(status && (params->numberOfAlfvenicModes == spectra.n_rows)){
 
-		Aw.L = mesh->nodes.X(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS-1) + mesh->DX;
-		vec x = (mesh->nodes.X + mesh->DX/2);
+		Aw.L = params->mesh.nodes.X(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS-1) + params->mesh.DX;
+		vec x = (params->mesh.nodes.X + params->mesh.DX/2);
 
 		Aw.amp.set_size(spectra.n_rows);
 		Aw.wavenumber.set_size(spectra.n_rows);
 		Aw.angularFreq.set_size(spectra.n_rows);
 		Aw.phase.set_size(spectra.n_rows);
-		Aw.dB.zeros(mesh->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+		Aw.dB.zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 
 		for(int ii=0;ii<spectra.n_rows;ii++){
 			Aw.angularFreq(ii) = spectra(ii,0);

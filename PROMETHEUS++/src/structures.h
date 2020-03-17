@@ -104,9 +104,13 @@ struct energyMonitor{
 struct meshParams{
 	vfield_vec nodes;
 
-	int NX_PER_MPI;
-	int NY_PER_MPI;
-	int NZ_PER_MPI;
+	int NX_PER_MPI; // Number of mesh nodes along x-axis in subdomain (no ghost nodes considered)
+	int NY_PER_MPI; // Number of mesh nodes along y-axis in subdomain (no ghost nodes considered)
+	int NZ_PER_MPI; // Number of mesh nodes along z-axis in subdomain (no ghost nodes considered)
+
+	int NX_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	int NY_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	int NZ_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 
 	double DX;
 	double DY;
@@ -115,6 +119,7 @@ struct meshParams{
 
 
 struct backgroundPlasmaParameters{
+	double ne;
 	double Te;
 	double Bo;
 	double Bx;
@@ -160,19 +165,12 @@ struct simulationParameters{
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
-	int NX_PER_MPI; // Number of mesh nodes along x-axis in subdomain (no ghost nodes considered)
-	int NY_PER_MPI; // Number of mesh nodes along y-axis in subdomain (no ghost nodes considered)
-	int NZ_PER_MPI; // Number of mesh nodes along z-axis in subdomain (no ghost nodes considered)
-
-	int NX_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
-	int NY_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
-	int NZ_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	// Parameters of mesh used in simulation
+	meshParams mesh;
 
 	//ions properties
 	int numberOfParticleSpecies; // This species are evolved self-consistently with the fields
 	int numberOfTracerSpecies; // This species are not self-consistently evolved with the fields
-
-	double ne; // Electron number density (input file)
 
 	backgroundPlasmaParameters BGP;
 
@@ -192,6 +190,7 @@ struct simulationParameters{
 
 	energyMonitor * em; // Structure to monitor energy conservation
 
+	// Parameters of Alfven waves' spectrum
 	unsigned int loadModes;
 	unsigned int numberOfAlfvenicModes;//Number of Alfvenic waves for the initial condition
 	unsigned int numberOfTestModes;
@@ -199,6 +198,7 @@ struct simulationParameters{
 	double fracMagEnerInj;//Fraction of background magnetic energy injected
 	unsigned int shuffleModes;
 
+	// MPI parameters
 	mpiParams mpi;
 
 	// Error codes

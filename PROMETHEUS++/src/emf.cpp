@@ -20,9 +20,9 @@
 
 EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
 	n_cs = CS->length*CS->density;
-	NX_S = params->NX_PER_MPI + 2;
-	NX_T = params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2;
-	NX_R = params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
+	NX_S = params->mesh.NX_PER_MPI + 2;
+	NX_T = params->mesh.NX_IN_SIM + 2;
+	NX_R = params->mesh.NX_IN_SIM;
 
 	ne.zeros(NX_S);
 	n.zeros(NX_S);
@@ -41,20 +41,20 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 
 void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
-	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
-	arma::vec sendBuf(params->NX_PER_MPI);
+	arma::vec recvBuf(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->mesh.NX_PER_MPI);
 
-	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
+	MPI_ARMA_VEC chunk(params->mesh.NX_PER_MPI);
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for x-component
 	sendBuf = field->subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	field->subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 }
@@ -62,34 +62,34 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::v
 
 void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
-	arma::vec recvBuf(params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
-	arma::vec sendBuf(params->NX_PER_MPI);
+	arma::vec recvBuf(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec sendBuf(params->mesh.NX_PER_MPI);
 
-	MPI_ARMA_VEC chunk(params->NX_PER_MPI);
+	MPI_ARMA_VEC chunk(params->mesh.NX_PER_MPI);
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for x-component
 	sendBuf = field->X.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	field->X.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->X.subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for y-component
 	sendBuf = field->Y.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	field->Y.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->Y.subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
 	//Allgather for z-component
 	sendBuf = field->Z.subvec(iIndex, fIndex);
 	MPI_Allgather(sendBuf.memptr(), 1, chunk.type, recvBuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	field->Z.subvec(1, params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
+	field->Z.subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvBuf;
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 }
@@ -97,8 +97,8 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_
 
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params,vfield_vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	double sendBuf;
 	double recvBuf;
@@ -134,8 +134,8 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params,vfield_vec *
 
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec * field){
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	double sendBuf;
 	double recvBuf;
@@ -159,8 +159,8 @@ void EMF_SOLVER::smooth_TOS(const simulationParameters * params,vfield_vec * vf,
 
 	double w0(23.0/48.0), w1(0.25), w2(1.0/96.0);//weights
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
 	//Step 1: Averaging process
 	b = vf->X.subvec(iIndex-1,fIndex+1);
@@ -203,8 +203,8 @@ void EMF_SOLVER::smooth_TSC(const simulationParameters * params,vfield_vec * vf,
 
 	double w0(0.75), w1(0.125);//weights
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
 
 	//Step 1: Averaging process
@@ -246,8 +246,8 @@ void EMF_SOLVER::smooth(const simulationParameters * params,vfield_vec * vf,doub
 
 	double w0(0.5), w1(0.25);//weights
 
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 
 	//Step 1: Averaging process
@@ -287,39 +287,39 @@ void EMF_SOLVER::equilibrium(const simulationParameters * params,vector<ionSpeci
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParams * mesh,fields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, fields * EB){//This function calculates -culr(EB->E)
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 
 	//There is not x-component of curl(B)
 	EB->B.X.fill(0);
 
 	//y-component
-//	EB->B.Y.subvec(1,NX-2) = ( EB->E.Z.subvec(2,NX-1) - EB->E.Z.subvec(1,NX-2) )/mesh->DX;
-	EB->B.Y.subvec(iIndex,fIndex) = ( EB->E.Z.subvec(iIndex+1,fIndex+1) - EB->E.Z.subvec(iIndex,fIndex) )/mesh->DX;
+//	EB->B.Y.subvec(1,NX-2) = ( EB->E.Z.subvec(2,NX-1) - EB->E.Z.subvec(1,NX-2) )/params->mesh.DX;
+	EB->B.Y.subvec(iIndex,fIndex) = ( EB->E.Z.subvec(iIndex+1,fIndex+1) - EB->E.Z.subvec(iIndex,fIndex) )/params->mesh.DX;
 
 	//z-component
-//	EB->B.Z.subvec(1,NX-2) = - ( EB->E.Y.subvec(2,NX-1) - EB->E.Y.subvec(1,NX-2) )/mesh->DX;
-	EB->B.Z.subvec(iIndex,fIndex) = - ( EB->E.Y.subvec(iIndex+1,fIndex+1) - EB->E.Y.subvec(iIndex,fIndex) )/mesh->DX;
+//	EB->B.Z.subvec(1,NX-2) = - ( EB->E.Y.subvec(2,NX-1) - EB->E.Y.subvec(1,NX-2) )/params->mesh.DX;
+	EB->B.Z.subvec(iIndex,fIndex) = - ( EB->E.Y.subvec(iIndex+1,fIndex+1) - EB->E.Y.subvec(iIndex,fIndex) )/params->mesh.DX;
 }
 
 
-void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParams * mesh,twoDimensional::fields * EB){
-
-}
-
-
-void EMF_SOLVER::FaradaysLaw(const simulationParameters * params,const meshParams * mesh,threeDimensional::fields * EB){//This function calculates -culr(EB->E)
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB){
 
 }
 
 
-void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, threeDimensional::fields * EB){//This function calculates -culr(EB->E)
+
+}
+
+
+void EMF_SOLVER::advanceBField(const simulationParameters * params, fields * EB, vector<ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
@@ -330,29 +330,29 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshPar
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
 
 		K1 = *EB;//The value of the fields at the time level (N-1/2)
-		advanceEField(params,mesh,&K1,IONS);//E1 (using B^(N-1/2))
-		FaradaysLaw(params,mesh,&K1);//K1
+		advanceEField(params, &K1, IONS);//E1 (using B^(N-1/2))
+		FaradaysLaw(params, &K1);//K1
 
 		K2.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K1
 		K2.B.Y = EB->B.Y + (0.5*dt)*K1.B.Y;
 		K2.B.Z = EB->B.Z + (0.5*dt)*K1.B.Z;
 		K2.E = EB->E;
-		advanceEField(params,mesh,&K2,IONS);//E2 (using B^(N-1/2) + 0.5*dt*K1)
-		FaradaysLaw(params,mesh,&K2);//K2
+		advanceEField(params, &K2, IONS);//E2 (using B^(N-1/2) + 0.5*dt*K1)
+		FaradaysLaw(params, &K2);//K2
 
 		K3.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K2
 		K3.B.Y = EB->B.Y + (0.5*dt)*K2.B.Y;
 		K3.B.Z = EB->B.Z + (0.5*dt)*K2.B.Z;
 		K3.E = EB->E;
-		advanceEField(params,mesh,&K3,IONS);//E3 (using B^(N-1/2) + 0.5*dt*K2)
-		FaradaysLaw(params,mesh,&K3);//K3
+		advanceEField(params, &K3, IONS);//E3 (using B^(N-1/2) + 0.5*dt*K2)
+		FaradaysLaw(params, &K3);//K3
 
 		K4.B.X = EB->B.X;//B^(N-1/2) + dt*K2
 		K4.B.Y = EB->B.Y + dt*K3.B.Y;
 		K4.B.Z = EB->B.Z + dt*K3.B.Z;
 		K4.E = EB->E;
-		advanceEField(params,mesh,&K4,IONS);//E4 (using B^(N-1/2) + dt*K3)
-		FaradaysLaw(params,mesh,&K4);//K4
+		advanceEField(params, &K4, IONS);//E4 (using B^(N-1/2) + dt*K3)
+		FaradaysLaw(params, &K4);//K4
 
 		EB->B += (dt/6)*( K1.B + 2*K2.B + 2*K3.B + K4.B );
 	}//Runge-Kutta iterations
@@ -367,21 +367,21 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshPar
 		arma::vec S(NX_R, fill::zeros);			// Modified magnetic field
 		double de; 									// Electron skin depth
 
-		de = (F_C_DS/F_E_DS)*sqrt( F_ME_DS*F_EPSILON_DS/params->ne );
+		de = (F_C_DS/F_E_DS)*sqrt( F_ME_DS*F_EPSILON_DS/params->BGP.ne );
 
 		// Elements for first node in mesh
-		M(0,0) = 1.0 + 2.0*pow(de,2.0)/pow(mesh->DX,2.0);
-		M(0,1) = -pow(de,2.0)/pow(mesh->DX,2.0);
+		M(0,0) = 1.0 + 2.0*pow(de,2.0)/pow(params->mesh.DX,2.0);
+		M(0,1) = -pow(de,2.0)/pow(params->mesh.DX,2.0);
 
 
 		// Elements for last node in mesh
-		M(NX_R-1,NX_R-1) = 1.0 + 2.0*pow(de,2.0)/pow(mesh->DX,2.0);
-		M(NX_R-1,NX_R-2) = -pow(de,2.0)/pow(mesh->DX,2.0);
+		M(NX_R-1,NX_R-1) = 1.0 + 2.0*pow(de,2.0)/pow(params->mesh.DX,2.0);
+		M(NX_R-1,NX_R-2) = -pow(de,2.0)/pow(params->mesh.DX,2.0);
 
 		for(int ii=1; ii<NX_R-1; ii++){
-			M(ii,ii-1) = -pow(de,2.0)/pow(mesh->DX,2.0);
-			M(ii,ii) = 1.0 + 2.0*pow(de,2.0)/pow(mesh->DX,2.0);
-			M(ii,ii+1) = -pow(de,2.0)/pow(mesh->DX,2.0);
+			M(ii,ii-1) = -pow(de,2.0)/pow(params->mesh.DX,2.0);
+			M(ii,ii) = 1.0 + 2.0*pow(de,2.0)/pow(params->mesh.DX,2.0);
+			M(ii,ii+1) = -pow(de,2.0)/pow(params->mesh.DX,2.0);
 		}
 
 		// x-component of magnetic field
@@ -457,14 +457,14 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params,const meshPar
 
 
 #ifdef ONED
-void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * mesh,oneDimensional::fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_1D(const simulationParameters * params, oneDimensional::fields * EB, vector<ionSpecies> * IONS){
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
 	// n and U are armadillo vectors initialized in the EMF_SOLVER class constructor.
 	n.zeros();
@@ -505,9 +505,9 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 
 	// x-component
 
-	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/mesh->DX;
+	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
-	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/mesh->DX;
+	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
 	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) ) );
 
@@ -515,13 +515,13 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 
 	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,NX_S-2) + U.Z.subvec(2,NX_S-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,NX_S-1) - n.subvec(1,NX_S-2))/mesh->DX )/(0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,NX_S-1) - n.subvec(1,NX_S-2))/params->mesh.DX )/(0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) );
 
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFD with DX/2
 
-		EB->E.X.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*0.5*( U.X.subvec(1,NX_S-2) + U.X.subvec(2,NX_S-1) ) % ( (U.X.subvec(2,NX_S-1) - U.X.subvec(1,NX_S-2))/mesh->DX );
+		EB->E.X.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*0.5*( U.X.subvec(1,NX_S-2) + U.X.subvec(2,NX_S-1) ) % ( (U.X.subvec(2,NX_S-1) - U.X.subvec(1,NX_S-2))/params->mesh.DX );
 	}
 
 
@@ -530,9 +530,9 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 
 	//y-component
 
-	curlB.Y.subvec(iIndex,fIndex) = -(EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
+	curlB.Y.subvec(iIndex,fIndex) = -(EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX;//curl(B)z(i)
 
-	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
+	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX;//curl(B)z(i)
 
 	MPI_passGhosts(params,&curlB.Y);
 
@@ -547,11 +547,11 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFDs with DX
-		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Y.subvec(2,NX_S-1) - U.Y.subvec(0,NX_S-3))/mesh->DX );
+		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Y.subvec(2,NX_S-1) - U.Y.subvec(0,NX_S-3))/params->mesh.DX );
 
-		EB->E.Y.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Y.subvec(iIndex+1,fIndex+1) - curlB.Y.subvec(iIndex-1,fIndex-1))/mesh->DX );
+		EB->E.Y.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Y.subvec(iIndex+1,fIndex+1) - curlB.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX );
 
-		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/mesh->DX ) % curlB.Y.subvec(iIndex,fIndex);
+		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/params->mesh.DX ) % curlB.Y.subvec(iIndex,fIndex);
 	}
 
 
@@ -569,9 +569,9 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFDs with DX
-		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Z.subvec(2,NX_S-1) - U.Z.subvec(0,NX_S-3))/mesh->DX );
+		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Z.subvec(2,NX_S-1) - U.Z.subvec(0,NX_S-3))/params->mesh.DX );
 
-		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/mesh->DX );
+		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX );
 	}
 
 
@@ -610,33 +610,33 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params,const meshParams * m
 
 
 #ifdef TWOD
-void EMF_SOLVER::aef_2D(const simulationParameters * params,const meshParams * mesh,twoDimensional::fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_2D(const simulationParameters * params, twoDimensional::fields * EB, vector<ionSpecies> * IONS){
 
 }
 #endif
 
 
 #ifdef THREED
-void EMF_SOLVER::aef_3D(const simulationParameters * params,const meshParams * mesh,threeDimensional::fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::aef_3D(const simulationParameters * params, threeDimensional::fields * EB, vector<ionSpecies> * IONS){
 
 }
 #endif
 
 
-void EMF_SOLVER::advanceEField(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
+void EMF_SOLVER::advanceEField(const simulationParameters * params, fields * EB, vector<ionSpecies> * IONS){
 
 	//The ions' density and flow velocities are stored in the integer nodes,we'll use mean values of these quantities in order to calculate the electric field in the staggered grid.
 
 	#ifdef ONED
-	aef_1D(params,mesh,EB,IONS);
+	aef_1D(params, EB, IONS);
 	#endif
 
 	#ifdef TWOD
-	aef_2D(params,mesh,EB,IONS);
+	aef_2D(params, EB, IONS);
 	#endif
 
 	#ifdef THREED
-	aef_3D(params,mesh,EB,IONS);
+	aef_3D(params, EB, IONS);
 	#endif
 
 }
@@ -648,15 +648,14 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params,const meshPar
 	+ IONS_: Ions' variables at time level "l - 1/2"
 	+ IONS: Ions' variables at time level "l + 1/2"
 */
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshParams * mesh,\
-														oneDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, oneDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE){
 
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	ne.zeros();
 	n.zeros();
@@ -760,9 +759,9 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 	//x-component
 
-	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/mesh->DX;
+	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
-	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/mesh->DX;
+	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
 	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) ) );
 
@@ -770,7 +769,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 	EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.Z.subvec(1,NX_S-2) + V.Z.subvec(2,NX_S-1) ) % EB->B.Y.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,NX_S-1) - ne.subvec(1,NX_S-2))/mesh->DX )/(0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,NX_S-1) - ne.subvec(1,NX_S-2))/params->mesh.DX )/(0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) );
 
 
 	curlB.fill(0);
@@ -778,7 +777,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 	//y-component
 
-	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/mesh->DX;//curl(B)z(i)
+	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX;//curl(B)z(i)
 
 	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,NX_S-2));
 
@@ -789,7 +788,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 	//z-component
 
-	curlB.Y.subvec(iIndex,fIndex) = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/mesh->DX ;//curl(B)y(i)
+	curlB.Y.subvec(iIndex,fIndex) = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX ;//curl(B)y(i)
 
 	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,NX_S-2));
 
@@ -835,14 +834,14 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 
 #ifdef TWOD
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshParams * mesh,twoDimensional::fields * EB,vector<ionSpecies> * IONS,const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, twoDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE){
 
 }
 #endif
 
 
 #ifdef THREED
-void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params,const meshParams * mesh,threeDimensional::fields * EB,vector<ionSpecies> * IONS,const int BAE){
+void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, threeDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE){
 
 }
 #endif

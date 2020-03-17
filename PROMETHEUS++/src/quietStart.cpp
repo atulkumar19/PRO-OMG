@@ -46,7 +46,7 @@ template <class T> QUIETSTART<T>::QUIETSTART(const simulationParameters * params
 template <class T> double QUIETSTART<T>::recalculateNumberSuperParticles(const simulationParameters * params, T * ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
-    exponent = ceil(log(ions->NPC*params->NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
+    exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
     ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
 
 	ions->nSupPartOutput = floor( (ions->pctSupPartOutput/100.0)*ions->NSP );

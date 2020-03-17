@@ -60,9 +60,27 @@ It is important to have the following libraries and programs in your system in o
 * [Boost](http://www.boost.org/)
 * [zlib](http://zlib.net/)
 
-PROMETHEUS++ has been successfully compiled on **Mac OS 10.6.X and higher and on Linux distributions as **Ubuntu** and **Suse Linux**. There are some know problems when using versions of the [GNU Compiller Collection](http://gcc.gnu.org/) higher than 4.4 when installing versions of HDF5 earlier than 1.8.16. If you are installing 1.8.16 or higher you can use any version of the GNU compilers. 
+### COMPILERS ###
 
-**Users using HDF5 versions earlier than 1.8.16 are highly encouraged to follow ALL the steps below to avoid problems during the installation. Users using 1.8.16 and higher ONLY follow steps 1, 5, and 6.**
+PROMETHEUS++ has been successfully compiled on **Mac OS 10.6.X and higher** and on Linux distributions as **Ubuntu** and **Suse Linux**. 
+
+There are some know problems when using versions of the [GNU Compiller Collection](http://gcc.gnu.org/) higher than 4.4 when installing versions of HDF5 earlier than 1.8.16. If you are installing 1.8.16 or higher you can use any version of the GNU compilers. 
+
+### MAC OS USERS ###
+
+Users/Developers using Mac OS are encouraged to install and use the GNU compilers for building all the external libraries, MPI and compile PRO++. A useful guide/resource for installing GNU compilers in Mac OS can be found in [THIS](https://wiki.helsinki.fi/display/HUGG/GNU+compiler+install+on+Mac+OS+X) link.
+
+### HDF5 LIBRARY ###
+
+It is known that using HDF5 in some IBM systems that **do not support file locking** might produce an error during execution time when trying to create, read from or write to an HDF5 file, this despite that its installation goes well. As a possible solution, is to disable this feature of HDF5 when running the simulation. 
+
+For example, if mpirun is used to run the simulation, then we can disable file locking of HDF5 as follows:
+
+mpirun -env HDF5_USE_FILE_LOCKING FALSE ... (the rest of the parameters)
+
+Users using HDF5 versions earlier than 1.8.16 are highly encouraged to follow ALL the installation steps below to avoid problems during the installation. Users using 1.8.16 and higher ONLY follow steps 1, 5, and 6.
+
+### INSTALATION STEPS ###
 
 1. Open install_external_libraries.sh with a text editor and change the option USING_C11_STANDARD to 'yes' or 'no'. This depending if your compiler support the [C++11 standard](http://www.cprogramming.com/c++11/what-is-c++0x.html) or not.
 

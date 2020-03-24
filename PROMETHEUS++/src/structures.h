@@ -115,6 +115,10 @@ struct meshParams{
 	double DX;
 	double DY;
 	double DZ;
+
+	double LX;		// Size of simulation domain along x-axis
+	double LY;		// Size of simulation domain along x-axis
+	double LZ;		// Size of simulation domain along x-axis
 };
 
 

@@ -97,6 +97,7 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
     params->errorCodes[-105] = "Restart not implemented yet";
     params->errorCodes[-106] = "Inconsistency in iniital ion's velocity distribution function";
     params->errorCodes[-107] = "Inconsistency in iniital ion's spatial distribution function";
+    params->errorCodes[-108] = "Non-finite value in meshNode";
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -335,18 +336,24 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(simulationPar
 	for(int ii=0;ii<(int)(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);ii++){
 		params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX; //entire simulation domain's mesh grid
 	}
-	for(int ii=0;ii<(int)(params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);ii++){
+
+    for(int ii=0;ii<(int)(params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);ii++){
 		params->mesh.nodes.Y(ii) = (double)ii*params->mesh.DY; //
 	}
+
 	for(int ii=0;ii<(int)(params->mesh.NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);ii++){
 		params->mesh.nodes.Z(ii) = (double)ii*params->mesh.DZ; //
 	}
 
+    params->mesh.LX = params->mesh.DX*params->mesh.NX_IN_SIM;
+    params->mesh.LY = params->mesh.DY*params->mesh.NY_IN_SIM;
+    params->mesh.LZ = params->mesh.DZ*params->mesh.NZ_IN_SIM;
+
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-		cout << "Size of simulation domain along the x-axis: " << params->mesh.nodes.X(params->mesh.NX_PER_MPI-1) + params->mesh.DX << " m\n";
-		cout << "Size of simulation domain along the y-axis: " << params->mesh.nodes.Y(params->mesh.NY_PER_MPI-1) + params->mesh.DY << " m\n";
-		cout << "Size of simulation domain along the z-axis: " << params->mesh.nodes.Z(params->mesh.NZ_PER_MPI-1) + params->mesh.DZ << " m\n";
-		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *\n\n";
+		cout << "Size of simulation domain along the x-axis: " << params->mesh.LX << " m" << endl;
+		cout << "Size of simulation domain along the y-axis: " << params->mesh.LY << " m" << endl;
+		cout << "Size of simulation domain along the z-axis: " << params->mesh.LZ << " m" << endl;
+		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *" << endl;
 	}
 }
 

@@ -344,6 +344,8 @@ template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParamet
 	params->mesh.DX /= CS->length;
 	params->mesh.DY /= CS->length;
 	params->mesh.DZ /= CS->length;
+	params->mesh.LX /= CS->length;
+	params->mesh.LY /= CS->length;
 	//Normalizing the mesh.
 
 	//Normalizing ions' properties.

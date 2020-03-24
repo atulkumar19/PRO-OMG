@@ -99,20 +99,6 @@ protected:
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
 
-	void assignCell_TOS(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void assignCell_TSC(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void assignCell_NNS(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-
-	void assignCell_TOS(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-	void assignCell_TSC(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-	void assignCell_NNS(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-
 	void eivTOS(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
 	void eivTSC(const simulationParameters * params, oneDimensional::ionSpecies * IONS);

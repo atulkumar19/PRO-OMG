@@ -359,35 +359,28 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int ii;
 	int NSP(IONS->NSP);//number of superparticles
-	int NC;//number of grid cells
 
 	arma::vec X;
 	uvec LOGIC;
 
-	#pragma omp parallel shared(IONS, X, NSP, LOGIC) private(ii, NC)
-	{
-	#pragma omp for
-	for(ii=0;ii<NSP;ii++)
-		IONS->meshNode(ii) = floor((IONS->X(ii, 0) + 0.5*params->mesh.DX)/params->mesh.DX);
-
-	NC = params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS;
-
-	#pragma omp single
-	{
 	IONS->wxc = zeros(NSP);
 	IONS->wxl = zeros(NSP);
 	IONS->wxr = zeros(NSP);
 	X = zeros(NSP);
-	}
+
+	#pragma omp parallel shared(IONS, X, NSP, LOGIC)
+	{
+	#pragma omp for
+	for(int ii=0; ii<NSP; ii++)
+		IONS->meshNode(ii) = floor((IONS->X(ii, 0) + 0.5*params->mesh.DX)/params->mesh.DX);
 
 	#pragma omp for
-	for(ii=0;ii<NSP;ii++){
-		if(IONS->meshNode(ii) != NC){
+	for(int ii=0; ii<NSP; ii++){
+		if(IONS->meshNode(ii) != params->mesh.NX_IN_SIM){
 			X(ii) = IONS->X(ii, 0) - params->mesh.nodes.X(IONS->meshNode(ii));
 		}else{
-			X(ii) = IONS->X(ii, 0) - (params->mesh.nodes.X(NC-1) + params->mesh.DX);
+			X(ii) = IONS->X(ii, 0) - params->mesh.LX;
 		}
 	}
 
@@ -398,11 +391,11 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 	}
 
 	#pragma omp for
-	for(ii=0;ii<NSP;ii++)
+	for(int ii=0; ii<NSP; ii++)
 		IONS->wxc(ii) = 0.75 - (X(ii)/params->mesh.DX)*(X(ii)/params->mesh.DX);
 
 	#pragma omp for
-	for(ii=0;ii<NSP;ii++){
+	for(int ii=0; ii<NSP; ii++){
 		if(LOGIC(ii) == 1){
 			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
 			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
@@ -416,7 +409,7 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 
     #ifdef CHECKS_ON
 	if(!IONS->meshNode.is_finite()){
-		MPI_Abort(params->mpi.MPI_TOPO, -108)
+		MPI_Abort(params->mpi.MPI_TOPO, -108);
 	}
     #endif
 }
@@ -433,7 +426,87 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
+	int NSP(IONS->NSP);//number of superparticles
 
+	arma::vec X;
+	arma::vec Y;
+	uvec LOGIC_X;
+	uvec LOGIC_Y;
+
+	IONS->wxc = zeros(NSP);
+	IONS->wxl = zeros(NSP);
+	IONS->wxr = zeros(NSP);
+
+	IONS->wyc = zeros(NSP);
+	IONS->wyl = zeros(NSP);
+	IONS->wyr = zeros(NSP);
+
+	X = zeros(NSP);
+	Y = zeros(NSP);
+
+	#pragma omp parallel shared(IONS, X, Y, NSP, LOGIC_X, LOGIC_Y)
+	{
+	#pragma omp for
+	for(int ii=0; ii<NSP; ii++){
+		IONS->meshNode(ii,0) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
+		IONS->meshNode(ii,1) = floor((IONS->X(ii,1) + 0.5*params->mesh.DY)/params->mesh.DY);
+	}
+
+	#pragma omp for
+	for(int ii=0; ii<NSP; ii++){
+		if(IONS->meshNode(ii,0) != params->mesh.NX_IN_SIM){
+			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->meshNode(ii,0));
+		}else{
+			X(ii) = IONS->X(ii,0) - params->mesh.LX;
+		}
+
+		if(IONS->meshNode(ii,1) != params->mesh.NY_IN_SIM){
+			Y(ii) = IONS->X(ii,1) - params->mesh.nodes.Y(IONS->meshNode(ii,1));
+		}else{
+			Y(ii) = IONS->X(ii,1) - params->mesh.LY;
+		}
+	}
+
+	#pragma omp single
+	{
+	LOGIC_X = ( X > 0 );//If , aux > 0, then the particle is on the right of the meshnode
+	X = abs(X);
+
+	LOGIC_Y = ( Y > 0 );//If , aux > 0, then the particle is on the right of the meshnode
+	Y = abs(Y);
+	}
+
+	#pragma omp for
+	for(int ii=0; ii<NSP; ii++)
+		IONS->wxc(ii) = 0.75 - (X(ii)/params->mesh.DX)*(X(ii)/params->mesh.DX);
+		IONS->wyc(ii) = 0.75 - (Y(ii)/params->mesh.DY)*(Y(ii)/params->mesh.DY);
+
+	#pragma omp for
+	for(int ii=0; ii<NSP; ii++){
+		if(LOGIC_X(ii) == 1){
+			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
+			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
+		}else{
+			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
+			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
+		}
+
+		if(LOGIC_Y(ii) == 1){
+			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY);
+			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY);
+		}else{
+			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY);
+			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY);
+		}
+	}
+
+	}//End of the parallel region
+
+    #ifdef CHECKS_ON
+	if(!IONS->meshNode.is_finite()){
+		MPI_Abort(params->mpi.MPI_TOPO, -108);
+	}
+    #endif
 }
 
 

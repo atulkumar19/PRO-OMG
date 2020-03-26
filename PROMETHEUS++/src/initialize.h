@@ -43,7 +43,7 @@ using namespace arma;
 
 // using namespace oneDimensional;
 
-template <class T, class Y> class INITIALIZE{
+template <class IT, class FT> class INITIALIZE{
 
 	vector<string> split(const string& str, const string& delim);
 
@@ -63,16 +63,16 @@ public:
 
 	void loadMeshGeometry(simulationParameters * params, fundamentalScales * FS);
 
-	void loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP);
+	void loadIonParameters(simulationParameters * params, vector<IT> * IONS,  vector<GCSpecies> * GCP);
 
-	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<T> * IONS);
+	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<IT> * IONS);
 
 
 	void initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB);
 
 	void initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB);
 
-	void initializeFields(const simulationParameters * params, Y * EB);
+	void initializeFields(const simulationParameters * params, FT * EB);
 
 };
 

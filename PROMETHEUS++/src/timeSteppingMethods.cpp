@@ -18,16 +18,16 @@
 
 #include "timeSteppingMethods.h"
 
-template <class T, class Y> TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS(simulationParameters * params){
+template <class IT, class FT> TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_METHODS(simulationParameters * params){
     t1 = 0.0;						//
     t2 = 0.0;
     currentTime = 0.0;
     outputIterator = 0;			//
 }
 
-template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
+template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_METHODS::advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<IT,FT> * hdfObj, vector<IT> * IONS, FT * EB){
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
-	PIC<T,Y> ionsDynamics; // Initializing the PIC class object.
+	PIC<IT,FT> ionsDynamics; // Initializing the PIC class object.
     // GENERAL_FUNCTIONS genFun;
 
     // Repeat 3 times
@@ -98,7 +98,7 @@ template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::TIME_STEPPING_METHO
 }
 
 
-template <class T, class Y> void TIME_STEPPING_METHODS<T,Y>::advanceGCIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<T,Y> * hdfObj, vector<T> * IONS, Y * EB){
+template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::advanceGCIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<IT,FT> * hdfObj, vector<IT> * IONS, FT * EB){
     // EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
     // PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
 

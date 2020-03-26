@@ -18,7 +18,7 @@
 
 #include "initialize.h"
 
-template <class T, class Y> vector<string> INITIALIZE<T,Y>::split(const string& str, const string& delim)
+template <class IT, class FT> vector<string> INITIALIZE<IT,FT>::split(const string& str, const string& delim)
 {
     vector<string> tokens;
     size_t prev = 0, pos = 0;
@@ -36,7 +36,7 @@ template <class T, class Y> vector<string> INITIALIZE<T,Y>::split(const string& 
 }
 
 
-template <class T, class Y> map<string,float> INITIALIZE<T,Y>::loadParameters(string * inputFile){
+template <class IT, class FT> map<string,float> INITIALIZE<IT,FT>::loadParameters(string * inputFile){
 	string key;
 	float value;
 	fstream reader;
@@ -62,7 +62,7 @@ template <class T, class Y> map<string,float> INITIALIZE<T,Y>::loadParameters(st
 }
 
 
-template <class T, class Y> map<string,string>INITIALIZE<T,Y>::loadParametersString(string * inputFile){
+template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParametersString(string * inputFile){
 	string key;
 	string value;
 	fstream reader;
@@ -87,7 +87,7 @@ template <class T, class Y> map<string,string>INITIALIZE<T,Y>::loadParametersStr
     return readMap;
 }
 
-template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
+template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
     // Error codes
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
@@ -273,7 +273,7 @@ template <class T, class Y> INITIALIZE<T,Y>::INITIALIZE(simulationParameters * p
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(simulationParameters * params, fundamentalScales * FS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulationParameters * params, fundamentalScales * FS){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -327,21 +327,21 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(simulationPar
     }
     */
 
-	params->mesh.nodes.X.set_size(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);
-	params->mesh.nodes.Y.set_size(params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);
-	params->mesh.nodes.Z.set_size(params->mesh.NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);
+	params->mesh.nodes.X.set_size(params->mesh.NX_IN_SIM);
+	params->mesh.nodes.Y.set_size(params->mesh.NY_IN_SIM);
+	params->mesh.nodes.Z.set_size(params->mesh.NZ_IN_SIM);
 
     //cout << params->mpi.MPI_DOMAIN_NUMBER_CART << " | NX:" << params->mpi.MPI_DOMAINS_ALONG_X_AXIS << " | NY:" << params->mpi.MPI_DOMAINS_ALONG_Y_AXIS << " | NZ:" << params->mpi.MPI_DOMAINS_ALONG_Z_AXIS << endl;
 
-	for(int ii=0;ii<(int)(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS);ii++){
+	for(int ii=0; ii<params->mesh.NX_IN_SIM; ii++){
 		params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX; //entire simulation domain's mesh grid
 	}
 
-    for(int ii=0;ii<(int)(params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS);ii++){
+    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++){
 		params->mesh.nodes.Y(ii) = (double)ii*params->mesh.DY; //
 	}
 
-	for(int ii=0;ii<(int)(params->mesh.NZ_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Z_AXIS);ii++){
+	for(int ii=0; ii<params->mesh.NZ_IN_SIM; ii++){
 		params->mesh.nodes.Z(ii) = (double)ii*params->mesh.DZ; //
 	}
 
@@ -358,7 +358,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadMeshGeometry(simulationPar
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
     IONS->n.zeros(params->mesh.NX_IN_SIM + 2);       // Ghost cells are included (+2)
     IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);      // Ghost cells are included (+2)
     IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);     // Ghost cells are included (+2)
@@ -418,7 +418,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
     IONS->n.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);       // Ghost cells are included (+2)
     IONS->n_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);      // Ghost cells are included (+2)
     IONS->n__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);     // Ghost cells are included (+2)
@@ -467,12 +467,12 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeIonsArrays(const sim
     IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
 
 
-    // PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;                                  //*** @tomodify
-    // pic.assignCell(params, mesh, IONS, 1);    //*** @tomodify
+    //PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;                                  //*** @tomodify
+    //pic.assignCell(params, mesh, IONS, 1);    //*** @tomodify
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<T> * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<IT> * IONS){
 
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
@@ -489,10 +489,10 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 			switch (IONS->at(ii).IC) {
 				case(1):{
 						if(params->quietStart){
-                            QUIETSTART<T> qs(params, &IONS->at(ii));
+                            QUIETSTART<IT> qs(params, &IONS->at(ii));
 							qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
 						}else{
-                            RANDOMSTART<T> rs(params);
+                            RANDOMSTART<IT> rs(params);
 							rs.maxwellianVelocityDistribution(params,&IONS->at(ii));
 						}
 
@@ -500,10 +500,10 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 						}
 				case(2):{
 						if(params->quietStart){
-                            QUIETSTART<T> qs(params, &IONS->at(ii));
+                            QUIETSTART<IT> qs(params, &IONS->at(ii));
 							qs.ringLikeVelocityDistribution(params, &IONS->at(ii));
 						}else{
-                            RANDOMSTART<T> rs(params);
+                            RANDOMSTART<IT> rs(params);
 							rs.ringLikeVelocityDistribution(params, &IONS->at(ii));
 						}
 
@@ -511,11 +511,11 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 						}
 				default:{
                         if(params->quietStart){
-                            QUIETSTART<T> qs(params, &IONS->at(ii));
+                            QUIETSTART<IT> qs(params, &IONS->at(ii));
                             qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
 
                         }else{
-                            RANDOMSTART<T> rs(params);
+                            RANDOMSTART<IT> rs(params);
                             rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
                         }
 						}
@@ -534,7 +534,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::setupIonsInitialCondition(cons
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationParameters * params, vector<T> * IONS,  vector<GCSpecies> * GCP){
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS,  vector<GCSpecies> * GCP){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -560,7 +560,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
 
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		string name;
-		T ions;
+		IT ions;
         GCSpecies gcp;
         int SPECIES;
 		stringstream ss;
@@ -717,7 +717,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::loadIonParameters(simulationPa
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
     int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
 
     EB->zeros(NX);
@@ -741,7 +741,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(c
     EB->b_ = EB->b;
 }
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB){
     int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
     int NY(params->mesh.NY_IN_SIM + 2); // Ghost mesh points (+2) included
 
@@ -753,7 +753,7 @@ template <class T, class Y> void INITIALIZE<T,Y>::initializeFieldsSizeAndValue(c
 }
 
 
-template <class T, class Y> void INITIALIZE<T,Y>::initializeFields(const simulationParameters * params, Y * EB){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(const simulationParameters * params, FT * EB){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 

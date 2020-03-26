@@ -20,7 +20,7 @@
 #include "units.h"
 
 // For details on the theory behind the restrictions on the time step please see: P. Pritchett, IEEE Transactions on plasma science 28, 1976 (2000).
-template <class T, class Y> void UNITS<T,Y>::defineTimeStep(simulationParameters * params, vector<T> * IONS){
+template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParameters * params, vector<IT> * IONS){
 	// Algorithm for defining time step in simulation:
 	// 1) Check whether initial time step satisfies CFL condition for ions.
 	// 		1b) If CFL condition for ions is not satisfaced, define new time step.
@@ -137,7 +137,7 @@ template <class T, class Y> void UNITS<T,Y>::defineTimeStep(simulationParameters
 
 
 
-template <class T, class Y> void UNITS<T,Y>::broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS){
+template <class IT, class FT> void UNITS<IT,FT>::broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS){
 
 	// Define MPI type for characteristicScales structure.
 	int numStructElem(13);
@@ -186,7 +186,7 @@ template <class T, class Y> void UNITS<T,Y>::broadcastCharacteristicScales(simul
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
+template <class IT, class FT> void UNITS<IT,FT>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -210,7 +210,7 @@ template <class T, class Y> void UNITS<T,Y>::broadcastFundamentalScales(simulati
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScales(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
+template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScales(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS){
 
 	cout << "\n* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
 	if (params->includeElectronInertia == true){
@@ -244,7 +244,7 @@ template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScales(simulati
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS){
+template <class IT, class FT> void UNITS<IT,FT>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -267,7 +267,7 @@ template <class T, class Y> void UNITS<T,Y>::spatialScalesSanityCheck(simulation
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScales(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
+template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS){
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
 	// All the quantities below have units (SI).
@@ -316,7 +316,7 @@ template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScales(simulati
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParameters * params, vector<T> * IONS, Y * EB, const characteristicScales * CS){
+template <class IT, class FT> void UNITS<IT,FT>::dimensionlessForm(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS){
 	// Normalizing physical constants
 	F_E_DS /= CS->charge; // Dimensionless electron charge
 	F_ME_DS /= CS->mass; // Dimensionless electron charge
@@ -377,13 +377,13 @@ template <class T, class Y> void UNITS<T,Y>::dimensionlessForm(simulationParamet
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::normalizeVariables(simulationParameters * params, vector<T> * IONS, Y * EB, const characteristicScales * CS){
+template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS){
 
 	dimensionlessForm(params, IONS, EB, CS);
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<T> * IONS, characteristicScales * CS){
+template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -395,7 +395,7 @@ template <class T, class Y> void UNITS<T,Y>::defineCharacteristicScalesAndBcast(
 }
 
 
-template <class T, class Y> void UNITS<T,Y>::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS){
+template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScalesAndBcast(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS){
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 

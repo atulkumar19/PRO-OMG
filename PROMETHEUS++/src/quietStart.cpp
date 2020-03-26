@@ -18,7 +18,7 @@
 
 #include "quietStart.h"
 
-template <class T> QUIETSTART<T>::QUIETSTART(const simulationParameters * params, T * ions){
+template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * params, IT * ions){
 
     // Unitary vector along B field
 	b1 = {sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0), \
@@ -43,7 +43,7 @@ template <class T> QUIETSTART<T>::QUIETSTART(const simulationParameters * params
 }
 
 
-template <class T> double QUIETSTART<T>::recalculateNumberSuperParticles(const simulationParameters * params, T * ions){
+template <class IT> double QUIETSTART<IT>::recalculateNumberSuperParticles(const simulationParameters * params, IT * ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
     exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
@@ -53,7 +53,7 @@ template <class T> double QUIETSTART<T>::recalculateNumberSuperParticles(const s
 }
 
 
-template <class T> vector<int> QUIETSTART<T>::dec2bin(int dec){
+template <class IT> vector<int> QUIETSTART<IT>::dec2bin(int dec){
     vector<int> bin;
     while(dec != 0){
         bin.push_back(dec%2);
@@ -63,7 +63,7 @@ template <class T> vector<int> QUIETSTART<T>::dec2bin(int dec){
 }
 
 
-template <class T> vector<int> QUIETSTART<T>::dec2b3(int dec){
+template <class IT> vector<int> QUIETSTART<IT>::dec2b3(int dec){
     vector<int> b3;
     while(dec != 0){
         b3.push_back(dec%3);
@@ -73,7 +73,7 @@ template <class T> vector<int> QUIETSTART<T>::dec2b3(int dec){
 }
 
 
-template <class T> void QUIETSTART<T>::bit_reversedFractions_base2(const simulationParameters * params, unsigned int NSP, vec * b2fr){
+template <class IT> void QUIETSTART<IT>::bit_reversedFractions_base2(const simulationParameters * params, unsigned int NSP, vec * b2fr){
     const unsigned int sf(50);
     vec fracs = zeros(sf);
 
@@ -92,7 +92,7 @@ template <class T> void QUIETSTART<T>::bit_reversedFractions_base2(const simulat
 }
 
 
-template <class T> void QUIETSTART<T>::bit_reversedFractions_base3(const simulationParameters * params, unsigned int NSP, vec * b3fr){
+template <class IT> void QUIETSTART<IT>::bit_reversedFractions_base3(const simulationParameters * params, unsigned int NSP, vec * b3fr){
     const unsigned int sf(50);
     vec fracs = zeros(sf);
 
@@ -111,7 +111,7 @@ template <class T> void QUIETSTART<T>::bit_reversedFractions_base3(const simulat
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 1D3V.
-template <class T> void QUIETSTART<T>::maxwellianVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions){
+template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
@@ -165,7 +165,7 @@ template <class T> void QUIETSTART<T>::maxwellianVelocityDistribution(const simu
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 2D3V.
-template <class T> void QUIETSTART<T>::maxwellianVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions){
+template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
@@ -214,7 +214,7 @@ template <class T> void QUIETSTART<T>::maxwellianVelocityDistribution(const simu
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 1D3V
-template <class T> void QUIETSTART<T>::ringLikeVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions){
+template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->g = zeros(ions->NSP);
@@ -274,7 +274,7 @@ template <class T> void QUIETSTART<T>::ringLikeVelocityDistribution(const simula
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 2D3V
-template <class T> void QUIETSTART<T>::ringLikeVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions){
+template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->g = zeros(ions->NSP);

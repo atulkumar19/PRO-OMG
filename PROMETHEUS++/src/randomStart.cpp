@@ -18,7 +18,7 @@
 
 #include "randomStart.h"
 
-template <class T> RANDOMSTART<T>::RANDOMSTART(const simulationParameters * params){
+template <class IT> RANDOMSTART<IT>::RANDOMSTART(const simulationParameters * params){
 	// Unitary vector along B field
 	b1 = {sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0), \
 	      sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0),\
@@ -32,7 +32,7 @@ template <class T> RANDOMSTART<T>::RANDOMSTART(const simulationParameters * para
 }
 
 
-template <class T> void RANDOMSTART<T>::ringLikeVelocityDistribution(const simulationParameters * params, T * ions){
+template <class IT> void RANDOMSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, IT * ions){
 
 	ions->X = randu<mat>(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);
@@ -70,7 +70,7 @@ template <class T> void RANDOMSTART<T>::ringLikeVelocityDistribution(const simul
 
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
-template <class T> void RANDOMSTART<T>::maxwellianVelocityDistribution(const simulationParameters * params, T * ions){
+template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, IT * ions){
 
 	ions->X = randu<mat>(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);

@@ -18,11 +18,11 @@
 
 #include "PIC.h"
 
-template <class T, class Y> PIC<T,Y>::PIC(){
+template <class IT, class FT> PIC<IT,FT>::PIC(){
 
 }
 
-template <class T, class Y> void PIC<T,Y>::MPI_BcastDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::MPI_BcastDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
 	arma::vec nSend = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 	arma::vec nRecv = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
@@ -42,12 +42,12 @@ template <class T, class Y> void PIC<T,Y>::MPI_BcastDensity(const simulationPara
 }
 
 
-template <class T, class Y> void PIC<T,Y>::MPI_BcastDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::MPI_BcastDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::MPI_BcastBulkVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::MPI_BcastBulkVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
 	arma::vec bufSend = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
 	arma::vec bufRecv = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
@@ -88,12 +88,12 @@ template <class T, class Y> void PIC<T,Y>::MPI_BcastBulkVelocity(const simulatio
 }
 
 
-template <class T, class Y> void PIC<T,Y>::MPI_BcastBulkVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::MPI_BcastBulkVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
+template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
 
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -127,7 +127,7 @@ template <class T, class Y> void PIC<T,Y>::MPI_AllgatherField(const simulationPa
 }
 
 
-template <class T, class Y> void PIC<T,Y>::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
+template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
 
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -147,7 +147,7 @@ template <class T, class Y> void PIC<T,Y>::MPI_AllgatherField(const simulationPa
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TOS(arma::vec * v, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(arma::vec * v, double as){
 
 	//Step 1: Averaging process
 	int NX(v->n_elem);
@@ -168,12 +168,12 @@ template <class T, class Y> void PIC<T,Y>::smooth_TOS(arma::vec * v, double as){
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TOS(arma::mat * m, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(arma::mat * m, double as){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TOS(vfield_vec * vf, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(vfield_vec * vf, double as){
 
 	int NX(vf->X.n_elem),  N(vf->X.n_elem + 2);
 	arma::vec b = zeros(NX+2);
@@ -209,12 +209,12 @@ template <class T, class Y> void PIC<T,Y>::smooth_TOS(vfield_vec * vf, double as
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TOS(vfield_mat * vf, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(vfield_mat * vf, double as){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TSC(arma::vec * v, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(arma::vec * v, double as){
 
 	//Step 1: Averaging process
 
@@ -232,12 +232,12 @@ template <class T, class Y> void PIC<T,Y>::smooth_TSC(arma::vec * v, double as){
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TSC(arma::mat * m, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(arma::mat * m, double as){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TSC(vfield_vec * vf, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(vfield_vec * vf, double as){
 
 	int NX(vf->X.n_elem);
 	arma::vec b = zeros(NX);
@@ -275,12 +275,12 @@ template <class T, class Y> void PIC<T,Y>::smooth_TSC(vfield_vec * vf, double as
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth_TSC(vfield_mat * vf, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(vfield_mat * vf, double as){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth(arma::vec * v, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth(arma::vec * v, double as){
 
 	//Step 1: Averaging process
 
@@ -299,13 +299,13 @@ template <class T, class Y> void PIC<T,Y>::smooth(arma::vec * v, double as){
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth(arma::mat * m, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth(arma::mat * m, double as){
 
 }
 
 
 
-template <class T, class Y> void PIC<T,Y>::smooth(vfield_vec * vf, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as){
 
 	int NX(vf->X.n_elem);
 	arma::vec b = zeros(NX);
@@ -343,12 +343,12 @@ template <class T, class Y> void PIC<T,Y>::smooth(vfield_vec * vf, double as){
 }
 
 
-template <class T, class Y> void PIC<T,Y>::smooth(vfield_mat * vf, double as){
+template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_mat * vf, double as){
 
 }
 
 
-template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -361,26 +361,25 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 
 	int NSP(IONS->NSP);//number of superparticles
 
-	arma::vec X;
+	arma::vec X = zeros(NSP);
 	uvec LOGIC;
 
-	IONS->wxc = zeros(NSP);
-	IONS->wxl = zeros(NSP);
-	IONS->wxr = zeros(NSP);
-	X = zeros(NSP);
+	IONS->wxc.zeros();
+	IONS->wxl.zeros();
+	IONS->wxr.zeros();
 
 	#pragma omp parallel shared(IONS, X, NSP, LOGIC)
 	{
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++)
-		IONS->meshNode(ii) = floor((IONS->X(ii, 0) + 0.5*params->mesh.DX)/params->mesh.DX);
+		IONS->meshNode(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
 
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++){
 		if(IONS->meshNode(ii) != params->mesh.NX_IN_SIM){
-			X(ii) = IONS->X(ii, 0) - params->mesh.nodes.X(IONS->meshNode(ii));
+			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->meshNode(ii));
 		}else{
-			X(ii) = IONS->X(ii, 0) - params->mesh.LX;
+			X(ii) = IONS->X(ii,0) - params->mesh.LX;
 		}
 	}
 
@@ -415,7 +414,7 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 }
 
 
-template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 
@@ -428,21 +427,18 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 
 	int NSP(IONS->NSP);//number of superparticles
 
-	arma::vec X;
-	arma::vec Y;
+	arma::vec X = zeros(NSP);
+	arma::vec Y = zeros(NSP);
 	uvec LOGIC_X;
 	uvec LOGIC_Y;
 
-	IONS->wxc = zeros(NSP);
-	IONS->wxl = zeros(NSP);
-	IONS->wxr = zeros(NSP);
+	IONS->wxc.zeros();
+	IONS->wxl.zeros();
+	IONS->wxr.zeros();
 
-	IONS->wyc = zeros(NSP);
-	IONS->wyl = zeros(NSP);
-	IONS->wyr = zeros(NSP);
-
-	X = zeros(NSP);
-	Y = zeros(NSP);
+	IONS->wyc.zeros();
+	IONS->wyl.zeros();
+	IONS->wyr.zeros();
 
 	#pragma omp parallel shared(IONS, X, Y, NSP, LOGIC_X, LOGIC_Y)
 	{
@@ -477,9 +473,10 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 	}
 
 	#pragma omp for
-	for(int ii=0; ii<NSP; ii++)
+	for(int ii=0; ii<NSP; ii++){
 		IONS->wxc(ii) = 0.75 - (X(ii)/params->mesh.DX)*(X(ii)/params->mesh.DX);
 		IONS->wyc(ii) = 0.75 - (Y(ii)/params->mesh.DY)*(Y(ii)/params->mesh.DY);
+	}
 
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++){
@@ -510,7 +507,7 @@ template <class T, class Y> void PIC<T,Y>::assignCell(const simulationParameters
 }
 
 
-template <class T, class Y> void PIC<T,Y>::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB){
+template <class IT, class FT> void PIC<IT,FT>::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB){
 	if(A->n_elem != B->n_elem){
 		cerr<<"\nERROR: The number of elements of A and B, unable to calculate AxB.\n";
 		exit(1);
@@ -524,7 +521,7 @@ template <class T, class Y> void PIC<T,Y>::crossProduct(const arma::mat * A, con
 }
 
 
-template <class T, class Y> void PIC<T,Y>::eivTOS(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::eivTOS(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
 	int NC(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
@@ -630,7 +627,7 @@ template <class T, class Y> void PIC<T,Y>::eivTOS(const simulationParameters * p
 }
 
 
-template <class T, class Y> void PIC<T,Y>::eivTSC(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::eivTSC(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -695,7 +692,7 @@ template <class T, class Y> void PIC<T,Y>::eivTSC(const simulationParameters * p
 }
 
 
-template <class T, class Y> void PIC<T,Y>::extrapolateIonVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
 	IONS->nv__ = IONS->nv_;
 	IONS->nv_ = IONS->nv;
@@ -720,61 +717,8 @@ template <class T, class Y> void PIC<T,Y>::extrapolateIonVelocity(const simulati
 }
 
 
-template <class T, class Y> void PIC<T,Y>::eidTOS(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
-	int NC(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
-	int NSP(IONS->NSP);
-	int ii(0);
-	arma::vec n;
 
-	IONS->n = zeros(NC);//Setting to zero the ion density.
-	n.zeros(NC);
-
-	#pragma omp parallel shared(IONS) private(ii) firstprivate(NSP, NC, n)
-	{
-		#pragma omp for
-		for(ii=0;ii<NSP;ii++){
-			int ix = IONS->meshNode(ii) + 1;
-			if(ix == (NC-2)){//For the particles on the right side boundary.
-				n(NC-4) += IONS->wxll(ii);
-				n(NC-3) += IONS->wxl(ii);
-				n(NC-2) += IONS->wxc(ii);
-				n(NC-1) += IONS->wxr(ii);
-				n(0) += IONS->wxrr(ii);
-			}else if(ix == (NC-1)){//For the particles on the right side boundary.
-				n(NC-3) += IONS->wxll(ii);
-				n(NC-2) += IONS->wxl(ii);
-				n(NC-1) += IONS->wxc(ii);
-				n(2) += IONS->wxr(ii);
-				n(3) += IONS->wxrr(ii);
-			}else if(ix == 1){
-				n(NC-1) += IONS->wxll(ii);
-				n(0) += IONS->wxl(ii);
-				n(ix) += IONS->wxc(ii);
-				n(ix+1) += IONS->wxr(ii);
-				n(ix+2) += IONS->wxrr(ii);
-			}else{
-				n(ix-2) += IONS->wxll(ii);
-				n(ix-1) += IONS->wxl(ii);
-				n(ix) += IONS->wxc(ii);
-				n(ix+1) += IONS->wxr(ii);
-				n(ix+2) += IONS->wxrr(ii);
-			}
-		}
-
-		#pragma omp critical (update_density)
-		{
-		IONS->n += n;
-		}
-
-	}//End of the parallel region
-
-	backwardPBC_1D(&IONS->n);
-	IONS->n *= IONS->NCP/params->mesh.DX;
-}
-
-
-template <class T, class Y> void PIC<T,Y>::eidTSC(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
-
+template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
 	//				    0       x
@@ -783,25 +727,63 @@ template <class T, class Y> void PIC<T,Y>::eidTSC(const simulationParameters * p
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NC(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS + 2);//Grid cells along the X axis (considering the gosht cell)
+	// int NC(params->mesh.NX_IN_SIM + 2);//Grid cells along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
-	int ii(0);
-	arma::vec n;
+	arma::vec n = zeros(params->mesh.NX_IN_SIM + 4);
 
-	IONS->n = zeros(NC);//Setting to zero the ion density.
-	n.zeros(NC);
+	IONS->n.zeros(); // Setting to zero the ion density.
 
-	#pragma omp parallel shared(IONS) private(ii) firstprivate(NSP, NC, n)
+	#pragma omp parallel shared(params, IONS, NSP) firstprivate(n)
 	{
 		#pragma omp for
-		for(ii=0;ii<NSP;ii++){
+		for(int ii=0; ii<NSP; ii++){
+			int ix = IONS->meshNode(ii) + 2;
+
+			n(ix-1) += IONS->wxl(ii);
+			n(ix) += IONS->wxc(ii);
+			n(ix+1) += IONS->wxr(ii);
+		}
+
+		n.subvec(2,3) += n.subvec(params->mesh.NX_IN_SIM + 2,params->mesh.NX_IN_SIM + 3);
+		n.subvec(params->mesh.NX_IN_SIM,params->mesh.NX_IN_SIM + 1) += n.subvec(0,1);
+
+		#pragma omp critical (update_density)
+		{
+		IONS->n.subvec(1,params->mesh.NX_IN_SIM) += n.subvec(2,params->mesh.NX_IN_SIM + 1);
+		}
+
+	}//End of the parallel region
+
+	IONS->n *= IONS->NCP/params->mesh.DX;
+}
+
+/*
+template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
+
+	int NC(params->mesh.NX_IN_SIM + 2);//Grid cells along the X axis (considering the gosht cell)
+	int NSP(IONS->NSP);
+	arma::vec n = zeros(NC);
+
+	IONS->n.zeros(); // Setting to zero the ion density.
+
+	#pragma omp parallel shared(params, IONS, NSP, NC) firstprivate(n)
+	{
+		#pragma omp for
+		for(int ii=0; ii<NSP; ii++){
 			int ix = IONS->meshNode(ii) + 1;
 
 			if(ix == (NC-1)){//For the particles on the right side boundary.
 				n(NC-2) += IONS->wxl(ii);
 				n(NC-1) += IONS->wxc(ii);
 				n(2) += IONS->wxr(ii);
-			}else if(ix != (NC-1)){
+			}else{ // if(ix != (NC-1))
 				n(ix-1) += IONS->wxl(ii);
 				n(ix) += IONS->wxc(ii);
 				n(ix+1) += IONS->wxr(ii);
@@ -816,74 +798,90 @@ template <class T, class Y> void PIC<T,Y>::eidTSC(const simulationParameters * p
 	}//End of the parallel region
 
 	backwardPBC_1D(&IONS->n);
+
 	IONS->n *= IONS->NCP/params->mesh.DX;
 }
+*/
 
 
-template <class T, class Y> void PIC<T,Y>::extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
+
+	int NC_X(params->mesh.NX_IN_SIM + 2); // Grid cells along the x-axis (considering the gosht cell)
+	int NC_Y(params->mesh.NY_IN_SIM + 2); // Grid cells along the y-axis (considering the gosht cell)
+	int NSP(IONS->NSP);
+	arma::vec n = zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+
+	IONS->n.zeros(); // Setting to zero the ion density.
+/*
+	#pragma omp parallel shared(params, IONS, NSP, NC_X, NC_Y) firstprivate(n)
+	{
+		#pragma omp for
+		for(int ii=0; ii<NSP; ii++){
+			int ix = IONS->meshNode(ii,0) + 1;
+			int iy = IONS->meshNode(ii,1) + 1;
+
+			if(ix == (NC-1)){ //For the particles on the right side boundary of x-axis.
+				n(NC-2) += IONS->wxl(ii);
+				n(NC-1) += IONS->wxc(ii);
+				n(2) += IONS->wxr(ii);
+			}else{ // if(ix != (NC-1))
+				n(ix-1) += IONS->wxl(ii);
+				n(ix) += IONS->wxc(ii);
+				n(ix+1) += IONS->wxr(ii);
+			}
+		}
+
+		#pragma omp critical (update_density)
+		{
+		IONS->n += n;
+		}
+
+	}//End of the parallel region
+
+	backwardPBC_1D(&IONS->n);
+
+	IONS->n *= IONS->NCP/params->mesh.DX;
+*/
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+	// First, the particle density of time steps (it - 1) is kept in n_, (it - 2) is kept in n__,
+	// and at the time iteration (it - 3) in n___.
 
 	IONS->n___ = IONS->n__;
 	IONS->n__ = IONS->n_;
 	IONS->n_ = IONS->n;
 
-	switch (params->weightingScheme){
-		case(0):{
-				eidTOS(params, IONS);
-				break;
-				}
-		case(1):{
-				eidTSC(params, IONS);
-				break;
-				}
-		case(2):{
-				exit(0);
-				break;
-				}
-		default:{
-				eidTSC(params, IONS);
-				}
-	}
+	// Then, the ions' properties are distributed in the grid following the charge deposition of the Triangular
+	// Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+	eid(params, IONS);
 }
 
 
-template <class T, class Y> void PIC<T,Y>::eidTOS(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-
-}
-
-
-template <class T, class Y> void PIC<T,Y>::eidTSC(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-
-}
-
-
-template <class T, class Y> void PIC<T,Y>::extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+	// First, the particle density of time steps (it - 1) is kept in n_, (it - 2) is kept in n__,
+	// and at the time iteration (it - 3) in n___.
 
 	IONS->n___ = IONS->n__;
 	IONS->n__ = IONS->n_;
 	IONS->n_ = IONS->n;
 
-	switch (params->weightingScheme){
-		case(0):{
-				eidTOS(params, IONS);
-				break;
-				}
-		case(1):{
-				eidTSC(params, IONS);
-				break;
-				}
-		case(2):{
-				exit(0);
-				break;
-				}
-		default:{
-				eidTSC(params, IONS);
-				}
-	}
+	// Then, the ions' properties are distributed in the grid following the charge deposition of the Triangular
+	// Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+	eid(params, IONS);
 }
 
 
 #ifdef ONED
-template <class T, class Y> void PIC<T,Y>::EMF_TOS_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * EMF, arma::mat * F){
+template <class IT, class FT> void PIC<IT,FT>::EMF_TOS_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * EMF, arma::mat * F){
 
 	//wxc = 23/48 - (x/H)^2/4
 	//wxr = (abs(x)/H - 1)*(abs(x)/H - 5/2)*(abs(x)/H + 1/2)/6 + 1/4
@@ -988,7 +986,7 @@ template <class T, class Y> void PIC<T,Y>::EMF_TOS_1D(const simulationParameters
 
 
 #ifdef ONED
-template <class T, class Y> void PIC<T,Y>::EMF_TSC_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * emf, arma::mat * F){
+template <class IT, class FT> void PIC<IT,FT>::EMF_TSC_1D(const simulationParameters * params, const ionSpecies * IONS, vfield_vec * emf, arma::mat * F){
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
 	//				    0       x
@@ -1037,7 +1035,7 @@ template <class T, class Y> void PIC<T,Y>::EMF_TSC_1D(const simulationParameters
 #endif
 
 
-template <class T, class Y> void PIC<T,Y>::interpolateElectromagneticFields_1D(const simulationParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B){
+template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields_1D(const simulationParameters * params, const ionSpecies * IONS, fields * EB, arma::mat * E, arma::mat * B){
 	switch (params->weightingScheme){
 		case(0):{
 				EMF_TOS_1D(params, IONS, &EB->E, E);
@@ -1061,7 +1059,7 @@ template <class T, class Y> void PIC<T,Y>::interpolateElectromagneticFields_1D(c
 }
 
 
-template <class T, class Y> void PIC<T,Y>::aiv_Vay_1D(const simulationParameters * params, const characteristicScales * CS, fields * EB, vector<ionSpecies> * IONS, const double DT){
+template <class IT, class FT> void PIC<IT,FT>::aiv_Vay_1D(const simulationParameters * params, const characteristicScales * CS, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 
 	MPI_AllgatherField(params, &EB->E);
@@ -1190,7 +1188,7 @@ template <class T, class Y> void PIC<T,Y>::aiv_Vay_1D(const simulationParameters
 }
 
 
-template <class T, class Y> void PIC<T,Y>::aiv_Boris_1D(const simulationParameters * params, const characteristicScales * CS, fields * EB, vector<ionSpecies> * IONS, const double DT){
+template <class IT, class FT> void PIC<IT,FT>::aiv_Boris_1D(const simulationParameters * params, const characteristicScales * CS, fields * EB, vector<ionSpecies> * IONS, const double DT){
 
 	MPI_AllgatherField(params, &EB->E);
 	MPI_AllgatherField(params, &EB->B);
@@ -1352,7 +1350,7 @@ template <class T, class Y> void PIC<T,Y>::aiv_Boris_1D(const simulationParamete
 }
 
 
-template <class T, class Y> void PIC<T,Y>::aip(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
+template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
@@ -1403,13 +1401,13 @@ template <class T, class Y> void PIC<T,Y>::aip(const simulationParameters * para
 }
 
 
-template <class T, class Y> void PIC<T,Y>::aip(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT){
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 		int NSP(IONS->at(ii).NSP);
-		#pragma omp parallel shared(params, IONS) firstprivate(ii, DT, NSP)
+		#pragma omp parallel shared(params, IONS, ii) firstprivate(DT, NSP)
 		{
 			#pragma omp for
 			for(int ip=0;ip<NSP;ip++){
@@ -1459,7 +1457,7 @@ template <class T, class Y> void PIC<T,Y>::aip(const simulationParameters * para
 }
 
 
-template <class T, class Y> void PIC<T,Y>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, Y * EB, vector<T> * IONS, const double DT){
+template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS, const double DT){
 	switch (params->particleIntegrator){
 		case(1):{
 				aiv_Boris_1D(params, CS, EB, IONS, DT);
@@ -1478,12 +1476,6 @@ template <class T, class Y> void PIC<T,Y>::advanceIonsVelocity(const simulationP
 				}
 	}
 }
-
-
-template <class T, class Y> void PIC<T,Y>::advanceIonsPosition(const simulationParameters * params, vector<T> * IONS, const double DT){
-	aip(params, IONS, DT);
-}
-
 
 
 /* * * * * * * * CLASS PIC_GC OBJECTS * * * * * * * */
@@ -2543,4 +2535,4 @@ void PIC_GC::advanceGCIons(const simulationParameters * params, const characteri
 */
 
 template class PIC<oneDimensional::ionSpecies, oneDimensional::fields>;
-// template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;
+//template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;

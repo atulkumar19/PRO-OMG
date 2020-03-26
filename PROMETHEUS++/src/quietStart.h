@@ -35,7 +35,7 @@
 using namespace std;
 using namespace arma;
 
-template <class T> class QUIETSTART{
+template <class IT> class QUIETSTART{
     // Cartesian  unitary vectors
 	arma::vec x = {1.0, 0.0, 0.0};
 	arma::vec y = {0.0, 1.0, 0.0};
@@ -48,7 +48,7 @@ template <class T> class QUIETSTART{
 
     uvec dec; // Sequence of decimal numbers
 
-    double recalculateNumberSuperParticles(const simulationParameters * params, T *ions);
+    double recalculateNumberSuperParticles(const simulationParameters * params, IT *ions);
 
     vector<int> dec2bin(int dec);
 
@@ -62,7 +62,7 @@ public:
 
     QUIETSTART(){};
 
-    QUIETSTART(const simulationParameters * params, T * ions);
+    QUIETSTART(const simulationParameters * params, IT * ions);
 
 
 	void maxwellianVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions);

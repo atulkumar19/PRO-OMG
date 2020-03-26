@@ -46,7 +46,7 @@
 using namespace std;
 using namespace arma;
 
-template <class I, class F> class PIC{
+template <class IT, class FT> class PIC{
 
 	int NX;
 	int NY;
@@ -112,15 +112,11 @@ protected:
 	void extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
 
-	void eidTOS(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
-	void eidTSC(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
 	void extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void eidTOS(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-	void eidTSC(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
 	void extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
@@ -137,16 +133,9 @@ protected:
 	void EMF_TSC_3D(const ionSpecies * IONS, vfield_cube * fields, arma::mat * F);
 
 
-
 	void aiv_Vay_1D(const simulationParameters * params, const characteristicScales * CS, fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT);
 
-
 	void aiv_Boris_1D(const simulationParameters * params, const characteristicScales * CS, fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT);
-
-
-	void aip(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT);
-
-	void aip(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT);
 
   public:
 
@@ -156,9 +145,13 @@ protected:
 
 	void assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
-	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, Y * EB, vector<T> * IONS, const double DT);
 
-	void advanceIonsPosition(const simulationParameters * params, vector<T> * IONS, const double DT);
+	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS, const double DT);
+
+
+	void advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT);
+
+	void advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT);
 };
 
 /*

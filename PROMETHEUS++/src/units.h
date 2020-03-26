@@ -31,9 +31,9 @@
 using namespace std;
 using namespace arma;
 
-template <class T, class Y> class UNITS{
+template <class IT, class FT> class UNITS{
 
-	void dimensionlessForm(simulationParameters * params, vector<T> * IONS, Y * EB, const characteristicScales * CS);
+	void dimensionlessForm(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS);
 
 	void broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS);
 
@@ -45,17 +45,17 @@ public:
 
 	void spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS);
 
-	void defineTimeStep(simulationParameters * params, vector<T> * IONS);
+	void defineTimeStep(simulationParameters * params, vector<IT> * IONS);
 
-	void calculateFundamentalScales(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS);
+	void calculateFundamentalScales(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS);
 
-	void defineCharacteristicScales(simulationParameters * params, vector<T> * IONS, characteristicScales * CS);
+	void defineCharacteristicScales(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS);
 
-	void normalizeVariables(simulationParameters * params, vector<T> * IONS, Y * EB, const characteristicScales * CS);
+	void normalizeVariables(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS);
 
-	void defineCharacteristicScalesAndBcast(simulationParameters * params, vector<T> * IONS, characteristicScales * CS);
+	void defineCharacteristicScalesAndBcast(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS);
 
-	void calculateFundamentalScalesAndBcast(simulationParameters * params, vector<T> * IONS, fundamentalScales * FS);
+	void calculateFundamentalScalesAndBcast(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS);
 
 };
 

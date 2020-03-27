@@ -59,9 +59,13 @@ template <class IT, class FT> class PIC{
 
 protected:
 
-	void MPI_BcastDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void test(const simulationParameters * params);
 
-	void MPI_BcastDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+	void MPI_AllreduceVec(const simulationParameters * params, arma::vec * v);
+
+	void MPI_AllreduceMat(const simulationParameters * params, arma::mat * m);
+
+	void MPI_AllreduceDensity(const simulationParameters * params, IT * IONS);
 
 	void MPI_BcastBulkVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
@@ -72,21 +76,10 @@ protected:
 	void MPI_AllgatherField(const simulationParameters * params, arma::vec * field);
 
 
-	void smooth_TOS(arma::vec * v, double as);
+	void include4GhostsContributions(arma::vec * v);
 
-	void smooth_TOS(arma::mat * m, double as);
+	void include4GhostsContributions(arma::mat * m);
 
-	void smooth_TOS(vfield_vec * vf, double as);
-
-	void smooth_TOS(vfield_mat * vf, double as);
-
-	void smooth_TSC(arma::vec * v, double as);
-
-	void smooth_TSC(arma::mat * m, double as);
-
-	void smooth_TSC(vfield_vec * vf, double as);
-
-	void smooth_TSC(vfield_mat * vf, double as);
 
 	void smooth(arma::vec * v, double as);
 
@@ -95,6 +88,7 @@ protected:
 	void smooth(vfield_vec * vf, double as);
 
 	void smooth(vfield_mat * vf, double as);
+
 
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
@@ -140,6 +134,7 @@ protected:
   public:
 
 	PIC();
+
 
 	void assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 

@@ -32,6 +32,6 @@ phi                         0.0
 NX                          16
 NY                          1
 NZ                          1
-DrL                         1.0
+DrL                         2.0
 dp                          -1
 outputs_variables           {B,E,X,V,g}

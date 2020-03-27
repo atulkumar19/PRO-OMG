@@ -22,28 +22,31 @@ template <class IT, class FT> PIC<IT,FT>::PIC(){
 
 }
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_BcastDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
-	arma::vec nSend = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
-	arma::vec nRecv = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
-	nSend = IONS->n;
+template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceVec(const simulationParameters * params, arma::vec * v){
+	arma::vec recvbuf = zeros(v->n_elem);
 
-	MPI_ARMA_VEC mpi_n(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
+	MPI_Allreduce(v->memptr(), recvbuf.memptr(), v->n_elem, MPI_DOUBLE, MPI_SUM, params->mpi.MPI_TOPO);
 
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
-	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(nSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, nRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
-		IONS->n += nRecv;
-		nSend = nRecv;
-	}
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
+	*v = recvbuf;
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_BcastDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
+	arma::mat recvbuf = zeros(m->n_rows,m->n_cols);
 
+	MPI_Allreduce(m->memptr(), recvbuf.memptr(), m->n_elem, MPI_DOUBLE, MPI_SUM, params->mpi.MPI_TOPO);
+
+	*m = recvbuf;
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceDensity(const simulationParameters * params, IT * IONS){
+	arma::vec recvbuf = zeros(IONS->n.n_elem);
+
+	MPI_Allreduce(IONS->n.memptr(), recvbuf.memptr(), IONS->n.n_elem, MPI_DOUBLE, MPI_SUM, params->mpi.MPI_TOPO);
+
+	IONS->n = recvbuf;
 }
 
 
@@ -146,177 +149,96 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulati
 	MPI_Barrier(params->mpi.MPI_TOPO);
 }
 
+// * * * Ghost contributions * * *
+template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma::vec * v){
+	int N = v->n_elem;
 
-template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(arma::vec * v, double as){
-
-	//Step 1: Averaging process
-	int NX(v->n_elem);
-	int N(v->n_elem + 2);
-	arma::vec b = zeros(NX+2);
-	double w0(23.0/48.0);
-	double w1(0.25);
-	double w2(1.0/96.0);//weights
-
-	b.subvec(2, N-3) = v->subvec(1, NX-2);
-
-	forwardPBC_1D_TOS(&b);
-
-	b.subvec(2, N-3) = w0*b.subvec(2, N-3) + w1*b.subvec(3, N-2) + w1*b.subvec(1, N-4) + w2*b.subvec(4, N-1) + w2*b.subvec(0, N-5);
-
-	//Step 2: Averaged weighted variable estimation.
-	v->subvec(1, NX-2) = (1-as)*v->subvec(1, NX-2) + as*b.subvec(2, N-3);
+	v->subvec(2,3) += v->subvec(N-2,N-1);
+	v->subvec(N-4,N-3) += v->subvec(0,1);
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(arma::mat * m, double as){
+template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma::mat * m){
+	int NX = m->n_rows;
+	int NY = m->n_cols;
 
+	// Sides
+
+	m->submat(2,2,3,NY-3) += m->submat(NX-2,2,NX-1,NY-3); // left size along x-axis
+	m->submat(NX-4,2,NX-3,NY-3) += m->submat(0,2,1,NY-3); // right size along x-axis
+
+	m->submat(2,2,NX-3,3) += m->submat(2,NY-2,NX-3,NY-1); // left size along y-axis
+	m->submat(2,NY-4,NX-3,NY-3) += m->submat(2,0,NX-3,1); // right size along y-axis
+
+	// Corners
+
+	m->submat(2,2,3,3) += m->submat(NX-2,NY-2,NX-1,NY-1); // left x-axis, left y-axis
+	m->submat(NX-4,2,NX-3,3) += m->submat(0,NY-2,1,NY-1); // right x-axis, left y-axis
+	m->submat(2,NY-4,3,NY-3) += m->submat(NX-2,0,NX-1,1); // left x-axis, right y-axis
+	m->submat(NX-4,NY-4,NX-3,NY-3) += m->submat(0,0,1,1); // right x-axis, right y-axis
 }
 
-
-template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(vfield_vec * vf, double as){
-
-	int NX(vf->X.n_elem),  N(vf->X.n_elem + 2);
-	arma::vec b = zeros(NX+2);
-	double w0(23.0/48.0),  w1(0.25),  w2(1.0/96.0);//weights
-
-	//Step 1: Averaging process
-	b.subvec(2, N-3) = vf->X.subvec(1, NX-2);
-	forwardPBC_1D_TOS(&b);
-	b.subvec(2, N-3) = w0*b.subvec(2, N-3) + w1*b.subvec(3, N-2) + w1*b.subvec(1, N-4) + w2*b.subvec(4, N-1) + w2*b.subvec(0, N-5);
-
-	//Step 2: Averaged weighted variable estimation.
-	vf->X.subvec(1, NX-2) = (1-as)*vf->X.subvec(1, NX-2) + as*b.subvec(2, N-3);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b.subvec(2, N-3) = vf->Y.subvec(1, NX-2);
-	forwardPBC_1D_TOS(&b);
-	b.subvec(2, N-3) = w0*b.subvec(2, N-3) + w1*b.subvec(3, N-2) + w1*b.subvec(1, N-4) + w2*b.subvec(4, N-1) + w2*b.subvec(0, N-5);
-
-	//Step 2: Averaged weighted variable estimation.
-	vf->Y.subvec(1, NX-2) = (1-as)*vf->Y.subvec(1, NX-2) + as*b.subvec(2, N-3);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b.subvec(2, N-3) = vf->Z.subvec(1, NX-2);
-	forwardPBC_1D_TOS(&b);
-	b.subvec(2, N-3) = w0*b.subvec(2, N-3) + w1*b.subvec(3, N-2) + w1*b.subvec(1, N-4) + w2*b.subvec(4, N-1) + w2*b.subvec(0, N-5);
-
-	//Step 2: Averaged weighted variable estimation.
-	vf->Z.subvec(1, NX-2) = (1-as)*vf->Z.subvec(1, NX-2) + as*b.subvec(2, N-3);
-}
+// * * * Ghost contributions * * *
 
 
-template <class IT, class FT> void PIC<IT,FT>::smooth_TOS(vfield_mat * vf, double as){
 
-}
-
-
-template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(arma::vec * v, double as){
-
-	//Step 1: Averaging process
-
-	int NX(v->n_elem);
-	arma::vec b = zeros(NX);
-	double w0(0.75),  w1(0.125);//weights
-
-	b.subvec(1, NX-2) = v->subvec(1, NX-2);
-	forwardPBC_1D(&b);
-
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted variable estimation.
-	v->subvec(1, NX-2) = (1-as)*v->subvec(1, NX-2) + as*b.subvec(1, NX-2);
-}
-
-
-template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(arma::mat * m, double as){
-
-}
-
-
-template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(vfield_vec * vf, double as){
-
-	int NX(vf->X.n_elem);
-	arma::vec b = zeros(NX);
-	double w0(0.75);
-	double w1(0.125);//weights
-
-
-	//Step 1: Averaging process
-	b.subvec(1, NX-2) = vf->X.subvec(1, NX-2);
-	forwardPBC_1D(&b);
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(1, NX-2) = (1-as)*vf->X.subvec(1, NX-2) + as*b.subvec(1, NX-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b.subvec(1, NX-2) = vf->Y.subvec(1, NX-2);
-	forwardPBC_1D(&b);
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(1, NX-2) = (1-as)*vf->Y.subvec(1, NX-2) + as*b.subvec(1, NX-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b.subvec(1, NX-2) = vf->Z.subvec(1, NX-2);
-	forwardPBC_1D(&b);
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Z.subvec(1, NX-2) = (1-as)*vf->Z.subvec(1, NX-2) + as*b.subvec(1, NX-2);
-}
-
-
-template <class IT, class FT> void PIC<IT,FT>::smooth_TSC(vfield_mat * vf, double as){
-
-}
-
+// * * * Smoothing * * *
 
 template <class IT, class FT> void PIC<IT,FT>::smooth(arma::vec * v, double as){
-
-	//Step 1: Averaging process
-
 	int NX(v->n_elem);
 	arma::vec b = zeros(NX);
-	double w0(0.5);
-	double w1(0.25);//weights
+	double wc(0.75); 	// center weight
+	double ws(0.125);	// sides weight
 
+	//Step 1: Averaging process
 	b.subvec(1, NX-2) = v->subvec(1, NX-2);
+
 	forwardPBC_1D(&b);
 
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
+	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
 	//Step 2: Averaged weighted variable estimation.
-	v->subvec(1, NX-2) = (1-as)*v->subvec(1, NX-2) + as*b.subvec(1, NX-2);
+	v->subvec(1, NX-2) = (1.0 - as)*v->subvec(1, NX-2) + as*b.subvec(1, NX-2);
 }
 
 
 template <class IT, class FT> void PIC<IT,FT>::smooth(arma::mat * m, double as){
+	int NX(m->n_rows);
+	int NY(m->n_cols);
+	arma::mat b = zeros(NX,NY);
+	double wc(9.0/16.0);
+	double ws(3.0/32.0);
+	double wcr(1.0/64.0);
+
+	// Step 1: Averaging
+	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);
+
+	forwardPBC_2D(&b);
+
+	b.submat(1,1,NX-2,NY-2) = wc*b.submat(1,1,NX-2,NY-2) + \
+								ws*b.submat(2,1,NX-1,NY-2) + ws*b.submat(0,1,NX-3,NY-2) + \
+								ws*b.submat(1,2,NX-2,NY-1) + ws*b.submat(1,0,NX-2,NY-3) + \
+								wcr*b.submat(2,2,NX-1,NY-1) + wcr*b.submat(0,2,NX-3,NY-1) + \
+								wcr*b.submat(0,0,NX-3,NY-3) + wcr*b.submat(2,0,NX-1,NY-3);
+
+	// Step 2: Averaged weighted variable estimation
+	m->submat(1,1,NX-2,NY-2) = (1.0 - as)*m->submat(1,1,NX-2,NY-2) + as*b.submat(1,1,NX-2,NY-2);
 
 }
 
 
-
 template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as){
-
 	int NX(vf->X.n_elem);
 	arma::vec b = zeros(NX);
-	double w0(0.5);
-	double w1(0.25);//weights
-
+	double wc(0.75);
+	double ws(0.125);//weights
 
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = vf->X.subvec(1, NX-2);
+
 	forwardPBC_1D(&b);
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
+
+	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
 	//Step 2: Averaged weighted vector field estimation.
 	vf->X.subvec(1, NX-2) = (1-as)*vf->X.subvec(1, NX-2) + as*b.subvec(1, NX-2);
@@ -325,8 +247,10 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as
 
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = vf->Y.subvec(1, NX-2);
+
 	forwardPBC_1D(&b);
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
+
+	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
 	//Step 2: Averaged weighted vector field estimation.
 	vf->Y.subvec(1, NX-2) = (1-as)*vf->Y.subvec(1, NX-2) + as*b.subvec(1, NX-2);
@@ -335,8 +259,10 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as
 
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = vf->Z.subvec(1, NX-2);
+
 	forwardPBC_1D(&b);
-	b.subvec(1, NX-2) = w0*b.subvec(1, NX-2) + w1*b.subvec(2, NX-1) + w1*b.subvec(0, NX-3);
+
+	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
 	//Step 2: Averaged weighted vector field estimation.
 	vf->Z.subvec(1, NX-2) = (1-as)*vf->Z.subvec(1, NX-2) + as*b.subvec(1, NX-2);
@@ -346,6 +272,8 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as
 template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_mat * vf, double as){
 
 }
+
+// * * * Smoothing * * *
 
 
 template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
@@ -717,6 +645,34 @@ template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simu
 }
 
 
+template <class IT, class FT> void PIC<IT,FT>::test(const simulationParameters * params){
+	arma::mat m  = zeros(10,9);
+
+	for (int ii=0; ii<m.n_rows; ii++){
+		for (int jj=0; jj<m.n_cols; jj++){
+			m(ii,jj) = ii*m.n_cols + jj + 1;
+		}
+	}
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m.print("m");
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	include4GhostsContributions(&m);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m.print("Ghosts");
+
+	forwardPBC_2D(&m);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m.print("PBC");
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Abort(MPI_COMM_WORLD,-1000);
+}
+
 
 template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	//		wxl		   wxc		wxr
@@ -727,9 +683,8 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	// int NC(params->mesh.NX_IN_SIM + 2);//Grid cells along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
-	arma::vec n = zeros(params->mesh.NX_IN_SIM + 4);
+	arma::vec n = zeros(params->mesh.NX_IN_SIM + 4); // Four ghosht cells considereds
 
 	IONS->n.zeros(); // Setting to zero the ion density.
 
@@ -744,8 +699,7 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 			n(ix+1) += IONS->wxr(ii);
 		}
 
-		n.subvec(2,3) += n.subvec(params->mesh.NX_IN_SIM + 2,params->mesh.NX_IN_SIM + 3);
-		n.subvec(params->mesh.NX_IN_SIM,params->mesh.NX_IN_SIM + 1) += n.subvec(0,1);
+		include4GhostsContributions(&n);
 
 		#pragma omp critical (update_density)
 		{
@@ -757,52 +711,6 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 	IONS->n *= IONS->NCP/params->mesh.DX;
 }
 
-/*
-template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
-	//		wxl		   wxc		wxr
-	// --------*------------*--------X---*--------
-	//				    0       x
-
-	//wxc = 0.75 - (x/H)^2
-	//wxr = 0.5*(1.5 - abs(x)/H)^2
-	//wxl = 0.5*(1.5 - abs(x)/H)^2
-
-	int NC(params->mesh.NX_IN_SIM + 2);//Grid cells along the X axis (considering the gosht cell)
-	int NSP(IONS->NSP);
-	arma::vec n = zeros(NC);
-
-	IONS->n.zeros(); // Setting to zero the ion density.
-
-	#pragma omp parallel shared(params, IONS, NSP, NC) firstprivate(n)
-	{
-		#pragma omp for
-		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->meshNode(ii) + 1;
-
-			if(ix == (NC-1)){//For the particles on the right side boundary.
-				n(NC-2) += IONS->wxl(ii);
-				n(NC-1) += IONS->wxc(ii);
-				n(2) += IONS->wxr(ii);
-			}else{ // if(ix != (NC-1))
-				n(ix-1) += IONS->wxl(ii);
-				n(ix) += IONS->wxc(ii);
-				n(ix+1) += IONS->wxr(ii);
-			}
-		}
-
-		#pragma omp critical (update_density)
-		{
-		IONS->n += n;
-		}
-
-	}//End of the parallel region
-
-	backwardPBC_1D(&IONS->n);
-
-	IONS->n *= IONS->NCP/params->mesh.DX;
-}
-*/
-
 
 template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 	//		wxl		   wxc		wxr
@@ -813,42 +721,42 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NC_X(params->mesh.NX_IN_SIM + 2); // Grid cells along the x-axis (considering the gosht cell)
-	int NC_Y(params->mesh.NY_IN_SIM + 2); // Grid cells along the y-axis (considering the gosht cell)
 	int NSP(IONS->NSP);
-	arma::vec n = zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+	arma::vec n = zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4); // Four ghosht cells considereds
 
 	IONS->n.zeros(); // Setting to zero the ion density.
-/*
-	#pragma omp parallel shared(params, IONS, NSP, NC_X, NC_Y) firstprivate(n)
+
+	#pragma omp parallel shared(params, IONS, NSP) firstprivate(n)
 	{
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->meshNode(ii,0) + 1;
-			int iy = IONS->meshNode(ii,1) + 1;
+			int ix = IONS->meshNode(ii,0) + 2;
+			int iy = IONS->meshNode(ii,1) + 2;
 
-			if(ix == (NC-1)){ //For the particles on the right side boundary of x-axis.
-				n(NC-2) += IONS->wxl(ii);
-				n(NC-1) += IONS->wxc(ii);
-				n(2) += IONS->wxr(ii);
-			}else{ // if(ix != (NC-1))
-				n(ix-1) += IONS->wxl(ii);
-				n(ix) += IONS->wxc(ii);
-				n(ix+1) += IONS->wxr(ii);
-			}
+			n(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii);
+			n(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii);
+			n(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii);
+
+			n(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii);
+			n(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii);
+
+			n(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii);
+			n(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii);
+
+			n(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii);
+			n(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii);
 		}
+
+		include4GhostsContributions(&n);
 
 		#pragma omp critical (update_density)
 		{
-		IONS->n += n;
+		IONS->n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += n.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
 		}
 
 	}//End of the parallel region
 
-	backwardPBC_1D(&IONS->n);
-
-	IONS->n *= IONS->NCP/params->mesh.DX;
-*/
+	IONS->n *= IONS->NCP/(params->mesh.DX*params->mesh.DY);
 }
 
 
@@ -1151,27 +1059,9 @@ template <class IT, class FT> void PIC<IT,FT>::aiv_Vay_1D(const simulationParame
 
 		PIC::MPI_BcastBulkVelocity(params, &IONS->at(ii));
 
-		switch (params->weightingScheme){
-			case(0):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TOS(&IONS->at(ii).nv, params->smoothingParameter);
-					break;
-					}
-			case(1):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TSC(&IONS->at(ii).nv, params->smoothingParameter);
-					break;
-					}
-			case(2):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth(&IONS->at(ii).nv, params->smoothingParameter);
-					break;
-					}
-			default:{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TSC(&IONS->at(ii).nv, params->smoothingParameter);
-					}
-		}
+
+		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
+			smooth(&IONS->at(ii).nv, params->smoothingParameter);
 
 	}//structure to iterate over all the ion species.
 
@@ -1313,27 +1203,9 @@ template <class IT, class FT> void PIC<IT,FT>::aiv_Boris_1D(const simulationPara
 
 		PIC::MPI_BcastBulkVelocity(params, &IONS->at(ii));
 
-		switch (params->weightingScheme){
-			case(0):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TOS(&IONS->at(ii).nv, params->smoothingParameter);
-					break;
-					}
-			case(1):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TSC(&IONS->at(ii).nv, params->smoothingParameter);
-					break;
-					}
-			case(2):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth(&IONS->at(ii).nv, params->smoothingParameter);
-					break;
-					}
-			default:{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TSC(&IONS->at(ii).nv, params->smoothingParameter);
-					}
-		}
+
+		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
+			smooth(&IONS->at(ii).nv, params->smoothingParameter);
 
 	}//structure to iterate over all the ion species.
 
@@ -1371,31 +1243,14 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 
 		PIC::assignCell(params, &IONS->at(ii));
 
-		extrapolateIonDensity(params, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
+		//Once the ions have been pushed,  we extrapolate the density at the node grids.
+		extrapolateIonDensity(params, &IONS->at(ii));
 
-		PIC::MPI_BcastDensity(params, &IONS->at(ii));
+		// PIC::MPI_AllreduceDensity(params, &IONS->at(ii));
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).n);
 
-		switch (params->weightingScheme){
-			case(0):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TOS(&IONS->at(ii).n, params->smoothingParameter);
-					break;
-					}
-			case(1):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TSC(&IONS->at(ii).n, params->smoothingParameter);
-					break;
-					}
-			case(2):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth(&IONS->at(ii).n, params->smoothingParameter);
-					break;
-					}
-			default:{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth(&IONS->at(ii).n, params->smoothingParameter);
-					}
-		}
+		for (int jj=0; jj<params->filtersPerIterationIons; jj++)
+			smooth(&IONS->at(ii).n, params->smoothingParameter);
 
 	}//structure to iterate over all the ion species.
 }
@@ -1429,29 +1284,10 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 
 		extrapolateIonDensity(params, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
 
-		PIC::MPI_BcastDensity(params, &IONS->at(ii));
+		PIC::MPI_AllreduceMat(params, &IONS->at(ii).n);
 
-		switch (params->weightingScheme){
-			case(0):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TOS(&IONS->at(ii).n, params->smoothingParameter);
-					break;
-					}
-			case(1):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth_TSC(&IONS->at(ii).n, params->smoothingParameter);
-					break;
-					}
-			case(2):{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth(&IONS->at(ii).n, params->smoothingParameter);
-					break;
-					}
-			default:{
-					for(int jj=0;jj<params->filtersPerIterationIons;jj++)
-						smooth(&IONS->at(ii).n, params->smoothingParameter);
-					}
-		}
+		for (int jj=0; jj<params->filtersPerIterationIons; jj++)
+			smooth(&IONS->at(ii).n, params->smoothingParameter);
 
 	}//structure to iterate over all the ion species.
 }

@@ -34,7 +34,7 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
     for(int tt=0;tt<3;tt++){
         ionsDynamics.advanceIonsPosition(params, IONS, 0);
 
-        ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0); //*** @starthere
+        ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
     }
 
     // Repeat 3 times

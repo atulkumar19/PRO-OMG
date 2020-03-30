@@ -7,7 +7,7 @@ weightingScheme             1
 BC                          1
 loadFields                  0
 numberOfRKIterations        3
-smoothingParameter          1E-3
+smoothingParameter          1E-5
 filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
@@ -32,6 +32,6 @@ phi                         0.0
 NX                          16
 NY                          1
 NZ                          1
-DrL                         2.0
+DrL                         1.0
 dp                          -1
 outputs_variables           {B,E,X,V,g}

@@ -437,51 +437,39 @@ template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * 
 	IONS->nv.zeros(); // Setting to zero the ions' bulk velocity
 
 	vfield_vec nv;
+	nv.zeros(params->mesh.NX_IN_SIM + 4);
 
-	#pragma omp parallel shared(IONS, NC) firstprivate(nv)
+	#pragma omp parallel shared(params, IONS, NC) firstprivate(nv)
 	{
-		nv.zeros(NC);
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->meshNode(ii) + 1;
+			int ix = IONS->meshNode(ii) + 2;
 
-			if(ix == (NC-1)){//For the particles on the right side boundary.
-				nv.X(NC-2) += IONS->wxl(ii)*IONS->V(ii,0);
-				nv.X(NC-1) += IONS->wxc(ii)*IONS->V(ii,0);
-				nv.X(2) += IONS->wxr(ii)*IONS->V(ii,0);
+			nv.X(ix-1) += IONS->wxl(ii)*IONS->V(ii,0);
+			nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
+			nv.X(ix+1) += IONS->wxr(ii)*IONS->V(ii,0);
 
-				nv.Y(NC-2) += IONS->wxl(ii)*IONS->V(ii,1);
-				nv.Y(NC-1) += IONS->wxc(ii)*IONS->V(ii,1);
-				nv.Y(2) += IONS->wxr(ii)*IONS->V(ii,1);
+			nv.Y(ix-1) += IONS->wxl(ii)*IONS->V(ii,1);
+			nv.Y(ix) += IONS->wxc(ii)*IONS->V(ii,1);
+			nv.Y(ix+1) += IONS->wxr(ii)*IONS->V(ii,1);
 
-				nv.Z(NC-2) += IONS->wxl(ii)*IONS->V(ii,2);
-				nv.Z(NC-1) += IONS->wxc(ii)*IONS->V(ii,2);
-				nv.Z(2) += IONS->wxr(ii)*IONS->V(ii,2);
-			}else if(ix != (NC-1)){
-				nv.X(ix-1) += IONS->wxl(ii)*IONS->V(ii,0);
-				nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
-				nv.X(ix+1) += IONS->wxr(ii)*IONS->V(ii,0);
-
-				nv.Y(ix-1) += IONS->wxl(ii)*IONS->V(ii,1);
-				nv.Y(ix) += IONS->wxc(ii)*IONS->V(ii,1);
-				nv.Y(ix+1) += IONS->wxr(ii)*IONS->V(ii,1);
-
-				nv.Z(ix-1) += IONS->wxl(ii)*IONS->V(ii,2);
-				nv.Z(ix) += IONS->wxc(ii)*IONS->V(ii,2);
-				nv.Z(ix+1) += IONS->wxr(ii)*IONS->V(ii,2);
-			}
+			nv.Z(ix-1) += IONS->wxl(ii)*IONS->V(ii,2);
+			nv.Z(ix) += IONS->wxc(ii)*IONS->V(ii,2);
+			nv.Z(ix+1) += IONS->wxr(ii)*IONS->V(ii,2);
 		}
+
+		include4GhostsContributions(&nv.X);
+		include4GhostsContributions(&nv.Y);
+		include4GhostsContributions(&nv.Z);
 
 		#pragma omp critical (update_bulk_velocity)
 		{
-		IONS->nv += nv;
+		IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) += nv.X.subvec(2,params->mesh.NX_IN_SIM + 1);
+		IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) += nv.Y.subvec(2,params->mesh.NX_IN_SIM + 1);
+		IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) += nv.Z.subvec(2,params->mesh.NX_IN_SIM + 1);
 		}
 
 	}//End of the parallel region
-
-	backwardPBC_1D(&IONS->nv.X);
-	backwardPBC_1D(&IONS->nv.Y);
-	backwardPBC_1D(&IONS->nv.Z);
 
 	IONS->nv *= IONS->NCP/params->mesh.DX;
 }
@@ -791,13 +779,13 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 	}//structure to iterate over all the ion species.
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	restoreVector(&EB->E.X);
-	restoreVector(&EB->E.Y);
-	restoreVector(&EB->E.Z);
+	// restoreVector(&EB->E.X);
+	// restoreVector(&EB->E.Y);
+	// restoreVector(&EB->E.Z);
 
-	restoreVector(&EB->B.X);
-	restoreVector(&EB->B.Y);
-	restoreVector(&EB->B.Z);
+	// restoreVector(&EB->B.X);
+	// restoreVector(&EB->B.Y);
+	// restoreVector(&EB->B.Z);
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
 }

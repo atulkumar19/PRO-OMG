@@ -105,10 +105,6 @@ int main(int argc, char* argv[]){
 				break;
 				}
 		case(2):{
-				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
-				break;
-				}
-		case(3):{
 				timeStepping.advanceGCIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				break;
 				}

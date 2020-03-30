@@ -99,52 +99,8 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
 
 
 template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::advanceGCIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<IT,FT> * hdfObj, vector<IT> * IONS, FT * EB){
-    // EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
-    // PIC_GC ionsDynamics(params, mesh); // Initializing the PIC class object.
-
-    // Initialize density and bulk velocity
-    // ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, 0.0);
-
-    /*
-    fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
-
-    fields_solver.advanceEField(params, mesh, EB, IONS);
-    */
-
-    // hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
-
-    // t1 = MPI::Wtime();
-
-    // cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " TI: " << params->timeIterations << endl;
-
-    // for(int tt=0;tt<params->timeIterations;tt++){ // Time iterations.
-        // cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | ITERATION: " << tt + 1 << endl;
-
-        // ionsDynamics.advanceGCIons(params, CS, mesh, EB, IONS, params->DT);
-
-        /*
-        fields_solver.advanceBField(params, mesh, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
-
-        fields_solver.advanceEField(params, mesh, EB, IONS);
-        */
-
-        // currentTime += params->DT*CS->time;
-
-        // if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
-        //    hdfObj->saveOutputs(params, IONS, EB, CS, outputIterator + 1, currentTime);
-        //    outputIterator++;
-        // }
-
-
-        // if(tt == 100){
-        //    t2 = MPI::Wtime();
-        //    if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-        //        cout << "ESTIMATED TIME OF COMPLETION: " << (double)params->timeIterations*(t2 - t1)/6000.0 <<" minutes\n";
-        //    }
-        // }
-
-    // } // Time iterations.
-
+    MPI_Barrier(params->mpi.MPI_TOPO);
+    MPI_Abort(params->mpi.MPI_TOPO, -2000);
 }
 
 template class TIME_STEPPING_METHODS<oneDimensional::ionSpecies, oneDimensional::fields>;

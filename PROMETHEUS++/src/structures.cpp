@@ -23,3 +23,21 @@ double F_E_DS = F_E; // Dimensionless electric charge
 double F_ME_DS = F_ME; // Dimensionless electron mass
 double F_MU_DS = F_MU; // Dimensionless vacuum permeability
 double F_C_DS = F_C; // Dimensionless speed of light
+
+
+simulationParameters::simulationParameters(){
+    oneDimensional::ionSpecies IONS_1D;
+    typesInfo.ionSpecies_1D_type = &typeid(IONS_1D);
+
+    oneDimensional::GCSpecies GC_1D;
+    typesInfo.GCSpecies_1D_type = &typeid(GC_1D);
+
+    twoDimensional::ionSpecies IONS_2D;
+    typesInfo.ionSpecies_2D_type = &typeid(IONS_2D);
+
+    oneDimensional::fields EB_1D;
+    typesInfo.fields_1D_type = &typeid(EB_1D);
+
+    twoDimensional::fields EB_2D;
+    typesInfo.fields_2D_type = &typeid(EB_2D);
+}

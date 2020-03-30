@@ -36,7 +36,7 @@
 #include "mpi_main.h"
 
 
-class TIME_STEPPING_METHODS{
+template <class IT, class FT> class TIME_STEPPING_METHODS{
     double t1;						//
     double t2;
     double currentTime; 			// Current time in simulation.	//
@@ -46,9 +46,9 @@ public:
 
     TIME_STEPPING_METHODS(simulationParameters * params);
 
-    void advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
+    void advanceFullOrbitIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<IT,FT> * hdfObj, vector<IT> * IONS, FT * EB);
 
-    void advanceGCIonsAndMasslessElectrons(simulationParameters * params, meshParams * mesh, characteristicScales * CS, HDF * hdfObj, vector<ionSpecies> * IONS, fields * EB);
+    void advanceGCIonsAndMasslessElectrons(simulationParameters * params, characteristicScales * CS, HDF<IT,FT> * hdfObj, vector<IT> * IONS, FT * EB);
 
 };
 

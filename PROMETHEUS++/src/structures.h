@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include "armadillo"
 #include "types.h"
 
@@ -65,11 +66,18 @@ struct mpiParams{
 
 	MPI_Comm MPI_TOPO;
 
-	int rank_cart;
-	int lRank;
-	int rRank;
-	int uRank;
-	int dRank;
+	int MPI_DOMAINS_ALONG_X_AXIS;
+	int MPI_DOMAINS_ALONG_Y_AXIS;
+	int MPI_DOMAINS_ALONG_Z_AXIS;
+
+	int MPI_CART_COORDS_1D[1];
+	int MPI_CART_COORDS_2D[2];
+
+	int MPI_DOMAIN_NUMBER_CART;
+	int LEFT_MPI_DOMAIN_NUMBER_CART;
+	int RIGHT_MPI_DOMAIN_NUMBER_CART;
+	int UP_MPI_DOMAIN_NUMBER_CART;
+	int DOWN_MPI_DOMAIN_NUMBER_CART;
 };
 
 
@@ -96,17 +104,26 @@ struct energyMonitor{
 struct meshParams{
 	vfield_vec nodes;
 
-	int NX_PER_MPI;
-	int NY_PER_MPI;
-	int NZ_PER_MPI;
+	int NX_PER_MPI; // Number of mesh nodes along x-axis in subdomain (no ghost nodes considered)
+	int NY_PER_MPI; // Number of mesh nodes along y-axis in subdomain (no ghost nodes considered)
+	int NZ_PER_MPI; // Number of mesh nodes along z-axis in subdomain (no ghost nodes considered)
+
+	int NX_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	int NY_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
+	int NZ_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 
 	double DX;
 	double DY;
 	double DZ;
+
+	double LX;		// Size of simulation domain along x-axis
+	double LY;		// Size of simulation domain along x-axis
+	double LZ;		// Size of simulation domain along x-axis
 };
 
 
 struct backgroundPlasmaParameters{
+	double ne;
 	double Te;
 	double Bo;
 	double Bx;
@@ -130,6 +147,7 @@ struct simulationParameters{
 	int argc;
 	char **argv;
 
+	int dimensionality; // Dimensionality of the simulation domain 1-D = 1; 2-D = 2
 	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
 	bool includeElectronInertia;
 	bool quietStart; // Flag for using a quiet start
@@ -144,7 +162,6 @@ struct simulationParameters{
 	int transient;//Transient time (in number of iterations).
 	double DT;//Time step
 	double DTc;//Ciclotron period fraction.
-	double shorterIonGyroperiod;//Shorter ion cycloperiod.
 	int loadFields;
 	int loadGrid;
 	int usingHDF5;
@@ -152,15 +169,12 @@ struct simulationParameters{
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
-	int NX_PER_MPI; // Number of mesh nodes along x-axis
-	int NY_PER_MPI; // Number of mesh nodes along y-axis
-	int NZ_PER_MPI; // Number of mesh nodes along z-axis
+	// Parameters of mesh used in simulation
+	meshParams mesh;
 
 	//ions properties
 	int numberOfParticleSpecies; // This species are evolved self-consistently with the fields
 	int numberOfTracerSpecies; // This species are not self-consistently evolved with the fields
-
-	double ne; // Electron number density (input file)
 
 	backgroundPlasmaParameters BGP;
 
@@ -168,8 +182,9 @@ struct simulationParameters{
 	int filtersPerIterationIons;
 	int checkSmoothParameter;
 
-	double LarmorRadius;
+	double ionLarmorRadius;
 	double ionSkinDepth;
+	double ionGyroPeriod;
 
 	double DrL;
 	double dp;
@@ -179,6 +194,7 @@ struct simulationParameters{
 
 	energyMonitor * em; // Structure to monitor energy conservation
 
+	// Parameters of Alfven waves' spectrum
 	unsigned int loadModes;
 	unsigned int numberOfAlfvenicModes;//Number of Alfvenic waves for the initial condition
 	unsigned int numberOfTestModes;
@@ -186,7 +202,15 @@ struct simulationParameters{
 	double fracMagEnerInj;//Fraction of background magnetic energy injected
 	unsigned int shuffleModes;
 
+	// MPI parameters
 	mpiParams mpi;
+
+	// Error codes
+	std::map<int, std::string> errorCodes;
+
+	types_info typesInfo;
+
+	simulationParameters();
 };
 
 

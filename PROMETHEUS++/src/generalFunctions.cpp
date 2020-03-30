@@ -82,7 +82,7 @@ void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const mesh
 		}
 	}//The density still have units here.
 
-	aux = vx/mesh->DX;
+	aux = vx/params->mesh.DX;
 	#endif
 
 	#ifdef TWOD
@@ -99,7 +99,7 @@ void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const mesh
 		}
 	}//The density still have units here.
 
-	aux = vx/mesh->DX + vy/mesh->DY;
+	aux = vx/params->mesh.DX + vy/params->mesh.DY;
 	#endif
 
 	#ifdef THREED
@@ -120,7 +120,7 @@ void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const mesh
 		}
 	}//The density still have units here.
 
-	aux = vx/mesh->DX + vy/mesh->DY + vz/mesh->DZ;
+	aux = vx/params->mesh.DX + vy/params->mesh.DY + vz/params->mesh.DZ;
 	#endif
 
 	CourantNumber = params->DT*aux;
@@ -179,21 +179,21 @@ void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *m
 	tmpVector = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
 	tmpVector = tmpVector % tmpVector;
 	params->em->E_fieldEnergy(IT,0) = sum(tmpVector);
-	params->em->E_fieldEnergy(IT,0) *= 0.5*F_EPSILON*(CS->length*mesh->DX)*(CS->eField*CS->eField);//SI units.
+	params->em->E_fieldEnergy(IT,0) *= 0.5*F_EPSILON*(CS->length*params->mesh.DX)*(CS->eField*CS->eField);//SI units.
 	}
 
 	#pragma omp section
 	{
 	tmpVector = EB->E.Y.subvec(1,NX-2) % EB->E.Y.subvec(1,NX-2);
 	params->em->E_fieldEnergy(IT,1) = sum(tmpVector);
-	params->em->E_fieldEnergy(IT,1) *= 0.5*F_EPSILON*(CS->length*mesh->DX)*(CS->eField*CS->eField);//SI units.
+	params->em->E_fieldEnergy(IT,1) *= 0.5*F_EPSILON*(CS->length*params->mesh.DX)*(CS->eField*CS->eField);//SI units.
 	}
 
 	#pragma omp section
 	{
 	tmpVector = EB->E.Z.subvec(1,NX-2) % EB->E.Z.subvec(1,NX-2);
 	params->em->E_fieldEnergy(IT,2) = sum(tmpVector);
-	params->em->E_fieldEnergy(IT,2) *= 0.5*F_EPSILON*(CS->length*mesh->DX)*(CS->eField*CS->eField);//SI units.
+	params->em->E_fieldEnergy(IT,2) *= 0.5*F_EPSILON*(CS->length*params->mesh.DX)*(CS->eField*CS->eField);//SI units.
 	}
 
 	#pragma omp section
@@ -201,7 +201,7 @@ void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *m
 	tmpVector = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) ) - params->BGP.By;
 	tmpVector = tmpVector % tmpVector;
 	params->em->B_fieldEnergy(IT,1) = sum(tmpVector);
-	params->em->B_fieldEnergy(IT,1) *= (CS->length*mesh->DX)*(CS->bField*CS->bField)/(2*F_MU);//SI units
+	params->em->B_fieldEnergy(IT,1) *= (CS->length*params->mesh.DX)*(CS->bField*CS->bField)/(2*F_MU);//SI units
 	}
 
 	#pragma omp section
@@ -209,7 +209,7 @@ void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *m
 	tmpVector = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) ) - params->BGP.Bz;
 	tmpVector = tmpVector % tmpVector;
 	params->em->B_fieldEnergy(IT,2) = sum(tmpVector);
-	params->em->B_fieldEnergy(IT,2) *= (CS->length*mesh->DX)*(CS->bField*CS->bField)/(2*F_MU);//SI units
+	params->em->B_fieldEnergy(IT,2) *= (CS->length*params->mesh.DX)*(CS->bField*CS->bField)/(2*F_MU);//SI units
 	}
 
 	}//end of the parallel region

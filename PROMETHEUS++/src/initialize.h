@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <typeinfo>
 
 #include <armadillo>
 
@@ -40,11 +41,9 @@
 using namespace std;
 using namespace arma;
 
-using namespace oneDimensional;
+// using namespace oneDimensional;
 
-class INITIALIZE{
-
-	double ionSkinDepth, LarmorRadius;
+template <class IT, class FT> class INITIALIZE{
 
 	vector<string> split(const string& str, const string& delim);
 
@@ -52,19 +51,28 @@ class INITIALIZE{
 
 	map<string, string> loadParametersString(string *  inputFile);
 
+	void initializeIonsArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+
+	void initializeIonsArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+
 public:
 
 	INITIALIZE(simulationParameters * params, int argc, char* argv[]);
 
 	void loadInputParameters(simulationParameters * params, int argc, char* argv[]);
 
-	void loadMeshGeometry(const simulationParameters * params, fundamentalScales * FS, meshParams * mesh);
+	void loadMeshGeometry(simulationParameters * params, fundamentalScales * FS);
 
-	void loadIonParameters(simulationParameters * params, vector<ionSpecies> * IONS,  vector<GCSpecies> * GCP);
+	void loadIonParameters(simulationParameters * params, vector<IT> * IONS,  vector<GCSpecies> * GCP);
 
-	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, const meshParams * mesh, vector<ionSpecies> * IONS);
+	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<IT> * IONS);
 
-	void initializeFields(const simulationParameters * params,  const meshParams * mesh,  fields * EB);
+
+	void initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB);
+
+	void initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB);
+
+	void initializeFields(const simulationParameters * params, FT * EB);
 
 };
 

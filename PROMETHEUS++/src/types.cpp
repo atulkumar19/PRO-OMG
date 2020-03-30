@@ -116,6 +116,7 @@ void vfield_vec::zeros(unsigned int N){
 	Z.zeros(N);
 }
 
+
 void vfield_vec::fill(double value){
 	X.fill(value);
 	Y.fill(value);

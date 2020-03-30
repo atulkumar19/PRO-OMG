@@ -31,21 +31,9 @@
 using namespace std;
 using namespace arma;
 
-class UNITS{
+template <class IT, class FT> class UNITS{
 
-	#ifdef ONED
-	#define Cmax 1.0f
-	#endif
-
-	#ifdef TWOD
-	#define Cmax 1.0f/sqrt(2.0f)
-	#endif
-
-	#ifdef THREED
-	#define Cmax 1.0f/sqrt(3.0f)
-	#endif
-
-	void dimensionlessForm(simulationParameters * params, meshParams * mesh, vector<ionSpecies> * IONS, fields * EB, const characteristicScales * CS);
+	void dimensionlessForm(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS);
 
 	void broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS);
 
@@ -55,19 +43,19 @@ public:
 
 	UNITS(){};
 
-	void spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS, meshParams * mesh);
+	void spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS);
 
-	void defineTimeStep(simulationParameters * params, meshParams * mesh, vector<ionSpecies> * IONS, fields * EB);
+	void defineTimeStep(simulationParameters * params, vector<IT> * IONS);
 
-	void calculateFundamentalScales(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS);
+	void calculateFundamentalScales(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS);
 
-	void defineCharacteristicScales(simulationParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS);
+	void defineCharacteristicScales(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS);
 
-	void normalizeVariables(simulationParameters * params, meshParams * mesh, vector<ionSpecies> * IONS, fields * EB, const characteristicScales * CS);
+	void normalizeVariables(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS);
 
-	void defineCharacteristicScalesAndBcast(simulationParameters * params, vector<ionSpecies> * IONS, characteristicScales * CS);
+	void defineCharacteristicScalesAndBcast(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS);
 
-	void calculateFundamentalScalesAndBcast(simulationParameters * params, vector<ionSpecies> * IONS, fundamentalScales * FS);
+	void calculateFundamentalScalesAndBcast(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS);
 
 };
 

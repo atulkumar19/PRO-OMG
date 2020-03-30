@@ -69,18 +69,18 @@ class EMF_SOLVER{
 	void MPI_passGhosts(const simulationParameters * params, arma::vec * field);
 
 
-	void FaradaysLaw(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB);
+	void FaradaysLaw(const simulationParameters * params, oneDimensional::fields * EB);
 
-	void FaradaysLaw(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB);
+	void FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB);
 
-	void FaradaysLaw(const simulationParameters * params, const meshParams * mesh, threeDimensional::fields * EB);
+	void FaradaysLaw(const simulationParameters * params, threeDimensional::fields * EB);
 
 
-	void aef_1D(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<ionSpecies> * IONS);
+	void aef_1D(const simulationParameters * params, oneDimensional::fields * EB, vector<ionSpecies> * IONS);
 
-	void aef_2D(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB, vector<ionSpecies> * IONS);
+	void aef_2D(const simulationParameters * params, twoDimensional::fields * EB, vector<ionSpecies> * IONS);
 
-	void aef_3D(const simulationParameters * params, const meshParams * mesh, threeDimensional::fields * EB, vector<ionSpecies> * IONS);
+	void aef_3D(const simulationParameters * params, threeDimensional::fields * EB, vector<ionSpecies> * IONS);
 
   public:
 
@@ -102,15 +102,15 @@ class EMF_SOLVER{
 
 	void equilibrium(const simulationParameters * params, vector<ionSpecies> * IONS, fields * EB);
 
-	void advanceBField(const simulationParameters * params, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS);
+	void advanceBField(const simulationParameters * params, fields * EB, vector<ionSpecies> * IONS);
 
-	void advanceEField(const simulationParameters * params, const meshParams * mesh, fields * EB, vector<ionSpecies> * IONS);
+	void advanceEField(const simulationParameters * params, fields * EB, vector<ionSpecies> * IONS);
 
-	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, oneDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshParams * mesh, twoDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, twoDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, const meshParams * mesh, threeDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE);
+	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, threeDimensional::fields * EB, vector<ionSpecies> * IONS, const int BAE);
 
 };
 

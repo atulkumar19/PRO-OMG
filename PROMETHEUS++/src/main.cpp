@@ -90,7 +90,6 @@ int main(int argc, char* argv[]){
 	//*** @tomodify
 	// alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
-/*
 	TIME_STEPPING_METHODS<nDimensional::ionSpecies, nDimensional::fields> timeStepping(&params);
 
 	switch (params.particleIntegrator){
@@ -106,7 +105,7 @@ int main(int argc, char* argv[]){
 				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				}
 	}
-*/
+
 	mpi_main.finalizeCommunications(&params);
 
 	return(0);

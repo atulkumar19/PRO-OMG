@@ -41,7 +41,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceMat(const simulation
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
+template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * field){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvbuf(params->mesh.NX_IN_SIM);
@@ -64,7 +64,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulati
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulationParameters * params, arma::vec * field){
+template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvbuf(params->mesh.NX_IN_SIM);
@@ -521,7 +521,7 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NSP(IONS->NSP);
-	arma::vec n = zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4); // Four ghosht cells considereds
+	arma::mat n = zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4); // Four ghosht cells considereds
 
 	IONS->n.zeros(); // Setting to zero the ion density.
 
@@ -643,8 +643,8 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields(
 
 
 template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
-	MPI_AllgatherField(params, &EB->E);
-	MPI_AllgatherField(params, &EB->B);
+	MPI_Allgathervfield_vec(params, &EB->E);
+	MPI_Allgathervfield_vec(params, &EB->B);
 
 	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	forwardPBC_1D(&EB->E.X);

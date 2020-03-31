@@ -20,7 +20,7 @@
 
 
 #ifdef HDF5_FLOAT
-template <class T, class Y> void HDF<T,Y>::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
+template <class IT, class FT> void HDF<IT,FT>::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
 	int N_ELEM((*doubleVector).n_elem);
 	int ii;
 	(*floatVector).set_size(N_ELEM);
@@ -39,7 +39,7 @@ template <class T, class Y> void HDF<T,Y>::armaCastDoubleToFloat(vec * doubleVec
 
 
 // Function to save a single integer value
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name, int * value){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, int * value){
 	H5std_string nameSpace( name );
 	int data[1] = {*value};
 	hsize_t dims[1] = {1};
@@ -54,7 +54,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name
 
 
 // Function to save a single CPP_TYPE value
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name, CPP_TYPE * value){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, CPP_TYPE * value){
 	H5std_string nameSpace( name );
 	CPP_TYPE data[1] = {*value};
 	hsize_t dims[1] = {1};
@@ -69,7 +69,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name
 
 
 // Function to save a single integer value (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, int * value){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, int * value){
 	H5std_string nameSpace( name );
 	int data[1] = {*value};
 	hsize_t dims[1] = {1};
@@ -84,7 +84,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 
 
 // Function to save a single CPP_TYPE value (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, CPP_TYPE * value){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, CPP_TYPE * value){
 	H5std_string nameSpace( name );
 	CPP_TYPE data[1] = {*value};
 	hsize_t dims[1] = {1};
@@ -99,7 +99,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 
 
 // Function to save a vector of int values
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name, std::vector<int> * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, std::vector<int> * values){
 	H5std_string nameSpace( name );
 	unsigned long long int size = (unsigned long long int)values->size();
 
@@ -119,7 +119,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name
 
 
 // Function to save a vector of CPP_TYPE values
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values){
 	H5std_string nameSpace( name );
 	unsigned long long int size = (unsigned long long int)values->size();
 
@@ -139,7 +139,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name
 
 
 // Function to save an Armadillo vec vector
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name, arma::ivec * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, arma::ivec * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[1] = {(hsize_t)values->n_elem};
@@ -154,7 +154,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name
 
 
 // Function to save an Armadillo vec vector (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, arma::ivec * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::ivec * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[1] = {(hsize_t)values->n_elem};
@@ -169,7 +169,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 
 
 // Function to save an Armadillo vec vector
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name, arma::vec * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, arma::vec * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[1] = {(hsize_t)values->n_elem};
@@ -184,7 +184,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(H5File * file, string name
 
 
 // Function to save an Armadillo vec vector (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, arma::vec * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::vec * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[1] = {(hsize_t)values->n_elem};
@@ -199,7 +199,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 
 
 // Function to save an Armadillo fvec vector (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, arma::fvec * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::fvec * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[1] = {(hsize_t)values->n_elem};
@@ -214,7 +214,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 
 
 // Function to save an Armadillo vec vector (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, arma::mat * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::mat * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[2] = {(hsize_t)values->n_cols, (hsize_t)values->n_rows};
@@ -229,7 +229,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 
 
 // Function to save an Armadillo vec vector (to a HDF5 group)
-template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name, arma::fmat * values){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::fmat * values){
 	H5std_string nameSpace( name );
 
 	hsize_t dims[2] = {(hsize_t)values->n_cols, (hsize_t)values->n_rows};
@@ -246,7 +246,7 @@ template <class T, class Y> void HDF<T,Y>::saveToHDF5(Group * group, string name
 //
 // CLASS CONSTRUCTOR //
 //
-template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundamentalScales * FS, vector<T> *IONS){
+template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fundamentalScales * FS, vector<IT> *IONS){
 
 	try{
 		stringstream dn;
@@ -542,9 +542,7 @@ template <class T, class Y> HDF<T,Y>::HDF(simulationParameters * params, fundame
 }
 
 
-
-#ifdef ONED
-template <class T, class Y> void HDF<T,Y>::siv_1D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
+template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it){
 
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -568,7 +566,7 @@ template <class T, class Y> void HDF<T,Y>::siv_1D(const simulationParameters * p
 		arma::mat mat_values;
 		arma::fmat fmat_values;
 
-		iteration << IT;
+		iteration << it;
 		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		path = params->PATH + "/HDF5/";
@@ -746,39 +744,14 @@ template <class T, class Y> void HDF<T,Y>::siv_1D(const simulationParameters * p
     }
 
 }
-#endif
-
-#ifdef TWOD
-template <class T, class Y> void HDF<T,Y>::siv_2D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
-
-}
-#endif
-
-#ifdef THREED
-template <class T, class Y> void HDF<T,Y>::siv_3D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
-
-}
-#endif
 
 
-template <class T, class Y> void HDF<T,Y>::saveIonsVariables(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT){
-
-	#ifdef ONED
-		siv_1D(params, IONS_OUT, CS, IT);
-	#endif
-
-	#ifdef TWOD
-		siv_2D(params, IONS_OUT, CS, IT);
-	#endif
-
-	#ifdef THREED
-		siv_3D(params, IONS_OUT, CS, IT);
-	#endif
+template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it){
 
 }
 
 
-template <class T, class Y> void HDF<T,Y>::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int IT){
+template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int it){
 
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -808,7 +781,7 @@ template <class T, class Y> void HDF<T,Y>::saveFieldsVariables(const simulationP
 		arma::fmat fmat_values;
 
 
-		iteration << IT;
+		iteration << it;
 		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		path = params->PATH + "/HDF5/";
@@ -929,19 +902,15 @@ template <class T, class Y> void HDF<T,Y>::saveFieldsVariables(const simulationP
 	restoreVector(&EB->B.X);
 	restoreVector(&EB->B.Y);
 	restoreVector(&EB->B.Z);
+}
+
+
+template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it){
 
 }
 
-template <class T, class Y> void HDF<T,Y>::saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int IT){
 
-}
-
-template <class T, class Y> void HDF<T,Y>::saveFieldsVariables(const simulationParameters * params, threeDimensional::fields * EB, const characteristicScales * CS, const int IT){
-
-}
-
-template <class T, class Y> void HDF<T,Y>::saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime){
-
+template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParameters * params, const vector<IT> * IONS_OUT, FT * EB, const characteristicScales * CS, const int it, double totalTime){
 
 	try{
 
@@ -949,7 +918,7 @@ template <class T, class Y> void HDF<T,Y>::saveOutputs(const simulationParameter
 		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
 		stringstream iteration;
-		iteration << IT;
+		iteration << it;
 
 		string name, path;
 		path = params->PATH + "/HDF5/";
@@ -961,7 +930,7 @@ template <class T, class Y> void HDF<T,Y>::saveOutputs(const simulationParameter
 
 		H5File * outputFile;
 
-		if(IT == 0){
+		if(it == 0){
 			outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );// Create a new file using the default property lists.
 		}else{
 			outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );// Create a new file using the default property lists.
@@ -995,9 +964,9 @@ template <class T, class Y> void HDF<T,Y>::saveOutputs(const simulationParameter
 		error.printError();
     }
 
-	saveIonsVariables(params, IONS_OUT, CS, IT);
+	saveIonsVariables(params, IONS_OUT, CS, it);
 
-	saveFieldsVariables(params, EB, CS, IT);
+	saveFieldsVariables(params, EB, CS, it);
 
 }
 

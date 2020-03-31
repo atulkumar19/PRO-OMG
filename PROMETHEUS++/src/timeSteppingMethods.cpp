@@ -68,7 +68,7 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
         currentTime += params->DT*CS->time;
 
         if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
-            vector<ionSpecies> IONS_OUT = *IONS;
+            vector<oneDimensional::ionSpecies> IONS_OUT = *IONS;
             // The ions' velocity is advanced in time in order to obtain V^(N+1)
             ionsDynamics.advanceIonsVelocity(params, CS, EB, &IONS_OUT, params->DT/2);
             hdfObj->saveOutputs(params, &IONS_OUT, EB, CS, outputIterator+1, currentTime);

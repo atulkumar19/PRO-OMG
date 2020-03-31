@@ -27,7 +27,6 @@
 namespace oneDimensional{
 	class fields;
 	class ionSpecies;
-	class GCSpecies;
 }
 
 
@@ -52,8 +51,6 @@ public:
 
 	const std::type_info * ionSpecies_1D_type;
 	const std::type_info * ionSpecies_2D_type;
-
-	const std::type_info * GCSpecies_1D_type;
 
 	const std::type_info * fields_1D_type;
 	const std::type_info * fields_2D_type;
@@ -276,50 +273,6 @@ public:
 	~ionSpecies(){};
 };
 // * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
-
-class oneDimensional::GCSpecies : public vfield_vec{
-
-public:
-	int SPECIES;
-	int IC; // Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
-	double NSP; // Initial number of superparticles for the given ion species.
-	double NCP; // Number of charged particles per superparticle.
-	double NPC; // Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
-	double Q; 	// Charge.
-	double Z; 	// Atomic number.
-	double M; 	// Mass
-
-	// variables for controlling super-particles' outputs
-	double pctSupPartOutput;
-	unsigned int nSupPartOutput;
-
-	double Dn;
-
-	double go;			// Initial relativistic gamma
-	double Tpar;		// Parallel temperature.
-	double Tper;		// Perpendicular temperature.
-	double LarmorRadius;// Larmor radius.
-	double VTper;		// Thermal velocity.
-	double VTpar;		// Thermal velocity.
-	double Wc;			// Average cyclotron frequency.
-	double Wp;			// Plasma frequency.
-	double avg_mu; 		// Average magnetic moment
-
-	arma::vec X; 		// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::mat V; 		// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
-	arma::vec g; 		// Ions' relativistic gamma factor.
-	arma::vec Ppar; // Parallel momentum used in guiding-center orbits
-	arma::vec mu; 	// Ions' magnetic moment.
-
-	arma::ivec meshNode; // Position of each particle in the discrete mesh.
-
-	//These weights are used in the charge extrapolation and the force interpolation
-	arma::vec wxl, wxc, wxr;	// Particles' weights w.r.t. the vertices of the grid cells
-
-	GCSpecies(){};
-	~GCSpecies(){};
-};
-// * * * * * * * * GC VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
 
 // * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //

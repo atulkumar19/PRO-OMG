@@ -98,6 +98,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->errorCodes[-106] = "Inconsistency in iniital ion's velocity distribution function";
     params->errorCodes[-107] = "Inconsistency in iniital ion's spatial distribution function";
     params->errorCodes[-108] = "Non-finite value in meshNode";
+    params->errorCodes[-109] = "Number of nodes in either direction of simulation domain need to be a multiple of 2";
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -246,9 +247,55 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	// params->em = new energyMonitor((int)params->numberOfParticleSpecies,(int)params->timeIterations);
 
-    params->mesh.NX_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NX"] );
-    params->mesh.NY_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NY"] );
-    params->mesh.NZ_PER_MPI = (unsigned int)std::stoi( parametersStringMap["NZ"] );
+    // Number of nodes in entire simulation domain
+    unsigned int NX = (unsigned int)std::stoi( parametersStringMap["NX"] );
+    unsigned int NY = (unsigned int)std::stoi( parametersStringMap["NY"] );
+    unsigned int NZ = (unsigned int)std::stoi( parametersStringMap["NZ"] );
+
+    // Sanity check: if NX and/or NY is not a multiple of 2, the simulation aborts
+    if (params->dimensionality == 1){
+        if (fmod(NX, 2.0) > 0.0){
+            MPI_Barrier(params->mpi.MPI_TOPO);
+            MPI_Abort(params->mpi.MPI_TOPO,-109);
+        }
+
+        params->mesh.NX_IN_SIM = NX;
+        params->mesh.NX_PER_MPI = (int)( (double)NX/(double)params->mpi.NUMBER_MPI_DOMAINS );
+        params->mesh.SPLIT_DIRECTION = 0;
+
+        params->mesh.NY_IN_SIM = 1;
+        params->mesh.NY_PER_MPI = 1;
+
+        params->mesh.NZ_IN_SIM = 1;
+        params->mesh.NZ_PER_MPI = 1;
+    }else{
+        if ((fmod(NX, 2.0) > 0.0) || (fmod(NY, 2.0) > 0.0)){
+            MPI_Barrier(params->mpi.MPI_TOPO);
+            MPI_Abort(params->mpi.MPI_TOPO,-109);
+        }
+
+        if (NX >= NY){
+            params->mesh.NX_IN_SIM = NX;
+            params->mesh.NX_PER_MPI = (int)( (double)NX/(double)params->mpi.NUMBER_MPI_DOMAINS );
+
+            params->mesh.NY_IN_SIM = NY;
+            params->mesh.NY_PER_MPI = NY;
+
+            params->mesh.SPLIT_DIRECTION = 0;
+        }else{
+            params->mesh.NX_IN_SIM = NX;
+            params->mesh.NX_PER_MPI = NX;
+
+            params->mesh.NY_IN_SIM = NY;
+            params->mesh.NY_PER_MPI = (int)( (double)NY/(double)params->mpi.NUMBER_MPI_DOMAINS );
+
+            params->mesh.SPLIT_DIRECTION = 1;
+        }
+
+        params->mesh.NZ_IN_SIM = 1;
+        params->mesh.NZ_PER_MPI = 1;
+    }
+
 
 	params->DrL = std::stod( parametersStringMap["DrL"] );
 
@@ -295,38 +342,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
 			cout << "Using ION SKIN DEPTH to set up simulation grid." << endl;
 	}
 
-    //*** @tomodify
-    /*
-    switch (params->dimensionality){
-        case(1):{
-            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
-            params->mesh.NY_PER_MPI = 1;
-            params->mesh.NZ_PER_MPI = 1;
-
-            break;
-        }
-        case(2):{
-            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
-            params->mesh.NY_PER_MPI = params->NY_PER_MPI;
-            params->mesh.NZ_PER_MPI = 1;
-
-            break;
-        }
-        case(3):{
-            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
-            params->mesh.NY_PER_MPI = params->NY_PER_MPI;
-            params->mesh.NZ_PER_MPI = params->NZ_PER_MPI;
-
-            break;
-        }
-        default:{
-            params->mesh.NX_PER_MPI = params->NX_PER_MPI;
-            params->mesh.NY_PER_MPI = 1;
-            params->mesh.NZ_PER_MPI = 1;
-        }
-    }
-    */
-
 	params->mesh.nodes.X.set_size(params->mesh.NX_IN_SIM);
 	params->mesh.nodes.Y.set_size(params->mesh.NY_IN_SIM);
 	params->mesh.nodes.Z.set_size(params->mesh.NZ_IN_SIM);
@@ -350,9 +365,13 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
     params->mesh.LZ = params->mesh.DZ*params->mesh.NZ_IN_SIM;
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-		cout << "Size of simulation domain along the x-axis: " << params->mesh.LX << " m" << endl;
-		cout << "Size of simulation domain along the y-axis: " << params->mesh.LY << " m" << endl;
-		cout << "Size of simulation domain along the z-axis: " << params->mesh.LZ << " m" << endl;
+        cout << "+ Number of mesh nodes along x-axis: " << params->mesh.NX_IN_SIM << endl;
+        cout << "+ Number of mesh nodes along y-axis: " << params->mesh.NY_IN_SIM << endl;
+        cout << "+ Number of mesh nodes along z-axis: " << params->mesh.NZ_IN_SIM << endl;
+
+		cout << "+ Size of simulation domain along the x-axis: " << params->mesh.LX << " m" << endl;
+		cout << "+ Size of simulation domain along the y-axis: " << params->mesh.LY << " m" << endl;
+		cout << "+ Size of simulation domain along the z-axis: " << params->mesh.LZ << " m" << endl;
 		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *" << endl;
 	}
 }
@@ -453,6 +472,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     }
     //Checking integrity of the initial condition
 
+
     if(params->quietStart){
         IONS->X.col(0) *= params->mesh.DX*params->mesh.NX_IN_SIM;
         IONS->X.col(1) *= params->mesh.DY*params->mesh.NY_IN_SIM;
@@ -466,9 +486,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
     IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
 
-
-    //PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;                                  //*** @tomodify
-    //pic.assignCell(params, mesh, IONS, 1);    //*** @tomodify
+    PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;
+    pic.assignCell(params, IONS);
 }
 
 
@@ -534,7 +553,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS,  vector<GCSpecies> * GCP){
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS){
 
     MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -561,7 +580,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 	for(int ii=0;ii<totalNumSpecies;ii++){
 		string name;
 		IT ions;
-        GCSpecies gcp;
         int SPECIES;
 		stringstream ss;
 
@@ -618,7 +636,11 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.LarmorRadius = ions.VTper/ions.Wc;
 
             //Definition of the initial total number of superparticles for each species
-    		ions.NSP = ceil(ions.NPC*params->mesh.NX_PER_MPI);
+            if (params->dimensionality == 1)
+    		    ions.NSP = ceil(ions.NPC*params->mesh.NX_PER_MPI);
+            else
+                ions.NSP = ceil(ions.NPC*params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);
+
     		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 
     		IONS->push_back(ions);
@@ -638,67 +660,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
                 cout << "+ Parallel thermal velocity: " << ions.VTpar << " m/s" << endl;
                 cout << "+ Perpendicular thermal velocity: " << ions.VTper << " m/s" << endl;
                 cout << "+ Larmor radius: " << ions.LarmorRadius << " m" << endl;
-            }
-        }else if (SPECIES == -1){
-            gcp.SPECIES = SPECIES;
-
-            name = "NPC" + ss.str();
-    		gcp.NPC = parametersMap[name];
-    		name.clear();
-
-    		name = "IC" + ss.str();
-    		gcp.IC = (int)parametersMap[name];
-    		name.clear();
-
-    		name = "Tper" + ss.str();
-    		gcp.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
-    		name.clear();
-
-    		name = "Tpar" + ss.str();
-    		gcp.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
-    		name.clear();
-
-    		name = "Dn" + ss.str();
-    		gcp.Dn = parametersMap[name];
-    		name.clear();
-
-    		name = "pctSupPartOutput" + ss.str();
-    		gcp.pctSupPartOutput = parametersMap[name];
-    		name.clear();
-
-            name = "Z" + ss.str();
-			gcp.Z = parametersMap[name]; //parametersMap[name] = Atomic number.
-            name.clear();
-
-            gcp.Q = F_E*gcp.Z;
-
-			name = "M" + ss.str();
-			gcp.M = F_U*parametersMap[name]; //parametersMap[name] times the atomic mass unit.
-            name.clear();
-
-            ions.Wc = ions.Q*params->BGP.Bo/ions.M;
-
-            ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
-        	ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
-
-            ions.LarmorRadius = ions.VTper/ions.Wc;
-
-            //Definition of the initial total number of superparticles for each species
-    		gcp.NSP = ceil(gcp.NPC*params->mesh.NX_PER_MPI);
-    		gcp.nSupPartOutput = floor( (gcp.pctSupPartOutput/100.0)*gcp.NSP );
-
-    		GCP->push_back(gcp);
-
-            if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
-                cout << endl << "Species No "  << ii + 1 << " are guiding-center particles with the following parameters:" << endl;
-                cout << "+ Atomic number: " << gcp.Z << endl;
-                cout << "+ Mass: " << gcp.M << " kg" << endl;
-                cout << "+ Parallel temperature: " << gcp.Tpar*F_KB/F_E << " eV" << endl;
-                cout << "+ Perpendicular temperature: " << gcp.Tper*F_KB/F_E << " eV" << endl;
-                cout << "+ Cyclotron frequency: " << gcp.Wc << " Hz" << endl;
-                cout << "+ Parallel thermal velocity: " << gcp.VTpar << " m/s" << endl;
-                cout << "+ Perpendicular thermal velocity: " << gcp.VTper << " m/s" << endl;
-                cout << "+ Larmor radius: " << gcp.LarmorRadius << " m" << endl;
             }
         }else{
             MPI_Barrier(MPI_COMM_WORLD);

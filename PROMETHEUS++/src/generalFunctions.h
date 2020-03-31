@@ -70,9 +70,9 @@ class GENERAL_FUNCTIONS{
 
 	GENERAL_FUNCTIONS(){};
 
-	void checkStability(simulationParameters * params, const meshParams *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS);
+	void checkStability(simulationParameters * params, const meshParams *mesh, const characteristicScales * CS, const vector<oneDimensional::ionSpecies> * IONS);
 
-	void checkEnergy(simulationParameters * params, meshParams *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT);
+	void checkEnergy(simulationParameters * params, meshParams *mesh, characteristicScales * CS, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB, int IT);
 
 	void saveDiagnosticsVariables(simulationParameters * params);
 

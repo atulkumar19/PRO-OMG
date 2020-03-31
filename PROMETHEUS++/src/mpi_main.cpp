@@ -57,57 +57,21 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 		params->mpi.MPI_DOMAINS_ALONG_Y_AXIS = 1;
 		params->mpi.MPI_DOMAINS_ALONG_Z_AXIS = 1;
 
-		params->mesh.NX_IN_SIM = params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS;
-		params->mesh.NY_IN_SIM = 1;
-		params->mesh.NZ_IN_SIM = 1;
-
 		MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_1D, periods_1D, reorder, &params->mpi.MPI_TOPO);
 	}else{
 		ndims = 2;
 
-		double n(0.0); // Exponent of 2^n
-		double x;
-
-		do{
-			x = ((double)params->mpi.NUMBER_MPI_DOMAINS)/2.0;
-			n += 1.0;
-		} while(x > 1.0);
-
-		// We check whether n is a even number or an odd number
-		if( fmod(n, 2.0) > 0.0 ){	// n is an odd number
-			// The Cartesian topology of MPIs will be of size 2 x 2^(n-1),
-			// where 2 MPI processes are used along the direction with less nodes.
-			if(params->mesh.NX_PER_MPI > params->mesh.NY_PER_MPI){
-				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
-					dims_2D[0] = (int)pow(2.0, n-1.0); 	// x-axis
-					dims_2D[1] = 2;						// y-axis
-				}else{
-					dims_2D[0] = 2; 	// x-axis
-					dims_2D[1] = 1;						// y-axis
-				}
-			}else{
-				if(params->mpi.NUMBER_MPI_DOMAINS > 2){
-					dims_2D[0] = 2;						// x-axis
-					dims_2D[1] = (int)pow(2.0, n-1.0);	// y-axis
-				}else{
-					dims_2D[0] = 1;						// x-axis
-					dims_2D[1] = 2;	// y-axis
-				}
-
-			}
-		}else{ // n is an even number
-			// The Cartesian topology of MPIs will be of size 2^(n/2) x 2^(n/2).
-			dims_2D[0] = (int)pow(2.0, n/2.0); 	// x-axis
-			dims_2D[1] = (int)pow(2.0, n/2.0); 	// y-axis
+		if(params->mesh.SPLIT_DIRECTION == 0){
+			dims_2D[0] = params->mpi.NUMBER_MPI_DOMAINS; 	// x-axis
+			dims_2D[1] = 1; 								// y-axis
+		}else{
+			dims_2D[0] = 1; 								// x-axis
+			dims_2D[1] = params->mpi.NUMBER_MPI_DOMAINS;	// y-axis
 		}
 
 		params->mpi.MPI_DOMAINS_ALONG_X_AXIS = dims_2D[0];
 		params->mpi.MPI_DOMAINS_ALONG_Y_AXIS = dims_2D[1];
 		params->mpi.MPI_DOMAINS_ALONG_Z_AXIS = 1;
-
-		params->mesh.NX_IN_SIM = params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_X_AXIS;
-		params->mesh.NY_IN_SIM = params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAINS_ALONG_Y_AXIS;
-		params->mesh.NZ_IN_SIM = 1;
 
 		MPI_Cart_create(MPI_COMM_WORLD, ndims, dims_2D, periods_2D, reorder, &params->mpi.MPI_TOPO);
 	}

@@ -40,30 +40,23 @@ using namespace std;
 using namespace arma;
 
 int main(int argc, char* argv[]){
+	namespace nDimensional = twoDimensional;
+
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
 
-	simulationParameters params; 	// Input parameters for the simulation.
-	vector<oneDimensional::ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
-	vector<oneDimensional::GCSpecies> GCP;
-	characteristicScales CS;		// Derived type for keeping info about characteristic scales.
-	oneDimensional::fields EB; 						// Derived type with variables of electromagnetic fields.
+	simulationParameters params; 				// Input parameters for the simulation.
+	vector<nDimensional::ionSpecies> IONS; 	// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	characteristicScales CS;					// Derived type for keeping info about characteristic scales.
+	nDimensional::fields EB; 					// Derived type with variables of electromagnetic fields.
 
-	INITIALIZE<oneDimensional::ionSpecies, oneDimensional::fields> init(&params, argc, argv);
+	INITIALIZE<nDimensional::ionSpecies, nDimensional::fields> init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 
-	init.loadIonParameters(&params, &IONS, &GCP); //*** @tomodify
+	init.loadIonParameters(&params, &IONS); //*** @tomodify
 
-/*
-	vector<twoDimensional::ionSpecies> IONS_2D; //*** @todelete
-	twoDimensional::fields EB_2D; //*** @todelete
-
-	INITIALIZE<twoDimensional::ionSpecies> init_2D(&params, argc, argv); //*** @todelete
-	init_2D.loadIonParameters(&params, &IONS_2D, &GCP); //*** @todelete
-*/
-
-	UNITS<oneDimensional::ionSpecies, oneDimensional::fields> units;
+	UNITS<nDimensional::ionSpecies, nDimensional::fields> units;
 
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
@@ -79,7 +72,7 @@ int main(int argc, char* argv[]){
 
 	init.setupIonsInitialCondition(&params, &CS, &IONS); // Calculation of IONS[ii].NCP for each species
 
-	HDF<oneDimensional::ionSpecies, oneDimensional::fields> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
+	HDF<nDimensional::ionSpecies, nDimensional::fields> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
 
 	//*** @tomodify
 	// ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
@@ -97,7 +90,8 @@ int main(int argc, char* argv[]){
 	//*** @tomodify
 	// alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
-	TIME_STEPPING_METHODS<oneDimensional::ionSpecies, oneDimensional::fields> timeStepping(&params);
+/*
+	TIME_STEPPING_METHODS<nDimensional::ionSpecies, nDimensional::fields> timeStepping(&params);
 
 	switch (params.particleIntegrator){
 		case(1):{
@@ -112,7 +106,7 @@ int main(int argc, char* argv[]){
 				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
 				}
 	}
-
+*/
 	mpi_main.finalizeCommunications(&params);
 
 	return(0);

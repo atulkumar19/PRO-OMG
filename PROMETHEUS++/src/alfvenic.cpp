@@ -18,7 +18,7 @@
 
 #include "alfvenic.h"
 
-ALFVENIC::ALFVENIC(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
+ALFVENIC::ALFVENIC(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
 
 	if(params->numberOfAlfvenicModes > 0){
 		if(params->loadModes == 0){
@@ -29,7 +29,7 @@ ALFVENIC::ALFVENIC(const simulationParameters * params,const meshParams * mesh,f
 	}
 }
 
-void ALFVENIC::generateModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::generateModes(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	Aw.amp.set_size(params->numberOfAlfvenicModes);
@@ -113,7 +113,7 @@ void ALFVENIC::generateModes(const simulationParameters * params,const meshParam
 
 }
 
-void ALFVENIC::loadModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS){
+void ALFVENIC::loadModes(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
 	plasmaParams PP(params,IONS);
 
 	mat spectra;
@@ -222,7 +222,7 @@ void ALFVENIC::dispertionRelation(const plasmaParams *PP){
 	k.save("wnumb.dat",raw_ascii);
 }
 
-double ALFVENIC::dispertionRelation(double w,plasmaParams * PP){
+double ALFVENIC::dispertionRelation(double w, plasmaParams * PP){
 	double k;
 	k = (w/A_C)*sqrt( 1 - PP->wpe*PP->wpe/(w*(w+PP->wce)) - PP->wpp*PP->wpp/(w*(w-PP->wcp)) - PP->wpa*PP->wpa/(w*(w-PP->wca)) );
 	return(k);
@@ -230,7 +230,7 @@ double ALFVENIC::dispertionRelation(double w,plasmaParams * PP){
 
 /* From the dispersion relation we have the following equation to
    calculate the ratio w/k used in the perturbation amplitudes */
-double ALFVENIC::function(const plasmaParams *PP,double w,double k){
+double ALFVENIC::function(const plasmaParams *PP, double w, double k){
 	double fw(0);
 	fw += w*w*(w + PP->wce)*(w - PP->wcp)*(w - PP->wca) - w*(w - PP->wcp)*(w - PP->wca)*PP->wpe*PP->wpe;
 	fw += - w*(w + PP->wce)*(w - PP->wca)*PP->wpp*PP->wpp - w*(w + PP->wce)*(w - PP->wcp)*PP->wpa*PP->wpa;
@@ -238,7 +238,7 @@ double ALFVENIC::function(const plasmaParams *PP,double w,double k){
 	return(fw);
 }
 
-double ALFVENIC::brentRoots(const plasmaParams *PP,double x1,double x2,double k,int ITMAX){
+double ALFVENIC::brentRoots(const plasmaParams *PP, double x1, double x2, double k, int ITMAX){
 
 	double nearZero(1E-20);
 	double tolerance (1E-10);
@@ -338,7 +338,7 @@ void ALFVENIC::normalize(const characteristicScales * CS){
 	}
 }
 
-void ALFVENIC::addMagneticPerturbations(fields * EB){
+void ALFVENIC::addMagneticPerturbations(oneDimensional::fields * EB){
 	unsigned int NX(EB->B.X.n_elem);
 
 	EB->B.X.subvec(1,NX-2) += Aw.dB.X;
@@ -346,7 +346,7 @@ void ALFVENIC::addMagneticPerturbations(fields * EB){
 	EB->B.Z.subvec(1,NX-2) += Aw.dB.Z;
 }
 
-void ALFVENIC::addVelocityPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS){
+void ALFVENIC::addVelocityPerturbations(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS){
 
 	double PHI(params->BGP.propVectorAngle*M_PI/180);
 
@@ -367,7 +367,7 @@ void ALFVENIC::addVelocityPerturbations(const simulationParameters * params,vect
 
 }
 
-void ALFVENIC::addPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS,fields * EB){
+void ALFVENIC::addPerturbations(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB){
 
 	if(params->numberOfAlfvenicModes > 0){
 		addMagneticPerturbations(EB);

@@ -65,10 +65,6 @@ protected:
 
 	void MPI_AllreduceMat(const simulationParameters * params, arma::mat * m);
 
-	void MPI_BcastBulkVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void MPI_BcastBulkVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
 	void MPI_AllgatherField(const simulationParameters * params, vfield_vec * field);
 
 	void MPI_AllgatherField(const simulationParameters * params, arma::vec * field);
@@ -125,6 +121,8 @@ protected:
 
 
 	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT);
+
+	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT);
 
 
 	void advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT);

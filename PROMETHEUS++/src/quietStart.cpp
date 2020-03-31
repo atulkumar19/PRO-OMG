@@ -34,7 +34,7 @@ template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * para
 
     recalculateNumberSuperParticles(params, ions);
 
-	unsigned int NTSP = (unsigned int)((int)(ions->NSP)*params->mpi.NUMBER_MPI_DOMAINS); // Number of super-particles in entire simulation
+	unsigned int NTSP = (unsigned int)((int)(2*ions->NSP)*params->mpi.NUMBER_MPI_DOMAINS); // Number of super-particles in entire simulation
 
     QUIETSTART::dec = zeros<uvec>(NTSP);
     for(unsigned int ii=1; ii<NTSP; ii++){
@@ -46,8 +46,14 @@ template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * para
 template <class IT> double QUIETSTART<IT>::recalculateNumberSuperParticles(const simulationParameters * params, IT * ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
-    exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
-    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
+	if (params->dimensionality == 1){
+		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
+	    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
+	}else{
+		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
+	    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
+	}
+
 
 	ions->nSupPartOutput = floor( (ions->pctSupPartOutput/100.0)*ions->NSP );
 }
@@ -176,18 +182,16 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
 
     // Initialising positions
-    vec b2fr = zeros(ions->NSP);
+	vec b2fr = zeros(ions->NSP);
     bit_reversedFractions_base2(params, ions->NSP, &b2fr);
 
-	b2fr *= 2.0*M_PI;
+	vec b3fr = zeros(ions->NSP);
+    bit_reversedFractions_base3(params, ions->NSP, &b3fr);
 
-    ions->X.col(0) = cos(b2fr);
-	ions->X.col(1) = sin(b2fr);
+	ions->X.col(0) = b2fr;
+	ions->X.col(1) = b3fr;
 
     // Initialising gyro-angle
-
-    vec b3fr = zeros(ions->NSP);
-    bit_reversedFractions_base3(params, ions->NSP, &b3fr);
 
     b3fr *= 2.0*M_PI;
 

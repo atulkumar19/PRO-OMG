@@ -29,9 +29,6 @@ simulationParameters::simulationParameters(){
     oneDimensional::ionSpecies IONS_1D;
     typesInfo.ionSpecies_1D_type = &typeid(IONS_1D);
 
-    oneDimensional::GCSpecies GC_1D;
-    typesInfo.GCSpecies_1D_type = &typeid(GC_1D);
-
     twoDimensional::ionSpecies IONS_2D;
     typesInfo.ionSpecies_2D_type = &typeid(IONS_2D);
 

@@ -67,7 +67,7 @@ class ALFVENIC{
 		double wpa, wpp, wpe;
 		double VA;
 		double dp;
-		plasmaParams(const simulationParameters * params,vector<ionSpecies> * IONS){
+		plasmaParams(const simulationParameters * params,vector<oneDimensional::ionSpecies> * IONS){
 			np = (1/1E6)*IONS->at(0).Dn*params->BGP.ne;//1/cm^3
 			na = (1/1E6)*IONS->at(1).Dn*params->BGP.ne;//1/cm^3
 			ne = np + A_Za*na;
@@ -87,30 +87,30 @@ class ALFVENIC{
 
 	};
 
-	double function(const plasmaParams *PP,double w,double k);
+	double function(const plasmaParams *PP, double w, double k);
 
 	void dispertionRelation(const plasmaParams *PP);
 
-	double dispertionRelation(double w,plasmaParams * PP);
+	double dispertionRelation(double w, plasmaParams * PP);
 
-	double brentRoots(const plasmaParams *PP,double x1,double x2,double k,int ITMAX);
+	double brentRoots(const plasmaParams *PP, double x1, double x2, double k, int ITMAX);
 
-	void addMagneticPerturbations(fields * EB);
+	void addMagneticPerturbations(oneDimensional::fields * EB);
 
-	void addVelocityPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS);
+	void addVelocityPerturbations(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS);
 
-	void generateModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS);
+	void generateModes(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
-	void loadModes(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS);
+	void loadModes(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
 
 public:
 
-	ALFVENIC(const simulationParameters * params,const meshParams * mesh,fields * EB,vector<ionSpecies> * IONS);
+	ALFVENIC(const simulationParameters * params, const meshParams * mesh, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
 	void normalize(const characteristicScales * CS);
 
-	void addPerturbations(const simulationParameters * params,vector<ionSpecies> * IONS,fields * EB);
+	void addPerturbations(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB);
 
 };
 

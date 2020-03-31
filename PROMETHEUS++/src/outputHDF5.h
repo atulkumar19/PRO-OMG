@@ -39,68 +39,60 @@ using namespace H5;
 using namespace std;
 using namespace arma;
 
-template <class T, class Y> class HDF{
+template <class IT, class FT> class HDF{
 
-#ifdef HDF5_DOUBLE
-	#define HDF_TYPE PredType::NATIVE_DOUBLE
-	#define CPP_TYPE double
-#elif defined HDF5_FLOAT
-	#define HDF_TYPE PredType::NATIVE_FLOAT
-	#define CPP_TYPE float
-#endif
-
-
-void saveToHDF5(H5File * file, string name, int * value);
-
-void saveToHDF5(H5File * file, string name, CPP_TYPE * value);
-
-void saveToHDF5(Group * group, string name, int * value);
-
-void saveToHDF5(Group * group, string name, CPP_TYPE * value);
-
-void saveToHDF5(H5File * file, string name, std::vector<int> * values);
-
-void saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values);
-
-void saveToHDF5(H5File * file, string name, arma::ivec * values);
-
-void saveToHDF5(Group * group, string name, arma::ivec * values);
-
-void saveToHDF5(H5File * file, string name, arma::vec * values);
-
-void saveToHDF5(Group * group, string name, arma::vec * values);
-
-void saveToHDF5(Group * group, string name, arma::fvec * values);
-
-void saveToHDF5(Group * group, string name, arma::mat * values);
-
-void saveToHDF5(Group * group, string name, arma::fmat * values);
+	#ifdef HDF5_DOUBLE
+		#define HDF_TYPE PredType::NATIVE_DOUBLE
+		#define CPP_TYPE double
+	#elif defined HDF5_FLOAT
+		#define HDF_TYPE PredType::NATIVE_FLOAT
+		#define CPP_TYPE float
+	#endif
 
 
-void siv_1D(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+	void saveToHDF5(H5File * file, string name, int * value);
 
-void siv_2D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+	void saveToHDF5(H5File * file, string name, CPP_TYPE * value);
 
-void siv_3D(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+	void saveToHDF5(Group * group, string name, int * value);
 
-void saveIonsVariables(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, const characteristicScales * CS, const int IT);
+	void saveToHDF5(Group * group, string name, CPP_TYPE * value);
+
+	void saveToHDF5(H5File * file, string name, std::vector<int> * values);
+
+	void saveToHDF5(H5File * file, string name, std::vector<CPP_TYPE> * values);
+
+	void saveToHDF5(H5File * file, string name, arma::ivec * values);
+
+	void saveToHDF5(Group * group, string name, arma::ivec * values);
+
+	void saveToHDF5(H5File * file, string name, arma::vec * values);
+
+	void saveToHDF5(Group * group, string name, arma::vec * values);
+
+	void saveToHDF5(Group * group, string name, arma::fvec * values);
+
+	void saveToHDF5(Group * group, string name, arma::mat * values);
+
+	void saveToHDF5(Group * group, string name, arma::fmat * values);
 
 
+	void saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it);
 
-void saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int IT);
+	void saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it);
 
-void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int IT);
 
-void saveFieldsVariables(const simulationParameters * params, threeDimensional::fields * EB, const characteristicScales * CS, const int IT);
+	void saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int it);
 
-void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
+	void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it);
+
+	void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
 
 public:
 
-HDF(simulationParameters * params, fundamentalScales * FS, vector<T> * IONS);
+	HDF(simulationParameters * params, fundamentalScales * FS, vector<IT> * IONS);
 
-void saveOutputs(const simulationParameters * params, const vector<ionSpecies> * IONS_OUT, fields * EB, const characteristicScales * CS, const int IT, double totalTime);
-
+	void saveOutputs(const simulationParameters * params, const vector<IT> * IONS_OUT, FT * EB, const characteristicScales * CS, const int it, double totalTime);
 };
 
 

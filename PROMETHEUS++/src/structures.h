@@ -28,18 +28,6 @@
 #include<omp.h>
 #include "mpi.h"
 
-#ifdef ONED
-using namespace oneDimensional;
-#endif
-
-#ifdef TWOD
-using namespace twoDimensional;
-#endif
-
-#ifdef THREED
-using namespace threeDimensional;
-#endif
-
 #define float_zero 1E-7
 #define double_zero 1E-15
 
@@ -119,6 +107,8 @@ struct meshParams{
 	double LX;		// Size of simulation domain along x-axis
 	double LY;		// Size of simulation domain along x-axis
 	double LZ;		// Size of simulation domain along x-axis
+
+	int SPLIT_DIRECTION;
 };
 
 

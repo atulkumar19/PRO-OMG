@@ -53,7 +53,7 @@ void GENERAL_FUNCTIONS::bCastTimestep(simulationParameters * params, int logicVa
 
 }
 
-void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const meshParams *mesh, const characteristicScales * CS, const vector<ionSpecies> * IONS){
+void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const meshParams *mesh, const characteristicScales * CS, const vector<oneDimensional::ionSpecies> * IONS){
 
 /*	#ifdef ONED
 	double Cmax(1);
@@ -136,7 +136,7 @@ void GENERAL_FUNCTIONS::checkStability(simulationParameters * params, const mesh
 
 }
 
-void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *mesh, characteristicScales * CS, vector<ionSpecies> * IONS, fields * EB, int IT){
+void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *mesh, characteristicScales * CS, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB, int IT){
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){//Iteration over the ions' species
 		int NSP(IONS->at(ii).NSP);

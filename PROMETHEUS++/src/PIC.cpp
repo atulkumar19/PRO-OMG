@@ -41,52 +41,6 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceMat(const simulation
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_BcastBulkVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
-
-	arma::vec bufSend = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
-	arma::vec bufRecv = zeros(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
-
-	MPI_ARMA_VEC mpi_n(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS+2);
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
-	//x-component
-	bufSend = IONS->nv.X;
-	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
-		IONS->nv.X += bufRecv;
-		bufSend = bufRecv;
-	}
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
-	//x-component
-	bufSend = IONS->nv.Y;
-	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
-		IONS->nv.Y += bufRecv;
-		bufSend = bufRecv;
-	}
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
-	//x-component
-	bufSend = IONS->nv.Z;
-	for(int ii=0;ii<params->mpi.NUMBER_MPI_DOMAINS-1;ii++){
-		MPI_Sendrecv(bufSend.memptr(), 1, mpi_n.type, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, bufRecv.memptr(), 1, mpi_n.type, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
-		IONS->nv.Z += bufRecv;
-		bufSend = bufRecv;
-	}
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-}
-
-
-template <class IT, class FT> void PIC<IT,FT>::MPI_BcastBulkVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-
-}
-
-
 template <class IT, class FT> void PIC<IT,FT>::MPI_AllgatherField(const simulationParameters * params, vfield_vec * field){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -327,6 +281,10 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NSP(IONS->NSP);//number of superparticles
+
+	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | NSP: " << NSP << " | RNSP: " << IONS->wxc.n_elem << endl;
+	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->wxc.n_elem << " | " << IONS->wxr.n_elem << " | " << IONS->wxl.n_elem << " | " << IONS->wyc.n_elem << " | " << IONS->wyr.n_elem << " | " << IONS->wyl.n_elem << endl;
+	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->meshNode.n_rows << " | " << IONS->X.n_rows << endl;
 
 	arma::vec X = zeros(NSP);
 	arma::vec Y = zeros(NSP);
@@ -770,13 +728,128 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 
 		extrapolateIonVelocity(params, &IONS->at(ii));
 
-		PIC::MPI_BcastBulkVelocity(params, &IONS->at(ii));
+		// Reduce operation for including contribution of bulk velocity of all MPIs
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.X);
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Z);
 
 
 		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
 			smooth(&IONS->at(ii).nv, params->smoothingParameter);
 
 	}//structure to iterate over all the ion species.
+
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	// restoreVector(&EB->E.X);
+	// restoreVector(&EB->E.Y);
+	// restoreVector(&EB->E.Z);
+
+	// restoreVector(&EB->B.X);
+	// restoreVector(&EB->B.Y);
+	// restoreVector(&EB->B.Z);
+	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+	/*
+	MPI_AllgatherField(params, &EB->E);
+	MPI_AllgatherField(params, &EB->B);
+
+	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	forwardPBC_1D(&EB->E.X);
+	forwardPBC_1D(&EB->E.Y);
+	forwardPBC_1D(&EB->E.Z);
+
+	forwardPBC_1D(&EB->B.X);
+	forwardPBC_1D(&EB->B.Y);
+	forwardPBC_1D(&EB->B.Z);
+	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+
+	int NX(EB->E.X.n_elem);
+
+	oneDimensional::fields EB_(NX); // Electromagnetic fields computed in a single grid, where the densities and bulk velocities are known
+
+	EB_.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
+	EB_.E.Y.subvec(1,NX-2) = EB->E.Y.subvec(1,NX-2);
+	EB_.E.Z.subvec(1,NX-2) = EB->E.Z.subvec(1,NX-2);
+
+	EB_.B.X.subvec(1,NX-2) = EB->B.X.subvec(1,NX-2);
+	EB_.B.Y.subvec(1,NX-2) = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) );
+	EB_.B.Z.subvec(1,NX-2) = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) );
+
+	forwardPBC_1D(&EB_.E.X);
+	forwardPBC_1D(&EB_.E.Y);
+	forwardPBC_1D(&EB_.E.Z);
+
+	forwardPBC_1D(&EB_.B.X);
+	forwardPBC_1D(&EB_.B.Y);
+	forwardPBC_1D(&EB_.B.Z);
+
+	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
+		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
+		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
+
+		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
+
+		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
+		int NSP(IONS->at(ii).NSP);
+		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
+		arma::vec gp(IONS->at(ii).NSP);
+		arma::vec sigma(IONS->at(ii).NSP);
+		arma::vec us(IONS->at(ii).NSP);
+		arma::vec s(IONS->at(ii).NSP);
+		arma::mat U(IONS->at(ii).NSP, 3);
+		arma::mat VxB(IONS->at(ii).NSP, 3);
+		arma::mat tau(IONS->at(ii).NSP, 3);
+		arma::mat up(IONS->at(ii).NSP, 3);
+		arma::mat t(IONS->at(ii).NSP, 3);
+		arma::mat upxt(IONS->at(ii).NSP, 3);
+
+		crossProduct(&IONS->at(ii).V, &Bp, &VxB);//VxB
+
+		#pragma omp parallel shared(IONS, Ep, Bp, U, gp, sigma, us, s, VxB, tau, up, t, upxt) firstprivate(A, NSP)
+		{
+			#pragma omp for
+			for(int ip=0;ip<NSP;ip++){
+				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
+				U.row(ip) = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+
+				U.row(ip) += 0.5*A*(Ep.row(ip) + VxB.row(ip)); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
+				tau.row(ip) = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+				up.row(ip) = U.row(ip) + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+				gp(ip) = sqrt( 1.0 + dot(up.row(ip), up.row(ip))/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+				sigma(ip) = gp(ip)*gp(ip) - dot(tau.row(ip), tau.row(ip)); // sigma = gammap^2 - tau*tau';
+				us(ip) = dot(up.row(ip), tau.row(ip))/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( dot(tau.row(ip), tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+				t.row(ip) = tau.row(ip)/IONS->at(ii).g(ip); 			// t = tau/gamma;
+				s(ip) = 1.0/( 1.0 + dot(t.row(ip), t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
+			}
+
+			#pragma omp critical
+			crossProduct(&up, &t, &upxt);
+
+			#pragma omp for
+			for(int ip=0;ip<NSP;ip++){
+				U.row(ip) = s(ip)*( up.row(ip) + dot(up.row(ip), t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
+				IONS->at(ii).V.row(ip) = U.row(ip)/IONS->at(ii).g(ip);	// V = U_L/gamma;
+			}
+		} // End of parallel region
+
+		extrapolateIonVelocity(params, &IONS->at(ii));
+
+		// Reduce operation for including contribution of bulk velocity of all MPIs
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.X);
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Z);
+
+
+		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
+			smooth(&IONS->at(ii).nv, params->smoothingParameter);
+
+	}//structure to iterate over all the ion species.
+	*/
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	// restoreVector(&EB->E.X);
@@ -862,4 +935,4 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 
 
 template class PIC<oneDimensional::ionSpecies, oneDimensional::fields>;
-//template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;
+template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;

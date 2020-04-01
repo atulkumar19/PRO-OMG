@@ -31,11 +31,15 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
     // GENERAL_FUNCTIONS genFun;
 
     // Repeat 3 times
-    for(int tt=0;tt<3;tt++){
-        ionsDynamics.advanceIonsPosition(params, IONS, 0);
+    //for(int tt=0;tt<3;tt++){
+    //    ionsDynamics.advanceIonsPosition(params, IONS, 0);
 
-//*** @tomodify        ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
-    }
+    //    ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
+    //}
+
+    ionsDynamics.advanceIonsPosition(params, IONS, 0);
+
+    ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
 
     MPI_Barrier(params->mpi.MPI_TOPO);
     MPI_Abort(params->mpi.MPI_TOPO,-1000);

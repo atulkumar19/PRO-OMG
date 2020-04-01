@@ -90,6 +90,16 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 			// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | COORDS: " << params->mpi.MPI_CART_COORDS_2D[0] << " " << params->mpi.MPI_CART_COORDS_2D[1] << endl; //*** @todelete
 		}
 
+		for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
+			int * COORDS = new int[2*params->mpi.NUMBER_MPI_DOMAINS];
+
+			MPI_Allgather(&params->mpi.MPI_CART_COORDS_2D, 2, MPI_INT, COORDS, 2, MPI_INT, params->mpi.MPI_TOPO);
+
+			params->mpi.MPI_CART_COORDS.push_back(new int[2]);
+			*(params->mpi.MPI_CART_COORDS.at(mpis)) = *(COORDS + 2*mpis);
+			*(params->mpi.MPI_CART_COORDS.at(mpis) + 1) = *(COORDS + 2*mpis + 1);
+		}
+
 		src = params->mpi.MPI_DOMAIN_NUMBER_CART;
 		MPI_Cart_shift(params->mpi.MPI_TOPO, 0, 1, &src, &params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART);
 

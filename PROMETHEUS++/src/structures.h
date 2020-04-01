@@ -60,6 +60,7 @@ struct mpiParams{
 
 	int MPI_CART_COORDS_1D[1];
 	int MPI_CART_COORDS_2D[2];
+	std::vector<int *> MPI_CART_COORDS;
 
 	int MPI_DOMAIN_NUMBER_CART;
 	int LEFT_MPI_DOMAIN_NUMBER_CART;

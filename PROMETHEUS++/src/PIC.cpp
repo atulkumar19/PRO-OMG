@@ -41,26 +41,71 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceMat(const simulation
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * field){
+template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvbuf(params->mesh.NX_IN_SIM);
 	arma::vec sendbuf(params->mesh.NX_PER_MPI);
 
 	//Allgather for x-component
-	sendbuf = field->X.subvec(iIndex, fIndex);
+	sendbuf = vfield->X.subvec(iIndex, fIndex);
 	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	field->X.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+	vfield->X.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
 
 	//Allgather for y-component
-	sendbuf = field->Y.subvec(iIndex, fIndex);
+	sendbuf = vfield->Y.subvec(iIndex, fIndex);
 	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	field->Y.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+	vfield->Y.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
 
 	//Allgather for z-component
-	sendbuf = field->Z.subvec(iIndex, fIndex);
+	sendbuf = vfield->Z.subvec(iIndex, fIndex);
 	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	field->Z.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+	vfield->Z.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
+	arma::mat A = zeros(params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
+
+	for (int ii=0; ii<params->mesh.NY_PER_MPI; ii++){
+		for (int jj=0; jj<params->mesh.NX_PER_MPI; jj++){
+			A(jj,ii) = (jj+1) + (ii)*params->mesh.NX_PER_MPI + params->mpi.MPI_DOMAIN_NUMBER_CART*params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI;
+		}
+	}
+
+	if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
+		A.print("A");
+
+
+	unsigned int iIndex = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART;
+	unsigned int fIndex = params->mesh.NX_PER_MPI*params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1) - 1;
+
+	arma::vec recvbuf = zeros(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);
+
+	//Allgather for x-component
+	sendbuf = vectorise(A);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+
+	arma::mat C = zeros(params->mesh.NX_IN_SIM, params->mesh.NY_IN_SIM);
+
+	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
+		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
+		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NX_PER_MPI*(mpis+1) - 1;
+
+		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI;
+		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI - 1;
+		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NX_PER_MPI;
+		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NX_PER_MPI - 1;
+
+		if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
+			cout << "MPI: " << mpis << " | ir: " << ir << " | fr: " << fr << " | ic: " << ic << " | fc: " << fc << endl;
+
+		C.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
+	}
+
+	if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
+		C.print("C");
 }
 
 
@@ -75,6 +120,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervec(const simulation
 	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 	field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
 }
+
 
 // * * * Ghost contributions * * *
 template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma::vec * v){
@@ -753,6 +799,9 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 
 
 template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+	MPI_Allgathervfield_mat(params, &EB->E);
+
+
 	/*
 	MPI_AllgatherField(params, &EB->E);
 	MPI_AllgatherField(params, &EB->B);

@@ -268,6 +268,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
         params->mesh.NZ_IN_SIM = 1;
         params->mesh.NZ_PER_MPI = 1;
+
+        params->mesh.NUM_NODES_PER_MPI = params->mesh.NX_PER_MPI;
+        params->mesh.NUM_NODES_IN_SIM = params->mesh.NX_IN_SIM;
     }else{
         if ((fmod(NX, 2.0) > 0.0) || (fmod(NY, 2.0) > 0.0)){
             MPI_Barrier(params->mpi.MPI_TOPO);
@@ -294,6 +297,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
         params->mesh.NZ_IN_SIM = 1;
         params->mesh.NZ_PER_MPI = 1;
+
+        params->mesh.NUM_NODES_PER_MPI = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI;
+        params->mesh.NUM_NODES_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
     }
 
 

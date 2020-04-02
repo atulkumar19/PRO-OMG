@@ -101,6 +101,9 @@ struct meshParams{
 	int NY_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 	int NZ_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 
+	int NUM_NODES_IN_SIM; // Number of mesh nodes in the entire simulation domain (no ghost nodes considered)
+	int NUM_NODES_PER_MPI; // Number of mesh nodes in each MPI process (no ghost nodes considered)
+
 	double DX;
 	double DY;
 	double DZ;

@@ -77,6 +77,11 @@ protected:
 	void include4GhostsContributions(arma::mat * m);
 
 
+	void computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G);
+
+	void computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G);
+
+
 	void smooth(arma::vec * v, double as);
 
 	void smooth(arma::mat * m, double as);

@@ -172,6 +172,23 @@ template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma:
 // * * * Ghost contributions * * *
 
 
+template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G){
+	int NX = F->E.X.n_elem;
+
+	G->E.X.subvec(1,NX-2) = 0.5*( F->E.X.subvec(1,NX-2) + F->E.X.subvec(0,NX-3) );
+	G->E.Y.subvec(1,NX-2) = F->E.Y.subvec(1,NX-2);
+	G->E.Z.subvec(1,NX-2) = F->E.Z.subvec(1,NX-2);
+
+	G->B.X.subvec(1,NX-2) = F->B.X.subvec(1,NX-2);
+	G->B.Y.subvec(1,NX-2) = 0.5*( F->B.Y.subvec(1,NX-2) + F->B.Y.subvec(0,NX-3) );
+	G->B.Z.subvec(1,NX-2) = 0.5*( F->B.Z.subvec(1,NX-2) + F->B.Z.subvec(0,NX-3) );
+}
+
+template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
+
+}
+
+
 
 // * * * Smoothing * * *
 
@@ -184,7 +201,7 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(arma::vec * v, double as){
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = v->subvec(1, NX-2);
 
-	forwardPBC_1D(&b);
+	fillGhosts(&b);
 
 	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
@@ -204,7 +221,7 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(arma::mat * m, double as){
 	// Step 1: Averaging
 	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);
 
-	forwardPBC_2D(&b);
+	fillGhosts(&b);
 
 	b.submat(1,1,NX-2,NY-2) = wc*b.submat(1,1,NX-2,NY-2) + \
 								ws*b.submat(2,1,NX-1,NY-2) + ws*b.submat(0,1,NX-3,NY-2) + \
@@ -227,7 +244,7 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = vf->X.subvec(1, NX-2);
 
-	forwardPBC_1D(&b);
+	fillGhosts(&b);
 
 	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
@@ -239,7 +256,7 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = vf->Y.subvec(1, NX-2);
 
-	forwardPBC_1D(&b);
+	fillGhosts(&b);
 
 	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
@@ -251,7 +268,7 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = vf->Z.subvec(1, NX-2);
 
-	forwardPBC_1D(&b);
+	fillGhosts(&b);
 
 	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
@@ -525,7 +542,7 @@ template <class IT, class FT> void PIC<IT,FT>::test(const simulationParameters *
 	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
 		m.print("Ghosts");
 
-	forwardPBC_2D(&m);
+	fillGhosts(&m);
 
 	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
 		m.print("PBC");
@@ -711,34 +728,14 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 	MPI_Allgathervfield_vec(params, &EB->B);
 
 	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	forwardPBC_1D(&EB->E.X);
-	forwardPBC_1D(&EB->E.Y);
-	forwardPBC_1D(&EB->E.Z);
-
-	forwardPBC_1D(&EB->B.X);
-	forwardPBC_1D(&EB->B.Y);
-	forwardPBC_1D(&EB->B.Z);
+	fillGhosts(EB);
 	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
-	int NX(EB->E.X.n_elem);
+	oneDimensional::fields EB_(params->mesh.NX_IN_SIM + 2);
 
-	oneDimensional::fields EB_(NX); // Electromagnetic fields computed in a single grid, where the densities and bulk velocities are known
+	computeFieldsOnNonStaggeredGrid(EB,&EB_);
 
-	EB_.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
-	EB_.E.Y.subvec(1,NX-2) = EB->E.Y.subvec(1,NX-2);
-	EB_.E.Z.subvec(1,NX-2) = EB->E.Z.subvec(1,NX-2);
-
-	EB_.B.X.subvec(1,NX-2) = EB->B.X.subvec(1,NX-2);
-	EB_.B.Y.subvec(1,NX-2) = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) );
-	EB_.B.Z.subvec(1,NX-2) = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) );
-
-	forwardPBC_1D(&EB_.E.X);
-	forwardPBC_1D(&EB_.E.Y);
-	forwardPBC_1D(&EB_.E.Z);
-
-	forwardPBC_1D(&EB_.B.X);
-	forwardPBC_1D(&EB_.B.Y);
-	forwardPBC_1D(&EB_.B.Z);
+	fillGhosts(&EB_);
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
@@ -803,15 +800,7 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 
 	}//structure to iterate over all the ion species.
 
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	// restoreVector(&EB->E.X);
-	// restoreVector(&EB->E.Y);
-	// restoreVector(&EB->E.Z);
-
-	// restoreVector(&EB->B.X);
-	// restoreVector(&EB->B.Y);
-	// restoreVector(&EB->B.Z);
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
+	// Ghosts cells might be set to zero if needed, but before saving to HDF5 ghost cells need to be filled again.
 
 }
 
@@ -820,41 +809,17 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 	MPI_Allgathervfield_mat(params, &EB->E);
 	MPI_Allgathervfield_mat(params, &EB->B);
 
-
-	/*
-	MPI_AllgatherField(params, &EB->E);
-	MPI_AllgatherField(params, &EB->B);
-
 	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	forwardPBC_1D(&EB->E.X);
-	forwardPBC_1D(&EB->E.Y);
-	forwardPBC_1D(&EB->E.Z);
-
-	forwardPBC_1D(&EB->B.X);
-	forwardPBC_1D(&EB->B.Y);
-	forwardPBC_1D(&EB->B.Z);
+	fillGhosts(EB);
 	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
-	int NX(EB->E.X.n_elem);
+	twoDimensional::fields EB_(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
 
-	oneDimensional::fields EB_(NX); // Electromagnetic fields computed in a single grid, where the densities and bulk velocities are known
+	computeFieldsOnNonStaggeredGrid(EB,&EB_);
 
-	EB_.E.X.subvec(1,NX-2) = 0.5*( EB->E.X.subvec(1,NX-2) + EB->E.X.subvec(0,NX-3) );
-	EB_.E.Y.subvec(1,NX-2) = EB->E.Y.subvec(1,NX-2);
-	EB_.E.Z.subvec(1,NX-2) = EB->E.Z.subvec(1,NX-2);
+	fillGhosts(&EB_);
 
-	EB_.B.X.subvec(1,NX-2) = EB->B.X.subvec(1,NX-2);
-	EB_.B.Y.subvec(1,NX-2) = 0.5*( EB->B.Y.subvec(1,NX-2) + EB->B.Y.subvec(0,NX-3) );
-	EB_.B.Z.subvec(1,NX-2) = 0.5*( EB->B.Z.subvec(1,NX-2) + EB->B.Z.subvec(0,NX-3) );
-
-	forwardPBC_1D(&EB_.E.X);
-	forwardPBC_1D(&EB_.E.Y);
-	forwardPBC_1D(&EB_.E.Z);
-
-	forwardPBC_1D(&EB_.B.X);
-	forwardPBC_1D(&EB_.B.Y);
-	forwardPBC_1D(&EB_.B.Z);
-
+/*
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
@@ -920,13 +885,13 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 	*/
 
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	// restoreVector(&EB->E.X);
-	// restoreVector(&EB->E.Y);
-	// restoreVector(&EB->E.Z);
+	// setGhostsToZero(&EB->E.X);
+	// setGhostsToZero(&EB->E.Y);
+	// setGhostsToZero(&EB->E.Z);
 
-	// restoreVector(&EB->B.X);
-	// restoreVector(&EB->B.Y);
-	// restoreVector(&EB->B.Z);
+	// setGhostsToZero(&EB->B.X);
+	// setGhostsToZero(&EB->B.Y);
+	// setGhostsToZero(&EB->B.Z);
 	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 
 }

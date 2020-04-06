@@ -75,7 +75,6 @@ emf.o	\
 generalFunctions.o	\
 types.o	\
 outputHDF5.o	\
-alfvenic.o	\
 mpi_main.o	\
 randomStart.o	\
 quietStart.o)

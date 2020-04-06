@@ -227,18 +227,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
-	params->loadModes = (unsigned int)std::stoi( parametersStringMap["loadModes"] );
-
-	params->numberOfAlfvenicModes = (unsigned int)std::stoi( parametersStringMap["numberOfAlfvenicModes"] );
-
-	params->numberOfTestModes = (unsigned int)std::stoi( parametersStringMap["numberOfTestModes"] );
-
-	params->maxAngle = std::stod( parametersStringMap["maxAngle"] );
-
-	params->shuffleModes = (unsigned int)std::stoi( parametersStringMap["shuffleModes"] );
-
-	params->fracMagEnerInj = std::stod( parametersStringMap["fracMagEnerInj"] );
-
 	params->BGP.ne = std::stod( parametersStringMap["ne"] );
 
 	params->loadFields = std::stoi( parametersStringMap["loadFields"] );

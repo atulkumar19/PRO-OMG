@@ -160,13 +160,13 @@ void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *m
 		}//end of the parallel section
 	}//Iteration over the ions' species
 
-	forwardPBC_1D(&EB->E.X);
-	forwardPBC_1D(&EB->E.Y);
-	forwardPBC_1D(&EB->E.Z);
+	fillGhosts(&EB->E.X);
+	fillGhosts(&EB->E.Y);
+	fillGhosts(&EB->E.Z);
 
-	forwardPBC_1D(&EB->B.X);
-	forwardPBC_1D(&EB->B.Y);
-	forwardPBC_1D(&EB->B.Z);
+	fillGhosts(&EB->B.X);
+	fillGhosts(&EB->B.Y);
+	fillGhosts(&EB->B.Z);
 
 	int NX(EB->E.X.n_elem);
 	vec tmpVector;
@@ -223,13 +223,13 @@ void GENERAL_FUNCTIONS::checkEnergy(simulationParameters * params, meshParams *m
 	params->em->totalEnergy(IT,0) += params->em->B_fieldEnergy(IT,1) + params->em->B_fieldEnergy(IT,2);
 
 
-	restoreVector(&EB->E.X);
-	restoreVector(&EB->E.Y);
-	restoreVector(&EB->E.Z);
+	setGhostsToZero(&EB->E.X);
+	setGhostsToZero(&EB->E.Y);
+	setGhostsToZero(&EB->E.Z);
 
-	restoreVector(&EB->B.X);
-	restoreVector(&EB->B.Y);
-	restoreVector(&EB->B.Z);
+	setGhostsToZero(&EB->B.X);
+	setGhostsToZero(&EB->B.Y);
+	setGhostsToZero(&EB->B.Z);
 
 	if( (IT+1) == params->transient ){//IT == params->transient
 		//params->em->totalEnergy.col(1).fill( mean(params->em->totalEnergy.col(0).subvec(0,params->transient-1)) );

@@ -757,13 +757,13 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	try{
-		// forwardPBC_1D(&EB->E.X);
-		// forwardPBC_1D(&EB->E.Y);
-		// forwardPBC_1D(&EB->E.Z);
+		// fillGhosts(&EB->E.X);
+		// fillGhosts(&EB->E.Y);
+		// fillGhosts(&EB->E.Z);
 
-		// forwardPBC_1D(&EB->B.X);
-		// forwardPBC_1D(&EB->B.Y);
-		// forwardPBC_1D(&EB->B.Z);
+		// fillGhosts(&EB->B.X);
+		// fillGhosts(&EB->B.Y);
+		// fillGhosts(&EB->B.Z);
 
 		string name;
 		string path;
@@ -895,13 +895,13 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 		error.printError();
     }
 
-	restoreVector(&EB->E.X);
-	restoreVector(&EB->E.Y);
-	restoreVector(&EB->E.Z);
+	setGhostsToZero(&EB->E.X);
+	setGhostsToZero(&EB->E.Y);
+	setGhostsToZero(&EB->E.Z);
 
-	restoreVector(&EB->B.X);
-	restoreVector(&EB->B.Y);
-	restoreVector(&EB->B.Z);
+	setGhostsToZero(&EB->B.X);
+	setGhostsToZero(&EB->B.Y);
+	setGhostsToZero(&EB->B.Z);
 }
 
 

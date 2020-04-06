@@ -188,14 +188,6 @@ struct simulationParameters{
 
 	energyMonitor * em; // Structure to monitor energy conservation
 
-	// Parameters of Alfven waves' spectrum
-	unsigned int loadModes;
-	unsigned int numberOfAlfvenicModes;//Number of Alfvenic waves for the initial condition
-	unsigned int numberOfTestModes;
-	double maxAngle;
-	double fracMagEnerInj;//Fraction of background magnetic energy injected
-	unsigned int shuffleModes;
-
 	// MPI parameters
 	mpiParams mpi;
 

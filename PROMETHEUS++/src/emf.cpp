@@ -465,11 +465,11 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params, oneDimensional::fie
 	U.zeros();
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-		forwardPBC_1D(&IONS->at(ii).n);
-		forwardPBC_1D(&IONS->at(ii).n_);
-		forwardPBC_1D(&IONS->at(ii).nv.X);
-		forwardPBC_1D(&IONS->at(ii).nv.Y);
-		forwardPBC_1D(&IONS->at(ii).nv.Z);
+		fillGhosts(&IONS->at(ii).n);
+		fillGhosts(&IONS->at(ii).n_);
+		fillGhosts(&IONS->at(ii).nv.X);
+		fillGhosts(&IONS->at(ii).nv.Y);
+		fillGhosts(&IONS->at(ii).nv.Z);
 
 		// Ions density at time level "l + 1/2"
 		// n(l+1/2) = ( n(l+1) + n(l) )/2
@@ -645,11 +645,11 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	U.zeros();
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-			forwardPBC_1D(&IONS->at(ii).n);
-			forwardPBC_1D(&IONS->at(ii).n_);
-			forwardPBC_1D(&IONS->at(ii).nv.X);
-			forwardPBC_1D(&IONS->at(ii).nv.Y);
-			forwardPBC_1D(&IONS->at(ii).nv.Z);
+			fillGhosts(&IONS->at(ii).n);
+			fillGhosts(&IONS->at(ii).n_);
+			fillGhosts(&IONS->at(ii).nv.X);
+			fillGhosts(&IONS->at(ii).nv.Y);
+			fillGhosts(&IONS->at(ii).nv.Z);
 
 			// Electron density at time level "l + 1"
 			ne += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1);
@@ -678,11 +678,11 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	U_.zeros();
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-		forwardPBC_1D(&IONS->at(ii).n_);
-		forwardPBC_1D(&IONS->at(ii).n__);
-		forwardPBC_1D(&IONS->at(ii).nv_.X);
-		forwardPBC_1D(&IONS->at(ii).nv_.Y);
-		forwardPBC_1D(&IONS->at(ii).nv_.Z);
+		fillGhosts(&IONS->at(ii).n_);
+		fillGhosts(&IONS->at(ii).n__);
+		fillGhosts(&IONS->at(ii).nv_.X);
+		fillGhosts(&IONS->at(ii).nv_.Y);
+		fillGhosts(&IONS->at(ii).nv_.Z);
 
 		// Ions density at time level "l - 1/2"
 		// n(l-1/2) = ( n(l) + n(l-1) )/2
@@ -707,10 +707,10 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 		U__.fill(0.0);
 
 		for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-			forwardPBC_1D(&IONS->at(ii).n__);
-			forwardPBC_1D(&IONS->at(ii).nv__.X);
-			forwardPBC_1D(&IONS->at(ii).nv__.Y);
-			forwardPBC_1D(&IONS->at(ii).nv__.Z);
+			fillGhosts(&IONS->at(ii).n__);
+			fillGhosts(&IONS->at(ii).nv__.X);
+			fillGhosts(&IONS->at(ii).nv__.Y);
+			fillGhosts(&IONS->at(ii).nv__.Z);
 
 			// Ions density at time level "l - 3/2"
 			// n(l-3/2) = ( n(l-1) + n(l-2) )/2

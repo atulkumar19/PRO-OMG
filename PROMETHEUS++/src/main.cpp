@@ -74,21 +74,12 @@ int main(int argc, char* argv[]){
 
 	HDF<nDimensional::ionSpecies, nDimensional::fields> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
 
-	//*** @tomodify
-	// ALFVENIC alfvenPerturbations(&params, &mesh, &EB, &IONS); // Include Alfvenic perturbations in the initial condition
-
 	units.defineTimeStep(&params, &IONS);
 
 	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
 	units.normalizeVariables(&params, &IONS, &EB, &CS);
 
-	//*** @tomodify
-	// alfvenPerturbations.normalize(&CS);
-
 	/**************** All the quantities below are dimensionless ****************/
-
-	//*** @tomodify
-	// alfvenPerturbations.addPerturbations(&params, &IONS, &EB);
 
 	TIME_STEPPING_METHODS<nDimensional::ionSpecies, nDimensional::fields> timeStepping(&params);
 

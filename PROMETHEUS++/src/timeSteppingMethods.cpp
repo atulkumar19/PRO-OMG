@@ -30,23 +30,19 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
 	PIC<IT,FT> ionsDynamics; // Initializing the PIC class object.
     // GENERAL_FUNCTIONS genFun;
 
-    // Repeat 3 times
-    //for(int tt=0;tt<3;tt++){
-    //    ionsDynamics.advanceIonsPosition(params, IONS, 0);
-
-    //    ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
-    //}
-
     ionsDynamics.advanceIonsPosition(params, IONS, 0);
-
     ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
-
     MPI_Barrier(params->mpi.MPI_TOPO);
     MPI_Abort(params->mpi.MPI_TOPO,-1000);
+/*
+    // Repeat 3 times
+    for(int tt=0;tt<3;tt++){
+        ionsDynamics.advanceIonsPosition(params, IONS, 0);
 
+        ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
+    }
     // Repeat 3 times
 
-/* // @tomodify
     hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 
     t1 = MPI::Wtime();
@@ -84,9 +80,9 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
         }
 
         //*** @tomodiify
-        if( (params->checkStability == 1) && fmod((double)(tt+1), params->rateOfChecking) == 0 ){
-            genFun.checkStability(params, mesh, CS, IONS);
-        }
+        //if( (params->checkStability == 1) && fmod((double)(tt+1), params->rateOfChecking) == 0 ){
+        //    genFun.checkStability(params, mesh, CS, IONS);
+        //}
 
 // This function to monitor energy conservation needs to be implemented in a better way
 //		genFun.checkEnergy(params,mesh,CS,IONS,EB,tt);
@@ -99,8 +95,9 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
             }
         }
     } // Time iterations.
-*/ // @tomodify
+
     // genFun.saveDiagnosticsVariables(params);
+*/
 }
 
 

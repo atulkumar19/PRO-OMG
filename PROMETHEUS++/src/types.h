@@ -188,7 +188,8 @@ public:
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 				// Ions' relativistic gamma factor.
-	arma::ivec meshNode; 		// Ions' position in terms of the index of mesh node
+	arma::ivec mn; 				// Ions' position in terms of the index of mesh node
+	arma::ivec mn_; 				// Ions' position in terms of the index of mesh node
 
 	// Guiding-center variables
 	arma::vec mu; 				// Ions' magnetic moment.
@@ -198,8 +199,10 @@ public:
 	arma::vec wxl;				// Particles' weights w.r.t. the vertices of the grid cells
 	arma::vec wxc;				// Particles' weights w.r.t. the vertices of the grid cells
 	arma::vec wxr;				// Particles' weights w.r.t. the vertices of the grid cells
-	arma::vec wxll;				// Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
-	arma::vec wxrr;				// Particles' weights w.r.t. the vertices of the grid cells. Third-order particle interpolation
+
+	arma::vec wxl_;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxc_;				// Particles' weights w.r.t. the vertices of the grid cells
+	arma::vec wxr_;				// Particles' weights w.r.t. the vertices of the grid cells
 
 	arma::vec n; 				// Ion density at time level "l + 1"
 	arma::vec n_; 				// Ion density at time level "l - 1;
@@ -246,7 +249,8 @@ public:
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 				// Ions' relativistic gamma factor.
-	arma::imat meshNode; 		// Ions' position in terms of the index of mesh node
+	arma::imat mn; 				// Ions' position in terms of the index of mesh node
+	arma::imat mn_; 				// Ions' position in terms of the index of mesh node
 
 	// Guiding-center variables
 	arma::vec mu; 				// Ions' magnetic moment.

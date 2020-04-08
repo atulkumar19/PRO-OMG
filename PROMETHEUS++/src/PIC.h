@@ -121,7 +121,6 @@ protected:
 
 	PIC();
 
-
 	void assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
 	void assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS);

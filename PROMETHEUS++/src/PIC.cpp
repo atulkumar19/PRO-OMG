@@ -171,7 +171,9 @@ template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma:
 
 // * * * Ghost contributions * * *
 
+//! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
 
+//! Linear interpolation is used to calculate the values of the fields in a non-staggered grid.
 template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G){
 	int NX = F->E.X.n_elem;
 
@@ -184,6 +186,9 @@ template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(o
 	G->B.Z.subvec(1,NX-2) = 0.5*( F->B.Z.subvec(1,NX-2) + F->B.Z.subvec(0,NX-3) );
 }
 
+//! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
+
+//! Bilinear interpolation is used to calculate the values of the fields in a non-staggered grid.
 template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
 
 }
@@ -308,12 +313,12 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 	{
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++)
-		IONS->meshNode(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
+		IONS->mn(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
 
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++){
-		if(IONS->meshNode(ii) != params->mesh.NX_IN_SIM){
-			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->meshNode(ii));
+		if(IONS->mn(ii) != params->mesh.NX_IN_SIM){
+			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii));
 		}else{
 			X(ii) = IONS->X(ii,0) - params->mesh.LX;
 		}
@@ -343,7 +348,7 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 	}//End of the parallel region
 
     #ifdef CHECKS_ON
-	if(!IONS->meshNode.is_finite()){
+	if(!IONS->mn.is_finite()){
 		MPI_Abort(params->mpi.MPI_TOPO, -108);
 	}
     #endif
@@ -365,7 +370,7 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 
 	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | NSP: " << NSP << " | RNSP: " << IONS->wxc.n_elem << endl;
 	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->wxc.n_elem << " | " << IONS->wxr.n_elem << " | " << IONS->wxl.n_elem << " | " << IONS->wyc.n_elem << " | " << IONS->wyr.n_elem << " | " << IONS->wyl.n_elem << endl;
-	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->meshNode.n_rows << " | " << IONS->X.n_rows << endl;
+	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->mn.n_rows << " | " << IONS->X.n_rows << endl;
 
 	arma::vec X = zeros(NSP);
 	arma::vec Y = zeros(NSP);
@@ -384,20 +389,20 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 	{
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++){
-		IONS->meshNode(ii,0) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
-		IONS->meshNode(ii,1) = floor((IONS->X(ii,1) + 0.5*params->mesh.DY)/params->mesh.DY);
+		IONS->mn(ii,0) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
+		IONS->mn(ii,1) = floor((IONS->X(ii,1) + 0.5*params->mesh.DY)/params->mesh.DY);
 	}
 
 	#pragma omp for
 	for(int ii=0; ii<NSP; ii++){
-		if(IONS->meshNode(ii,0) != params->mesh.NX_IN_SIM){
-			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->meshNode(ii,0));
+		if(IONS->mn(ii,0) != params->mesh.NX_IN_SIM){
+			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii,0));
 		}else{
 			X(ii) = IONS->X(ii,0) - params->mesh.LX;
 		}
 
-		if(IONS->meshNode(ii,1) != params->mesh.NY_IN_SIM){
-			Y(ii) = IONS->X(ii,1) - params->mesh.nodes.Y(IONS->meshNode(ii,1));
+		if(IONS->mn(ii,1) != params->mesh.NY_IN_SIM){
+			Y(ii) = IONS->X(ii,1) - params->mesh.nodes.Y(IONS->mn(ii,1));
 		}else{
 			Y(ii) = IONS->X(ii,1) - params->mesh.LY;
 		}
@@ -440,7 +445,7 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 	}//End of the parallel region
 
     #ifdef CHECKS_ON
-	if(!IONS->meshNode.is_finite()){
+	if(!IONS->mn.is_finite()){
 		MPI_Abort(params->mpi.MPI_TOPO, -108);
 	}
     #endif
@@ -482,7 +487,7 @@ template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * 
 	{
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->meshNode(ii) + 2;
+			int ix = IONS->mn(ii) + 2;
 
 			nv.X(ix-1) += IONS->wxl(ii)*IONS->V(ii,0);
 			nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
@@ -571,7 +576,7 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 	{
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->meshNode(ii) + 2;
+			int ix = IONS->mn(ii) + 2;
 
 			n(ix-1) += IONS->wxl(ii);
 			n(ix) += IONS->wxc(ii);
@@ -610,8 +615,8 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 	{
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->meshNode(ii,0) + 2;
-			int iy = IONS->meshNode(ii,1) + 2;
+			int ix = IONS->mn(ii,0) + 2;
+			int iy = IONS->mn(ii,1) + 2;
 
 			n(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii);
 			n(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii);
@@ -685,7 +690,7 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simu
 	//that each position is accessed (read/written) by one thread at the time.
 	#pragma omp parallel for shared(NX, NSP, params, IONS, emf, F)
 	for(int ii=0; ii<NSP; ii++){
-		int ix = IONS->meshNode(ii) + 1;
+		int ix = IONS->mn(ii) + 1;
 
 		if(ix == (NX-1)){//For the particles on the right side boundary.
 			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);

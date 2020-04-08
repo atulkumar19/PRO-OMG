@@ -674,7 +674,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 					//Saving ions species density
 					name = "mn";
-					ivec_values = IONS_OUT->at(ii).meshNode;
+					ivec_values = IONS_OUT->at(ii).mn;
 					saveToHDF5(group_ionSpecies, name, &ivec_values);
 					name.clear();
 

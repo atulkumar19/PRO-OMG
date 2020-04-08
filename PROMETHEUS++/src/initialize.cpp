@@ -382,10 +382,16 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);    // Ghost cells are included (+2)
 
     // Setting size and value to zero of arrays for ions' variables
-    IONS->meshNode.zeros(IONS->NSP);
+    IONS->mn.zeros(IONS->NSP);
+    IONS->mn_.zeros(IONS->NSP);
+
     IONS->wxc.zeros(IONS->NSP);
     IONS->wxl.zeros(IONS->NSP);
     IONS->wxr.zeros(IONS->NSP);
+
+    IONS->wxc_.zeros(IONS->NSP);
+    IONS->wxl_.zeros(IONS->NSP);
+    IONS->wxr_.zeros(IONS->NSP);
 
     //Checking the integrity of the initial condition
     if((int)IONS->V.n_elem != (int)(3*IONS->NSP)){
@@ -442,7 +448,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);    // Ghost cells are included (+2)
 
     // Setting size and value to zero of arrays for ions' variables
-    IONS->meshNode.zeros(IONS->NSP, 2);
+    IONS->mn.zeros(IONS->NSP, 2);
+    IONS->mn_.zeros(IONS->NSP, 2);
 
     IONS->wxc.zeros(IONS->NSP);
     IONS->wxl.zeros(IONS->NSP);

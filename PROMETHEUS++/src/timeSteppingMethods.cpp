@@ -29,12 +29,13 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC<IT,FT> ionsDynamics; // Initializing the PIC class object.
     // GENERAL_FUNCTIONS genFun;
-/*
+
     ionsDynamics.advanceIonsPosition(params, IONS, 0);
     ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
     MPI_Barrier(params->mpi.MPI_TOPO);
     MPI_Abort(params->mpi.MPI_TOPO,-1000);
-*/
+    
+/*
     // Repeat 3 times
     for(int tt=0;tt<3;tt++){
         ionsDynamics.advanceIonsPosition(params, IONS, 0);
@@ -97,7 +98,7 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
     } // Time iterations.
 
     // genFun.saveDiagnosticsVariables(params);
-
+*/
 }
 
 
@@ -107,4 +108,4 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::advanceGCIonsAn
 }
 
 template class TIME_STEPPING_METHODS<oneDimensional::ionSpecies, oneDimensional::fields>;
-//template class TIME_STEPPING_METHODS<twoDimensional::ionSpecies, twoDimensional::fields>;
+template class TIME_STEPPING_METHODS<twoDimensional::ionSpecies, twoDimensional::fields>;

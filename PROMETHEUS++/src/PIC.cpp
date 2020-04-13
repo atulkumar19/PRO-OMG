@@ -186,11 +186,22 @@ template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(o
 	G->B.Z.subvec(1,NX-2) = 0.5*( F->B.Z.subvec(1,NX-2) + F->B.Z.subvec(0,NX-3) );
 }
 
+
+
 //! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
 
 //! Bilinear interpolation is used to calculate the values of the fields in a non-staggered grid.
 template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
+	int NX = F->E.X.n_rows;
+	int NY = F->E.X.n_cols;
 
+	G->E.X.submat(1,1,NX-2,NY-2) = 0.5*( F->E.X.submat(0,1,NX-3,NY-2) + F->E.X.submat(1,1,NX-2,NY-2) );
+	G->E.Y.submat(1,1,NX-2,NY-2) = 0.5*( F->E.Y.submat(1,0,NX-2,NY-3) + F->E.Y.submat(1,1,NX-2,NY-2) );
+	G->E.Z.submat(1,1,NX-2,NY-2) = F->E.Z.submat(1,1,NX-2,NY-2);
+
+	G->B.X.submat(1,1,NX-2,NY-2) = 0.5*( F->B.X.submat(1,0,NX-2,NY-3) + F->B.X.submat(1,1,NX-2,NY-2) );
+	G->B.Y.submat(1,1,NX-2,NY-2) = 0.5*( F->B.Y.submat(0,1,NX-3,NY-2) + F->B.Y.submat(1,1,NX-2,NY-2) );
+	G->B.Z.submat(1,1,NX-2,NY-2) = 0.25*( F->B.Z.submat(0,0,NX-3,NY-3) + F->B.Z.submat(1,0,NX-2,NY-3) + F->B.Z.submat(0,1,NX-3,NY-2) + F->B.Z.submat(1,1,NX-2,NY-2) );
 }
 
 
@@ -728,6 +739,63 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields(
 }
 
 
+template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * fields, arma::mat * F){
+	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
+
+//*** @tomodify
+/*
+	int NX =  params->mesh.NX_IN_SIM + 2;//Mesh size along the X axis (considering the gosht cell)
+	int NSP(IONS->NSP);
+
+	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
+	//that each position is accessed (read/written) by one thread at the time.
+	#pragma omp parallel for shared(NX, NSP, params, IONS, emf, F)
+	for(int ii=0; ii<NSP; ii++){
+		int ix = IONS->mn(ii) + 1;
+
+		if(ix == (NX-1)){//For the particles on the right side boundary.
+			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
+			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
+			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
+
+			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
+			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
+			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
+
+			(*F)(ii,0) += IONS->wxr(ii)*emf->X(2);
+			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(2);
+			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(2);
+		}else{
+			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
+			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
+			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
+
+			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
+			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
+			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
+
+			(*F)(ii,0) += IONS->wxr(ii)*emf->X(ix+1);
+			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(ix+1);
+			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(ix+1);
+		}
+	}//End of the parallel region
+*/
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B){
+	interpolateVectorField(params, IONS, &EB->E, E);
+	interpolateVectorField(params, IONS, &EB->B, B);
+}
+
+
 template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
 	MPI_Allgathervfield_vec(params, &EB->E);
 	MPI_Allgathervfield_vec(params, &EB->B);
@@ -824,12 +892,16 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 
 	fillGhosts(&EB_);
 
-/*
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
+		//*** @tomodify
 		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
+
+		//*** @todelete
+		MPI_Barrier(params->mpi.MPI_TOPO);
+	    MPI_Abort(params->mpi.MPI_TOPO,-1500);
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
 		int NSP(IONS->at(ii).NSP);
@@ -875,6 +947,8 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 			}
 		} // End of parallel region
 
+//*** @tomodify
+/*
 		extrapolateIonVelocity(params, &IONS->at(ii));
 
 		// Reduce operation for including contribution of bulk velocity of all MPIs
@@ -885,20 +959,9 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 
 		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
 			smooth(&IONS->at(ii).nv, params->smoothingParameter);
+*/
 
 	}//structure to iterate over all the ion species.
-	*/
-
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-	// setGhostsToZero(&EB->E.X);
-	// setGhostsToZero(&EB->E.Y);
-	// setGhostsToZero(&EB->E.Z);
-
-	// setGhostsToZero(&EB->B.X);
-	// setGhostsToZero(&EB->B.Y);
-	// setGhostsToZero(&EB->B.Z);
-	//The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-
 }
 
 

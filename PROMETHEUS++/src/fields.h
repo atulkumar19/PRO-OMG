@@ -16,8 +16,8 @@
     along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef H_EMF_SOLVER
-#define H_EMF_SOLVER
+#ifndef H_FIELDS_SOLVER
+#define H_FIELDS_SOLVER
 
 #include <iostream>
 #include <cmath>

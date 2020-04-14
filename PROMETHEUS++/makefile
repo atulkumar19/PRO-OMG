@@ -66,12 +66,11 @@ endif
 
 BINARIES = $(addprefix $(OBJ)/,structures.o\
 main.o	\
-timeSteppingMethods.o	\
 PIC.o	\
 initialize.o	\
 units.o	\
 boundaryConditions.o	\
-emf.o	\
+fields.o	\
 generalFunctions.o	\
 types.o	\
 outputHDF5.o	\

@@ -1,4 +1,4 @@
-dimensionality              2
+dimensionality              1
 particleIntegrator          1
 includeElectronInertia      0
 quietStart                  1

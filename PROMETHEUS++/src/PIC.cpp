@@ -141,11 +141,39 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervec(const simulation
 
 
 // * * * Ghost contributions * * *
+template <class IT, class FT> void PIC<IT,FT>::fill4Ghosts(arma::vec * v){
+	int N = v->n_elem;
+
+	v->subvec(N-2,N-1) = v->subvec(2,3);
+	v->subvec(0,1) = v->subvec(N-4,N-3);
+}
+
 template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma::vec * v){
 	int N = v->n_elem;
 
 	v->subvec(2,3) += v->subvec(N-2,N-1);
 	v->subvec(N-4,N-3) += v->subvec(0,1);
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::fill4Ghosts(arma::mat * m){
+	int NX = m->n_rows;
+	int NY = m->n_cols;
+
+	// Sides
+
+	m->submat(NX-2,2,NX-1,NY-3) = m->submat(2,2,3,NY-3); // left size along x-axis
+	m->submat(0,2,1,NY-3) = m->submat(NX-4,2,NX-3,NY-3); // right size along x-axis
+
+	m->submat(2,NY-2,NX-3,NY-1) = m->submat(2,2,NX-3,3); // left size along y-axis
+	m->submat(2,0,NX-3,1) = m->submat(2,NY-4,NX-3,NY-3); // right size along y-axis
+
+	// Corners
+
+	m->submat(NX-2,NY-2,NX-1,NY-1) = m->submat(2,2,3,3); // left x-axis, left y-axis
+	m->submat(0,NY-2,1,NY-1) = m->submat(NX-4,2,NX-3,3); // right x-axis, left y-axis
+	m->submat(NX-2,0,NX-1,1) = m->submat(2,NY-4,3,NY-3); // left x-axis, right y-axis
+	m->submat(0,0,1,1) = m->submat(NX-4,NY-4,NX-3,NY-3); // right x-axis, right y-axis
 }
 
 
@@ -252,49 +280,16 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(arma::mat * m, double as){
 
 
 template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as){
-	int NX(vf->X.n_elem);
-	arma::vec b = zeros(NX);
-	double wc(0.75);
-	double ws(0.125);//weights
-
-	//Step 1: Averaging process
-	b.subvec(1, NX-2) = vf->X.subvec(1, NX-2);
-
-	fillGhosts(&b);
-
-	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(1, NX-2) = (1-as)*vf->X.subvec(1, NX-2) + as*b.subvec(1, NX-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b.subvec(1, NX-2) = vf->Y.subvec(1, NX-2);
-
-	fillGhosts(&b);
-
-	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(1, NX-2) = (1-as)*vf->Y.subvec(1, NX-2) + as*b.subvec(1, NX-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b.subvec(1, NX-2) = vf->Z.subvec(1, NX-2);
-
-	fillGhosts(&b);
-
-	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Z.subvec(1, NX-2) = (1-as)*vf->Z.subvec(1, NX-2) + as*b.subvec(1, NX-2);
+	smooth(&vf->X,as); // x component
+	smooth(&vf->Y,as); // y component
+	smooth(&vf->Z,as); // z component
 }
 
 
 template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_mat * vf, double as){
-
+	smooth(&vf->X,as); // x component
+	smooth(&vf->Y,as); // y component
+	smooth(&vf->Z,as); // z component
 }
 
 // * * * Smoothing * * *
@@ -487,14 +482,13 @@ template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * 
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NC(params->mesh.NX_IN_SIM + 2);//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
 	IONS->nv.zeros(); // Setting to zero the ions' bulk velocity
 
 	vfield_vec nv;
 	nv.zeros(params->mesh.NX_IN_SIM + 4);
 
-	#pragma omp parallel shared(params, IONS, NC) firstprivate(nv)
+	#pragma omp parallel shared(params, IONS) firstprivate(nv)
 	{
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
@@ -531,6 +525,98 @@ template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * 
 
 
 template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+
+	IONS->nv__ = IONS->nv_;
+	IONS->nv_ = IONS->nv;
+
+	eiv(params, IONS);
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
+
+	int NSP(IONS->NSP);
+	IONS->nv.zeros(); // Setting to zero the ions' bulk velocity
+
+	vfield_mat nv;
+	nv.zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4);
+
+	#pragma omp parallel shared(params, IONS) firstprivate(nv)
+	{
+		#pragma omp for
+		for(int ii=0; ii<NSP; ii++){
+			int ix = IONS->mn(ii,0) + 2;
+			int iy = IONS->mn(ii,1) + 2;
+
+			// x component
+			nv.X(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,0);
+			nv.X(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,0);
+			nv.X(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,0);
+
+			nv.X(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,0);
+			nv.X(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,0);
+
+			nv.X(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,0);
+			nv.X(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,0);
+
+			nv.X(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii)*IONS->V(ii,0);
+			nv.X(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,0);
+
+			// y component
+			nv.Y(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,1);
+			nv.Y(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,1);
+			nv.Y(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,1);
+
+			nv.Y(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,1);
+			nv.Y(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,1);
+
+			nv.Y(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,1);
+			nv.Y(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,1);
+
+			nv.Y(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii)*IONS->V(ii,1);
+			nv.Y(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,1);
+
+			// z component
+			nv.Z(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,2);
+			nv.Z(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,2);
+			nv.Z(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,2);
+
+			nv.Z(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,2);
+			nv.Z(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,2);
+
+			nv.Z(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,2);
+			nv.Z(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,2);
+
+			nv.Z(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii)*IONS->V(ii,2);
+			nv.Z(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,2);
+		}
+
+		include4GhostsContributions(&nv.X);
+		include4GhostsContributions(&nv.Y);
+		include4GhostsContributions(&nv.Z);
+
+		#pragma omp critical (update_bulk_velocity)
+		{
+		IONS->nv.X.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += nv.X.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
+		IONS->nv.Y.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += nv.Y.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
+		IONS->nv.Z.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += nv.Z.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
+		}
+
+	}//End of the parallel region
+
+	IONS->nv *= IONS->NCP/(params->mesh.DX*params->mesh.DY);
+}
+
+
+template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 
 	IONS->nv__ = IONS->nv_;
 	IONS->nv_ = IONS->nv;
@@ -684,7 +770,7 @@ template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simul
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * emf, arma::mat * F){
+template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * field, arma::mat * F){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -694,42 +780,39 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simu
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NX =  params->mesh.NX_IN_SIM + 2;//Mesh size along the X axis (considering the gosht cell)
+	int NX =  params->mesh.NX_IN_SIM + 4;//Mesh size along the X axis (considering the gosht cell)
 	int NSP(IONS->NSP);
+
+	arma::vec field_X = zeros(NX);
+	arma::vec field_Y = zeros(NX);
+	arma::vec field_Z = zeros(NX);
+
+	field_X.subvec(1,NX-2) = field->X;
+	field_Y.subvec(1,NX-2) = field->Y;
+	field_Z.subvec(1,NX-2) = field->Z;
+
+	fill4Ghosts(&field_X);
+	fill4Ghosts(&field_Y);
+	fill4Ghosts(&field_Z);
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
-	#pragma omp parallel for shared(NX, NSP, params, IONS, emf, F)
+	#pragma omp parallel for shared(NSP, params, IONS, F, field_X, field_Y, field_Z)
 	for(int ii=0; ii<NSP; ii++){
-		int ix = IONS->mn(ii) + 1;
+		int ix = IONS->mn(ii) + 2;
 
-		if(ix == (NX-1)){//For the particles on the right side boundary.
-			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
-			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
-			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
+		(*F)(ii,0) += IONS->wxl(ii)*field_X(ix-1);
+		(*F)(ii,1) += IONS->wxl(ii)*field_Y(ix-1);
+		(*F)(ii,2) += IONS->wxl(ii)*field_Z(ix-1);
 
-			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
-			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
-			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
+		(*F)(ii,0) += IONS->wxc(ii)*field_X(ix);
+		(*F)(ii,1) += IONS->wxc(ii)*field_Y(ix);
+		(*F)(ii,2) += IONS->wxc(ii)*field_Z(ix);
 
-			(*F)(ii,0) += IONS->wxr(ii)*emf->X(2);
-			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(2);
-			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(2);
-		}else{
-			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
-			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
-			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
-
-			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
-			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
-			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
-
-			(*F)(ii,0) += IONS->wxr(ii)*emf->X(ix+1);
-			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(ix+1);
-			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(ix+1);
-		}
+		(*F)(ii,0) += IONS->wxr(ii)*field_X(ix+1);
+		(*F)(ii,1) += IONS->wxr(ii)*field_Y(ix+1);
+		(*F)(ii,2) += IONS->wxr(ii)*field_Z(ix+1);
 	}//End of the parallel region
-
 }
 
 
@@ -739,7 +822,7 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields(
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * fields, arma::mat * F){
+template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * field, arma::mat * F){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -749,44 +832,72 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simu
 	//wxr = 0.5*(1.5 - abs(x)/H)^2
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
-//*** @tomodify
-/*
-	int NX =  params->mesh.NX_IN_SIM + 2;//Mesh size along the X axis (considering the gosht cell)
+	int NX =  params->mesh.NX_IN_SIM + 4; // Mesh size along the X axis (considering 4 gosht cell)
+	int NY =  params->mesh.NY_IN_SIM + 4; // Mesh size along the Y axis (considering 4 gosht cell)
 	int NSP(IONS->NSP);
+
+	arma::mat field_X = zeros(NX,NY);
+	arma::mat field_Y = zeros(NX,NY);
+	arma::mat field_Z = zeros(NX,NY);
+
+	field_X.submat(1,1,NX-2,NY-2) = field->X;
+	field_Y.submat(1,1,NX-2,NY-2) = field->Y;
+	field_Z.submat(1,1,NX-2,NY-2) = field->Z;
+
+	fill4Ghosts(&field_X);
+	fill4Ghosts(&field_Y);
+	fill4Ghosts(&field_Z);
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
-	#pragma omp parallel for shared(NX, NSP, params, IONS, emf, F)
+	#pragma omp parallel for shared(NSP, params, IONS, F, field_X, field_Y, field_Z)
 	for(int ii=0; ii<NSP; ii++){
-		int ix = IONS->mn(ii) + 1;
+		int ix = IONS->mn(ii,0) + 2;
+		int iy = IONS->mn(ii,1) + 2;
 
-		if(ix == (NX-1)){//For the particles on the right side boundary.
-			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
-			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
-			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
+		// x component
+		(*F)(ii,0) += IONS->wxl(ii)*IONS->wyc(ii)*field_X(ix-1,iy);
+		(*F)(ii,0) += IONS->wxc(ii)*IONS->wyc(ii)*field_X(ix,iy);
+		(*F)(ii,0) += IONS->wxr(ii)*IONS->wyc(ii)*field_X(ix+1,iy);
 
-			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
-			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
-			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
+		(*F)(ii,0) += IONS->wxc(ii)*IONS->wyl(ii)*field_X(ix,iy-1);
+		(*F)(ii,0) += IONS->wxc(ii)*IONS->wyr(ii)*field_X(ix,iy+1);
 
-			(*F)(ii,0) += IONS->wxr(ii)*emf->X(2);
-			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(2);
-			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(2);
-		}else{
-			(*F)(ii,0) += IONS->wxl(ii)*emf->X(ix-1);
-			(*F)(ii,1) += IONS->wxl(ii)*emf->Y(ix-1);
-			(*F)(ii,2) += IONS->wxl(ii)*emf->Z(ix-1);
+		(*F)(ii,0) += IONS->wxr(ii)*IONS->wyl(ii)*field_X(ix+1,iy-1);
+		(*F)(ii,0) += IONS->wxr(ii)*IONS->wyr(ii)*field_X(ix+1,iy+1);
 
-			(*F)(ii,0) += IONS->wxc(ii)*emf->X(ix);
-			(*F)(ii,1) += IONS->wxc(ii)*emf->Y(ix);
-			(*F)(ii,2) += IONS->wxc(ii)*emf->Z(ix);
+		(*F)(ii,0) += IONS->wxl(ii)*IONS->wyl(ii)*field_X(ix-1,iy-1);
+		(*F)(ii,0) += IONS->wxl(ii)*IONS->wyr(ii)*field_X(ix-1,iy+1);
 
-			(*F)(ii,0) += IONS->wxr(ii)*emf->X(ix+1);
-			(*F)(ii,1) += IONS->wxr(ii)*emf->Y(ix+1);
-			(*F)(ii,2) += IONS->wxr(ii)*emf->Z(ix+1);
-		}
+		// y component
+		(*F)(ii,1) += IONS->wxl(ii)*IONS->wyc(ii)*field_Y(ix-1,iy);
+		(*F)(ii,1) += IONS->wxc(ii)*IONS->wyc(ii)*field_Y(ix,iy);
+		(*F)(ii,1) += IONS->wxr(ii)*IONS->wyc(ii)*field_Y(ix+1,iy);
+
+		(*F)(ii,1) += IONS->wxc(ii)*IONS->wyl(ii)*field_Y(ix,iy-1);
+		(*F)(ii,1) += IONS->wxc(ii)*IONS->wyr(ii)*field_Y(ix,iy+1);
+
+		(*F)(ii,1) += IONS->wxr(ii)*IONS->wyl(ii)*field_Y(ix+1,iy-1);
+		(*F)(ii,1) += IONS->wxr(ii)*IONS->wyr(ii)*field_Y(ix+1,iy+1);
+
+		(*F)(ii,1) += IONS->wxl(ii)*IONS->wyl(ii)*field_Y(ix-1,iy-1);
+		(*F)(ii,1) += IONS->wxl(ii)*IONS->wyr(ii)*field_Y(ix-1,iy+1);
+
+		// z component
+		(*F)(ii,2) += IONS->wxl(ii)*IONS->wyc(ii)*field_Z(ix-1,iy);
+		(*F)(ii,2) += IONS->wxc(ii)*IONS->wyc(ii)*field_Z(ix,iy);
+		(*F)(ii,2) += IONS->wxr(ii)*IONS->wyc(ii)*field_Z(ix+1,iy);
+
+		(*F)(ii,2) += IONS->wxc(ii)*IONS->wyl(ii)*field_Z(ix,iy-1);
+		(*F)(ii,2) += IONS->wxc(ii)*IONS->wyr(ii)*field_Z(ix,iy+1);
+
+		(*F)(ii,2) += IONS->wxr(ii)*IONS->wyl(ii)*field_Z(ix+1,iy-1);
+		(*F)(ii,2) += IONS->wxr(ii)*IONS->wyr(ii)*field_Z(ix+1,iy+1);
+
+		(*F)(ii,2) += IONS->wxl(ii)*IONS->wyl(ii)*field_Z(ix-1,iy-1);
+		(*F)(ii,2) += IONS->wxl(ii)*IONS->wyr(ii)*field_Z(ix-1,iy+1);
 	}//End of the parallel region
-*/
+
 }
 
 
@@ -896,12 +1007,7 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
-		//*** @tomodify
 		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
-
-		//*** @todelete
-		MPI_Barrier(params->mpi.MPI_TOPO);
-	    MPI_Abort(params->mpi.MPI_TOPO,-1500);
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
 		int NSP(IONS->at(ii).NSP);
@@ -947,19 +1053,16 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 			}
 		} // End of parallel region
 
-//*** @tomodify
-/*
 		extrapolateIonVelocity(params, &IONS->at(ii));
 
 		// Reduce operation for including contribution of bulk velocity of all MPIs
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.X);
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Z);
+		PIC::MPI_AllreduceMat(params, &IONS->at(ii).nv.X);
+		PIC::MPI_AllreduceMat(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_AllreduceMat(params, &IONS->at(ii).nv.Z);
 
 
 		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
 			smooth(&IONS->at(ii).nv, params->smoothingParameter);
-*/
 
 	}//structure to iterate over all the ion species.
 }

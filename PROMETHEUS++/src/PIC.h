@@ -76,6 +76,10 @@ protected:
 
 	void include4GhostsContributions(arma::mat * m);
 
+	void fill4Ghosts(arma::vec * v);
+
+	void fill4Ghosts(arma::mat * m);
+
 
 	void computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G);
 
@@ -112,11 +116,11 @@ protected:
 	void extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
 
-	void interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * fields, arma::mat * F);
+	void interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * field, arma::mat * F);
 
 	void interpolateElectromagneticFields(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, oneDimensional::fields * EB, arma::mat * E, arma::mat * B);
 
-	void interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * fields, arma::mat * F);
+	void interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * field, arma::mat * F);
 
 	void interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B);
 

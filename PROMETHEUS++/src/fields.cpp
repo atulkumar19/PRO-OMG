@@ -16,7 +16,7 @@
     along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "emf.h"
+#include "fields.h"
 
 EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
 	n_cs = CS->length*CS->density;

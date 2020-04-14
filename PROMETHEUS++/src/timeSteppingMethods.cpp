@@ -29,13 +29,12 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
     EMF_SOLVER fields_solver(params, CS); // Initializing the emf class object.
 	PIC<IT,FT> ionsDynamics; // Initializing the PIC class object.
     // GENERAL_FUNCTIONS genFun;
-
+/*
     ionsDynamics.advanceIonsPosition(params, IONS, 0);
     ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
     MPI_Barrier(params->mpi.MPI_TOPO);
     MPI_Abort(params->mpi.MPI_TOPO,-1000);
-    
-/*
+*/
     // Repeat 3 times
     for(int tt=0;tt<3;tt++){
         ionsDynamics.advanceIonsPosition(params, IONS, 0);
@@ -43,8 +42,8 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
         ionsDynamics.advanceIonsVelocity(params, CS, EB, IONS, 0);
     }
     // Repeat 3 times
-
-    hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
+    //*** @tomodiify
+    // hdfObj->saveOutputs(params, IONS, EB, CS, 0, 0);
 
     t1 = MPI::Wtime();
 
@@ -59,26 +58,28 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
 
         ionsDynamics.advanceIonsPosition(params, IONS, params->DT); // Advance ions' position in time to level X^(N+1).
 
+        //*** @tomodiify
+        // fields_solver.advanceBField(params, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
-        fields_solver.advanceBField(params, EB, IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
-
-        if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
+        //*** @tomodiify
+        // if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
              // Using the Bashford-Adams extrapolation.
-            fields_solver.advanceEFieldWithVelocityExtrapolation(params, EB, IONS, 1);
-        }else{
+        //    fields_solver.advanceEFieldWithVelocityExtrapolation(params, EB, IONS, 1);
+        // }else{
              // Using basic velocity extrapolation.
-            fields_solver.advanceEFieldWithVelocityExtrapolation(params, EB, IONS, 0);
-        }
+        //    fields_solver.advanceEFieldWithVelocityExtrapolation(params, EB, IONS, 0);
+        // }
 
         currentTime += params->DT*CS->time;
 
-        if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
-            vector<oneDimensional::ionSpecies> IONS_OUT = *IONS;
-            // The ions' velocity is advanced in time in order to obtain V^(N+1)
-            ionsDynamics.advanceIonsVelocity(params, CS, EB, &IONS_OUT, params->DT/2);
-            hdfObj->saveOutputs(params, &IONS_OUT, EB, CS, outputIterator+1, currentTime);
-            outputIterator++;
-        }
+        //*** @tomodiify
+        // if(fmod((double)(tt + 1), params->outputCadenceIterations) == 0){
+        //     vector<oneDimensional::ionSpecies> IONS_OUT = *IONS;
+        //     // The ions' velocity is advanced in time in order to obtain V^(N+1)
+        //     ionsDynamics.advanceIonsVelocity(params, CS, EB, &IONS_OUT, params->DT/2);
+        //     hdfObj->saveOutputs(params, &IONS_OUT, EB, CS, outputIterator+1, currentTime);
+        //     outputIterator++;
+        // }
 
         //*** @tomodiify
         //if( (params->checkStability == 1) && fmod((double)(tt+1), params->rateOfChecking) == 0 ){
@@ -98,7 +99,6 @@ template <class IT, class FT> void TIME_STEPPING_METHODS<IT,FT>::TIME_STEPPING_M
     } // Time iterations.
 
     // genFun.saveDiagnosticsVariables(params);
-*/
 }
 
 

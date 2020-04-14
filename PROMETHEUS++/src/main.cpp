@@ -26,12 +26,11 @@
 #include "structures.h"
 #include "initialize.h"
 #include "PIC.h"
-#include "emf.h"
+#include "fields.h"
 #include "units.h"
 #include "generalFunctions.h"
 #include "outputHDF5.h"
 #include "alfvenic.h"
-#include "timeSteppingMethods.h"
 
 #include <omp.h>
 #include "mpi_main.h"
@@ -40,7 +39,8 @@ using namespace std;
 using namespace arma;
 
 int main(int argc, char* argv[]){
-	namespace nDimensional = twoDimensional;
+	namespace nDimensional = oneDimensional;
+	// namespace nDimensional = twoDimensional;
 
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
@@ -81,21 +81,90 @@ int main(int argc, char* argv[]){
 
 	/**************** All the quantities below are dimensionless ****************/
 
-	TIME_STEPPING_METHODS<nDimensional::ionSpecies, nDimensional::fields> timeStepping(&params);
+	// Definition of variables for advancing in time particles and fields.
+	double t1 = 0.0;
+    double t2 = 0.0;
+    double currentTime = 0.0;
+    int outputIterator = 0;
+	int numberOfIterationsForEstimator = 1000;
 
-	switch (params.particleIntegrator){
-		case(1):{
-				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
-				break;
-				}
-		case(2):{
-				timeStepping.advanceGCIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
-				break;
-				}
-		default:{
-				timeStepping.advanceFullOrbitIonsAndMasslessElectrons(&params, &CS, &hdfObj, &IONS, &EB);
-				}
-	}
+	EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
+	PIC<nDimensional::ionSpecies, nDimensional::fields> ionsDynamics; // Initializing the PIC class object.
+    //*** @tomodiify
+	// GENERAL_FUNCTIONS genFun;
+
+    // Repeat 3 times
+    for(int tt=0;tt<3;tt++){
+        ionsDynamics.advanceIonsPosition(&params, &IONS, 0);
+
+        ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
+    }
+    // Repeat 3 times
+
+    //*** @tomodiify
+    hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
+
+    t1 = MPI::Wtime();
+
+    for(int tt=0; tt<params.timeIterations; tt++){ // Time iterations.
+        if(tt == 0){
+			//*** @tomodiify
+            // genFun.checkStability(&params, &mesh, &CS, &IONS);
+
+			ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
+        }else{
+            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT); // Advance ions' velocity V^(N+1/2).
+        }
+
+        ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
+
+        //*** @tomodiify
+        fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+
+        //*** @tomodiify
+        if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
+         	// Using the Bashford-Adams extrapolation.
+        	fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 1);
+        }else{
+			// Using basic velocity extrapolation.
+        	fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 0);
+	    }
+
+        currentTime += params.DT*CS.time;
+
+        //*** @tomodiify
+        if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0){
+			vector<nDimensional::ionSpecies> IONS_OUT = IONS;
+
+            // The ions' velocity is advanced in time in order to obtain V^(N+1)
+            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS_OUT, 0.5*params.DT);
+
+			hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
+
+			outputIterator++;
+        }
+
+        //*** @tomodiify
+        // if( (params.checkStability == 1) && fmod((double)(tt+1), params.rateOfChecking) == 0 ){
+        //	genFun.checkStability(&params, &mesh, &CS, &IONS);
+        // }
+
+		//*** @tomodiify
+		// genFun.checkEnergy(&params, &mesh, &CS, &IONS, &EB, tt);
+
+        if(tt == numberOfIterationsForEstimator){
+            t2 = MPI::Wtime();
+
+			double estimatedSimulationTime = ( (double)params.timeIterations*(t2 - t1)/(double)numberOfIterationsForEstimator )/60.0;
+
+			if(params.mpi.MPI_DOMAIN_NUMBER_CART == 0){
+                cout << "ESTIMATED TIME OF COMPLETION: " << estimatedSimulationTime <<" MINUTES" << endl;
+            }
+        }
+    } // Time iterations.
+
+	//*** @tomodiify
+    // genFun.saveDiagnosticsVariables(&params);
 
 	mpi_main.finalizeCommunications(&params);
 

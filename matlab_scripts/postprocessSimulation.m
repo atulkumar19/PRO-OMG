@@ -36,9 +36,11 @@ ST.time = loadTimeVector(ST);
 
 % GC_test_4(ST);
 
+FO_test_1(ST);
+
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
-FourierAnalysis(ST,'B','z');
+% FourierAnalysis(ST,'B','z');
 
 % FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
@@ -626,6 +628,79 @@ ylabel('$E_z$ [V/m]','Interpreter','latex')
 
 
 end
+
+
+function FO_test_1(ST)
+% Function for testing ExB drift of a GC particle in constant perpendicular
+% electric and magnetic fields.
+NT = int64(ST.numberOfOutputs);
+NSPP = int64(ST.params.ions.numberOfParticleSpecies);
+ND = int64(ST.params.numOfDomains);
+DX = int64(ST.params.geometry.DX);
+
+
+ilabels = {};
+
+for ss=1:NSPP
+    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
+    qi = ST.params.ions.(['spp_' num2str(ss)]).Q;
+    NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
+    NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
+    NPARTICLES = ND*NSP;
+
+    X = zeros(NPARTICLES,NT);
+    V = zeros(NPARTICLES,3,NT);
+
+    for ii=1:NT
+        for dd=1:ND
+            iIndex = NSP*(dd - 1) + 1;
+            fIndex = iIndex + NSP - 1;
+
+            X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
+            V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
+        end
+    end
+
+    ilabels{ss} = ['Species ' num2str(ss)];
+
+    % Time
+    t = ST.time;
+    
+    % Plot test particle position and velocity
+    ii = randi(NPARTICLES);
+    
+    x = squeeze(X(ii,:));
+    v = squeeze(V(ii,:,:));
+
+    fig = figure;
+    subplot(4,1,1)
+    plot(t, x, 'b.')
+    xlabel('Time [s]','interpreter','latex')
+    ylabel('$X(t)$ [m]','interpreter','latex')
+
+    figure(fig)
+    subplot(4,1,2)
+    plot(t, v(1,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_x$ [m/s]','interpreter','latex')
+
+    figure(fig)
+    subplot(4,1,3)
+    plot(t, v(2,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_y$ [m/s]','interpreter','latex')
+
+    figure(fig)
+    subplot(4,1,4)
+    plot(t, v(3,:), 'b.')
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$V_y$ [m/s]','interpreter','latex')
+
+end
+
+
+end
+
 
 
 function FourierAnalysis(ST,field,component)

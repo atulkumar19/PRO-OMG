@@ -250,7 +250,6 @@ public:
 	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 				// Ions' relativistic gamma factor.
 	arma::imat mn; 				// Ions' position in terms of the index of mesh node
-	arma::imat mn_; 				// Ions' position in terms of the index of mesh node
 
 	// Guiding-center variables
 	arma::vec mu; 				// Ions' magnetic moment.

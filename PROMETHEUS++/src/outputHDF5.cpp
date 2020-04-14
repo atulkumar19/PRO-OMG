@@ -138,7 +138,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string 
 }
 
 
-// Function to save an Armadillo vec vector
+// Function to save an Armadillo ivec vector (to a HDF5 file)
 template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, arma::ivec * values){
 	H5std_string nameSpace( name );
 
@@ -153,7 +153,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string 
 }
 
 
-// Function to save an Armadillo vec vector (to a HDF5 group)
+// Function to save an Armadillo ivec vector (to a HDF5 group)
 template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::ivec * values){
 	H5std_string nameSpace( name );
 
@@ -213,6 +213,36 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string 
 }
 
 
+// Function to save an Armadillo imat vector (to a HDF5 file)
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, arma::imat * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[2] = {(hsize_t)values->n_cols, (hsize_t)values->n_rows};
+	DataSpace * dataspace = new DataSpace(2, dims);
+	DataSet * dataset = new DataSet(file->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( values->memptr(), PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
+// Function to save an Armadillo imat vector (to a HDF5 group)
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::imat * values){
+	H5std_string nameSpace( name );
+
+	hsize_t dims[2] = {(hsize_t)values->n_cols, (hsize_t)values->n_rows};
+	DataSpace * dataspace = new DataSpace(2, dims);
+	DataSet * dataset = new DataSet(group->createDataSet( nameSpace, PredType::NATIVE_INT, *dataspace ));
+
+	dataset->write( values->memptr(), PredType::NATIVE_INT);
+
+	delete dataspace;
+	delete dataset;
+}
+
+
 // Function to save an Armadillo vec vector (to a HDF5 group)
 template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string name, arma::mat * values){
 	H5std_string nameSpace( name );
@@ -240,6 +270,40 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string 
 
 	delete dataspace;
 	delete dataset;
+}
+
+
+//! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
+
+//! Linear interpolation is used to calculate the values of the fields in a non-staggered grid.
+template <class IT, class FT> void HDF<IT,FT>::computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G){
+	int NX = F->E.X.n_elem;
+
+	G->E.X.subvec(1,NX-2) = 0.5*( F->E.X.subvec(1,NX-2) + F->E.X.subvec(0,NX-3) );
+	G->E.Y.subvec(1,NX-2) = F->E.Y.subvec(1,NX-2);
+	G->E.Z.subvec(1,NX-2) = F->E.Z.subvec(1,NX-2);
+
+	G->B.X.subvec(1,NX-2) = F->B.X.subvec(1,NX-2);
+	G->B.Y.subvec(1,NX-2) = 0.5*( F->B.Y.subvec(1,NX-2) + F->B.Y.subvec(0,NX-3) );
+	G->B.Z.subvec(1,NX-2) = 0.5*( F->B.Z.subvec(1,NX-2) + F->B.Z.subvec(0,NX-3) );
+}
+
+
+
+//! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
+
+//! Bilinear interpolation is used to calculate the values of the fields in a non-staggered grid.
+template <class IT, class FT> void HDF<IT,FT>::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
+	int NX = F->E.X.n_rows;
+	int NY = F->E.X.n_cols;
+
+	G->E.X.submat(1,1,NX-2,NY-2) = 0.5*( F->E.X.submat(0,1,NX-3,NY-2) + F->E.X.submat(1,1,NX-2,NY-2) );
+	G->E.Y.submat(1,1,NX-2,NY-2) = 0.5*( F->E.Y.submat(1,0,NX-2,NY-3) + F->E.Y.submat(1,1,NX-2,NY-2) );
+	G->E.Z.submat(1,1,NX-2,NY-2) = F->E.Z.submat(1,1,NX-2,NY-2);
+
+	G->B.X.submat(1,1,NX-2,NY-2) = 0.5*( F->B.X.submat(1,0,NX-2,NY-3) + F->B.X.submat(1,1,NX-2,NY-2) );
+	G->B.Y.submat(1,1,NX-2,NY-2) = 0.5*( F->B.Y.submat(0,1,NX-3,NY-2) + F->B.Y.submat(1,1,NX-2,NY-2) );
+	G->B.Z.submat(1,1,NX-2,NY-2) = 0.25*( F->B.Z.submat(0,0,NX-3,NY-3) + F->B.Z.submat(1,0,NX-2,NY-3) + F->B.Z.submat(0,1,NX-3,NY-2) + F->B.Z.submat(1,1,NX-2,NY-2) );
 }
 
 
@@ -542,7 +606,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it){
+template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it){
 
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -585,7 +649,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 		Group * group_ions = new Group( group_iteration->createGroup( "ions" ) );
 		name.clear();
 
-		for(int ii=0;ii<IONS_OUT->size();ii++){//Iterations over the ion species.
+		for(int ii=0; ii<IONS->size(); ii++){//Iterations over the ion species.
 			stringstream ionSpec;
 			ionSpec << (ii+1);
 			name = "spp_" + ionSpec.str();
@@ -598,10 +662,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//Saving the x-axis coordinates
 					name = "X";
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->length*IONS_OUT->at(ii).X.col(0);
+					vec_values = CS->length*IONS->at(ii).X.col(0);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->length*IONS_OUT->at(ii).X.col(0));
+					fvec_values = conv_to<fvec>::from(CS->length*IONS->at(ii).X.col(0));
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -610,10 +674,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 					name = "V";
 					#ifdef HDF5_DOUBLE
-					mat_values = CS->velocity*IONS_OUT->at(ii).V;
+					mat_values = CS->velocity*IONS->at(ii).V;
 					saveToHDF5(group_ionSpecies, name, &mat_values);
 					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from(CS->velocity*IONS_OUT->at(ii).V);
+					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).V);
 					saveToHDF5(group_ionSpecies, name, &fmat_values);
 					#endif
 					name.clear();
@@ -623,10 +687,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//Saving ions species density
 					name = "n";
 					#ifdef HDF5_DOUBLE
-					vec_values = IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length;
+					vec_values = IONS->at(ii).n.subvec(iIndex,fIndex)/CS->length;
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).n.subvec(iIndex,fIndex)/CS->length);
+					fvec_values = conv_to<fvec>::from(IONS->at(ii).n.subvec(iIndex,fIndex)/CS->length);
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -636,10 +700,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//Saving ions species density
 					name = "g";
 					#ifdef HDF5_DOUBLE
-					vec_values = IONS_OUT->at(ii).g;
+					vec_values = IONS->at(ii).g;
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS_OUT->at(ii).g);
+					fvec_values = conv_to<fvec>::from(IONS->at(ii).g);
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -649,10 +713,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//Saving ions species density
 					name = "mu";
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->magneticMoment*IONS_OUT->at(ii).mu;
+					vec_values = CS->magneticMoment*IONS->at(ii).mu;
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->magneticMoment*IONS_OUT->at(ii).mu);
+					fvec_values = conv_to<fvec>::from(CS->magneticMoment*IONS->at(ii).mu);
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -662,10 +726,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//Saving ions species density
 					name = "Ppar";
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->momentum*IONS_OUT->at(ii).Ppar;
+					vec_values = CS->momentum*IONS->at(ii).Ppar;
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from( CS->momentum*IONS_OUT->at(ii).Ppar );
+					fvec_values = conv_to<fvec>::from( CS->momentum*IONS->at(ii).Ppar );
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -674,7 +738,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 					//Saving ions species density
 					name = "mn";
-					ivec_values = IONS_OUT->at(ii).mn;
+					ivec_values = IONS->at(ii).mn;
 					saveToHDF5(group_ionSpecies, name, &ivec_values);
 					name.clear();
 
@@ -685,10 +749,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//x-component species bulk velocity
 					name = "x";
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					vec_values = CS->velocity*IONS->at(ii).nv.X.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.X.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.X.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex));
 					saveToHDF5(group_bulkVelocity, name, &fvec_values);
 					#endif
 					name.clear();
@@ -696,10 +760,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//x-component species bulk velocity
 					name = "y";
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					vec_values = CS->velocity*IONS->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex));
 					saveToHDF5(group_bulkVelocity, name, &fvec_values);
 					#endif
 					name.clear();
@@ -707,10 +771,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					//x-component species bulk velocity
 					name = "z";
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex);
+					vec_values = CS->velocity*IONS->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->velocity*IONS_OUT->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS_OUT->at(ii).n.subvec(iIndex,fIndex));
+					fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex));
 					saveToHDF5(group_bulkVelocity, name, &fvec_values);
 					#endif
 					name.clear();
@@ -742,29 +806,218 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
 		error.printError();
     }
-
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it){
+template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it){
+	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
+	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
+	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NX_PER_MPI + 1;
+	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NX_PER_MPI;
 
+	try{
+		string path;
+		string name;
+		stringstream iteration;
+		stringstream dn;
+
+
+		int int_value;
+		CPP_TYPE cpp_type_value;
+		std::vector<CPP_TYPE> vector_values;
+
+		arma::ivec ivec_values;
+		arma::imat imat_values;
+
+		arma::vec vec_values;
+		arma::fvec fvec_values;
+
+		arma::mat mat_values;
+		arma::fmat fmat_values;
+
+		iteration << it;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
+
+		path = params->PATH + "/HDF5/";
+		name = path + "file_D" + dn.str() + ".h5";
+		const H5std_string	FILE_NAME( name );
+		name.clear();
+
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
+
+		name = "/" + iteration.str();
+		Group * group_iteration = new Group (outputFile->openGroup( name ));
+		name.clear();
+
+		//Ions
+		name = "ions";
+		Group * group_ions = new Group( group_iteration->createGroup( "ions" ) );
+		name.clear();
+
+		for(int ii=0; ii<IONS->size(); ii++){//Iterations over the ion species.
+			stringstream ionSpec;
+			ionSpec << (ii+1);
+			name = "spp_" + ionSpec.str();
+			Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
+			name.clear();
+
+			for(int ov=0; ov<params->outputs_variables.size(); ov++){
+				if(params->outputs_variables.at(ov) == "X"){
+
+					//Saving the x-axis coordinates
+					name = "X";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->length*IONS->at(ii).X.cols(0,1);
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->length*IONS->at(ii).X.cols(0,1) );
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "V"){
+
+					name = "V";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->velocity*IONS->at(ii).V;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).V);
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "n"){
+
+					//Saving ions species density
+					name = "n";
+					#ifdef HDF5_DOUBLE
+					mat_values = IONS->at(ii).n.submat(irow,icol,frow,fcol)/(CS->length*CS->length);
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( IONS->at(ii).n.submat(irow,icol,frow,fcol)/(CS->length*CS->length) );
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "g"){
+
+					name = "g";
+					#ifdef HDF5_DOUBLE
+					vec_values = IONS->at(ii).g;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from( IONS->at(ii).g );
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "mu"){
+
+					name = "mu";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->magneticMoment*IONS->at(ii).mu;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from( CS->magneticMoment*IONS->at(ii).mu );
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "Ppar"){
+
+					name = "Ppar";
+					#ifdef HDF5_DOUBLE
+					vec_values = CS->momentum*IONS->at(ii).Ppar;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from( CS->momentum*IONS->at(ii).Ppar );
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "mn"){
+
+					name = "mn";
+					imat_values = IONS->at(ii).mn;
+					saveToHDF5(group_ionSpecies, name, &imat_values);
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "U"){
+
+					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
+
+					//x-component species bulk velocity
+					name = "x";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->velocity*IONS->at(ii).nv.X.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol);
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.X.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol) );
+					saveToHDF5(group_bulkVelocity, name, &fmat_values);
+					#endif
+					name.clear();
+
+					//y-component species bulk velocity
+					name = "y";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->velocity*IONS->at(ii).nv.Y.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol);
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.Y.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol) );
+					saveToHDF5(group_bulkVelocity, name, &fmat_values);
+					#endif
+					name.clear();
+
+					//z-component species bulk velocity
+					name = "z";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->velocity*IONS->at(ii).nv.Z.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol);
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.Z.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol) );
+					saveToHDF5(group_bulkVelocity, name, &fmat_values);
+					#endif
+					name.clear();
+
+					delete group_bulkVelocity;
+				}
+			}
+
+			delete group_ionSpecies;
+		}//Iterations over the ion species.
+
+		delete group_ions;
+		//Ions*/
+
+		delete group_iteration;
+
+		delete outputFile;
+	}//End of try block
+
+    catch( FileIException error ){// catch failure caused by the H5File operations
+		error.printError();
+    }
+
+    catch( DataSetIException error ){// catch failure caused by the DataSet operations
+		error.printError();
+    }
+
+    catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
+		error.printError();
+	   }
 }
 
 
 template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int it){
-
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
+	oneDimensional::fields F(params->mesh.NX_IN_SIM + 2);
+
+	computeFieldsOnNonStaggeredGrid(EB, &F);
+
 	try{
-		// fillGhosts(&EB->E.X);
-		// fillGhosts(&EB->E.Y);
-		// fillGhosts(&EB->E.Z);
-
-		// fillGhosts(&EB->B.X);
-		// fillGhosts(&EB->B.Y);
-		// fillGhosts(&EB->B.Z);
-
 		string name;
 		string path;
 		stringstream iteration;
@@ -804,10 +1057,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//x-component of electric field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) );
+				vec_values = CS->eField*F.E.X.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( 0.5*CS->eField*( EB->E.X.subvec(iIndex,fIndex) + EB->E.X.subvec(iIndex-1,fIndex-1) ) );
+				fvec_values = conv_to<fvec>::from( CS->eField*F.E.X.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -815,10 +1068,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//y-component of electric field
 				name = "y";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->eField*EB->E.Y.subvec(iIndex,fIndex);
+				vec_values = CS->eField*F.E.Y.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Y.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->eField*F.E.Y.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -826,10 +1079,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//z-component of electric field
 				name = "z";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->eField*EB->E.Z.subvec(iIndex,fIndex);
+				vec_values = CS->eField*F.E.Z.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Z.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->eField*F.E.Z.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -841,10 +1094,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//x-component of magnetic field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*EB->B.X.subvec(iIndex,fIndex);
+				vec_values = CS->bField*F.B.X.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*EB->B.X.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->bField*F.B.X.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -852,10 +1105,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//y-component of magnetic field
 				name = "y";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) );
+				vec_values = CS->bField*F.B.Y.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) ) ) );
+				fvec_values = conv_to<fvec>::from( CS->bField*F.B.Y.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -863,10 +1116,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//z-component of magnetic field
 				name = "z";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) );
+				vec_values = CS->bField*F.B.Z.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*( 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) ) ) );
+				fvec_values = conv_to<fvec>::from( CS->bField*F.B.Z.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -894,26 +1147,156 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
 		error.printError();
     }
-
-	setGhostsToZero(&EB->E.X);
-	setGhostsToZero(&EB->E.Y);
-	setGhostsToZero(&EB->E.Z);
-
-	setGhostsToZero(&EB->B.X);
-	setGhostsToZero(&EB->B.Y);
-	setGhostsToZero(&EB->B.Z);
 }
 
 
 template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it){
+	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
+	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
+	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NX_PER_MPI + 1;
+	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NX_PER_MPI;
+
+	twoDimensional::fields F(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+
+	computeFieldsOnNonStaggeredGrid(EB, &F);
+
+	try{
+		string name;
+		string path;
+		stringstream iteration;
+		stringstream dn;
+
+		int int_value;
+		CPP_TYPE cpp_type_value;
+		std::vector<CPP_TYPE> vector_values;
+
+		arma::vec vec_values;
+		arma::fvec fvec_values;
+
+		arma::mat mat_values;
+		arma::fmat fmat_values;
+
+
+		iteration << it;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
+
+		path = params->PATH + "/HDF5/";
+		name = path + "file_D" + dn.str() + ".h5";
+		const H5std_string	FILE_NAME( name );
+		name.clear();
+
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
+
+		string group_iteration_name;
+		group_iteration_name = "/" + iteration.str();
+		Group * group_iteration = new Group (outputFile->openGroup( group_iteration_name ));
+
+		Group * group_fields = new Group( group_iteration->createGroup( "fields" ) );//Electromagnetic fields
+
+		for(int ov=0; ov<params->outputs_variables.size(); ov++){
+			if(params->outputs_variables.at(ov) == "E"){
+				Group * group_field = new Group( group_fields->createGroup( "E" ) );//Electric fields
+
+				//x-component of electric field
+				name = "x";
+				#ifdef HDF5_DOUBLE
+				mat_values = CS->eField*F.E.X.submat(irow,icol,frow,fcol);
+				saveToHDF5(group_ionSpecies, name, &mat_values);
+				#elif defined HDF5_FLOAT
+				fmat_values = conv_to<fmat>::from( CS->eField*F.E.X.submat(irow,icol,frow,fcol) );
+				saveToHDF5(group_field, name, &fmat_values);
+				#endif
+				name.clear();
+
+				//y-component of electric field
+				name = "y";
+				#ifdef HDF5_DOUBLE
+				mat_values = CS->eField*F.E.Y.submat(irow,icol,frow,fcol);
+				saveToHDF5(group_ionSpecies, name, &mat_values);
+				#elif defined HDF5_FLOAT
+				fmat_values = conv_to<fmat>::from( CS->eField*F.E.Y.submat(irow,icol,frow,fcol) );
+				saveToHDF5(group_field, name, &fmat_values);
+				#endif
+				name.clear();
+
+				//z-component of electric field
+				name = "z";
+				#ifdef HDF5_DOUBLE
+				mat_values = CS->eField*F.E.Z.submat(irow,icol,frow,fcol);
+				saveToHDF5(group_ionSpecies, name, &mat_values);
+				#elif defined HDF5_FLOAT
+				fmat_values = conv_to<fmat>::from( CS->eField*F.E.Z.submat(irow,icol,frow,fcol) );
+				saveToHDF5(group_field, name, &fmat_values);
+				#endif
+				name.clear();
+
+				delete group_field;
+			}if(params->outputs_variables.at(ov) == "B"){
+				Group * group_field = new Group( group_fields->createGroup( "B" ) );//Electric fields
+
+				//x-component of magnetic field
+				name = "x";
+				#ifdef HDF5_DOUBLE
+				mat_values = CS->bField*F.B.X.submat(irow,icol,frow,fcol);
+				saveToHDF5(group_ionSpecies, name, &mat_values);
+				#elif defined HDF5_FLOAT
+				fmat_values = conv_to<fmat>::from( CS->bField*F.B.X.submat(irow,icol,frow,fcol) );
+				saveToHDF5(group_field, name, &fmat_values);
+				#endif
+				name.clear();
+
+				//y-component of magnetic field
+				name = "y";
+				#ifdef HDF5_DOUBLE
+				mat_values = CS->bField*F.B.Y.submat(irow,icol,frow,fcol);
+				saveToHDF5(group_ionSpecies, name, &mat_values);
+				#elif defined HDF5_FLOAT
+				fmat_values = conv_to<fmat>::from( CS->bField*F.B.Y.submat(irow,icol,frow,fcol) );
+				saveToHDF5(group_field, name, &fmat_values);
+				#endif
+				name.clear();
+
+				//z-component of magnetic field
+				name = "z";
+				#ifdef HDF5_DOUBLE
+				mat_values = CS->bField*F.B.Z.submat(irow,icol,frow,fcol);
+				saveToHDF5(group_ionSpecies, name, &mat_values);
+				#elif defined HDF5_FLOAT
+				fmat_values = conv_to<fmat>::from( CS->bField*F.B.Z.submat(irow,icol,frow,fcol) );
+				saveToHDF5(group_field, name, &fmat_values);
+				#endif
+				name.clear();
+
+				delete group_field;
+			}
+		}
+
+		delete group_fields;//Electromagnetic fields
+
+		delete group_iteration;
+
+		delete outputFile;
+	}
+
+
+    catch( FileIException error ){// catch failure caused by the H5File operations
+		error.printError();
+    }
+
+    catch( DataSetIException error ){// catch failure caused by the DataSet operations
+		error.printError();
+    }
+
+    catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
+		error.printError();
+    }
 
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParameters * params, const vector<IT> * IONS_OUT, FT * EB, const characteristicScales * CS, const int it, double totalTime){
+template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it, double totalTime){
 
 	try{
-
 		stringstream dn;
 		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
 
@@ -964,7 +1347,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParam
 		error.printError();
     }
 
-	saveIonsVariables(params, IONS_OUT, CS, it);
+	saveIonsVariables(params, IONS, CS, it);
 
 	saveFieldsVariables(params, EB, CS, it);
 

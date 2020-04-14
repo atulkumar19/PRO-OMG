@@ -39,8 +39,8 @@ using namespace std;
 using namespace arma;
 
 int main(int argc, char* argv[]){
-	namespace nDimensional = oneDimensional;
-	// namespace nDimensional = twoDimensional;
+	// namespace nDimensional = oneDimensional;
+	namespace nDimensional = twoDimensional;
 
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
@@ -101,6 +101,8 @@ int main(int argc, char* argv[]){
     }
     // Repeat 3 times
 
+//	cout << "MPI: " << params.mpi.MPI_DOMAIN_NUMBER_CART << " | F1 " << endl;
+
     //*** @tomodiify
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
 
@@ -119,15 +121,15 @@ int main(int argc, char* argv[]){
         ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
         //*** @tomodiify
-        fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         //*** @tomodiify
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
          	// Using the Bashford-Adams extrapolation.
-        	fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 1);
+        	//fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 1);
         }else{
 			// Using basic velocity extrapolation.
-        	fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 0);
+        	//fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 0);
 	    }
 
         currentTime += params.DT*CS.time;

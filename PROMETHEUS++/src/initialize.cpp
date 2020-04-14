@@ -449,8 +449,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
 
     // Setting size and value to zero of arrays for ions' variables
     IONS->mn.zeros(IONS->NSP, 2);
-    IONS->mn_.zeros(IONS->NSP, 2);
-
+    
     IONS->wxc.zeros(IONS->NSP);
     IONS->wxl.zeros(IONS->NSP);
     IONS->wxr.zeros(IONS->NSP);

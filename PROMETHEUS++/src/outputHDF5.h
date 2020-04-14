@@ -72,14 +72,23 @@ template <class IT, class FT> class HDF{
 
 	void saveToHDF5(Group * group, string name, arma::fvec * values);
 
+	void saveToHDF5(H5File * file, string name, arma::imat * values);
+
+	void saveToHDF5(Group * group, string name, arma::imat * values);
+
 	void saveToHDF5(Group * group, string name, arma::mat * values);
 
 	void saveToHDF5(Group * group, string name, arma::fmat * values);
+	
+
+	void computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G);
+
+	void computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G);
 
 
-	void saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it);
+	void saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it);
 
-	void saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS_OUT, const characteristicScales * CS, const int it);
+	void saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it);
 
 
 	void saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int it);
@@ -92,7 +101,7 @@ public:
 
 	HDF(simulationParameters * params, fundamentalScales * FS, vector<IT> * IONS);
 
-	void saveOutputs(const simulationParameters * params, const vector<IT> * IONS_OUT, FT * EB, const characteristicScales * CS, const int it, double totalTime);
+	void saveOutputs(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it, double totalTime);
 };
 
 

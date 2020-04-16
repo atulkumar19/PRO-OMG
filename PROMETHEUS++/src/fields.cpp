@@ -152,134 +152,63 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec *
 }
 
 
-void EMF_SOLVER::smooth_TOS(const simulationParameters * params, vfield_vec * vf, double as){
-	MPI_passGhosts(params,vf);
-
-	arma::vec b = zeros(NX_S);
-
-	double w0(23.0/48.0), w1(0.25), w2(1.0/96.0);//weights
-
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
+// * * * Smoothing * * *
+void EMF_SOLVER::smooth(arma::vec * v, double as){
+	int NX(v->n_elem);
+	arma::vec b = zeros(NX);
+	double wc(0.75); 	// center weight
+	double ws(0.125);	// sides weight
 
 	//Step 1: Averaging process
-	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(2,NX_S-3) = w0*b.subvec(2,NX_S-3) + w1*b.subvec(3,NX_S-2) + w1*b.subvec(1,NX_S-4) + w2*b.subvec(4,NX_S-1) + w2*b.subvec(0,NX_S-5);
+	b.subvec(1, NX-2) = v->subvec(1, NX-2);
 
-	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(2,NX_S-3);
+	fillGhosts(&b);
 
-	b.fill(0);
+	b.subvec(1, NX-2) = wc*b.subvec(1, NX-2) + ws*b.subvec(2, NX-1) + ws*b.subvec(0, NX-3);
 
-	//Step 1: Averaging process
-	b = vf->Y.subvec(iIndex-1,fIndex+1);
-	b.subvec(2,NX_S-3) = w0*b.subvec(2,NX_S-3) + w1*b.subvec(3,NX_S-2) + w1*b.subvec(1,NX_S-4) + w2*b.subvec(4,NX_S-1) + w2*b.subvec(0,NX_S-5);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(2,NX_S-3);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(2,NX_S-3) = w0*b.subvec(2,NX_S-3) + w1*b.subvec(3,NX_S-2) + w1*b.subvec(1,NX_S-4) + w2*b.subvec(4,NX_S-1) + w2*b.subvec(0,NX_S-5);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(2,NX_S-3);
-
-	b.fill(0);
+	//Step 2: Averaged weighted variable estimation.
+	v->subvec(1, NX-2) = (1.0 - as)*v->subvec(1, NX-2) + as*b.subvec(1, NX-2);
 }
 
 
-void EMF_SOLVER::smooth_TOS(const simulationParameters * params, vfield_mat * vf, double as){
+void EMF_SOLVER::smooth(arma::mat * m, double as){
+	int NX(m->n_rows);
+	int NY(m->n_cols);
+	arma::mat b = zeros(NX,NY);
+	double wc(9.0/16.0);
+	double ws(3.0/32.0);
+	double wcr(1.0/64.0);
 
-}
+	// Step 1: Averaging
+	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);
 
+	fillGhosts(&b);
 
-void EMF_SOLVER::smooth_TSC(const simulationParameters * params, vfield_vec * vf, double as){
-	MPI_passGhosts(params,vf);
+	b.submat(1,1,NX-2,NY-2) = wc*b.submat(1,1,NX-2,NY-2) + \
+								ws*b.submat(2,1,NX-1,NY-2) + ws*b.submat(0,1,NX-3,NY-2) + \
+								ws*b.submat(1,2,NX-2,NY-1) + ws*b.submat(1,0,NX-2,NY-3) + \
+								wcr*b.submat(2,2,NX-1,NY-1) + wcr*b.submat(0,2,NX-3,NY-1) + \
+								wcr*b.submat(0,0,NX-3,NY-3) + wcr*b.submat(2,0,NX-1,NY-3);
 
-	arma::vec b = zeros(NX_S);
-
-	double w0(0.75), w1(0.125);//weights
-
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
-
-
-	//Step 1: Averaging process
-	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2)+ w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b = vf->Y.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b = vf->Z.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
-}
-
-
-void EMF_SOLVER::smooth_TSC(const simulationParameters * params, vfield_mat * vf, double as){
+	// Step 2: Averaged weighted variable estimation
+	m->submat(1,1,NX-2,NY-2) = (1.0 - as)*m->submat(1,1,NX-2,NY-2) + as*b.submat(1,1,NX-2,NY-2);
 
 }
 
 
-void EMF_SOLVER::smooth(const simulationParameters * params, vfield_vec * vf, double as){
-	MPI_passGhosts(params,vf);
-
-	arma::vec b = zeros(NX_S);
-
-	double w0(0.5), w1(0.25);//weights
-
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
-
-
-	//Step 1: Averaging process
-	b = vf->X.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2)+ w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->X.subvec(iIndex,fIndex) = (1.0 - as)*vf->X.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b = vf->Y.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Y.subvec(iIndex,fIndex) = (1.0 - as)*vf->Y.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
-
-	b.fill(0);
-
-	//Step 1: Averaging process
-	b = vf->Z.subvec(iIndex-1,fIndex+1);
-	b.subvec(1,NX_S-2) = w0*b.subvec(1,NX_S-2) + w1*b.subvec(2,NX_S-1) + w1*b.subvec(0,NX_S-3);
-
-	//Step 2: Averaged weighted vector field estimation.
-	vf->Z.subvec(iIndex,fIndex) = (1.0 - as)*vf->Z.subvec(iIndex,fIndex) + as*b.subvec(1,NX_S-2);
+void EMF_SOLVER::smooth(vfield_vec * vf, double as){
+	smooth(&vf->X,as); // x component
+	smooth(&vf->Y,as); // y component
+	smooth(&vf->Z,as); // z component
 }
 
 
-void EMF_SOLVER::smooth(const simulationParameters * params, vfield_mat * vf, double as){
-
+void EMF_SOLVER::smooth(vfield_mat * vf, double as){
+	smooth(&vf->X,as); // x component
+	smooth(&vf->Y,as); // y component
+	smooth(&vf->Z,as); // z component
 }
+// * * * Smoothing * * *
 
 
 void EMF_SOLVER::equilibrium(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB){
@@ -409,24 +338,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 	}
 #endif
 
-
-	switch (params->weightingScheme){
-		case(0):{
-				smooth_TOS(params,&EB->B,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(1):{
-				smooth_TSC(params,&EB->B,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(2):{
-				smooth(params,&EB->B,params->smoothingParameter);//Just added!
-				break;
-				}
-		default:{
-				smooth_TSC(params,&EB->B,params->smoothingParameter);//Just added!
-				}
-	}
+	smooth(&EB->B,params->smoothingParameter);
 
 	EB->b_ = EB->b;
 
@@ -582,23 +494,7 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params, oneDimensional::fie
 	}
 #endif
 
-	switch (params->weightingScheme){
-		case(0):{
-				smooth_TOS(params,&EB->E,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(1):{
-				smooth_TSC(params,&EB->E,params->smoothingParameter);//Just added!
-				break;
-				}
-		case(2):{
-				smooth(params,&EB->E,params->smoothingParameter);//Just added!
-				break;
-				}
-		default:{
-				smooth_TSC(params,&EB->E,params->smoothingParameter);//Just added!
-				}
-	}
+	smooth(&EB->E,params->smoothingParameter);
 }
 
 
@@ -793,26 +689,8 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	}
 #endif
 
-		switch (params->weightingScheme){
-			case(0):{
-					smooth_TOS(params,&EB->E,params->smoothingParameter);//Just added!
-					break;
-					}
-			case(1):{
-					smooth_TSC(params,&EB->E,params->smoothingParameter);//Just added!
-					break;
-					}
-			case(2):{
-					smooth(params,&EB->E,params->smoothingParameter);//Just added!
-					break;
-					}
-			default:{
-					smooth_TSC(params,&EB->E,params->smoothingParameter);//Just added!
-					}
-		}
-
-
-	}
+	smooth(&EB->E,params->smoothingParameter);
+}
 
 
 

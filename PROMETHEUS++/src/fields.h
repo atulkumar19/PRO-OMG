@@ -72,6 +72,15 @@ class EMF_SOLVER{
 	void MPI_passGhosts(const simulationParameters * params, arma::vec * field);
 
 
+	void smooth(arma::vec * v, double as);
+
+	void smooth(arma::mat * m, double as);
+
+	void smooth(vfield_vec * vf, double as);
+
+	void smooth(vfield_mat * vf, double as);
+
+
 	void FaradaysLaw(const simulationParameters * params, oneDimensional::fields * EB);
 
 	void FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB);
@@ -87,17 +96,6 @@ class EMF_SOLVER{
 
 	EMF_SOLVER(const simulationParameters * params, characteristicScales * CS);
 
-	void smooth_TOS(const simulationParameters * params, vfield_vec * vf, double as);
-
-	void smooth_TOS(const simulationParameters * params, vfield_mat * vf, double as);
-
-	void smooth_TSC(const simulationParameters * params, vfield_vec * vf, double as);
-
-	void smooth_TSC(const simulationParameters * params, vfield_mat * vf, double as);
-
-	void smooth(const simulationParameters * params, vfield_vec * vf, double as);
-
-	void smooth(const simulationParameters * params, vfield_mat * vf, double as);
 
 	void equilibrium(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB);
 

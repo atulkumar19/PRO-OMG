@@ -424,6 +424,21 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 		saveToHDF5(group_geo, name, &cpp_type_value);
 		name.clear();
 
+		name = "LX";
+		cpp_type_value = params->mesh.LX;
+		saveToHDF5(group_geo, name, &cpp_type_value);
+		name.clear();
+
+		name = "LY";
+		cpp_type_value = params->mesh.LY;
+		saveToHDF5(group_geo, name, &cpp_type_value);
+		name.clear();
+
+		name = "LZ";
+		cpp_type_value = params->mesh.LZ;
+		saveToHDF5(group_geo, name, &cpp_type_value);
+		name.clear();
+
 		name = "NX";
 		int_value = params->mesh.NX_PER_MPI;
 		saveToHDF5(group_geo, name, &int_value);
@@ -1013,6 +1028,14 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
+	fillGhosts(&EB->E.X);
+	fillGhosts(&EB->E.Y);
+	fillGhosts(&EB->E.Z);
+
+	fillGhosts(&EB->B.X);
+	fillGhosts(&EB->B.Y);
+	fillGhosts(&EB->B.Z);
+
 	oneDimensional::fields F(params->mesh.NX_IN_SIM + 2);
 
 	computeFieldsOnNonStaggeredGrid(EB, &F);
@@ -1147,6 +1170,14 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
 		error.printError();
     }
+
+	setGhostsToZero(&EB->E.X);
+	setGhostsToZero(&EB->E.Y);
+	setGhostsToZero(&EB->E.Z);
+
+	setGhostsToZero(&EB->B.X);
+	setGhostsToZero(&EB->B.Y);
+	setGhostsToZero(&EB->B.Z);
 }
 
 

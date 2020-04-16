@@ -18,12 +18,12 @@
 
 #include "PIC.h"
 
-template <class IT, class FT> PIC<IT,FT>::PIC(){
+PIC::PIC(){
 
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceVec(const simulationParameters * params, arma::vec * v){
+void PIC::MPI_AllreduceVec(const simulationParameters * params, arma::vec * v){
 	arma::vec recvbuf = zeros(v->n_elem);
 
 	MPI_Allreduce(v->memptr(), recvbuf.memptr(), v->n_elem, MPI_DOUBLE, MPI_SUM, params->mpi.MPI_TOPO);
@@ -32,7 +32,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceVec(const simulation
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
+void PIC::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
 	arma::mat recvbuf = zeros(m->n_rows,m->n_cols);
 
 	MPI_Allreduce(m->memptr(), recvbuf.memptr(), m->n_elem, MPI_DOUBLE, MPI_SUM, params->mpi.MPI_TOPO);
@@ -41,7 +41,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_AllreduceMat(const simulation
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
+void PIC::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvbuf(params->mesh.NX_IN_SIM);
@@ -64,7 +64,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_vec(const sim
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
+void PIC::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
 	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
 	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
 	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NX_PER_MPI + 1;
@@ -127,7 +127,7 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervfield_mat(const sim
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
+void PIC::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 	arma::vec recvbuf(params->mesh.NX_IN_SIM);
@@ -141,14 +141,14 @@ template <class IT, class FT> void PIC<IT,FT>::MPI_Allgathervec(const simulation
 
 
 // * * * Ghost contributions * * *
-template <class IT, class FT> void PIC<IT,FT>::fill4Ghosts(arma::vec * v){
+void PIC::fill4Ghosts(arma::vec * v){
 	int N = v->n_elem;
 
 	v->subvec(N-2,N-1) = v->subvec(2,3);
 	v->subvec(0,1) = v->subvec(N-4,N-3);
 }
 
-template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma::vec * v){
+void PIC::include4GhostsContributions(arma::vec * v){
 	int N = v->n_elem;
 
 	v->subvec(2,3) += v->subvec(N-2,N-1);
@@ -156,7 +156,7 @@ template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma:
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::fill4Ghosts(arma::mat * m){
+void PIC::fill4Ghosts(arma::mat * m){
 	int NX = m->n_rows;
 	int NY = m->n_cols;
 
@@ -177,7 +177,7 @@ template <class IT, class FT> void PIC<IT,FT>::fill4Ghosts(arma::mat * m){
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma::mat * m){
+void PIC::include4GhostsContributions(arma::mat * m){
 	int NX = m->n_rows;
 	int NY = m->n_cols;
 
@@ -202,7 +202,7 @@ template <class IT, class FT> void PIC<IT,FT>::include4GhostsContributions(arma:
 //! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
 
 //! Linear interpolation is used to calculate the values of the fields in a non-staggered grid.
-template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G){
+void PIC::computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G){
 	int NX = F->E.X.n_elem;
 
 	G->E.X.subvec(1,NX-2) = 0.5*( F->E.X.subvec(1,NX-2) + F->E.X.subvec(0,NX-3) );
@@ -219,7 +219,7 @@ template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(o
 //! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
 
 //! Bilinear interpolation is used to calculate the values of the fields in a non-staggered grid.
-template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
+void PIC::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
 	int NX = F->E.X.n_rows;
 	int NY = F->E.X.n_cols;
 
@@ -235,8 +235,7 @@ template <class IT, class FT> void PIC<IT,FT>::computeFieldsOnNonStaggeredGrid(t
 
 
 // * * * Smoothing * * *
-
-template <class IT, class FT> void PIC<IT,FT>::smooth(arma::vec * v, double as){
+void PIC::smooth(arma::vec * v, double as){
 	int NX(v->n_elem);
 	arma::vec b = zeros(NX);
 	double wc(0.75); 	// center weight
@@ -254,7 +253,7 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(arma::vec * v, double as){
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::smooth(arma::mat * m, double as){
+void PIC::smooth(arma::mat * m, double as){
 	int NX(m->n_rows);
 	int NY(m->n_cols);
 	arma::mat b = zeros(NX,NY);
@@ -279,23 +278,22 @@ template <class IT, class FT> void PIC<IT,FT>::smooth(arma::mat * m, double as){
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_vec * vf, double as){
+void PIC::smooth(vfield_vec * vf, double as){
 	smooth(&vf->X,as); // x component
 	smooth(&vf->Y,as); // y component
 	smooth(&vf->Z,as); // z component
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::smooth(vfield_mat * vf, double as){
+void PIC::smooth(vfield_mat * vf, double as){
 	smooth(&vf->X,as); // x component
 	smooth(&vf->Y,as); // y component
 	smooth(&vf->Z,as); // z component
 }
-
 // * * * Smoothing * * *
 
 
-template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
@@ -361,7 +359,7 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+void PIC::assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
@@ -458,7 +456,7 @@ template <class IT, class FT> void PIC<IT,FT>::assignCell(const simulationParame
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB){
+void PIC::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB){
 	if(A->n_elem != B->n_elem){
 		cerr<<"\nERROR: The number of elements of A and B, unable to calculate AxB.\n";
 		exit(1);
@@ -472,7 +470,7 @@ template <class IT, class FT> void PIC<IT,FT>::crossProduct(const arma::mat * A,
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::eiv(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -524,7 +522,7 @@ template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * 
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::extrapolateIonVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 
 	IONS->nv__ = IONS->nv_;
 	IONS->nv_ = IONS->nv;
@@ -533,7 +531,7 @@ template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simu
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -616,7 +614,7 @@ template <class IT, class FT> void PIC<IT,FT>::eiv(const simulationParameters * 
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+void PIC::extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 
 	IONS->nv__ = IONS->nv_;
 	IONS->nv_ = IONS->nv;
@@ -625,7 +623,7 @@ template <class IT, class FT> void PIC<IT,FT>::extrapolateIonVelocity(const simu
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::test(const simulationParameters * params){
+void PIC::test(const simulationParameters * params){
 	arma::mat m  = zeros(10,9);
 
 	for (int ii=0; ii<m.n_rows; ii++){
@@ -654,7 +652,7 @@ template <class IT, class FT> void PIC<IT,FT>::test(const simulationParameters *
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -693,7 +691,7 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+void PIC::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -742,7 +740,7 @@ template <class IT, class FT> void PIC<IT,FT>::eid(const simulationParameters * 
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
 	// First, the particle density of time steps (it - 1) is kept in n_, (it - 2) is kept in n__,
 	// and at the time iteration (it - 3) in n___.
 
@@ -756,7 +754,7 @@ template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simul
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+void PIC::extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
 	// First, the particle density of time steps (it - 1) is kept in n_, (it - 2) is kept in n__,
 	// and at the time iteration (it - 3) in n___.
 
@@ -770,7 +768,7 @@ template <class IT, class FT> void PIC<IT,FT>::extrapolateIonDensity(const simul
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * field, arma::mat * F){
+void PIC::interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * field, arma::mat * F){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -816,13 +814,13 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simu
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, oneDimensional::fields * EB, arma::mat * E, arma::mat * B){
+void PIC::interpolateElectromagneticFields(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, oneDimensional::fields * EB, arma::mat * E, arma::mat * B){
 	interpolateVectorField(params, IONS, &EB->E, E);
 	interpolateVectorField(params, IONS, &EB->B, B);
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * field, arma::mat * F){
+void PIC::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * field, arma::mat * F){
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -901,13 +899,13 @@ template <class IT, class FT> void PIC<IT,FT>::interpolateVectorField(const simu
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B){
+void PIC::interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B){
 	interpolateVectorField(params, IONS, &EB->E, E);
 	interpolateVectorField(params, IONS, &EB->B, B);
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
 	MPI_Allgathervfield_vec(params, &EB->E);
 	MPI_Allgathervfield_vec(params, &EB->B);
 
@@ -989,7 +987,7 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
 	MPI_Allgathervfield_mat(params, &EB->E);
 	MPI_Allgathervfield_mat(params, &EB->B);
 
@@ -1068,7 +1066,7 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsVelocity(const simulat
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
@@ -1077,7 +1075,7 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 		#pragma omp parallel shared(params, IONS, ii) firstprivate(DT, NSP)
 		{
 			#pragma omp for
-			for(int ip=0;ip<NSP;ip++){
+			for(int ip=0; ip<NSP; ip++){
 				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
 
                 IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX);//x
@@ -1101,7 +1099,7 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 }
 
 
-template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT){
 
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
@@ -1110,12 +1108,12 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 		#pragma omp parallel shared(params, IONS, ii) firstprivate(DT, NSP)
 		{
 			#pragma omp for
-			for(int ip=0;ip<NSP;ip++){
-				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
-				IONS->at(ii).X(ip,1) += DT*IONS->at(ii).V(ip,1);
+			for(int ip=0; ip<NSP; ip++){
+				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0); // x
+				IONS->at(ii).X(ip,1) += DT*IONS->at(ii).V(ip,1); // y
 
                 IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX); // Periodic condition along x-axis
-				IONS->at(ii).X(ip,1) = fmod(IONS->at(ii).X(ip,1), params->mesh.LY); // Periodic condition along x-axis
+				IONS->at(ii).X(ip,1) = fmod(IONS->at(ii).X(ip,1), params->mesh.LY); // Periodic condition along y-axis
 
                 if(IONS->at(ii).X(ip,0) < 0)
         			IONS->at(ii).X(ip,0) += params->mesh.LX;
@@ -1138,5 +1136,5 @@ template <class IT, class FT> void PIC<IT,FT>::advanceIonsPosition(const simulat
 }
 
 
-template class PIC<oneDimensional::ionSpecies, oneDimensional::fields>;
-template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;
+// template class PIC<oneDimensional::ionSpecies, oneDimensional::fields>;
+// template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;

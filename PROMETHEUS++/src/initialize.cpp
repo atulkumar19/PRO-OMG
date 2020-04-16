@@ -432,8 +432,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     #endif
     */
 
-    PIC<oneDimensional::ionSpecies, oneDimensional::fields> pic;
-    pic.assignCell(params, IONS);
+    PIC ionsDynamics;
+    ionsDynamics.assignCell(params, IONS);
 }
 
 
@@ -449,7 +449,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
 
     // Setting size and value to zero of arrays for ions' variables
     IONS->mn.zeros(IONS->NSP, 2);
-    
+
     IONS->wxc.zeros(IONS->NSP);
     IONS->wxl.zeros(IONS->NSP);
     IONS->wxr.zeros(IONS->NSP);
@@ -486,8 +486,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
     IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
 
-    PIC<twoDimensional::ionSpecies, twoDimensional::fields> pic;
-    pic.assignCell(params, IONS);
+    PIC ionsDynamics;
+    ionsDynamics.assignCell(params, IONS);
 }
 
 
@@ -707,6 +707,9 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     int NY(params->mesh.NY_IN_SIM + 2); // Ghost mesh points (+2) included
 
     EB->zeros(NX,NY);
+
+    //*** @todelete
+    // EB->E.X.fill(1.0E5);
 
     EB->B.X.fill(params->BGP.Bx);//x
     EB->B.Y.fill(params->BGP.By);//y

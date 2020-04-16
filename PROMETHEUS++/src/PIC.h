@@ -46,7 +46,7 @@
 using namespace std;
 using namespace arma;
 
-template <class IT, class FT> class PIC{
+class PIC{
 
 	int NX;
 	int NY;

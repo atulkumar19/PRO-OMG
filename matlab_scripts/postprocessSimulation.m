@@ -30,11 +30,11 @@ ST.time = loadTimeVector(ST);
 
 % FO_test_1D(ST);
 
-FO_test_2D(ST);
+% FO_test_2D(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
-% FourierAnalysis(ST,'B','z');
+FourierAnalysis(ST,'B','z');
 
 % FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
@@ -238,6 +238,9 @@ for ss=1:NSPP
     NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
     NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
     NPARTICLES = ND*NSP;
+    Wc = qi*ST.params.Bo(3)/mi;
+    Eo = 1.0E5;
+    Bo = ST.params.Bo(3);
 
     X = zeros(NPARTICLES,2,NT);
     V = zeros(NPARTICLES,3,NT);
@@ -262,22 +265,33 @@ for ss=1:NSPP
     
     x = squeeze(X(ii,:,:));
     v = squeeze(V(ii,:,:));
+    
+    xs = v(1,1)*sin(Wc*t)/Wc - (v(2,1) + Eo/Bo)*cos(Wc*t)/Wc + x(1,1) + (v(2,1) + Eo/Bo)/Wc;
+    xs = mod(xs,ST.params.geometry.LX);
+    xs(xs<0) = xs(xs<0) + ST.params.geometry.LX;
+    
+    ys = v(1,1)*cos(Wc*t)/Wc + (v(2,1) + Eo/Bo)*sin(Wc*t)/Wc - Eo*t/Bo + x(2,1) - v(1,1)/Wc;
+    ys = mod(ys,ST.params.geometry.LY);
+    ys(ys<0) = ys(ys<0) + ST.params.geometry.LY;
+    
+    vxs = v(1,1)*cos(Wc*t) + (v(2,1) + Eo/Bo)*sin(Wc*t);
+    vys = -v(1,1)*sin(Wc*t) + (v(2,1) + Eo/Bo)*cos(Wc*t) - Eo/Bo;
 
     fig = figure;
     subplot(4,1,1)
-    plot(x(1,:), x(2,:), 'b.')
-    xlabel('Time [s]','interpreter','latex')
-    ylabel('$X(t)$ [m]','interpreter','latex')
+    plot(x(1,:), x(2,:), 'b.', xs,ys,'r.', x(1,1), x(2,1),'sm', xs(1),ys(1),'go')
+    xlabel('$X$ [m]','interpreter','latex')
+    ylabel('$Y$ [m]','interpreter','latex')
 
     figure(fig)
     subplot(4,1,2)
-    plot(t, v(1,:), 'b.')
+    plot(t, v(1,:), 'b.',t,vxs,'r')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_x$ [m/s]','interpreter','latex')
 
     figure(fig)
     subplot(4,1,3)
-    plot(t, v(2,:), 'b.')
+    plot(t, v(2,:), 'b.',t,vys,'r')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_y$ [m/s]','interpreter','latex')
 

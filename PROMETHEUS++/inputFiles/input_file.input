@@ -12,7 +12,7 @@ filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              5.0
+simulationTime              10.0
 outputCadence               0.02
 transient                   0
 numberOfParticleSpecies     1
@@ -23,7 +23,7 @@ Te                          1.0E3
 Bo                          2.1
 theta                       0.0
 phi                         0.0
-NX                          256
+NX                          16
 NY                          8
 NZ                          1
 DrL                         2.0

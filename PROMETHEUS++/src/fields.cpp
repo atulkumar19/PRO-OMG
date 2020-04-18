@@ -19,23 +19,46 @@
 #include "fields.h"
 
 EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
-	n_cs = CS->length*CS->density;
 	NX_S = params->mesh.NX_PER_MPI + 2;
 	NX_T = params->mesh.NX_IN_SIM + 2;
 	NX_R = params->mesh.NX_IN_SIM;
 
-	ne.zeros(NX_S);
-	n.zeros(NX_S);
-	n_.zeros(NX_S);
-	n__.zeros(NX_S);
+	NY_S = params->mesh.NY_PER_MPI + 2;
+	NY_T = params->mesh.NY_IN_SIM + 2;
+	NY_R = params->mesh.NY_IN_SIM;
 
-	U.zeros(NX_S);
-	U_.zeros(NX_S);
-	U__.zeros(NX_S);
+	if (params->dimensionality == 1){
+		n_cs = CS->length*CS->density;
 
-	Ui.zeros(NX_S);
-	Ui_.zeros(NX_S);
-	Ui__.zeros(NX_S);
+		ne.zeros(NX_S);
+		n.zeros(NX_S);
+		n_.zeros(NX_S);
+		n__.zeros(NX_S);
+
+		U.zeros(NX_S);
+		U_.zeros(NX_S);
+		U__.zeros(NX_S);
+
+		Ui.zeros(NX_S);
+		Ui_.zeros(NX_S);
+		Ui__.zeros(NX_S);
+
+		V1D.ne.zeros(NX_S);
+		V1D.n.zeros(NX_S);
+		V1D.n_.zeros(NX_S);
+		V1D.n__.zeros(NX_S);
+
+		V1D.U.zeros(NX_S);
+		V1D.U_.zeros(NX_S);
+		V1D.U__.zeros(NX_S);
+
+		V1D.Ui.zeros(NX_S);
+		V1D.Ui_.zeros(NX_S);
+		V1D.Ui__.zeros(NX_S);
+	}else if (params->dimensionality == 2){
+
+	}
+
 }
 
 
@@ -248,9 +271,6 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
 
-	// if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		// EB->B.Z.print("B");
-
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
 
 		K1 = *EB;//The value of the fields at the time level (N-1/2)
@@ -360,6 +380,13 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 
 	MPI_passGhosts(params,&EB->b);
 	MPI_passGhosts(params,&EB->_B);
+}
+
+
+void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS){
+	//Using the RK4 scheme to advance B.
+	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
+	dt = params->DT/((double)params->numberOfRKIterations);
 }
 
 

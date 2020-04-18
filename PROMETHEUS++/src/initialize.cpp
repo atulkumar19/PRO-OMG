@@ -708,9 +708,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
 
     EB->zeros(NX,NY);
 
-    //*** @todelete
-    // EB->E.X.fill(1.0E5);
-
     EB->B.X.fill(params->BGP.Bx);//x
     EB->B.Y.fill(params->BGP.By);//y
     EB->B.Z.fill(params->BGP.Bz);//z

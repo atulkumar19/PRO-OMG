@@ -38,30 +38,68 @@ class EMF_SOLVER{
 
 	double dt;//Time step for the RK4 function
 
-	oneDimensional::fields AUX; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+	double n_cs;
+
+	int NX_S; 				// Number of grid cells per subdomain, including 2 ghost cells.
+	int NX_T; 				// Number of grid cells in entire simulation domain, including 2 ghost cells.
+	int NX_R; 				// Number of grid cells in entire simulation domain, not including ghost cells.
+
+	int NY_S; 				// Number of grid cells per subdomain, including 2 ghost cells.
+	int NY_T; 				// Number of grid cells in entire simulation domain, including 2 ghost cells.
+	int NY_R; 				// Number of grid cells in entire simulation domain, not including ghost cells.
+
 	oneDimensional::fields  K1; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 	oneDimensional::fields  K2; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 	oneDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 	oneDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-	int NX_S; // Number of grid cells per subdomain, including 2 ghost cells.
-	int NX_T; // Number of grid cells in entire simulation domain, including 2 ghost cells.
-	int NX_R; // Number of grid cells in entire simulation domain, not including ghost cells.
+	struct V_1D{
+		oneDimensional::fields  K1; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+		oneDimensional::fields  K2; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+		oneDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+		oneDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-	double n_cs;
+		arma::vec ne;			// Electron plasma density at time level "l + 1"
+		arma::vec n; 			// Total plasma density at time level "l + 1"
+		arma::vec n_; 			// Total plasma density at time level "l - 1/2"
+		arma::vec n__; 			// Total plasma density at time level "l - 3/2"
+
+		vfield_vec V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
+		vfield_vec U; 			// Ions' bulk velocity at time level "l + 1/2"
+		vfield_vec U_; 			// Ions' bulk velocity at time level "l - 1/2"
+		vfield_vec U__; 		// Ions' bulk velocity at time level "l - 3/2"
+		vfield_vec Ui; 			// Ions' bulk velocity at time level "l - 3/2"
+		vfield_vec Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
+		vfield_vec Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
+	} V1D;
+
 	arma::vec ne;			// Electron plasma density at time level "l + 1"
 	arma::vec n; 			// Total plasma density at time level "l + 1"
-	arma::vec n_; 		// Total plasma density at time level "l - 1/2"
-	arma::vec n__; 		// Total plasma density at time level "l - 3/2"
+	arma::vec n_; 			// Total plasma density at time level "l - 1/2"
+	arma::vec n__; 			// Total plasma density at time level "l - 3/2"
 
-	vfield_vec V; 	// Extrapolated ions' bulk velocity at time level "l + 1"
-	vfield_vec U; 	// Ions' bulk velocity at time level "l + 1/2"
-	vfield_vec U_; 	// Ions' bulk velocity at time level "l - 1/2"
-	vfield_vec U__; // Ions' bulk velocity at time level "l - 3/2"
-	vfield_vec Ui; // Ions' bulk velocity at time level "l - 3/2"
-	vfield_vec Ui_; // Ions' bulk velocity at time level "l - 3/2"
-	vfield_vec Ui__; // Ions' bulk velocity at time level "l - 3/2"
+	vfield_vec V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
+	vfield_vec U; 			// Ions' bulk velocity at time level "l + 1/2"
+	vfield_vec U_; 			// Ions' bulk velocity at time level "l - 1/2"
+	vfield_vec U__; 		// Ions' bulk velocity at time level "l - 3/2"
+	vfield_vec Ui; 			// Ions' bulk velocity at time level "l - 3/2"
+	vfield_vec Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
+	vfield_vec Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
 
+/*
+	arma::mat ne;			// Electron plasma density at time level "l + 1"
+	arma::mat n; 			// Total plasma density at time level "l + 1"
+	arma::mat n_; 			// Total plasma density at time level "l - 1/2"
+	arma::mat n__; 			// Total plasma density at time level "l - 3/2"
+
+	vfield_mat V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
+	vfield_mat U; 			// Ions' bulk velocity at time level "l + 1/2"
+	vfield_mat U_; 			// Ions' bulk velocity at time level "l - 1/2"
+	vfield_mat U__; 		// Ions' bulk velocity at time level "l - 3/2"
+	vfield_mat Ui; 			// Ions' bulk velocity at time level "l - 3/2"
+	vfield_mat Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
+	vfield_mat Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
+*/
 
 	void MPI_AllgatherField(const simulationParameters * params, arma::vec * field);
 
@@ -100,6 +138,8 @@ class EMF_SOLVER{
 	void equilibrium(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB);
 
 	void advanceBField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
+
+	void advanceBField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
 
 	void advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 

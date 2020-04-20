@@ -62,11 +62,11 @@ void PIC::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_ve
 
 
 void PIC::MPI_Allgathermat(const simulationParameters * params, arma::mat * field){
-	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
-	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
 
-	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NY_PER_MPI + 1;
-	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NY_PER_MPI;
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
 
 	arma::vec recvbuf = zeros(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
 	arma::vec sendbuf = zeros(params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);

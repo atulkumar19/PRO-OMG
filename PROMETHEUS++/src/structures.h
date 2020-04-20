@@ -52,15 +52,23 @@ struct mpiParams{
 	int NUMBER_MPI_DOMAINS;
 	int MPI_DOMAIN_NUMBER;
 
-	MPI_Comm MPI_TOPO;
-
 	int MPI_DOMAINS_ALONG_X_AXIS;
 	int MPI_DOMAINS_ALONG_Y_AXIS;
 	int MPI_DOMAINS_ALONG_Z_AXIS;
 
+	MPI_Comm MPI_TOPO; // Cartesian topology
+
 	int MPI_CART_COORDS_1D[1];
 	int MPI_CART_COORDS_2D[2];
 	std::vector<int *> MPI_CART_COORDS;
+
+	unsigned int iIndex;
+	unsigned int fIndex;
+
+	unsigned int irow;
+	unsigned int frow;
+	unsigned int icol;
+	unsigned int fcol;
 
 	int MPI_DOMAIN_NUMBER_CART;
 	int LEFT_MPI_DOMAIN_NUMBER_CART;

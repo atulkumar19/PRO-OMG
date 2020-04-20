@@ -114,6 +114,16 @@ void MPI_MAIN::createMPITopology(simulationParameters * params){
 			MPI_Cart_shift(params->mpi.MPI_TOPO, 1, -1, &src, &params->mpi.DOWN_MPI_DOMAIN_NUMBER_CART);
 		}
 
+		if(params->dimensionality == 1){
+			params->mpi.iIndex = params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1;
+			params->mpi.fIndex = params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+		}else{
+			params->mpi.irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
+			params->mpi.frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
+			params->mpi.icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NY_PER_MPI + 1;
+			params->mpi.fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NY_PER_MPI;
+		}
+
 		if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 			cout << endl << "* * * * * * * * * * * * GENERATING MPI TOPOLOGY * * * * * * * * * * * * * * * * * *" << endl;
 			if(params->dimensionality == 1){

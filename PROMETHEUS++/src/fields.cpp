@@ -56,8 +56,8 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 
 //*** @tomodify
 void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::vec * F){
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
 
 	arma::vec recvbuf(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 	arma::vec sendbuf(params->mesh.NX_PER_MPI);
@@ -77,9 +77,8 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::v
 
 //*** @tomodify
 void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_vec * F){
-
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
 
 	arma::vec recvbuf(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
 	arma::vec sendbuf(params->mesh.NX_PER_MPI);
@@ -112,8 +111,8 @@ void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_
 
 
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::vec * F){
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
 
 	double sendbuf;
 	double recvbuf;
@@ -136,39 +135,86 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, vfield_vec 
 
 
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::mat * F){
-	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
-	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
-
-	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NY_PER_MPI + 1;
-	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NY_PER_MPI;
-
-	arma::vec recvbuf;
-	arma::vec sendbuf;
-
 	if (params->mesh.SPLIT_DIRECTION == 0){ // Split along x-axis
-/*
-		recvbuf = zeros(NY);
-		sendbuf = zeros(NY);
+		unsigned int irow = params->mpi.irow;
+		unsigned int frow = params->mpi.frow;
+
+		int NY = params->mesh.NY_IN_SIM + 2;
+
+		arma::rowvec recvbuf(NY);
+		arma::rowvec sendbuf(NY);
 
 		// Up to down ghost cells and viceversa
-		F->submat(1,0,NX-2,0) = F->submat(1,NY-2,NX-2,NY-2);
-		F->submat(1,NY-1,NX-2,NY-1) = F->submat(1,1,NX-2,1);
+		F->submat(irow,0,frow,0) = F->submat(irow,NY-2,frow,NY-2);
+		F->submat(irow,NY-1,frow,NY-1) = F->submat(irow,1,frow,1);
 
-		sendbuf = F->col(NX-1);
+		// We first pass the ghosts cells at the right end to the right MPI process in the Cartesian topology
+		sendbuf = F->row(frow);
 		sendbuf(0) = sendbuf(NY-2);
 		sendbuf(NY-1) = sendbuf(1);
 		MPI_Sendrecv(sendbuf.memptr(), NY, MPI_DOUBLE, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 0, recvbuf.memptr(), NY, MPI_DOUBLE, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
-		F->col(0) = recvbuf;
+		F->row(irow-1) = recvbuf;
 
+		sendbuf = F->row(irow);
+		sendbuf(0) = sendbuf(NY-2);
+		sendbuf(NY-1) = sendbuf(1);
+		MPI_Sendrecv(sendbuf.memptr(), NY, MPI_DOUBLE, params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART, 1, recvbuf.memptr(), NY, MPI_DOUBLE, params->mpi.RIGHT_MPI_DOMAIN_NUMBER_CART, 1, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		F->row(frow+1) = recvbuf;
+	}else{ // Split along y-axis
+		unsigned int icol = params->mpi.icol;
+		unsigned int fcol = params->mpi.fcol;
 
-*/
+		int NX = params->mesh.NX_IN_SIM + 2;
+
+		arma::colvec recvbuf(NX);
+		arma::colvec sendbuf(NX);
+
+		// Left to right ghost cells and viceversa
+		F->submat(0,icol,0,fcol) = F->submat(NX-2,icol,NX-2,fcol);
+		F->submat(NX-1,icol,NX-1,fcol) = F->submat(1,icol,1,fcol);
 
 		// We first pass the ghosts cells at the right end to the right MPI process in the Cartesian topology
+		sendbuf = F->col(fcol);
+		sendbuf(0) = sendbuf(NX-2);
+		sendbuf(NX-1) = sendbuf(1);
+		MPI_Sendrecv(sendbuf.memptr(), NX, MPI_DOUBLE, params->mpi.UP_MPI_DOMAIN_NUMBER_CART, 0, recvbuf.memptr(), NX, MPI_DOUBLE, params->mpi.DOWN_MPI_DOMAIN_NUMBER_CART, 0, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		F->col(icol-1) = recvbuf;
 
-	}else{ // Split along y-axis
-
+		sendbuf = F->col(icol);
+		sendbuf(0) = sendbuf(NX-2);
+		sendbuf(NX-1) = sendbuf(1);
+		MPI_Sendrecv(sendbuf.memptr(), NX, MPI_DOUBLE, params->mpi.DOWN_MPI_DOMAIN_NUMBER_CART, 1, recvbuf.memptr(), NX, MPI_DOUBLE, params->mpi.UP_MPI_DOMAIN_NUMBER_CART, 1, params->mpi.MPI_TOPO, MPI_STATUS_IGNORE);
+		F->col(fcol+1) = recvbuf;
 	}
 
+}
+
+
+void EMF_SOLVER::test_vfield_mat(const simulationParameters * params, arma::mat * m){
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
+		m->randu();
+	}else{
+		arma_rng::set_seed_random();
+		m->randu();
+	}
+
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m->print("MPI 0");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1 Before");
+
+
+	MPI_passGhosts(params, m);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1 After");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+	MPI_Abort(params->mpi.MPI_TOPO,-2000);
 }
 
 
@@ -248,8 +294,8 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, oneDimensional
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
 
 
 	//There is not x-component of curl(B)
@@ -429,8 +475,8 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 	MPI_passGhosts(params, &EB->B);
 
 	// Indices of subdomain
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
 
 	// stting to zero number density and bulk velocity vectors
 	V1D.n.zeros();
@@ -574,14 +620,16 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS){
 	MPI_passGhosts(params, &EB->E);
 	MPI_passGhosts(params, &EB->B);
-/*
+
 	// Indices of subdomain
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
 
 	// stting to zero number density and bulk velocity vectors
-	V1D.n.zeros();
-	V1D.U.zeros();
+	V2D.n.zeros();
+	V2D.U.zeros();
 
 	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 		fillGhosts(&IONS->at(ii).n);
@@ -592,13 +640,13 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 		// Ions density at time level "l + 1/2"
 		// n(l+1/2) = ( n(l+1) + n(l) )/2
-		V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
+		V2D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.submat(irow-1,icol-1,frow+1,fcol+1) + IONS->at(ii).n_.submat(irow-1,icol-1,frow+1,fcol+1) );
 
 		// Ions bulk velocity at time level "l + 1/2"
 		//sum_k[ Z_k*n_k*u_k ]
-		V1D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
-		V1D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
-		V1D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
+		V2D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.submat(irow-1,icol-1,frow+1,fcol+1);
+		V2D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.submat(irow-1,icol-1,frow+1,fcol+1);
+		V2D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.submat(irow-1,icol-1,frow+1,fcol+1);
 	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
 	V1D.U.X /= V1D.n;
@@ -608,15 +656,20 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	V1D.n /= n_cs;//Normalized density
 
 	// We compute the curl(B).
-	vfield_vec curlB(NX_T);
+	vfield_mat curlB(NX_T,NY_T);
 
 	EB->E.zeros();
 
 	// x-component
 
 	// The Y and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
-	curlB.Y.subvec(iIndex,fIndex) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
-	curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	curlB.X.submat(irow,icol,frow,fcol) = ( EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
+	MPI_Barrier(params->mpi.MPI_TOPO);
+	MPI_Abort(params->mpi.MPI_TOPO,-2000);
+/*
+
+	curlB.Y.submat(irow,icol,frow,fcol) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
 	// Number density at Ex-nodes. Linear interpolation used.
 	V1D.n_interp = 0.5*( V1D.n.subvec(1,NX_S-2) + V1D.n.subvec(2,NX_S-1) );
@@ -719,8 +772,8 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	MPI_passGhosts(params,&EB->B);
 
 	//Definitions
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
 
 	V1D._n.zeros();
 	V1D.n.zeros();

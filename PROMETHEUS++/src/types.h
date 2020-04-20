@@ -267,7 +267,7 @@ public:
 	arma::mat n; 		// Ion density at time level "l + 1"
 	arma::mat n_; 		// Ion density at time level "l - 1;
 	arma::mat n__; 		// Ion density at time level "l - 2;
-	arma::mat n___; 		// Ion density at time level "l - 3;
+	arma::mat n___; 	// Ion density at time level "l - 3;
 	vfield_mat nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"

@@ -492,17 +492,17 @@ void PIC::eiv(const simulationParameters * params, oneDimensional::ionSpecies * 
 		for(int ii=0; ii<NSP; ii++){
 			int ix = IONS->mn(ii) + 2;
 
-			nv.X(ix-1) += IONS->wxl(ii)*IONS->V(ii,0);
-			nv.X(ix) += IONS->wxc(ii)*IONS->V(ii,0);
-			nv.X(ix+1) += IONS->wxr(ii)*IONS->V(ii,0);
+			nv.X(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,0);
+			nv.X(ix) 	+= IONS->wxc(ii)*IONS->V(ii,0);
+			nv.X(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,0);
 
-			nv.Y(ix-1) += IONS->wxl(ii)*IONS->V(ii,1);
-			nv.Y(ix) += IONS->wxc(ii)*IONS->V(ii,1);
-			nv.Y(ix+1) += IONS->wxr(ii)*IONS->V(ii,1);
+			nv.Y(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,1);
+			nv.Y(ix) 	+= IONS->wxc(ii)*IONS->V(ii,1);
+			nv.Y(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,1);
 
-			nv.Z(ix-1) += IONS->wxl(ii)*IONS->V(ii,2);
-			nv.Z(ix) += IONS->wxc(ii)*IONS->V(ii,2);
-			nv.Z(ix+1) += IONS->wxr(ii)*IONS->V(ii,2);
+			nv.Z(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,2);
+			nv.Z(ix) 	+= IONS->wxc(ii)*IONS->V(ii,2);
+			nv.Z(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,2);
 		}
 
 		include4GhostsContributions(&nv.X);
@@ -555,12 +555,12 @@ void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * 
 			int iy = IONS->mn(ii,1) + 2;
 
 			// x component
-			nv.X(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,0);
-			nv.X(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,0);
-			nv.X(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,0);
+			nv.X(ix-1,iy) 	+= IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,0);
+			nv.X(ix,iy)   	+= IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,0);
+			nv.X(ix+1,iy) 	+= IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,0);
 
-			nv.X(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,0);
-			nv.X(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,0);
+			nv.X(ix,iy-1) 	+= IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,0);
+			nv.X(ix,iy+1) 	+= IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,0);
 
 			nv.X(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,0);
 			nv.X(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,0);
@@ -569,12 +569,12 @@ void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * 
 			nv.X(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,0);
 
 			// y component
-			nv.Y(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,1);
-			nv.Y(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,1);
-			nv.Y(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,1);
+			nv.Y(ix-1,iy) 	+= IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,1);
+			nv.Y(ix,iy)   	+= IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,1);
+			nv.Y(ix+1,iy) 	+= IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,1);
 
-			nv.Y(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,1);
-			nv.Y(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,1);
+			nv.Y(ix,iy-1) 	+= IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,1);
+			nv.Y(ix,iy+1) 	+= IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,1);
 
 			nv.Y(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,1);
 			nv.Y(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,1);
@@ -583,12 +583,12 @@ void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * 
 			nv.Y(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,1);
 
 			// z component
-			nv.Z(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,2);
-			nv.Z(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,2);
-			nv.Z(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,2);
+			nv.Z(ix-1,iy) 	+= IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,2);
+			nv.Z(ix,iy) 	+= IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,2);
+			nv.Z(ix+1,iy) 	+= IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,2);
 
-			nv.Z(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,2);
-			nv.Z(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,2);
+			nv.Z(ix,iy-1) 	+= IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,2);
+			nv.Z(ix,iy+1) 	+= IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,2);
 
 			nv.Z(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,2);
 			nv.Z(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,2);
@@ -674,7 +674,7 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
 			int ix = IONS->mn(ii) + 2;
 
 			n(ix-1) += IONS->wxl(ii);
-			n(ix) += IONS->wxc(ii);
+			n(ix) 	+= IONS->wxc(ii);
 			n(ix+1) += IONS->wxr(ii);
 		}
 
@@ -713,18 +713,18 @@ void PIC::eid(const simulationParameters * params, twoDimensional::ionSpecies * 
 			int ix = IONS->mn(ii,0) + 2;
 			int iy = IONS->mn(ii,1) + 2;
 
-			n(ix-1,iy) += IONS->wxl(ii)*IONS->wyc(ii);
-			n(ix,iy) += IONS->wxc(ii)*IONS->wyc(ii);
-			n(ix+1,iy) += IONS->wxr(ii)*IONS->wyc(ii);
+			n(ix-1,iy) 		+= IONS->wxl(ii)*IONS->wyc(ii);
+			n(ix,iy) 		+= IONS->wxc(ii)*IONS->wyc(ii);
+			n(ix+1,iy) 		+= IONS->wxr(ii)*IONS->wyc(ii);
 
-			n(ix,iy-1) += IONS->wxc(ii)*IONS->wyl(ii);
-			n(ix,iy+1) += IONS->wxc(ii)*IONS->wyr(ii);
+			n(ix,iy-1) 		+= IONS->wxc(ii)*IONS->wyl(ii);
+			n(ix,iy+1) 		+= IONS->wxc(ii)*IONS->wyr(ii);
 
-			n(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii);
-			n(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii);
+			n(ix+1,iy-1) 	+= IONS->wxr(ii)*IONS->wyl(ii);
+			n(ix+1,iy+1) 	+= IONS->wxr(ii)*IONS->wyr(ii);
 
-			n(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii);
-			n(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii);
+			n(ix-1,iy-1) 	+= IONS->wxl(ii)*IONS->wyl(ii);
+			n(ix-1,iy+1) 	+= IONS->wxl(ii)*IONS->wyr(ii);
 		}
 
 		include4GhostsContributions(&n);

@@ -30,20 +30,7 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 	if (params->dimensionality == 1){
 		n_cs = CS->length*CS->density;
 
-		ne.zeros(NX_S);
-		n.zeros(NX_S);
-		n_.zeros(NX_S);
-		n__.zeros(NX_S);
-
-		U.zeros(NX_S);
-		U_.zeros(NX_S);
-		U__.zeros(NX_S);
-
-		Ui.zeros(NX_S);
-		Ui_.zeros(NX_S);
-		Ui__.zeros(NX_S);
-
-		V1D.ne.zeros(NX_S);
+		V1D._n.zeros(NX_S);
 		V1D.n.zeros(NX_S);
 		V1D.n_.zeros(NX_S);
 		V1D.n__.zeros(NX_S);
@@ -51,10 +38,6 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 		V1D.U.zeros(NX_S);
 		V1D.U_.zeros(NX_S);
 		V1D.U__.zeros(NX_S);
-
-		V1D.Ui.zeros(NX_S);
-		V1D.Ui_.zeros(NX_S);
-		V1D.Ui__.zeros(NX_S);
 	}else if (params->dimensionality == 2){
 
 	}
@@ -252,11 +235,9 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, oneDimensional
 	EB->B.X.fill(0);
 
 	//y-component
-//	EB->B.Y.subvec(1,NX-2) = ( EB->E.Z.subvec(2,NX-1) - EB->E.Z.subvec(1,NX-2) )/params->mesh.DX;
-	EB->B.Y.subvec(iIndex,fIndex) = ( EB->E.Z.subvec(iIndex+1,fIndex+1) - EB->E.Z.subvec(iIndex,fIndex) )/params->mesh.DX;
+	EB->B.Y.subvec(iIndex,fIndex) =   ( EB->E.Z.subvec(iIndex+1,fIndex+1) - EB->E.Z.subvec(iIndex,fIndex) )/params->mesh.DX;
 
 	//z-component
-//	EB->B.Z.subvec(1,NX-2) = - ( EB->E.Y.subvec(2,NX-1) - EB->E.Y.subvec(1,NX-2) )/params->mesh.DX;
 	EB->B.Z.subvec(iIndex,fIndex) = - ( EB->E.Y.subvec(iIndex+1,fIndex+1) - EB->E.Y.subvec(iIndex,fIndex) )/params->mesh.DX;
 }
 
@@ -268,38 +249,38 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, twoDimensional
 
 void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
-	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
+	//B^(N+1) = B^(N) + dt( K1^(N) + 2*V1D.K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
 
-	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){//Runge-Kutta iterations
+	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){ // Runge-Kutta iterations
 
-		K1 = *EB;//The value of the fields at the time level (N-1/2)
-		advanceEField(params, &K1, IONS);//E1 (using B^(N-1/2))
-		FaradaysLaw(params, &K1);//K1
+		V1D.K1 = *EB; 									// The value of the fields at the time level (N-1/2)
+		advanceEField(params, &V1D.K1, IONS);			// E1 (using B^(N-1/2))
+		FaradaysLaw(params, &V1D.K1);					// K1
 
-		K2.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K1
-		K2.B.Y = EB->B.Y + (0.5*dt)*K1.B.Y;
-		K2.B.Z = EB->B.Z + (0.5*dt)*K1.B.Z;
-		K2.E = EB->E;
-		advanceEField(params, &K2, IONS);//E2 (using B^(N-1/2) + 0.5*dt*K1)
-		FaradaysLaw(params, &K2);//K2
+		V1D.K2.B.X = EB->B.X;							// B^(N-1/2) + 0.5*dt*K1
+		V1D.K2.B.Y = EB->B.Y + (0.5*dt)*V1D.K1.B.Y;
+		V1D.K2.B.Z = EB->B.Z + (0.5*dt)*V1D.K1.B.Z;
+		V1D.K2.E = EB->E;
+		advanceEField(params, &V1D.K2, IONS);			// E2 (using B^(N-1/2) + 0.5*dt*K1)
+		FaradaysLaw(params, &V1D.K2);					// K2
 
-		K3.B.X = EB->B.X;//B^(N-1/2) + 0.5*dt*K2
-		K3.B.Y = EB->B.Y + (0.5*dt)*K2.B.Y;
-		K3.B.Z = EB->B.Z + (0.5*dt)*K2.B.Z;
-		K3.E = EB->E;
-		advanceEField(params, &K3, IONS);//E3 (using B^(N-1/2) + 0.5*dt*K2)
-		FaradaysLaw(params, &K3);//K3
+		V1D.K3.B.X = EB->B.X;							// B^(N-1/2) + 0.5*dt*K2
+		V1D.K3.B.Y = EB->B.Y + (0.5*dt)*V1D.K2.B.Y;
+		V1D.K3.B.Z = EB->B.Z + (0.5*dt)*V1D.K2.B.Z;
+		V1D.K3.E = EB->E;
+		advanceEField(params, &V1D.K3, IONS);			// E3 (using B^(N-1/2) + 0.5*dt*K2)
+		FaradaysLaw(params, &V1D.K3);					// K3
 
-		K4.B.X = EB->B.X;//B^(N-1/2) + dt*K2
-		K4.B.Y = EB->B.Y + dt*K3.B.Y;
-		K4.B.Z = EB->B.Z + dt*K3.B.Z;
-		K4.E = EB->E;
-		advanceEField(params, &K4, IONS);//E4 (using B^(N-1/2) + dt*K3)
-		FaradaysLaw(params, &K4);//K4
+		V1D.K4.B.X = EB->B.X;							// B^(N-1/2) + dt*K2
+		V1D.K4.B.Y = EB->B.Y + dt*V1D.K3.B.Y;
+		V1D.K4.B.Z = EB->B.Z + dt*V1D.K3.B.Z;
+		V1D.K4.E = EB->E;
+		advanceEField(params, &V1D.K4, IONS);			// E4 (using B^(N-1/2) + dt*K3)
+		FaradaysLaw(params, &V1D.K4);					// K4
 
-		EB->B += (dt/6)*( K1.B + 2*K2.B + 2*K3.B + K4.B );
-	}//Runge-Kutta iterations
+		EB->B += (dt/6)*( V1D.K1.B + 2*V1D.K2.B + 2*V1D.K3.B + V1D.K4.B );
+	} // Runge-Kutta iterations
 
 
 
@@ -307,8 +288,8 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 		MPI_AllgatherField(params, &EB->B);
 
 		// arma::vec n
-		arma::mat M(NX_R, NX_R, fill::zeros);	// Matrix to be inverted to calculate the actual magnetic field
-		arma::vec S(NX_R, fill::zeros);			// Modified magnetic field
+		arma::mat M(NX_R, NX_R, fill::zeros);		// Matrix to be inverted to calculate the actual magnetic field
+		arma::vec S(NX_R, fill::zeros);				// Modified magnetic field
 		double de; 									// Electron skin depth
 
 		de = (F_C_DS/F_E_DS)*sqrt( F_ME_DS*F_EPSILON_DS/params->BGP.ne );
@@ -347,14 +328,14 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 
 #ifdef CHECKS_ON
 	if(!EB->B.X.is_finite()){
-		cout << "ERROR: Non finite values in Bx" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
+		cout << "Non finite values in Bx" << endl;
+		MPI_Abort(params->mpi.MPI_TOPO, -113);
 	}else if(!EB->B.Y.is_finite()){
-		cout << "ERROR: Non finite values in By" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
+		cout << "Non finite values in By" << endl;
+		MPI_Abort(params->mpi.MPI_TOPO, -114);
 	}else if(!EB->B.Z.is_finite()){
-		cout << "ERROR: Non finite values in Bz" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
+		cout << "Non finite values in Bz" << endl;
+		MPI_Abort(params->mpi.MPI_TOPO, -115);
 	}
 #endif
 
@@ -384,26 +365,23 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 
 
 void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS){
-	//Using the RK4 scheme to advance B.
-	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
-	dt = params->DT/((double)params->numberOfRKIterations);
+
 }
 
 
-void EMF_SOLVER::aef_1D(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
-
+void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
-	//Definitions
+	// Indices of subdomain
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART + 1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART + 1));
 
-	// n and U are armadillo vectors initialized in the EMF_SOLVER class constructor.
-	n.zeros();
-	U.zeros();
+	// stting to zero number density and bulk velocity vectors
+	V1D.n.zeros();
+	V1D.U.zeros();
 
-	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
+	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 		fillGhosts(&IONS->at(ii).n);
 		fillGhosts(&IONS->at(ii).n_);
 		fillGhosts(&IONS->at(ii).nv.X);
@@ -412,140 +390,129 @@ void EMF_SOLVER::aef_1D(const simulationParameters * params, oneDimensional::fie
 
 		// Ions density at time level "l + 1/2"
 		// n(l+1/2) = ( n(l+1) + n(l) )/2
-		n += 0.5*IONS->at(ii).Z*(IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1));
-		// n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1);
+		V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
 
 		// Ions bulk velocity at time level "l + 1/2"
 		//sum_k[ Z_k*n_k*u_k ]
-		U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
-		U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
-		U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
+		V1D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
+		V1D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
+		V1D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
 	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
-	U.X /= n;
-	U.Y /= n;
-	U.Z /= n;
+	V1D.U.X /= V1D.n;
+	V1D.U.Y /= V1D.n;
+	V1D.U.Z /= V1D.n;
 
-	n /= n_cs;//Normalized density
+	V1D.n /= n_cs;//Normalized density
 
-	//Definitions
-
+	// We compute the curl(B).
 	vfield_vec curlB(NX_T);
 
-	EB->E.fill(0);
-
-	// NOTE: In the following, the indices range per subdomain goes as follows: (iIndex,fIndex) = (1,NX-2).
+	EB->E.zeros();
 
 	// x-component
 
-	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	// The Y and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
+	curlB.Y.subvec(iIndex,fIndex) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
-	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	// Number density at Ex-nodes. Linear interpolation used.
+	V1D.n_interp = 0.5*( V1D.n.subvec(1,NX_S-2) + V1D.n.subvec(2,NX_S-1) );
 
-	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.n_interp );
 
-	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( U.Y.subvec(1,NX_S-2) + U.Y.subvec(2,NX_S-1) ) % EB->B.Z.subvec(iIndex,fIndex);
+	// Uy is interpolated to Ex-nodes
+	V1D.U_interp = 0.5*( V1D.U.Y.subvec(1,NX_S-2) + V1D.U.Y.subvec(2,NX_S-1) );
 
-	EB->E.X.subvec(iIndex,fIndex) += 0.5*( U.Z.subvec(1,NX_S-2) + U.Z.subvec(2,NX_S-1) ) % EB->B.Y.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += - V1D.U_interp % EB->B.Z.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (n.subvec(2,NX_S-1) - n.subvec(1,NX_S-2))/params->mesh.DX )/(0.5*( n.subvec(1,NX_S-2) + n.subvec(2,NX_S-1) ) );
+	// Uz is interpolated to Ex-nodes
+	V1D.U_interp = 0.5*( V1D.U.Z.subvec(1,NX_S-2) + V1D.U.Z.subvec(2,NX_S-1) );
+
+	EB->E.X.subvec(iIndex,fIndex) +=   V1D.U_interp % EB->B.Y.subvec(iIndex,fIndex);
+
+	// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
+	V1D.dndx = ( V1D.n.subvec(2,NX_S-1) - V1D.n.subvec(1,NX_S-2) )/params->mesh.DX;
+
+	EB->E.X.subvec(iIndex,fIndex) += - ( params->BGP.Te/F_E_DS )*V1D.dndx/V1D.n_interp;
 
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFD with DX/2
 
-		EB->E.X.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*0.5*( U.X.subvec(1,NX_S-2) + U.X.subvec(2,NX_S-1) ) % ( (U.X.subvec(2,NX_S-1) - U.X.subvec(1,NX_S-2))/params->mesh.DX );
+		EB->E.X.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*0.5*( V1D.U.X.subvec(1,NX_S-2) + V1D.U.X.subvec(2,NX_S-1) ) % ( (V1D.U.X.subvec(2,NX_S-1) - V1D.U.X.subvec(1,NX_S-2))/params->mesh.DX );
 	}
 
+	curlB.zeros();
 
-	curlB.fill(0);
 
+	// y-component
 
-	//y-component
-
-	curlB.Y.subvec(iIndex,fIndex) = -(EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX;//curl(B)z(i)
-
-	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX;//curl(B)z(i)
+	// The Y and Z components of curl(B) are computed directly at Ey-nodes.
+	curlB.Y.subvec(iIndex,fIndex) = -( EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	curlB.Z.subvec(iIndex,fIndex) =  ( EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
 	MPI_passGhosts(params,&curlB.Y);
 
 	MPI_passGhosts(params,&curlB.Z);
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2));
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2) );
 
-	EB->E.Y.subvec(iIndex,fIndex) += - U.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+	// Bz is interpolated to Ey-nodes
+	V1D.B_interp = 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) );
 
-	EB->E.Y.subvec(iIndex,fIndex) += U.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
+	EB->E.Y.subvec(iIndex,fIndex) +=   V1D.U.X.subvec(1,NX_S-2) % V1D.B_interp;
 
-	// Including electron inertia term
-	if (params->includeElectronInertia){
-		// CFDs with DX
-		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Y.subvec(2,NX_S-1) - U.Y.subvec(0,NX_S-3))/params->mesh.DX );
-
-		EB->E.Y.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Y.subvec(iIndex+1,fIndex+1) - curlB.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX );
-
-		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2) % n.subvec(1,NX_S-2)) ) % ( 0.5*(n.subvec(2,NX_S-1) - n.subvec(0,NX_S-3))/params->mesh.DX ) % curlB.Y.subvec(iIndex,fIndex);
-	}
-
-
-	//z-component
-
-	// The y-component of Curl(B) has been calculated above.
-
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2));
-
-	EB->E.Z.subvec(iIndex,fIndex) += - U.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
-
-	EB->E.Z.subvec(iIndex,fIndex) += U.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
-
+	EB->E.Y.subvec(iIndex,fIndex) += - V1D.U.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		// CFDs with DX
-		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*U.X.subvec(1,NX_S-2) % ( 0.5*(U.Z.subvec(2,NX_S-1) - U.Z.subvec(0,NX_S-3))/params->mesh.DX );
+		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*V1D.U.X.subvec(1,NX_S-2) % ( 0.5*(V1D.U.Y.subvec(2,NX_S-1) - V1D.U.Y.subvec(0,NX_S-3))/params->mesh.DX );
 
-		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX );
+		EB->E.Y.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( V1D.U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Y.subvec(iIndex+1,fIndex+1) - curlB.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX );
+
+		EB->E.Y.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*( V1D.U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2) % V1D.n.subvec(1,NX_S-2)) ) % ( 0.5*(V1D.n.subvec(2,NX_S-1) - V1D.n.subvec(0,NX_S-3))/params->mesh.DX ) % curlB.Y.subvec(iIndex,fIndex);
 	}
 
 
-#ifdef CHECKS_ON
-	if(!EB->E.X.is_finite()){
-		cout << "ERROR: Non finite values in Ex" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
-	}else if(!EB->E.Y.is_finite()){
-		cout << "ERROR: Non finite values in Ey" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
-	}else if(!EB->E.Z.is_finite()){
-		cout << "ERROR: Non finite values in Ez" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
+	// z-component
+
+	// The y-component of Curl(B) has been calculated above at the right places. Note that Ey-nodes and Ez-nodes are the same.
+
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2));
+
+	// By is interpolated to Ez-nodes
+	V1D.B_interp = 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) );
+
+	EB->E.Z.subvec(iIndex,fIndex) += - V1D.U.X.subvec(1,NX_S-2) % V1D.B_interp;
+
+	EB->E.Z.subvec(iIndex,fIndex) +=   V1D.U.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+
+
+	// Including electron inertia term
+	if (params->includeElectronInertia){
+		// CFDs with DX
+		EB->E.Z.subvec(iIndex,fIndex) -= (F_ME_DS/F_E_DS)*V1D.U.X.subvec(1,NX_S-2) % ( 0.5*(V1D.U.Z.subvec(2,NX_S-1) - V1D.U.Z.subvec(0,NX_S-3))/params->mesh.DX );
+
+		EB->E.Z.subvec(iIndex,fIndex) += (F_ME_DS/F_E_DS)*( V1D.U.X.subvec(1,NX_S-2)/(F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2)) ) % ( 0.5*(curlB.Z.subvec(iIndex+1,fIndex+1) - curlB.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX );
 	}
-#endif
-
-	smooth(&EB->E,params->smoothingParameter);
-}
 
 
-void EMF_SOLVER::aef_2D(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS){
-
-}
-
-
-void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
-
-	//The ions' density and flow velocities are stored in the integer nodes,we'll use mean values of these quantities in order to calculate the electric field in the staggered grid.
-
-	#ifdef ONED
-	aef_1D(params, EB, IONS);
+	#ifdef CHECKS_ON
+		if(!EB->E.X.is_finite()){
+			cout << "Non finite values in Ex" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -110);
+		}else if(!EB->E.Y.is_finite()){
+			cout << "Non finite values in Ey" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -111);
+		}else if(!EB->E.Z.is_finite()){
+			cout << "Non finite values in Ez" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -112);
+		}
 	#endif
 
-	#ifdef TWOD
-	aef_2D(params, EB, IONS);
-	#endif
-
-	#ifdef THREED
-	aef_3D(params, EB, IONS);
-	#endif
-
+	smooth(&EB->E, params->smoothingParameter);
 }
 
 
@@ -555,7 +522,6 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 	+ IONS: Ions' variables at time level "l + 1/2"
 */
 void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const int BAE){
-
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
@@ -563,9 +529,9 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
-	ne.zeros();
-	n.zeros();
-	U.zeros();
+	V1D._n.zeros();
+	V1D.n.zeros();
+	V1D.U.zeros();
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 			fillGhosts(&IONS->at(ii).n);
@@ -575,30 +541,29 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 			fillGhosts(&IONS->at(ii).nv.Z);
 
 			// Electron density at time level "l + 1"
-			ne += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1);
+			V1D._n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1);
 
 			// Ions density at time level "l + 1/2"
 			// n(l+1/2) = ( n(l+1) + n(l) )/2
-			n += 0.5*IONS->at(ii).Z*(IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1));
-			// n += IONS->at(ii).Z*IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1);
+			V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
 
 			// Ions bulk velocity at time level "l + 1/2"
 			//sum_k[ Z_k*n_k*u_k ]
-			U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
-			U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
-			U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
+			V1D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
+			V1D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
+			V1D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
 	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
-	U.X /= n;
-	U.Y /= n;
-	U.Z /= n;
+	V1D.U.X /= V1D.n;
+	V1D.U.Y /= V1D.n;
+	V1D.U.Z /= V1D.n;
 
-	ne /= n_cs;
-	n /= n_cs;//Dimensionless density
+	V1D._n /= n_cs;
+	V1D.n /= n_cs;//Dimensionless density
 
 
-	n_.zeros();
-	U_.zeros();
+	V1D.n_.zeros();
+	V1D.U_.zeros();
 
 	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 		fillGhosts(&IONS->at(ii).n_);
@@ -609,25 +574,25 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 		// Ions density at time level "l - 1/2"
 		// n(l-1/2) = ( n(l) + n(l-1) )/2
-		n_ += 0.5*IONS->at(ii).Z*(IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1,fIndex + 1));
+		V1D.n_ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1,fIndex + 1) );
 
 		// Ions bulk velocity at time level "l - 1/2"
 		//sum_k[ Z_k*n_k*u_k ]
-		U_.X += IONS->at(ii).Z*IONS->at(ii).nv_.X.subvec(iIndex-1,fIndex+1);
-		U_.Y += IONS->at(ii).Z*IONS->at(ii).nv_.Y.subvec(iIndex-1,fIndex+1);
-		U_.Z += IONS->at(ii).Z*IONS->at(ii).nv_.Z.subvec(iIndex-1,fIndex+1);
+		V1D.U_.X += IONS->at(ii).Z*IONS->at(ii).nv_.X.subvec(iIndex-1,fIndex+1);
+		V1D.U_.Y += IONS->at(ii).Z*IONS->at(ii).nv_.Y.subvec(iIndex-1,fIndex+1);
+		V1D.U_.Z += IONS->at(ii).Z*IONS->at(ii).nv_.Z.subvec(iIndex-1,fIndex+1);
 	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
-	U_.X /= n_;
-	U_.Y /= n_;
-	U_.Z /= n_;
+	V1D.U_.X /= V1D.n_;
+	V1D.U_.Y /= V1D.n_;
+	V1D.U_.Z /= V1D.n_;
 
-	n_ /= n_cs;//Dimensionless density
+	V1D.n_ /= n_cs;//Dimensionless density
 
 
 	if(BAE == 1){
-		n__.zeros();
-		U__.fill(0.0);
+		V1D.n__.zeros();
+		V1D.U__.zeros();
 
 		for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
 			fillGhosts(&IONS->at(ii).n__);
@@ -637,86 +602,106 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 			// Ions density at time level "l - 3/2"
 			// n(l-3/2) = ( n(l-1) + n(l-2) )/2
-			n__ += 0.5*IONS->at(ii).Z*(IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1));
+			V1D.n__ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) );
 
 			//sum_k[ Z_k*n_k*u_k ]
-			U__.X += IONS->at(ii).Z*IONS->at(ii).nv__.X.subvec(iIndex-1,fIndex+1);
-			U__.Y += IONS->at(ii).Z*IONS->at(ii).nv__.Y.subvec(iIndex-1,fIndex+1);
-			U__.Z += IONS->at(ii).Z*IONS->at(ii).nv__.Z.subvec(iIndex-1,fIndex+1);
+			V1D.U__.X += IONS->at(ii).Z*IONS->at(ii).nv__.X.subvec(iIndex-1,fIndex+1);
+			V1D.U__.Y += IONS->at(ii).Z*IONS->at(ii).nv__.Y.subvec(iIndex-1,fIndex+1);
+			V1D.U__.Z += IONS->at(ii).Z*IONS->at(ii).nv__.Z.subvec(iIndex-1,fIndex+1);
 		}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
-		U__.X /= n__;
-		U__.Y /= n__;
-		U__.Z /= n__;
+		V1D.U__.X /= V1D.n__;
+		V1D.U__.Y /= V1D.n__;
+		V1D.U__.Z /= V1D.n__;
 
-		n__ /= n_cs;//Dimensionless density
+		V1D.n__ /= n_cs;//Dimensionless density
 
 		//Here we use the velocity extrapolation U^(N+1) = 2*U^(N+1/2) - 1.5*U^(N-1/2) + 0.5*U^(N-3/2)
-		V = 2.0*U - 1.5*U_ + 0.5*U__;
+		V1D.V = 2.0*V1D.U - 1.5*V1D.U_ + 0.5*V1D.U__;
 	}else{
 		//Here we use the velocity extrapolation U^(N+1) = 1.5*U^(N+1/2) - 0.5*U^(N-1/2)
-		V = 1.5*U - 0.5*U_;
+		V1D.V = 1.5*V1D.U - 0.5*V1D.U_;
 	}
 
-
+	// We compute the curl(B).
 	vfield_vec curlB(NX_T);
 
-	EB->E.fill(0);
+	EB->E.zeros();
 
-	//x-component
+	// x-component
 
-	curlB.Y.subvec(iIndex,fIndex) = -0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	// The Y and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
+	curlB.Y.subvec(iIndex,fIndex) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
-	curlB.Z.subvec(iIndex,fIndex) = 0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	// Number density at Ex-nodes. Linear interpolation used.
+	V1D.n_interp = 0.5*( V1D._n.subvec(1,NX_S-2) + V1D._n.subvec(2,NX_S-1) );
 
-	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*( 0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) ) );
+	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.n_interp );
 
-	EB->E.X.subvec(iIndex,fIndex) += - 0.5*( V.Y.subvec(1,NX_S-2) + V.Y.subvec(2,NX_S-1) ) % EB->B.Z.subvec(iIndex,fIndex);
+	// Uy is interpolated to Ex-nodes
+	V1D.U_interp = 0.5*( V1D.V.Y.subvec(1,NX_S-2) + V1D.V.Y.subvec(2,NX_S-1) );
 
-	EB->E.X.subvec(iIndex,fIndex) += 0.5*( V.Z.subvec(1,NX_S-2) + V.Z.subvec(2,NX_S-1) ) % EB->B.Y.subvec(iIndex,fIndex);
+	EB->E.X.subvec(iIndex,fIndex) += - V1D.U_interp % EB->B.Z.subvec(iIndex,fIndex);
 
-	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*( (ne.subvec(2,NX_S-1) - ne.subvec(1,NX_S-2))/params->mesh.DX )/(0.5*( ne.subvec(1,NX_S-2) + ne.subvec(2,NX_S-1) ) );
+	// Uz is interpolated to Ex-nodes
+	V1D.U_interp = 0.5*( V1D.V.Z.subvec(1,NX_S-2) + V1D.V.Z.subvec(2,NX_S-1) );
 
+	EB->E.X.subvec(iIndex,fIndex) +=   V1D.U_interp % EB->B.Y.subvec(iIndex,fIndex);
 
-	curlB.fill(0);
+	// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
+	V1D.dndx = ( V1D._n.subvec(2,NX_S-1) - V1D._n.subvec(1,NX_S-2) )/params->mesh.DX;
 
-
-	//y-component
-
-	curlB.Z.subvec(iIndex,fIndex) = (EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1))/params->mesh.DX;//curl(B)z(i)
-
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,NX_S-2));
-
-	EB->E.Y.subvec(iIndex,fIndex) += - V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
-
-	EB->E.Y.subvec(iIndex,fIndex) += V.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1)) );
+	EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*V1D.dndx/V1D.n_interp;
 
 
-	//z-component
-
-	curlB.Y.subvec(iIndex,fIndex) = - (EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1))/params->mesh.DX ;//curl(B)y(i)
-
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*ne.subvec(1,NX_S-2));
-
-	EB->E.Z.subvec(iIndex,fIndex) += - V.X.subvec(1,NX_S-2) % ( 0.5*(EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1)) );
-
-	EB->E.Z.subvec(iIndex,fIndex) += V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+	curlB.zeros();
 
 
-#ifdef CHECKS_ON
-	if(!EB->E.X.is_finite()){
-		cout << "ERROR: Non finite values in Ex" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
-	}else if(!EB->E.Y.is_finite()){
-		cout << "ERROR: Non finite values in Ey" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
-	}else if(!EB->E.Z.is_finite()){
-		cout << "ERROR: Non finite values in Ez" << endl;
-		MPI_Abort(params->mpi.MPI_TOPO, -2);
-	}
-#endif
+	// y-component
 
-	smooth(&EB->E,params->smoothingParameter);
+	// The Y and Z components of curl(B) are computed directly at Ey-nodes.
+	curlB.Y.subvec(iIndex,fIndex) = - ( EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	curlB.Z.subvec(iIndex,fIndex) =   ( EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+
+	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D._n.subvec(1,NX_S-2) );
+
+	// Bz is interpolated to Ey-nodes
+	V1D.B_interp = 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) );
+
+	EB->E.Y.subvec(iIndex,fIndex) +=   V1D.V.X.subvec(1,NX_S-2) % V1D.B_interp;
+
+	EB->E.Y.subvec(iIndex,fIndex) += - V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+
+
+	// z-component
+
+	// The y-component of Curl(B) has been calculated above at the right places. Note that Ey-nodes and Ez-nodes are the same.
+
+	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D._n.subvec(1,NX_S-2));
+
+	// By is interpolated to Ez-nodes
+	V1D.B_interp = 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) );
+
+	EB->E.Z.subvec(iIndex,fIndex) += - V1D.V.X.subvec(1,NX_S-2) % V1D.B_interp;
+
+	EB->E.Z.subvec(iIndex,fIndex) +=   V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+
+
+	#ifdef CHECKS_ON
+		if(!EB->E.X.is_finite()){
+			cout << "Non finite values in Ex" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -110);
+		}else if(!EB->E.Y.is_finite()){
+			cout << "Non finite values in Ey" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -111);
+		}else if(!EB->E.Z.is_finite()){
+			cout << "Non finite values in Ez" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -112);
+		}
+	#endif
+
+	smooth(&EB->E, params->smoothingParameter);
 }
 
 

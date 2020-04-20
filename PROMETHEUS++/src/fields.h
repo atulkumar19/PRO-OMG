@@ -48,18 +48,18 @@ class EMF_SOLVER{
 	int NY_T; 				// Number of grid cells in entire simulation domain, including 2 ghost cells.
 	int NY_R; 				// Number of grid cells in entire simulation domain, not including ghost cells.
 
-	oneDimensional::fields  K1; // Temporary fields of the four stages of the RK calculation of the magnetic field.
-	oneDimensional::fields  K2; // Temporary fields of the four stages of the RK calculation of the magnetic field.
-	oneDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
-	oneDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
-
 	struct V_1D{
+		arma::vec B_interp;
+		arma::vec n_interp;
+		arma::vec U_interp;
+		arma::vec dndx;
+
 		oneDimensional::fields  K1; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 		oneDimensional::fields  K2; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 		oneDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 		oneDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-		arma::vec ne;			// Electron plasma density at time level "l + 1"
+		arma::vec _n;			// Electron plasma density at time level "l + 1"
 		arma::vec n; 			// Total plasma density at time level "l + 1"
 		arma::vec n_; 			// Total plasma density at time level "l - 1/2"
 		arma::vec n__; 			// Total plasma density at time level "l - 3/2"
@@ -73,33 +73,33 @@ class EMF_SOLVER{
 		vfield_vec Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
 	} V1D;
 
-	arma::vec ne;			// Electron plasma density at time level "l + 1"
-	arma::vec n; 			// Total plasma density at time level "l + 1"
-	arma::vec n_; 			// Total plasma density at time level "l - 1/2"
-	arma::vec n__; 			// Total plasma density at time level "l - 3/2"
 
-	vfield_vec V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
-	vfield_vec U; 			// Ions' bulk velocity at time level "l + 1/2"
-	vfield_vec U_; 			// Ions' bulk velocity at time level "l - 1/2"
-	vfield_vec U__; 		// Ions' bulk velocity at time level "l - 3/2"
-	vfield_vec Ui; 			// Ions' bulk velocity at time level "l - 3/2"
-	vfield_vec Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
-	vfield_vec Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
+	struct V_2D{
+		arma::mat B_interp;
+		arma::mat n_interp;
+		arma::mat U_interp;
+		arma::mat dndx;
+		arma::mat dndy;
 
-/*
-	arma::mat ne;			// Electron plasma density at time level "l + 1"
-	arma::mat n; 			// Total plasma density at time level "l + 1"
-	arma::mat n_; 			// Total plasma density at time level "l - 1/2"
-	arma::mat n__; 			// Total plasma density at time level "l - 3/2"
+		twoDimensional::fields  K1; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+		twoDimensional::fields  K2; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+		twoDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
+		twoDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
-	vfield_mat V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
-	vfield_mat U; 			// Ions' bulk velocity at time level "l + 1/2"
-	vfield_mat U_; 			// Ions' bulk velocity at time level "l - 1/2"
-	vfield_mat U__; 		// Ions' bulk velocity at time level "l - 3/2"
-	vfield_mat Ui; 			// Ions' bulk velocity at time level "l - 3/2"
-	vfield_mat Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
-	vfield_mat Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
-*/
+		arma::mat _n;			// Electron plasma density at time level "l + 1"
+		arma::mat n; 			// Total plasma density at time level "l + 1"
+		arma::mat n_; 			// Total plasma density at time level "l - 1/2"
+		arma::mat n__; 			// Total plasma density at time level "l - 3/2"
+
+		vfield_mat V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
+		vfield_mat U; 			// Ions' bulk velocity at time level "l + 1/2"
+		vfield_mat U_; 			// Ions' bulk velocity at time level "l - 1/2"
+		vfield_mat U__; 		// Ions' bulk velocity at time level "l - 3/2"
+		vfield_mat Ui; 			// Ions' bulk velocity at time level "l - 3/2"
+		vfield_mat Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
+		vfield_mat Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
+	} V2D;
+
 
 	void MPI_AllgatherField(const simulationParameters * params, arma::vec * field);
 
@@ -122,11 +122,6 @@ class EMF_SOLVER{
 	void FaradaysLaw(const simulationParameters * params, oneDimensional::fields * EB);
 
 	void FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB);
-
-
-	void aef_1D(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
-
-	void aef_2D(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
 
   public:
 

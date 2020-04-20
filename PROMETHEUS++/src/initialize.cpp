@@ -99,6 +99,13 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->errorCodes[-107] = "Inconsistency in iniital ion's spatial distribution function";
     params->errorCodes[-108] = "Non-finite value in meshNode";
     params->errorCodes[-109] = "Number of nodes in either direction of simulation domain need to be a multiple of 2";
+    params->errorCodes[-110] = "Non finite values in Ex";
+    params->errorCodes[-111] = "Non finite values in Ey";
+    params->errorCodes[-112] = "Non finite values in Ez";
+    params->errorCodes[-113] = "Non finite values in Bx";
+    params->errorCodes[-114] = "Non finite values in By";
+    params->errorCodes[-115] = "Non finite values in Bz";
+
 
 	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
 	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -415,22 +422,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
 
     double chargeDensityPerCell;
 
-    // #ifdef ONED
     chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
     IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI)*chargeDensityPerCell;
-    // #endif
-
-    /*
-    #ifdef TWOD
-    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
-    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
-    #endif
-
-    #ifdef THREED
-    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
-    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI*params->mesh.DZ*(double)params->mesh.NZ_PER_MPI)*chargeDensityPerCell;
-    #endif
-    */
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
@@ -484,7 +477,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
     double chargeDensityPerCell;
 
     chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
-    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI*params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
+    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI)*(params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
@@ -542,7 +535,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 		} // if(params->restart)
 
         if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP << '\n';
+			cout << "Super-particles used to simulate species No " << ii + 1 << ": " << IONS->at(ii).NSP*params->mpi.NUMBER_MPI_DOMAINS << '\n';
 
         initializeIonsArrays(params, &IONS->at(ii));
     }//Iteration over ion species

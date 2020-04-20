@@ -28,7 +28,7 @@ void MPI_MAIN::mpi_function(simulationParameters * params){
 	{
 	nthreads = omp_get_num_threads();
 	thread = omp_get_thread_num();
-	cout << "Hello from thread " << thread << " in MPI process " << params->mpi.MPI_DOMAIN_NUMBER << " of " << params->mpi.NUMBER_MPI_DOMAINS << " MPI processes\n";
+	cout << "Hello from thread " << thread << " in MPI process " << params->mpi.MPI_DOMAIN_NUMBER << " of " << params->mpi.NUMBER_MPI_DOMAINS << " MPI processes" << endl;
 	}
 	}
 
@@ -140,7 +140,7 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	bool finalized = false;
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		cout << "\n* * * * * * * * * * * * FINALIZING MPI COMMUNICATIONS * * * * * * * * * * * * * * * * * *\n";
+		cout << "\n* * * * * * * * * * * * FINALIZING MPI COMMUNICATIONS * * * * * * * * * * * * * * * * * *" << endl;
 
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
@@ -149,10 +149,10 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	finalized = MPI::Is_finalized();
 
 	if(finalized)
-		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " FINALIZED\n";
+		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " FINALIZED" << endl;
 	else
-		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " NOT FINALIZED - ERROR\n";
+		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " NOT FINALIZED - ERROR" << endl;
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-		cout << "* * * * * * * * * * * * MPI COMMUNICATIONS FINALIZED * * * * * * * * * * * * * * * * * *\n";
+		cout << "* * * * * * * * * * * * MPI COMMUNICATIONS FINALIZED * * * * * * * * * * * * * * * * * *" << endl;
 }

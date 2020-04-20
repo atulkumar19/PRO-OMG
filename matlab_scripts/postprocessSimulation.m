@@ -34,7 +34,7 @@ ST.time = loadTimeVector(ST);
 
 % FourierAnalysis(ST,'B','x');
 % FourierAnalysis(ST,'B','y');
-FourierAnalysis(ST,'B','z');
+% FourierAnalysis(ST,'B','z');
 
 % FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');

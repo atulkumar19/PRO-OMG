@@ -1,7 +1,7 @@
-dimensionality              1
+dimensionality              2
 particleIntegrator          1
 includeElectronInertia      0
-quietStart                  1
+quietStart                  0
 restart                     0
 weightingScheme             1
 BC                          1
@@ -12,7 +12,7 @@ filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              10.0
+simulationTime              1.0
 outputCadence               0.02
 transient                   0
 numberOfParticleSpecies     1
@@ -28,4 +28,4 @@ NY                          8
 NZ                          1
 DrL                         2.0
 dp                          -1
-outputs_variables           {B,E,X,V,g}
+outputs_variables           {U,n,B,E,X,V,g}

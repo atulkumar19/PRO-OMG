@@ -347,10 +347,10 @@ template <class IT, class FT> void UNITS<IT,FT>::dimensionlessForm(simulationPar
 	params->mesh.LX /= CS->length;
 	params->mesh.LY /= CS->length;
 	params->mesh.LZ /= CS->length;
-	//Normalizing the mesh.
+	// Normalizing the mesh.
 
-	//Normalizing ions' properties.
-	for(int ii=0;ii<IONS->size();ii++){//Iterations over the ion species.
+	// Normalizing ions' properties.
+	for(int ii=0;ii<IONS->size();ii++){// Iterations over the ion species.
 		IONS->at(ii).Q /= CS->charge;
 		IONS->at(ii).M /= CS->mass;
 		IONS->at(ii).Tpar /= CS->temperature;
@@ -365,16 +365,13 @@ template <class IT, class FT> void UNITS<IT,FT>::dimensionlessForm(simulationPar
 		IONS->at(ii).P = IONS->at(ii).P/CS->momentum;
 		IONS->at(ii).Ppar = IONS->at(ii).Ppar/CS->momentum;
 		IONS->at(ii).mu = IONS->at(ii).mu/CS->magneticMoment;
-	}//Iterations over the ion species.
-	//Normalizing ions' properties.
+	}// Iterations over the ion species.
+	// Normalizing ions' properties.
 
-	//Normalizing the electromagnetic fields.
-
+	// Normalizing the electromagnetic fields.
 	EB->E /= CS->eField;
 	EB->B /= CS->bField;
-	EB->_B /= CS->bField;
-
-	//Normalizing the electromagnetic fields.
+	// Normalizing the electromagnetic fields.
 }
 
 

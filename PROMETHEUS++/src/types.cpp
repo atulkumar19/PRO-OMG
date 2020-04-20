@@ -334,23 +334,14 @@ void vfield_cube::zeros(unsigned int N, unsigned int M, unsigned int P){
 void oneDimensional::fields::zeros(unsigned int N){
 	E.zeros(N);
 	B.zeros(N);
-	b.zeros(N);
-	b_.zeros(N);
-	_B.zeros(N);
 }
 
 void twoDimensional::fields::zeros(unsigned int N, unsigned int M){
 	E.zeros(N,M);
 	B.zeros(N,M);
-	b.zeros(N,M);
-	b_.zeros(N,M);
-	_B.zeros(N,M);
 }
 
 void threeDimensional::fields::zeros(unsigned int N, unsigned int M, unsigned int P){
 	E.zeros(N,M,P);
 	B.zeros(N,M,P);
-	b.zeros(N,M,P);
-	b_.zeros(N,M,P);
-	_B.zeros(N,M,P);
 }

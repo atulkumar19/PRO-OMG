@@ -101,13 +101,20 @@ class EMF_SOLVER{
 	} V2D;
 
 
-	void MPI_AllgatherField(const simulationParameters * params, arma::vec * field);
+	//*** @tomodify
+	void MPI_AllgatherField(const simulationParameters * params, arma::vec * F);
 
-	void MPI_AllgatherField(const simulationParameters * params, vfield_vec * field);
+	//*** @tomodify
+	void MPI_AllgatherField(const simulationParameters * params, vfield_vec * F);
 
-	void MPI_passGhosts(const simulationParameters * params, vfield_vec * field);
 
-	void MPI_passGhosts(const simulationParameters * params, arma::vec * field);
+	void MPI_passGhosts(const simulationParameters * params, vfield_vec * F);
+
+	void MPI_passGhosts(const simulationParameters * params, arma::vec * F);
+
+	void MPI_passGhosts(const simulationParameters * params, vfield_mat * F);
+
+	void MPI_passGhosts(const simulationParameters * params, arma::mat * F);
 
 
 	void smooth(arma::vec * v, double as);
@@ -123,6 +130,11 @@ class EMF_SOLVER{
 
 	void FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB);
 
+
+	void advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
+
+	void advanceEField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
+
   public:
 
 	EMF_SOLVER(){};
@@ -135,8 +147,6 @@ class EMF_SOLVER{
 	void advanceBField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
 	void advanceBField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
-
-	void advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
 	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const int BAE);
 

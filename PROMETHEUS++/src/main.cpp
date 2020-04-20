@@ -30,7 +30,6 @@
 #include "units.h"
 #include "generalFunctions.h"
 #include "outputHDF5.h"
-#include "alfvenic.h"
 
 #include <omp.h>
 #include "mpi_main.h"
@@ -46,7 +45,7 @@ int main(int argc, char* argv[]){
 	MPI_MAIN mpi_main;
 
 	simulationParameters params; 				// Input parameters for the simulation.
-	vector<nDimensional::ionSpecies> IONS; 	// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	vector<nDimensional::ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	characteristicScales CS;					// Derived type for keeping info about characteristic scales.
 	nDimensional::fields EB; 					// Derived type with variables of electromagnetic fields.
 
@@ -54,7 +53,7 @@ int main(int argc, char* argv[]){
 
 	mpi_main.createMPITopology(&params);
 
-	init.loadIonParameters(&params, &IONS); //*** @tomodify
+	init.loadIonParameters(&params, &IONS);
 
 	UNITS<nDimensional::ionSpecies, nDimensional::fields> units;
 
@@ -90,18 +89,18 @@ int main(int argc, char* argv[]){
 
 	EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
-    //*** @tomodiify
+
+	//*** @tomodiify
 	// GENERAL_FUNCTIONS genFun;
 
     // Repeat 3 times
-    for(int tt=0;tt<3;tt++){
+    for(int tt=0; tt<3; tt++){
         ionsDynamics.advanceIonsPosition(&params, &IONS, 0);
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
     }
     // Repeat 3 times
 
-    //*** @tomodiify
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
 
     t1 = MPI::Wtime();
@@ -119,20 +118,19 @@ int main(int argc, char* argv[]){
         ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
         //*** @tomodiify
-        // fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         //*** @tomodiify
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
          	// Using the Bashford-Adams extrapolation.
-        	// fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 1);
+        	fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 1);
         }else{
 			// Using basic velocity extrapolation.
-        	// fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 0);
+        	fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 0);
 	    }
 
         currentTime += params.DT*CS.time;
 
-        //*** @tomodiify
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0){
 			vector<nDimensional::ionSpecies> IONS_OUT = IONS;
 

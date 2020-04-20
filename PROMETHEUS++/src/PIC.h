@@ -61,15 +61,19 @@ protected:
 
 	void test(const simulationParameters * params);
 
+	void test_vfield_mat(const simulationParameters * params, arma::mat * m);
+
 	void MPI_AllreduceVec(const simulationParameters * params, arma::vec * v);
 
 	void MPI_AllreduceMat(const simulationParameters * params, arma::mat * m);
 
+	void MPI_Allgathervec(const simulationParameters * params, arma::vec * field);
+
 	void MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield);
 
-	void MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
+	void MPI_Allgathermat(const simulationParameters * params, arma::mat * field);
 
-	void MPI_Allgathervec(const simulationParameters * params, arma::vec * field);
+	void MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
 
 
 	void include4GhostsContributions(arma::vec * v);

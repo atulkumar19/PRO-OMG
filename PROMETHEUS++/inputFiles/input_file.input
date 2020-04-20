@@ -1,7 +1,7 @@
 dimensionality              2
 particleIntegrator          1
 includeElectronInertia      0
-quietStart                  0
+quietStart                  1
 restart                     0
 weightingScheme             1
 BC                          1

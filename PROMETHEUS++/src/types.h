@@ -285,12 +285,9 @@ class oneDimensional::fields : public vfield_vec{
 public:
 	vfield_vec E;
 	vfield_vec B;
-	vfield_vec _B;
-	vfield_vec b;
-	vfield_vec b_;
 
 	fields(){};
-	fields(unsigned int N) : E(N), B(N), b(N), b_(N), _B(N){};
+	fields(unsigned int N) : E(N), B(N){};
 
 	~fields(){};
 
@@ -304,12 +301,9 @@ class twoDimensional::fields : public vfield_mat{
 public:
 	vfield_mat E;
 	vfield_mat B;
-	vfield_mat _B;
-	vfield_mat b;
-	vfield_mat b_;
 
 	fields(){};
-	fields(unsigned int NX, unsigned int NY) : E(NX,NY), B(NX,NY), b(NX,NY), b_(NX,NY), _B(NX,NY){};
+	fields(unsigned int NX, unsigned int NY) : E(NX,NY), B(NX,NY){};
 
 	~fields(){};
 
@@ -322,12 +316,9 @@ class threeDimensional::fields : public vfield_cube{
 public:
 	vfield_cube E;
 	vfield_cube B;
-	vfield_cube b;
-	vfield_cube b_;
-	arma::cube _B;
 
 	fields(){};
-	fields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P), b(N,M,P), b_(N,M,P), _B(N,M,P){};
+	fields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P){};
 
 	~fields(){};
 

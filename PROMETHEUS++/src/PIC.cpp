@@ -41,92 +41,6 @@ void PIC::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
 }
 
 
-void PIC::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
-	arma::vec recvbuf(params->mesh.NX_IN_SIM);
-	arma::vec sendbuf(params->mesh.NX_PER_MPI);
-
-	//Allgather for x-component
-	sendbuf = vfield->X.subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	vfield->X.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
-
-	//Allgather for y-component
-	sendbuf = vfield->Y.subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	vfield->Y.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
-
-	//Allgather for z-component
-	sendbuf = vfield->Z.subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	vfield->Z.subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
-}
-
-
-void PIC::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
-	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
-	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
-	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NX_PER_MPI + 1;
-	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NX_PER_MPI;
-
-	arma::vec recvbuf = zeros(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
-	arma::vec sendbuf = zeros(params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);
-
-	//Allgather for x-component
-	sendbuf = vectorise(vfield->X.submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-
-	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
-		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
-		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NX_PER_MPI*(mpis+1) - 1;
-
-		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
-		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
-		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NX_PER_MPI + 1;
-		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NX_PER_MPI;
-
-		vfield->X.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
-	}
-
-	recvbuf.zeros();
-
-	//Allgather for y-component
-	sendbuf = vectorise(vfield->Y.submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-
-	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
-		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
-		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NX_PER_MPI*(mpis+1) - 1;
-
-		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
-		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
-		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NX_PER_MPI + 1;
-		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NX_PER_MPI;
-
-		vfield->Y.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
-	}
-
-	recvbuf.zeros();
-
-	//Allgather for x-component
-	sendbuf = vectorise(vfield->Z.submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-
-	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
-		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
-		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NX_PER_MPI*(mpis+1) - 1;
-
-		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
-		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
-		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NX_PER_MPI + 1;
-		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NX_PER_MPI;
-
-		vfield->Z.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
-	}
-}
-
-
 void PIC::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
@@ -137,6 +51,76 @@ void PIC::MPI_Allgathervec(const simulationParameters * params, arma::vec * fiel
 	sendbuf = field->subvec(iIndex, fIndex);
 	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 	field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+}
+
+
+void PIC::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
+	MPI_Allgathervec(params, &vfield->X);
+	MPI_Allgathervec(params, &vfield->Y);
+	MPI_Allgathervec(params, &vfield->Z);
+}
+
+
+void PIC::MPI_Allgathermat(const simulationParameters * params, arma::mat * field){
+	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
+	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
+
+	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NY_PER_MPI + 1;
+	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NY_PER_MPI;
+
+	arma::vec recvbuf = zeros(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);
+
+	//Allgather for x-component
+	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+
+	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
+		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
+		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*(mpis+1) - 1;
+
+		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
+		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
+
+		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NY_PER_MPI + 1;
+		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NY_PER_MPI;
+
+		field->submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
+	}
+
+}
+
+
+void PIC::test_vfield_mat(const simulationParameters * params, arma::mat * m){
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
+		m->randu();
+	}else{
+		arma_rng::set_seed_random();
+		m->randu();
+	}
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m->print("MPI 0");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1 Before");
+
+	MPI_Allgathermat(params, m);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1 After");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+	MPI_Abort(params->mpi.MPI_TOPO,-2000);
+}
+
+
+void PIC::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
+	MPI_Allgathermat(params, &vfield->X);
+	MPI_Allgathermat(params, &vfield->Y);
+	MPI_Allgathermat(params, &vfield->Z);
 }
 
 

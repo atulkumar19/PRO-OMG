@@ -440,23 +440,17 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimension
 		advanceEField(params, &V2D.K1, IONS);			// E1 (using B^(N-1/2))
 		FaradaysLaw(params, &V2D.K1);					// K1
 
-		V2D.K2.B.X = EB->B.X + (0.5*dt)*V2D.K1.B.X;		// B^(N-1/2) + 0.5*dt*K1
-		V2D.K2.B.Y = EB->B.Y + (0.5*dt)*V2D.K1.B.Y;
-		V2D.K2.B.Z = EB->B.Z + (0.5*dt)*V2D.K1.B.Z;
+		V2D.K2.B = EB->B + (0.5*dt)*V2D.K1.B;			// B^(N-1/2) + 0.5*dt*K1
 		V2D.K2.E = EB->E;
 		advanceEField(params, &V2D.K2, IONS);			// E2 (using B^(N-1/2) + 0.5*dt*K1)
 		FaradaysLaw(params, &V2D.K2);					// K2
 
-		V2D.K3.B.X = EB->B.X + (0.5*dt)*V2D.K2.B.X;		// B^(N-1/2) + 0.5*dt*K2
-		V2D.K3.B.Y = EB->B.Y + (0.5*dt)*V2D.K2.B.Y;
-		V2D.K3.B.Z = EB->B.Z + (0.5*dt)*V2D.K2.B.Z;
+		V2D.K3.B = EB->B + (0.5*dt)*V2D.K2.B;			// B^(N-1/2) + 0.5*dt*K2
 		V2D.K3.E = EB->E;
 		advanceEField(params, &V2D.K3, IONS);			// E3 (using B^(N-1/2) + 0.5*dt*K2)
 		FaradaysLaw(params, &V2D.K3);					// K3
 
-		V2D.K4.B.X = EB->B.X + dt*V2D.K3.B.X;			// B^(N-1/2) + dt*K2
-		V2D.K4.B.Y = EB->B.Y + dt*V2D.K3.B.Y;
-		V2D.K4.B.Z = EB->B.Z + dt*V2D.K3.B.Z;
+		V2D.K4.B = EB->B + dt*V2D.K3.B;					// B^(N-1/2) + dt*K2
 		V2D.K4.E = EB->E;
 		advanceEField(params, &V2D.K4, IONS);			// E4 (using B^(N-1/2) + dt*K3)
 		FaradaysLaw(params, &V2D.K4);					// K4

@@ -405,6 +405,7 @@ NT = ST.numberOfOutputs;
 NSPP = ST.params.ions.numberOfParticleSpecies;
 ND = ST.params.numOfDomains;
 DX = ST.params.geometry.DX;
+DY = ST.params.geometry.DY;
 
 % First we calculate the kinetic energy of the simulated ions
 Ei = zeros(NSPP,NT);
@@ -424,7 +425,11 @@ for ss=1:NSPP
             Ei(ss,ii) = Ei(ss,ii) + sum(vx.^2 + vy.^2 + vz.^2);
         end
 
-        Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/DX;
+        if(ST.params.dimensionality == 1)
+            Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/DX;
+        else
+            Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/(DX*DY);
+        end
     end
 
     ilabels{ss} = ['Species ' num2str(ss)];
@@ -433,6 +438,7 @@ ilabels{NSPP + 1} = 'Total';
 
 
 % Energy of electromagnetic fields
+EBx = zeros(1,NT);
 EBy = zeros(1,NT);
 EBz = zeros(1,NT);
 
@@ -442,9 +448,11 @@ EEz = zeros(1,NT);
 
 for ii=1:NT
     for dd=1:ND
+        Bx = ST.params.Bo(1) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
         By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
         Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
 
+        EBx(ii) = EBx(ii) + sum(sum(Bx.^2));
         EBy(ii) = EBy(ii) + sum(sum(By.^2));
         EBz(ii) = EBz(ii) + sum(sum(Bz.^2));
 
@@ -458,9 +466,10 @@ for ii=1:NT
     end
 end
 
+EBx = 0.5*EBx/ST.mu0;
 EBy = 0.5*EBy/ST.mu0;
 EBz = 0.5*EBz/ST.mu0;
-EB = EBy + EBz;
+EB = EBx + EBy + EBz;
 
 EEx = 0.5*ST.ep0*EEx;
 EEy = 0.5*ST.ep0*EEy;
@@ -476,6 +485,7 @@ ET = 100.0*(ET - ET(1))/ET(1);
 Ei = Ei - Ei(:,1);
 
 % Change in magnetic energy w.r.t. initial condition
+EBx = EBx - EBx(1);
 EBy = EBy - EBy(1);
 EBz = EBz - EBz(1);
 EB = EB - EB(1);
@@ -513,12 +523,12 @@ legend(ilabels,'interpreter','latex')
 
 figure(fig);
 subplot(5,1,2)
-plot(ST.time, EBy, 'b-.', ST.time, EBz, 'c-.', ST.time, EB, 'k-')
+plot(ST.time, EBx, 'r--', ST.time, EBy, 'b-.', ST.time, EBz, 'c-.', ST.time, EB, 'k-')
 box on; grid on;
 xlim([min(ST.time) max(ST.time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_B$ (J/m$^3$)','interpreter','latex')
-legend({'$B_y$', '$B_z$', '$B$'},'interpreter','latex')
+legend({'$B_x$', '$B_y$', '$B_z$', '$B$'},'interpreter','latex')
 
 figure(fig);
 subplot(5,1,3)

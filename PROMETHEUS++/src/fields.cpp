@@ -310,6 +310,25 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, oneDimensional
 
 
 void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB){
+	MPI_passGhosts(params, &EB->E);
+	MPI_passGhosts(params, &EB->B);
+
+	// Indices of subdomain
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
+
+
+	//There is not x-component of curl(B)
+	EB->B.X.submat(irow,icol,frow,fcol)  = - ( EB->E.Z.submat(irow,icol+1,frow,fcol+1) - EB->E.Z.submat(irow,icol,frow,fcol) )/params->mesh.DY;
+
+	//y-component
+	EB->B.Y.submat(irow,icol,frow,fcol)  =   ( EB->E.Z.submat(irow+1,icol,frow+1,fcol) - EB->E.Z.submat(irow,icol,frow,fcol) )/params->mesh.DX;
+
+	//z-component
+	EB->B.Z.submat(irow,icol,frow,fcol)  = - ( EB->E.Y.submat(irow+1,icol,frow+1,fcol) - EB->E.Y.submat(irow,icol,frow,fcol) )/params->mesh.DX;
+	EB->B.Z.submat(irow,icol,frow,fcol) +=   ( EB->E.X.submat(irow,icol+1,frow,fcol+1) - EB->E.X.submat(irow,icol,frow,fcol) )/params->mesh.DY;
 
 }
 
@@ -420,22 +439,22 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimension
 		V2D.K1 = *EB; 									// The value of the fields at the time level (N-1/2)
 		advanceEField(params, &V2D.K1, IONS);			// E1 (using B^(N-1/2))
 		FaradaysLaw(params, &V2D.K1);					// K1
-/*
-		V2D.K2.B.X = EB->B.X;							// B^(N-1/2) + 0.5*dt*K1
+
+		V2D.K2.B.X = EB->B.X + (0.5*dt)*V2D.K1.B.X;		// B^(N-1/2) + 0.5*dt*K1
 		V2D.K2.B.Y = EB->B.Y + (0.5*dt)*V2D.K1.B.Y;
 		V2D.K2.B.Z = EB->B.Z + (0.5*dt)*V2D.K1.B.Z;
 		V2D.K2.E = EB->E;
 		advanceEField(params, &V2D.K2, IONS);			// E2 (using B^(N-1/2) + 0.5*dt*K1)
 		FaradaysLaw(params, &V2D.K2);					// K2
 
-		V2D.K3.B.X = EB->B.X;							// B^(N-1/2) + 0.5*dt*K2
+		V2D.K3.B.X = EB->B.X + (0.5*dt)*V2D.K2.B.X;		// B^(N-1/2) + 0.5*dt*K2
 		V2D.K3.B.Y = EB->B.Y + (0.5*dt)*V2D.K2.B.Y;
 		V2D.K3.B.Z = EB->B.Z + (0.5*dt)*V2D.K2.B.Z;
 		V2D.K3.E = EB->E;
 		advanceEField(params, &V2D.K3, IONS);			// E3 (using B^(N-1/2) + 0.5*dt*K2)
 		FaradaysLaw(params, &V2D.K3);					// K3
 
-		V2D.K4.B.X = EB->B.X;							// B^(N-1/2) + dt*K2
+		V2D.K4.B.X = EB->B.X + dt*V2D.K3.B.X;			// B^(N-1/2) + dt*K2
 		V2D.K4.B.Y = EB->B.Y + dt*V2D.K3.B.Y;
 		V2D.K4.B.Z = EB->B.Z + dt*V2D.K3.B.Z;
 		V2D.K4.E = EB->E;
@@ -443,15 +462,11 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimension
 		FaradaysLaw(params, &V2D.K4);					// K4
 
 		EB->B += (dt/6.0)*( V2D.K1.B + 2.0*V2D.K2.B + 2.0*V2D.K3.B + V2D.K4.B );
-*/
 	} // Runge-Kutta iterations
-
-
 
 	if (params->includeElectronInertia){
 		//*** @toimplement
 	}
-
 
 	#ifdef CHECKS_ON
 	if(!EB->B.X.is_finite()){
@@ -649,11 +664,11 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 		V2D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.submat(irow-1,icol-1,frow+1,fcol+1);
 	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
-	V1D.U.X /= V1D.n;
-	V1D.U.Y /= V1D.n;
-	V1D.U.Z /= V1D.n;
+	V2D.U.X /= V2D.n;
+	V2D.U.Y /= V2D.n;
+	V2D.U.Z /= V2D.n;
 
-	V1D.n /= n_cs;//Normalized density
+	V2D.n /= n_cs;//Normalized density
 
 	// We compute the curl(B).
 	vfield_mat curlB(NX_T,NY_T);
@@ -663,33 +678,31 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	// x-component
 
 	// The Y and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
-	curlB.X.submat(irow,icol,frow,fcol) = ( EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
-	MPI_Barrier(params->mpi.MPI_TOPO);
-	MPI_Abort(params->mpi.MPI_TOPO,-2000);
-/*
+	curlB.Y.submat(irow,icol,frow,fcol) = - 0.25*( (EB->B.Z.submat(irow+1,icol,frow+1,fcol) - EB->B.Z.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Z.submat(irow+1,icol-1,frow+1,fcol-1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DX;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.submat(irow+1,icol,frow+1,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol) )/params->mesh.DX - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
 
-	curlB.Y.submat(irow,icol,frow,fcol) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
-	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	// Number density at Ex-nodes. Biinear interpolation used.
+	V2D.n_interp = 0.5*( V2D.n.submat(1,1,NX_S-2,NY_S-2) + V2D.n.submat(2,1,NX_S-1,NY_S-2) );
 
-	// Number density at Ex-nodes. Linear interpolation used.
-	V1D.n_interp = 0.5*( V1D.n.subvec(1,NX_S-2) + V1D.n.subvec(2,NX_S-1) );
+	// Bz is interpolated to Ex-nodes
+	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
 
-	EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.n_interp );
+	EB->E.X.submat(irow,icol,frow,fcol) = ( curlB.Y.submat(irow,icol,frow,fcol) % V2D.B_interp - curlB.Z.submat(irow,icol,frow,fcol) % EB->B.Y.submat(irow,icol,frow,fcol) )/( F_MU_DS*F_E_DS*V2D.n_interp );
 
 	// Uy is interpolated to Ex-nodes
-	V1D.U_interp = 0.5*( V1D.U.Y.subvec(1,NX_S-2) + V1D.U.Y.subvec(2,NX_S-1) );
+	V2D.U_interp = 0.5*( V2D.U.Y.submat(1,1,NX_S-2,NY_S-2) + V2D.U.Y.submat(2,1,NX_S-1,NY_S-2) );
 
-	EB->E.X.subvec(iIndex,fIndex) += - V1D.U_interp % EB->B.Z.subvec(iIndex,fIndex);
+	EB->E.X.submat(irow,icol,frow,fcol) += - V2D.U_interp % V2D.B_interp;
 
 	// Uz is interpolated to Ex-nodes
-	V1D.U_interp = 0.5*( V1D.U.Z.subvec(1,NX_S-2) + V1D.U.Z.subvec(2,NX_S-1) );
+	V2D.U_interp = 0.5*( V2D.U.Z.submat(1,1,NX_S-2,NY_S-2) + V2D.U.Z.submat(2,1,NX_S-1,NY_S-2) );
 
-	EB->E.X.subvec(iIndex,fIndex) +=   V1D.U_interp % EB->B.Y.subvec(iIndex,fIndex);
+	EB->E.X.submat(irow,icol,frow,fcol) +=   V2D.U_interp % EB->B.Y.submat(irow,icol,frow,fcol);
 
 	// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
-	V1D.dndx = ( V1D.n.subvec(2,NX_S-1) - V1D.n.subvec(1,NX_S-2) )/params->mesh.DX;
+	V2D.dndx = ( V2D.n.submat(2,1,NX_S-1,NY_S-2) - V2D.n.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DX;
 
-	EB->E.X.subvec(iIndex,fIndex) += - ( params->BGP.Te/F_E_DS )*V1D.dndx/V1D.n_interp;
+	EB->E.X.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndx/V2D.n_interp;
 
 	// Including electron inertia term
 	if (params->includeElectronInertia){
@@ -698,44 +711,65 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 	curlB.zeros();
 
-
 	// y-component
 
-	// The Y and Z components of curl(B) are computed directly at Ey-nodes.
-	curlB.Y.subvec(iIndex,fIndex) = -( EB->B.Z.subvec(iIndex,fIndex) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
-	curlB.Z.subvec(iIndex,fIndex) =  ( EB->B.Y.subvec(iIndex,fIndex) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+	// The X and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
+	curlB.X.submat(irow,icol,frow,fcol) =   0.25*( (EB->B.Z.submat(irow,icol+1,frow,fcol+1) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol+1,frow-1,fcol+1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( (EB->B.Y.submat(irow,icol,frow,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Y.submat(irow,icol+1,frow,fcol+1) - EB->B.Y.submat(irow-1,icol+1,frow-1,fcol+1))  )/params->mesh.DX \
+										  - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
 
-	MPI_passGhosts(params,&curlB.Y);
+	// MPI_passGhosts(params,&curlB.Y);
 
-	MPI_passGhosts(params,&curlB.Z);
+	// MPI_passGhosts(params,&curlB.Z);
 
-	EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2) );
+	// Number density at Ey-nodes. Biinear interpolation used.
+	V2D.n_interp = 0.5*( V2D.n.submat(1,1,NX_S-2,NY_S-2) + V2D.n.submat(1,2,NX_S-2,NY_S-1) );
 
 	// Bz is interpolated to Ey-nodes
-	V1D.B_interp = 0.5*( EB->B.Z.subvec(iIndex,fIndex) + EB->B.Z.subvec(iIndex-1,fIndex-1) );
+	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
 
-	EB->E.Y.subvec(iIndex,fIndex) +=   V1D.U.X.subvec(1,NX_S-2) % V1D.B_interp;
+	EB->E.Y.submat(irow,icol,frow,fcol) = - ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp - curlB.Z.submat(irow,icol,frow,fcol) % EB->B.X.submat(irow,icol,frow,fcol) )/( F_MU_DS*F_E_DS*V2D.n_interp );
 
-	EB->E.Y.subvec(iIndex,fIndex) += - V1D.U.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+	// Ux is interpolated to Ey-nodes
+	V2D.U_interp = 0.5*( V2D.U.X.submat(1,1,NX_S-2,NY_S-2) + V2D.U.X.submat(1,2,NX_S-2,NY_S-1) );
+
+	EB->E.Y.submat(irow,icol,frow,fcol) +=  V2D.U_interp % V2D.B_interp;
+
+	// Uz is interpolated to Ey-nodes
+	V2D.U_interp = 0.5*( V2D.U.Z.submat(1,1,NX_S-2,NY_S-2) + V2D.U.Z.submat(1,2,NX_S-2,NY_S-1) );
+
+	EB->E.Y.submat(irow,icol,frow,fcol) += - V2D.U_interp % EB->B.X.submat(irow,icol,frow,fcol);
+
+	// The partial derivative dn/dy is computed using centered finite differences with grid size DY/2
+	V2D.dndy = ( V2D.n.submat(1,2,NX_S-2,NY_S-1) - V2D.n.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DY;
+
+	EB->E.Y.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndy/V2D.n_interp;
 
 	// Including electron inertia term
 	if (params->includeElectronInertia){
 		//*** @toimplement
 	}
 
+	curlB.zeros();
 
 	// z-component
 
-	// The y-component of Curl(B) has been calculated above at the right places. Note that Ey-nodes and Ez-nodes are the same.
-
-	EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.n.subvec(1,NX_S-2));
+	curlB.X.submat(irow,icol,frow,fcol) = 0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol,frow-1,fcol) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
+	curlB.Y.submat(irow,icol,frow,fcol) = - 0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Z.submat(irow,icol-1,frow,fcol-1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DX;
 
 	// By is interpolated to Ez-nodes
-	V1D.B_interp = 0.5*( EB->B.Y.subvec(iIndex,fIndex) + EB->B.Y.subvec(iIndex-1,fIndex-1) );
+	V2D.B_interp = 0.5*( EB->B.Y.submat(irow,icol,frow,fcol) + EB->B.Y.submat(irow-1,icol,frow-1,fcol) );
 
-	EB->E.Z.subvec(iIndex,fIndex) += - V1D.U.X.subvec(1,NX_S-2) % V1D.B_interp;
+	EB->E.Z.submat(irow,icol,frow,fcol) =   ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D.n.submat(1,1,NX_S-2,NY_S-2));
 
-	EB->E.Z.subvec(iIndex,fIndex) +=   V1D.U.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
+	EB->E.Z.submat(irow,icol,frow,fcol) = - V2D.U.X.submat(1,1,NX_S-2,NY_S-2) % V2D.B_interp;
+
+	// Bx is interpolated to Ez-nodes
+	V2D.B_interp = 0.5*( EB->B.X.submat(irow,icol,frow,fcol) + EB->B.X.submat(irow,icol-1,frow,fcol-1) );
+
+	EB->E.Z.submat(irow,icol,frow,fcol) = - ( curlB.Y.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D.n.submat(1,1,NX_S-2,NY_S-2));
+
+	EB->E.Z.submat(irow,icol,frow,fcol) =   V2D.U.Y.submat(1,1,NX_S-2,NY_S-2) % V2D.B_interp;
 
 
 	// Including electron inertia term
@@ -758,7 +792,6 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	#endif
 
 	smooth(&EB->E, params->smoothingParameter);
-*/
 }
 
 
@@ -779,7 +812,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	V1D.n.zeros();
 	V1D.U.zeros();
 
-	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
+	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 			fillGhosts(&IONS->at(ii).n);
 			fillGhosts(&IONS->at(ii).n_);
 			fillGhosts(&IONS->at(ii).nv.X);
@@ -811,7 +844,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	V1D.n_.zeros();
 	V1D.U_.zeros();
 
-	for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
+	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 		fillGhosts(&IONS->at(ii).n_);
 		fillGhosts(&IONS->at(ii).n__);
 		fillGhosts(&IONS->at(ii).nv_.X);
@@ -840,7 +873,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 		V1D.n__.zeros();
 		V1D.U__.zeros();
 
-		for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
+		for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 			fillGhosts(&IONS->at(ii).n__);
 			fillGhosts(&IONS->at(ii).nv__.X);
 			fillGhosts(&IONS->at(ii).nv__.Y);
@@ -953,5 +986,209 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 
 
 void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const int BAE){
+	MPI_passGhosts(params,&EB->E);
+	MPI_passGhosts(params,&EB->B);
 
+	// Indices of subdomain
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
+
+	V2D._n.zeros();
+	V2D.n.zeros();
+	V2D.U.zeros();
+
+	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
+			fillGhosts(&IONS->at(ii).n);
+			fillGhosts(&IONS->at(ii).n_);
+			fillGhosts(&IONS->at(ii).nv.X);
+			fillGhosts(&IONS->at(ii).nv.Y);
+			fillGhosts(&IONS->at(ii).nv.Z);
+
+			// Electron density at time level "l + 1"
+			V2D._n += IONS->at(ii).Z*IONS->at(ii).n.submat(irow-1,icol-1,frow+1,fcol+1);
+
+			// Ions density at time level "l + 1/2"
+			// n(l+1/2) = ( n(l+1) + n(l) )/2
+			V2D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.submat(irow-1,icol-1,frow+1,fcol+1) + IONS->at(ii).n_.submat(irow-1,icol-1,frow+1,fcol+1) );
+
+			// Ions bulk velocity at time level "l + 1/2"
+			//sum_k[ Z_k*n_k*u_k ]
+			V2D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.submat(irow-1,icol-1,frow+1,fcol+1);
+			V2D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.submat(irow-1,icol-1,frow+1,fcol+1);
+			V2D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.submat(irow-1,icol-1,frow+1,fcol+1);
+	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
+
+	V2D.U.X /= V2D.n;
+	V2D.U.Y /= V2D.n;
+	V2D.U.Z /= V2D.n;
+
+	V2D._n /= n_cs;
+	V2D.n /= n_cs;
+
+
+	V2D.n_.zeros();
+	V2D.U_.zeros();
+
+	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
+		fillGhosts(&IONS->at(ii).n_);
+		fillGhosts(&IONS->at(ii).n__);
+		fillGhosts(&IONS->at(ii).nv_.X);
+		fillGhosts(&IONS->at(ii).nv_.Y);
+		fillGhosts(&IONS->at(ii).nv_.Z);
+
+		// Ions density at time level "l - 1/2"
+		// n(l-1/2) = ( n(l) + n(l-1) )/2
+		V2D.n_ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.submat(irow-1,icol-1,frow+1,fcol+1) + IONS->at(ii).n_.submat(irow-1,icol-1,frow+1,fcol+1) );
+
+		// Ions bulk velocity at time level "l - 1/2"
+		//sum_k[ Z_k*n_k*u_k ]
+		V2D.U_.X += IONS->at(ii).Z*IONS->at(ii).nv_.X.submat(irow-1,icol-1,frow+1,fcol+1);
+		V2D.U_.Y += IONS->at(ii).Z*IONS->at(ii).nv_.Y.submat(irow-1,icol-1,frow+1,fcol+1);
+		V2D.U_.Z += IONS->at(ii).Z*IONS->at(ii).nv_.Z.submat(irow-1,icol-1,frow+1,fcol+1);
+	}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
+
+	V2D.U_.X /= V2D.n_;
+	V2D.U_.Y /= V2D.n_;
+	V2D.U_.Z /= V2D.n_;
+
+	V2D.n_ /= n_cs;//Dimensionless density
+
+
+	if(BAE == 1){
+		V2D.n__.zeros();
+		V2D.U__.zeros();
+
+		for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
+			fillGhosts(&IONS->at(ii).n__);
+			fillGhosts(&IONS->at(ii).nv__.X);
+			fillGhosts(&IONS->at(ii).nv__.Y);
+			fillGhosts(&IONS->at(ii).nv__.Z);
+
+			// Ions density at time level "l - 3/2"
+			// n(l-3/2) = ( n(l-1) + n(l-2) )/2
+			V2D.n__ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.submat(irow-1,icol-1,frow+1,fcol+1) + IONS->at(ii).n__.submat(irow-1,icol-1,frow+1,fcol+1) );
+
+			//sum_k[ Z_k*n_k*u_k ]
+			V2D.U__.X += IONS->at(ii).Z*IONS->at(ii).nv__.X.submat(irow-1,icol-1,frow+1,fcol+1);
+			V2D.U__.Y += IONS->at(ii).Z*IONS->at(ii).nv__.Y.submat(irow-1,icol-1,frow+1,fcol+1);
+			V2D.U__.Z += IONS->at(ii).Z*IONS->at(ii).nv__.Z.submat(irow-1,icol-1,frow+1,fcol+1);
+		}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
+
+		V2D.U__.X /= V2D.n__;
+		V2D.U__.Y /= V2D.n__;
+		V2D.U__.Z /= V2D.n__;
+
+		V2D.n__ /= n_cs;//Dimensionless density
+
+		//Here we use the velocity extrapolation U^(N+1) = 2*U^(N+1/2) - 1.5*U^(N-1/2) + 0.5*U^(N-3/2)
+		V2D.V = 2.0*V2D.U - 1.5*V2D.U_ + 0.5*V2D.U__;
+	}else{
+		//Here we use the velocity extrapolation U^(N+1) = 1.5*U^(N+1/2) - 0.5*U^(N-1/2)
+		V2D.V = 1.5*V2D.U - 0.5*V2D.U_;
+	}
+
+	// We compute the curl(B).
+	vfield_mat curlB(NX_T,NY_T);
+
+	EB->E.zeros();
+
+	// x-component
+
+	// The Y and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
+	curlB.Y.submat(irow,icol,frow,fcol) = - 0.25*( (EB->B.Z.submat(irow+1,icol,frow+1,fcol) - EB->B.Z.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Z.submat(irow+1,icol-1,frow+1,fcol-1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DX;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.submat(irow+1,icol,frow+1,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol) )/params->mesh.DX - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
+
+	// Number density at Ex-nodes. Biinear interpolation used.
+	V2D.n_interp = 0.5*( V2D._n.submat(1,1,NX_S-2,NY_S-2) + V2D._n.submat(2,1,NX_S-1,NY_S-2) );
+
+	// Bz is interpolated to Ex-nodes
+	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
+
+	EB->E.X.submat(irow,icol,frow,fcol) = ( curlB.Y.submat(irow,icol,frow,fcol) % V2D.B_interp - curlB.Z.submat(irow,icol,frow,fcol) % EB->B.Y.submat(irow,icol,frow,fcol) )/( F_MU_DS*F_E_DS*V2D.n_interp );
+
+	// Uy is interpolated to Ex-nodes
+	V2D.U_interp = 0.5*( V2D.V.Y.submat(1,1,NX_S-2,NY_S-2) + V2D.V.Y.submat(2,1,NX_S-1,NY_S-2) );
+
+	EB->E.X.submat(irow,icol,frow,fcol) += - V2D.U_interp % V2D.B_interp;
+
+	// Uz is interpolated to Ex-nodes
+	V2D.U_interp = 0.5*( V2D.V.Z.submat(1,1,NX_S-2,NY_S-2) + V2D.V.Z.submat(2,1,NX_S-1,NY_S-2) );
+
+	EB->E.X.submat(irow,icol,frow,fcol) +=   V2D.U_interp % EB->B.Y.submat(irow,icol,frow,fcol);
+
+	// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
+	V2D.dndx = ( V2D._n.submat(2,1,NX_S-1,NY_S-2) - V2D._n.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DX;
+
+	EB->E.X.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndx/V2D.n_interp;
+
+	curlB.zeros();
+
+	// y-component
+
+	// The X and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
+	curlB.X.submat(irow,icol,frow,fcol) =   0.25*( (EB->B.Z.submat(irow,icol+1,frow,fcol+1) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol+1,frow-1,fcol+1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( (EB->B.Y.submat(irow,icol,frow,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Y.submat(irow,icol+1,frow,fcol+1) - EB->B.Y.submat(irow-1,icol+1,frow-1,fcol+1))  )/params->mesh.DX \
+										  - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
+
+	// Number density at Ey-nodes. Biinear interpolation used.
+	V2D.n_interp = 0.5*( V2D._n.submat(1,1,NX_S-2,NY_S-2) + V2D._n.submat(1,2,NX_S-2,NY_S-1) );
+
+	// Bz is interpolated to Ey-nodes
+	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
+
+	EB->E.Y.submat(irow,icol,frow,fcol) = - ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp - curlB.Z.submat(irow,icol,frow,fcol) % EB->B.X.submat(irow,icol,frow,fcol) )/( F_MU_DS*F_E_DS*V2D.n_interp );
+
+	// Ux is interpolated to Ey-nodes
+	V2D.U_interp = 0.5*( V2D.V.X.submat(1,1,NX_S-2,NY_S-2) + V2D.V.X.submat(1,2,NX_S-2,NY_S-1) );
+
+	EB->E.Y.submat(irow,icol,frow,fcol) +=  V2D.U_interp % V2D.B_interp;
+
+	// Uz is interpolated to Ey-nodes
+	V2D.U_interp = 0.5*( V2D.V.Z.submat(1,1,NX_S-2,NY_S-2) + V2D.V.Z.submat(1,2,NX_S-2,NY_S-1) );
+
+	EB->E.Y.submat(irow,icol,frow,fcol) += - V2D.U_interp % EB->B.X.submat(irow,icol,frow,fcol);
+
+	// The partial derivative dn/dy is computed using centered finite differences with grid size DY/2
+	V2D.dndy = ( V2D._n.submat(1,2,NX_S-2,NY_S-1) - V2D._n.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DY;
+
+	EB->E.Y.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndy/V2D.n_interp;
+
+	curlB.zeros();
+
+	// z-component
+
+	curlB.X.submat(irow,icol,frow,fcol) = 0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol,frow-1,fcol) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
+	curlB.Y.submat(irow,icol,frow,fcol) = - 0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Z.submat(irow,icol-1,frow,fcol-1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DX;
+
+	// By is interpolated to Ez-nodes
+	V2D.B_interp = 0.5*( EB->B.Y.submat(irow,icol,frow,fcol) + EB->B.Y.submat(irow-1,icol,frow-1,fcol) );
+
+	EB->E.Z.submat(irow,icol,frow,fcol) =   ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D._n.submat(1,1,NX_S-2,NY_S-2));
+
+	EB->E.Z.submat(irow,icol,frow,fcol) = - V2D.V.X.submat(1,1,NX_S-2,NY_S-2) % V2D.B_interp;
+
+	// Bx is interpolated to Ez-nodes
+	V2D.B_interp = 0.5*( EB->B.X.submat(irow,icol,frow,fcol) + EB->B.X.submat(irow,icol-1,frow,fcol-1) );
+
+	EB->E.Z.submat(irow,icol,frow,fcol) = - ( curlB.Y.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D._n.submat(1,1,NX_S-2,NY_S-2));
+
+	EB->E.Z.submat(irow,icol,frow,fcol) =   V2D.V.Y.submat(1,1,NX_S-2,NY_S-2) % V2D.B_interp;
+
+
+	#ifdef CHECKS_ON
+		if(!EB->E.X.is_finite()){
+			cout << "Non finite values in Ex" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -110);
+		}else if(!EB->E.Y.is_finite()){
+			cout << "Non finite values in Ey" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -111);
+		}else if(!EB->E.Z.is_finite()){
+			cout << "Non finite values in Ez" << endl;
+			MPI_Abort(params->mpi.MPI_TOPO, -112);
+		}
+	#endif
+
+	smooth(&EB->E, params->smoothingParameter);
 }

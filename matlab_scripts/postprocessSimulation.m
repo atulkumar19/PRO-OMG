@@ -40,7 +40,7 @@ ST.time = loadTimeVector(ST);
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
-EnergyDiagnostic(ST);
+% EnergyDiagnostic(ST);
 
 testFieldInterpolation(ST);
 end
@@ -614,7 +614,8 @@ for ss=1:NS
     end
     
     % Iterations to plot
-    its = [1 randi(NT) NT];
+%     its = [1 randi(NT) NT];
+    its = [1 1 1];
     
     fig_E = figure;
     fig_B = figure;
@@ -623,92 +624,92 @@ for ss=1:NS
         % Ex
         xAxis = xNodes + 0.5*DX;
         for it=1:numel(its)
-            F = squeeze( E(it,1,:,:) );
-            Fp = squeeze( Ep(it,:,1) );
+            F = squeeze( E(its(it),1,:,:) );
+            Fp = squeeze( Ep(its(it),:,1) );
             
             figure(fig_E)
             subplot(3,3,it)
-            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
             box on; grid on;
             xlabel('$x$','Interpreter','latex')
             ylabel('$E_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Ey
         xAxis = xNodes;
         for it=1:numel(its)
-            F = squeeze( E(it,2,:,:) );
-            Fp = squeeze( Ep(it,:,2) );
+            F = squeeze( E(its(it),2,:,:) );
+            Fp = squeeze( Ep(its(it),:,2) );
             
             figure(fig_E)
             subplot(3,3,it+3)
-            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
             box on; grid on;
             xlabel('$x$','Interpreter','latex')
             ylabel('$E_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Ez
         xAxis = xNodes;
         for it=1:numel(its)
-            F = squeeze( E(it,3,:,:) );
-            Fp = squeeze( Ep(it,:,3) );
+            F = squeeze( E(its(it),3,:,:) );
+            Fp = squeeze( Ep(its(it),:,3) );
             
             figure(fig_E)
             subplot(3,3,it+6)
-            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
             box on; grid on;
             xlabel('$x$','Interpreter','latex')
             ylabel('$E_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         
         % Bx
         xAxis = xNodes;
         for it=1:numel(its)
-            F = squeeze( B(it,1,:,:) );
-            Fp = squeeze( Bp(it,:,1) );
+            F = squeeze( B(its(it),1,:,:) );
+            Fp = squeeze( Bp(its(it),:,1) );
             
             figure(fig_B)
             subplot(3,3,it)
-            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
             box on; grid on;
             xlabel('$x$','Interpreter','latex')
             ylabel('$B_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % By
         xAxis = xNodes + 0.5*DX;
         for it=1:numel(its)
-            F = squeeze( B(it,2,:,:) );
-            Fp = squeeze( Bp(it,:,2) );
+            F = squeeze( B(its(it),2,:,:) );
+            Fp = squeeze( Bp(its(it),:,2) );
             
             figure(fig_B)
             subplot(3,3,it+3)
-            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
             box on; grid on;
             xlabel('$x$','Interpreter','latex')
             ylabel('$B_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Bz
         xAxis = xNodes + 0.5*DX;
         for it=1:numel(its)
-            F = squeeze( B(it,3,:,:) );
-            Fp = squeeze( Bp(it,:,3) );
+            F = squeeze( B(its(it),3,:,:) );
+            Fp = squeeze( Bp(its(it),:,3) );
             
             figure(fig_B)
             subplot(3,3,it+6)
-            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
             box on; grid on;
             xlabel('$x$','Interpreter','latex')
             ylabel('$B_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
     else
         % Ex
@@ -717,9 +718,9 @@ for ss=1:NS
         [XGRID,YGRID] = meshgrid(xAxis,yAxis);
         
         for it=1:numel(its)
-            F = squeeze( E(it,1,:,:) )';
-            Fp = squeeze( Ep(it,:,1) );
-            Xp = squeeze(X(it,:,:));
+            F = squeeze( E(its(it),1,:,:) )';
+            Fp = squeeze( Ep(its(it),:,1) );
+            Xp = squeeze(X(its(it),:,:));
             
             figure(fig_E)
             subplot(3,3,it)
@@ -729,7 +730,7 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$E_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Ey
@@ -738,9 +739,9 @@ for ss=1:NS
         [XGRID,YGRID] = meshgrid(xAxis,yAxis);
         
         for it=1:numel(its)
-            F = squeeze( E(it,2,:,:) )';
-            Fp = squeeze( Ep(it,:,2) );
-            Xp = squeeze(X(it,:,:));
+            F = squeeze( E(its(it),2,:,:) )';
+            Fp = squeeze( Ep(its(it),:,2) );
+            Xp = squeeze(X(its(it),:,:));
             
             figure(fig_E)
             subplot(3,3,it+3)
@@ -750,7 +751,7 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$E_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Ez
@@ -759,9 +760,9 @@ for ss=1:NS
         [XGRID,YGRID] = meshgrid(xAxis,yAxis);
         
         for it=1:numel(its)
-            F = squeeze( E(it,3,:,:) )';
-            Fp = squeeze( Ep(it,:,3) );
-            Xp = squeeze(X(it,:,:));
+            F = squeeze( E(its(it),3,:,:) )';
+            Fp = squeeze( Ep(its(it),:,3) );
+            Xp = squeeze(X(its(it),:,:));
             
             figure(fig_E)
             subplot(3,3,it+6)
@@ -771,7 +772,7 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$E_z$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Bx
@@ -780,9 +781,9 @@ for ss=1:NS
         [XGRID,YGRID] = meshgrid(xAxis,yAxis);
         
         for it=1:numel(its)
-            F = squeeze( B(it,1,:,:) )';
-            Fp = squeeze( Bp(it,:,1) );
-            Xp = squeeze(X(it,:,:));
+            F = squeeze( B(its(it),1,:,:) )';
+            Fp = squeeze( Bp(its(it),:,1) );
+            Xp = squeeze(X(its(it),:,:));
             
             figure(fig_B)
             subplot(3,3,it)
@@ -792,7 +793,7 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$B_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % By
@@ -801,9 +802,9 @@ for ss=1:NS
         [XGRID,YGRID] = meshgrid(xAxis,yAxis);
         
         for it=1:numel(its)
-            F = squeeze( B(it,2,:,:) )';
-            Fp = squeeze( Bp(it,:,2) );
-            Xp = squeeze(X(it,:,:));
+            F = squeeze( B(its(it),2,:,:) )';
+            Fp = squeeze( Bp(its(it),:,2) );
+            Xp = squeeze(X(its(it),:,:));
             
             figure(fig_B)
             subplot(3,3,it+3)
@@ -813,7 +814,7 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$B_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
         
         % Bz
@@ -822,9 +823,9 @@ for ss=1:NS
         [XGRID,YGRID] = meshgrid(xAxis,yAxis);
         
         for it=1:numel(its)
-            F = squeeze( B(it,3,:,:) )';
-            Fp = squeeze( Bp(it,:,3) );
-            Xp = squeeze(X(it,:,:));
+            F = squeeze( B(its(it),3,:,:) )';
+            Fp = squeeze( Bp(its(it),:,3) );
+            Xp = squeeze(X(its(it),:,:));
             
             figure(fig_B)
             subplot(3,3,it+6)
@@ -834,7 +835,7 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$B_z$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
     end
     

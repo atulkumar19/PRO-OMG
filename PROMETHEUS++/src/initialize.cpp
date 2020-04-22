@@ -692,9 +692,24 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
 
     EB->zeros(NX,NY);
 
-    EB->B.X.fill(params->BGP.Bx);//x
-    EB->B.Y.fill(params->BGP.By);//y
-    EB->B.Z.fill(params->BGP.Bz);//z
+    EB->B.X.fill(params->BGP.Bx); // x
+    EB->B.Y.fill(params->BGP.By); // y
+    EB->B.Z.fill(params->BGP.Bz); // z
+
+    //*** @todelete
+    arma::vec xAxis = params->mesh.nodes.X;
+    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++){
+        EB->B.X.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
+        EB->E.Y.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
+        EB->E.Z.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
+    }
+
+    xAxis = params->mesh.nodes.X + 0.5*params->mesh.DX;
+    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++){
+        EB->E.X.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
+        EB->B.Y.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
+        EB->B.Z.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
+    }
 }
 
 

@@ -6,13 +6,13 @@ restart                     0
 weightingScheme             1
 BC                          1
 loadFields                  0
-numberOfRKIterations        10
-smoothingParameter          1E-5
+numberOfRKIterations        5
+smoothingParameter          1E-9
 filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              1.0
+simulationTime              0.0
 outputCadence               0.1
 transient                   0
 numberOfParticleSpecies     1

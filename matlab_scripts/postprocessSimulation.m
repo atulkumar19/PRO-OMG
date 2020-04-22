@@ -41,6 +41,8 @@ ST.time = loadTimeVector(ST);
 % FourierAnalysis(ST,'E','z');
 
 EnergyDiagnostic(ST);
+
+testFieldInterpolation(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -57,12 +59,12 @@ end
 
 for ii=1:numel(info.Groups)
     groupName = strsplit(info.Groups(ii).Name,'/');
-
+    
     for jj=1:numel(info.Groups(ii).Datasets)
         datasetName = info.Groups(ii).Datasets(jj).Name;
         params.(groupName{end}).(datasetName) = h5read(info.Filename, ['/' groupName{end} '/' datasetName]);
     end
-
+    
     if ~isempty(info.Groups(ii).Groups)
         for jj=1:numel(info.Groups(ii).Groups)
             subGroupName = strsplit(info.Groups(ii).Groups(jj).Name,'/');
@@ -83,46 +85,46 @@ numberOfOutputs = [];
 
 for ff=1:ST.params.numOfDomains
     info = h5info([ST.path ['file_D' num2str(ff-1) '.h5']]);
-
+    
     numberOfOutputs(ff)= numel(info.Groups);
-
+    
     for ii=1:numel(info.Groups)
         groupName = strsplit(info.Groups(ii).Name,'/');
-
+        
         for jj=1:numel(info.Groups(ii).Datasets)
             datasetName = info.Groups(ii).Datasets(jj).Name;
             ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(datasetName) = ...
                 h5read(info.Filename, ['/' groupName{end} '/' datasetName]);
         end
-
+        
         if ~isempty(info.Groups(ii).Groups)
             for jj=1:numel(info.Groups(ii).Groups)
                 subGroupName = strsplit(info.Groups(ii).Groups(jj).Name,'/');
-
+                
                 for kk=1:numel(info.Groups(ii).Groups(jj).Datasets)
                     datasetName = info.Groups(ii).Groups(jj).Datasets(kk).Name;
                     ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(datasetName) = ...
                         h5read(info.Filename, [info.Groups(ii).Groups(jj).Name '/' datasetName]);
                 end
-
+                
                 if ~isempty(info.Groups(ii).Groups(jj).Groups)
                     for kk=1:numel(info.Groups(ii).Groups(jj).Groups)
                         subSubGroupName = strsplit(info.Groups(ii).Groups(jj).Groups(kk).Name,'/');
-
+                        
                         for ll=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Datasets)
                             datasetName = info.Groups(ii).Groups(jj).Groups(kk).Datasets(ll).Name;
-
+                            
                             ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(datasetName) = ...
                                 h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Name '/' datasetName]);
                         end
-
+                        
                         if ~isempty(info.Groups(ii).Groups(jj).Groups(kk).Groups)
                             for ll=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Groups)
                                 subSubSubGroupName = strsplit(info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Name,'/');
-
+                                
                                 for mm=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets)
                                     datasetName = info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets(mm).Name;
-
+                                    
                                     ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(subSubSubGroupName{end}).(datasetName) = ...
                                         h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Name '/' datasetName]);
                                 end
@@ -130,10 +132,10 @@ for ff=1:ST.params.numOfDomains
                         end
                     end
                 end
-
+                
             end
         end
-
+        
     end
 end
 
@@ -167,22 +169,22 @@ for ss=1:NSPP
     NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
     NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
     NPARTICLES = ND*NSP;
-
+    
     X = zeros(NPARTICLES,NT);
     V = zeros(NPARTICLES,3,NT);
-
+    
     for ii=1:NT
         for dd=1:ND
             iIndex = NSP*(dd - 1) + 1;
             fIndex = iIndex + NSP - 1;
-
+            
             X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
             V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
         end
     end
-
+    
     ilabels{ss} = ['Species ' num2str(ss)];
-
+    
     % Time
     t = ST.time;
     
@@ -191,31 +193,31 @@ for ss=1:NSPP
     
     x = squeeze(X(ii,:));
     v = squeeze(V(ii,:,:));
-
+    
     fig = figure;
     subplot(4,1,1)
     plot(t, x, 'b.')
     xlabel('Time [s]','interpreter','latex')
     ylabel('$X(t)$ [m]','interpreter','latex')
-
+    
     figure(fig)
     subplot(4,1,2)
     plot(t, v(1,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_x$ [m/s]','interpreter','latex')
-
+    
     figure(fig)
     subplot(4,1,3)
     plot(t, v(2,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_y$ [m/s]','interpreter','latex')
-
+    
     figure(fig)
     subplot(4,1,4)
     plot(t, v(3,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_y$ [m/s]','interpreter','latex')
-
+    
 end
 
 
@@ -241,22 +243,22 @@ for ss=1:NSPP
     Wc = qi*ST.params.Bo(3)/mi;
     Eo = 1.0E5;
     Bo = ST.params.Bo(3);
-
+    
     X = zeros(NPARTICLES,2,NT);
     V = zeros(NPARTICLES,3,NT);
-
+    
     for ii=1:NT
         for dd=1:ND
             iIndex = NSP*(dd - 1) + 1;
             fIndex = iIndex + NSP - 1;
-
+            
             X(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
             V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
         end
     end
-
+    
     ilabels{ss} = ['Species ' num2str(ss)];
-
+    
     % Time
     t = ST.time;
     
@@ -276,36 +278,35 @@ for ss=1:NSPP
     
     vxs = v(1,1)*cos(Wc*t) + (v(2,1) + Eo/Bo)*sin(Wc*t);
     vys = -v(1,1)*sin(Wc*t) + (v(2,1) + Eo/Bo)*cos(Wc*t) - Eo/Bo;
-
+    
     fig = figure;
     subplot(4,1,1)
     plot(x(1,:), x(2,:), 'b.', xs,ys,'r.', x(1,1), x(2,1),'sm', xs(1),ys(1),'go')
     xlabel('$X$ [m]','interpreter','latex')
     ylabel('$Y$ [m]','interpreter','latex')
-
+    
     figure(fig)
     subplot(4,1,2)
     plot(t, v(1,:), 'b.',t,vxs,'r')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_x$ [m/s]','interpreter','latex')
-
+    
     figure(fig)
     subplot(4,1,3)
     plot(t, v(2,:), 'b.',t,vys,'r')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_y$ [m/s]','interpreter','latex')
-
+    
     figure(fig)
     subplot(4,1,4)
     plot(t, v(3,:), 'b.')
     xlabel('Time (s)','interpreter','latex')
     ylabel('$V_y$ [m/s]','interpreter','latex')
-
+    
 end
 
 
 end
-
 
 
 function FourierAnalysis(ST,field,component)
@@ -356,7 +357,7 @@ for ii=1:NT
                 ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component) - ST.params.Bo(component_num);
         else
             F(ii,(dd-1)*NXPD + 1:dd*NXPD) = ...
-            ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
+                ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
         end
     end
 end
@@ -415,23 +416,23 @@ for ss=1:NSPP
     mi = ST.params.ions.(['spp_' num2str(ss)]).M;
     NCP = ST.params.ions.(['spp_' num2str(ss)]).NCP;
     NSP = ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT;
-
+    
     for ii=1:NT
         for dd=1:ND
             vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V(:,1);
             vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V(:,2);
             vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V(:,3);
-
+            
             Ei(ss,ii) = Ei(ss,ii) + sum(vx.^2 + vy.^2 + vz.^2);
         end
-
+        
         if(ST.params.dimensionality == 1)
             Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/DX;
         else
             Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/(DX*DY);
         end
     end
-
+    
     ilabels{ss} = ['Species ' num2str(ss)];
 end
 ilabels{NSPP + 1} = 'Total';
@@ -451,15 +452,15 @@ for ii=1:NT
         Bx = ST.params.Bo(1) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
         By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
         Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
-
+        
         EBx(ii) = EBx(ii) + sum(sum(Bx.^2));
         EBy(ii) = EBy(ii) + sum(sum(By.^2));
         EBz(ii) = EBz(ii) + sum(sum(Bz.^2));
-
+        
         Ex = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.x;
         Ey = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.y;
         Ez = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.z;
-
+        
         EEx(ii) = EEx(ii) + sum(sum(Ex.^2));
         EEy(ii) = EEy(ii) + sum(sum(Ey.^2));
         EEz(ii) = EEz(ii) + sum(sum(Ez.^2));
@@ -556,4 +557,287 @@ xlim([min(ST.time) max(ST.time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_T$ (\%)','interpreter','latex')
 
+end
+
+
+function testFieldInterpolation(ST)
+% Diagnostic to monitor energy transfer/conservation
+NT = ST.numberOfOutputs;
+NS = ST.params.ions.numberOfParticleSpecies;
+ND = ST.params.numOfDomains;
+NX = double(ST.params.geometry.NX);
+NY = double(ST.params.geometry.NY);
+DX = ST.params.geometry.DX;
+DY = ST.params.geometry.DY;
+xNodes = ST.params.geometry.xAxis;
+if (ST.params.dimensionality == 2)
+    yNodes = ST.params.geometry.yAxis;
+end
+
+for ss=1:NS
+    NSP = double(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
+    
+    X = zeros(NT,ND*NSP,ST.params.dimensionality);
+    Ep = zeros(NT,ND*NSP,3);
+    Bp = zeros(NT,ND*NSP,3);
+    E = zeros(NT,3,NX,NY);
+    B = zeros(NT,3,NX,NY);
+    
+    for ii=1:NT
+        for dd=1:ND
+            iIndex = (dd-1)*NSP + 1;
+            fIndex = dd*NSP;
+            X(ii,iIndex:fIndex,:) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
+            Ep(ii,iIndex:fIndex,:) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).E;
+            Bp(ii,iIndex:fIndex,:) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).B;
+            
+            if (ST.params.geometry.SPLIT_DIRECTION == 0)
+                ix = (dd-1)*NX + 1;
+                fx = dd*NX;
+                iy = 1;
+                fy = NY;
+            else
+                ix = 1;
+                fx = NX;
+                iy = (dd-1)*NY + 1;
+                fy = dd*NY;
+            end
+            
+            E(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.x;
+            E(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.y;
+            E(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.z;
+            
+            B(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
+            B(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
+            B(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
+        end
+    end
+    
+    % Iterations to plot
+    its = [1 randi(NT) NT];
+    
+    fig_E = figure;
+    fig_B = figure;
+    
+    if (ST.params.dimensionality == 1)
+        % Ex
+        xAxis = xNodes + 0.5*DX;
+        for it=1:numel(its)
+            F = squeeze( E(it,1,:,:) );
+            Fp = squeeze( Ep(it,:,1) );
+            
+            figure(fig_E)
+            subplot(3,3,it)
+            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$E_x$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Ey
+        xAxis = xNodes;
+        for it=1:numel(its)
+            F = squeeze( E(it,2,:,:) );
+            Fp = squeeze( Ep(it,:,2) );
+            
+            figure(fig_E)
+            subplot(3,3,it+3)
+            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$E_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Ez
+        xAxis = xNodes;
+        for it=1:numel(its)
+            F = squeeze( E(it,3,:,:) );
+            Fp = squeeze( Ep(it,:,3) );
+            
+            figure(fig_E)
+            subplot(3,3,it+6)
+            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$E_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        
+        % Bx
+        xAxis = xNodes;
+        for it=1:numel(its)
+            F = squeeze( B(it,1,:,:) );
+            Fp = squeeze( Bp(it,:,1) );
+            
+            figure(fig_B)
+            subplot(3,3,it)
+            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$B_x$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % By
+        xAxis = xNodes + 0.5*DX;
+        for it=1:numel(its)
+            F = squeeze( B(it,2,:,:) );
+            Fp = squeeze( Bp(it,:,2) );
+            
+            figure(fig_B)
+            subplot(3,3,it+3)
+            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$B_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Bz
+        xAxis = xNodes + 0.5*DX;
+        for it=1:numel(its)
+            F = squeeze( B(it,3,:,:) );
+            Fp = squeeze( Bp(it,:,3) );
+            
+            figure(fig_B)
+            subplot(3,3,it+6)
+            plot(xAxis,F,'bo-', X(it,:),Fp,'k.')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$B_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+    else
+        % Ex
+        xAxis = xNodes + 0.5*DX;
+        yAxis = yNodes;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( E(it,1,:,:) )';
+            Fp = squeeze( Ep(it,:,1) );
+            Xp = squeeze(X(it,:,:));
+            
+            figure(fig_E)
+            subplot(3,3,it)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$E_x$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Ey
+        xAxis = xNodes;
+        yAxis = yNodes + 0.5*DY;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( E(it,2,:,:) )';
+            Fp = squeeze( Ep(it,:,2) );
+            Xp = squeeze(X(it,:,:));
+            
+            figure(fig_E)
+            subplot(3,3,it+3)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$E_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Ez
+        xAxis = xNodes;
+        yAxis = yNodes;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( E(it,3,:,:) )';
+            Fp = squeeze( Ep(it,:,3) );
+            Xp = squeeze(X(it,:,:));
+            
+            figure(fig_E)
+            subplot(3,3,it+6)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$E_z$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Bx
+        xAxis = xNodes;
+        yAxis = yNodes + 0.5*DY;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( B(it,1,:,:) )';
+            Fp = squeeze( Bp(it,:,1) );
+            Xp = squeeze(X(it,:,:));
+            
+            figure(fig_B)
+            subplot(3,3,it)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$B_x$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % By
+        xAxis = xNodes + 0.5*DX;
+        yAxis = yNodes;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( B(it,2,:,:) )';
+            Fp = squeeze( Bp(it,:,2) );
+            Xp = squeeze(X(it,:,:));
+            
+            figure(fig_B)
+            subplot(3,3,it+3)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$B_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+        
+        % Bz
+        xAxis = xNodes;
+        yAxis = yNodes;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( B(it,3,:,:) )';
+            Fp = squeeze( Bp(it,:,3) );
+            Xp = squeeze(X(it,:,:));
+            
+            figure(fig_B)
+            subplot(3,3,it+6)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$B_z$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(it)) ' s'],'Interpreter','latex')
+        end
+    end
+    
+    
+end
 end

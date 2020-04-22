@@ -409,6 +409,11 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 		//Geometry of the mesh
 		Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
 
+		name = "SPLIT_DIRECTION";
+		int_value = params->mesh.SPLIT_DIRECTION;
+		saveToHDF5(group_geo, name, &int_value);
+		name.clear();
+
 		name = "DX";
 		cpp_type_value = params->mesh.DX;
 		saveToHDF5(group_geo, name, &cpp_type_value);
@@ -503,10 +508,10 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 			name = "yAxis";
 
 			#ifdef HDF5_DOUBLE
-			vec_values = params->mesh.nodes.X;
+			vec_values = params->mesh.nodes.Y;
 			saveToHDF5(group_geo, name, &vec_values);
 			#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(params->mesh.nodes.X);
+			fvec_values = conv_to<fvec>::from(params->mesh.nodes.Y);
 			saveToHDF5(group_geo, name, &fvec_values);
 			#endif
 
@@ -693,6 +698,30 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					saveToHDF5(group_ionSpecies, name, &mat_values);
 					#elif defined HDF5_FLOAT
 					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).V);
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "Ep"){
+
+					name = "E";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->eField*IONS->at(ii).E;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->eField*IONS->at(ii).E );
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "Bp"){
+
+					name = "B";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->bField*IONS->at(ii).B;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->bField*IONS->at(ii).B );
 					saveToHDF5(group_ionSpecies, name, &fmat_values);
 					#endif
 					name.clear();
@@ -898,6 +927,30 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					saveToHDF5(group_ionSpecies, name, &mat_values);
 					#elif defined HDF5_FLOAT
 					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).V);
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "Ep"){
+
+					name = "E";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->eField*IONS->at(ii).E;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->eField*IONS->at(ii).E );
+					saveToHDF5(group_ionSpecies, name, &fmat_values);
+					#endif
+					name.clear();
+
+				}else if(params->outputs_variables.at(ov) == "Bp"){
+
+					name = "B";
+					#ifdef HDF5_DOUBLE
+					mat_values = CS->bField*IONS->at(ii).B;
+					saveToHDF5(group_ionSpecies, name, &mat_values);
+					#elif defined HDF5_FLOAT
+					fmat_values = conv_to<fmat>::from( CS->bField*IONS->at(ii).B );
 					saveToHDF5(group_ionSpecies, name, &fmat_values);
 					#endif
 					name.clear();

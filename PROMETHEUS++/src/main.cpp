@@ -38,8 +38,8 @@ using namespace std;
 using namespace arma;
 
 int main(int argc, char* argv[]){
-	namespace nDimensional = oneDimensional;
-	// namespace nDimensional = twoDimensional;
+	// namespace nDimensional = oneDimensional;
+	namespace nDimensional = twoDimensional;
 
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;

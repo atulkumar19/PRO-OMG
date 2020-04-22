@@ -903,11 +903,14 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 	fillGhosts(&EB_);
 
-	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
+	for(int ii=0; ii<IONS->size(); ii++){//structure to iterate over all the ion species.
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
 		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
+
+		IONS->at(ii).E = Ep;
+		IONS->at(ii).B = Bp;
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
 		int NSP(IONS->at(ii).NSP);
@@ -985,11 +988,14 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 	fillGhosts(&EB_);
 
-	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
+	for(int ii=0; ii<IONS->size(); ii++){//structure to iterate over all the ion species.
 		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
 		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
+
+		IONS->at(ii).E = Ep;
+		IONS->at(ii).B = Bp;
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
 		int NSP(IONS->at(ii).NSP);

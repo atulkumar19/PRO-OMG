@@ -110,6 +110,10 @@ class EMF_SOLVER{
 
 	void test_vfield_mat(const simulationParameters * params, arma::mat * m);
 
+	void test_fillGhosts(const simulationParameters * params, arma::mat * m);
+
+
+
 	void MPI_passGhosts(const simulationParameters * params, arma::vec * F);
 
 	void MPI_passGhosts(const simulationParameters * params, vfield_vec * F);

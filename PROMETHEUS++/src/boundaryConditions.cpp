@@ -19,14 +19,13 @@
 #include "boundaryConditions.h"
 
 void backwardPBC_1D(vec * C){
-	double NX(C->n_elem);
+	int NX = C->n_elem;
 
 	(*C)(NX-2) += (*C)(0);//X=0 face.
 	(*C)(0) = 0;
 
 	(*C)(1) += (*C)(NX-1);//X=0 face.
 	(*C)(NX-1) = 0;
-
 }
 
 
@@ -38,11 +37,10 @@ void backwardPBC_2D(mat * C){
 
 
 void fillGhosts(vec * C){
-	double NX(C->n_elem);
+	int NX = C->n_elem;
 
 	(*C)(0) = (*C)(NX-2);//X=0 face.
 	(*C)(NX-1) = (*C)(1);//X=NX-1 face.
-
 }
 
 
@@ -58,8 +56,8 @@ void fillGhosts(oneDimensional::fields * F){
 
 
 void fillGhosts(mat * C){
-	double NX(C->n_rows);
-	double NY(C->n_cols);
+	int NX = C->n_rows;
+	int NY = C->n_cols;
 
 	C->submat(0,1,0,NY-2) = C->submat(NX-2,1,NX-2,NY-2); // Left ghost cells along x-axis
 	C->submat(NX-1,1,NX-1,NY-2) = C->submat(1,1,1,NY-2); // Right ghost cells along x-axis
@@ -87,12 +85,10 @@ void fillGhosts(twoDimensional::fields * F){
 
 
 void setGhostsToZero(vec * C){
-
-	double NX(C->n_elem);
+	int NX = C->n_elem;
 
 	(*C)(0) = 0;//X=0 face.
 	(*C)(NX-1) = 0;//X=NX-1 face.
-
 }
 
 void setGhostsToZero(mat * C){

@@ -7,12 +7,12 @@ weightingScheme             1
 BC                          1
 loadFields                  0
 numberOfRKIterations        5
-smoothingParameter          1E-9
+smoothingParameter          1E-5
 filtersPerIterationFields   1
 filtersPerIterationIons     1
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              0.0
+simulationTime              2.0
 outputCadence               0.1
 transient                   0
 numberOfParticleSpecies     1
@@ -23,8 +23,8 @@ Te                          1.0E3
 Bo                          2.1
 theta                       0.0
 phi                         0.0
-NX                          16
-NY                          8
+NX                          8
+NY                          4
 NZ                          1
 DrL                         2.0
 dp                          -1

@@ -40,7 +40,7 @@ ST.time = loadTimeVector(ST);
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
-% EnergyDiagnostic(ST);
+EnergyDiagnostic(ST);
 
 testFieldInterpolation(ST);
 end
@@ -614,8 +614,8 @@ for ss=1:NS
     end
     
     % Iterations to plot
-%     its = [1 randi(NT) NT];
-    its = [1 1 1];
+    its = [1 randi(NT) NT];
+%     its = [1 1 1];
     
     fig_E = figure;
     fig_B = figure;

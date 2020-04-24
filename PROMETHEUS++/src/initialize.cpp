@@ -422,10 +422,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
         IONS->X.col(0) = (params->mesh.DX*params->mesh.NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
     }
 
-    double chargeDensityPerCell;
-
-    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
-    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI)*chargeDensityPerCell;
+    IONS->NCP = (params->BGP.ne*params->mesh.LX)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
@@ -479,10 +476,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
         IONS->X.col(1) = (params->mesh.DY*params->mesh.NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
     }
 
-    double chargeDensityPerCell;
-
-    chargeDensityPerCell = IONS->Dn*params->BGP.ne/IONS->NSP;
-    IONS->NCP = (params->mesh.DX*(double)params->mesh.NX_PER_MPI)*(params->mesh.DY*(double)params->mesh.NY_PER_MPI)*chargeDensityPerCell;
+    IONS->NCP = (params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
@@ -697,19 +691,46 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     EB->B.Z.fill(params->BGP.Bz); // z
 
     //*** @todelete
+    /*
+    arma::vec xAxis = params->mesh.nodes.X + 0.5*params->mesh.DX;
+    for(int ii=1; ii<(NY-1); ii++){
+        EB->B.Z.col(ii).subvec(1,NX-2) += 0.5*params->BGP.Bz*cos(2.0*M_PI*xAxis/params->mesh.LX);
+    }
+    */
+
+    //*** @todelete
+    /*
     arma::vec xAxis = params->mesh.nodes.X;
-    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++){
+    for(int ii=1; ii<(NY-1); ii++){
         EB->B.X.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
         EB->E.Y.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
         EB->E.Z.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
     }
 
     xAxis = params->mesh.nodes.X + 0.5*params->mesh.DX;
-    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++){
+    for(int ii=1; ii<(NY-1); ii++){
         EB->E.X.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
         EB->B.Y.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
         EB->B.Z.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
     }
+    */
+
+    //*** @todelete
+    /*
+    arma::rowvec yAxis = conv_to<rowvec>::from( params->mesh.nodes.Y + 0.5*params->mesh.DY );
+    for(int ii=1; ii<(NX-1); ii++){
+        EB->B.X.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
+        EB->B.Z.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
+        EB->E.Y.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
+    }
+
+    yAxis = conv_to<rowvec>::from( params->mesh.nodes.Y );
+    for(int ii=1; ii<(NX-1); ii++){
+        EB->E.X.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
+        EB->E.Z.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
+        EB->B.Y.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
+    }
+    */
 }
 
 

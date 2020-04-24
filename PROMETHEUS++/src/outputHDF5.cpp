@@ -854,10 +854,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 
 template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it){
-	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
-	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
-	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NX_PER_MPI + 1;
-	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NX_PER_MPI;
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
 
 	try{
 		string path;
@@ -1235,10 +1235,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 
 
 template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it){
-	unsigned int irow = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART))*params->mesh.NX_PER_MPI + 1;
-	unsigned int frow = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)) + 1)*params->mesh.NX_PER_MPI;
-	unsigned int icol = *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1)*params->mesh.NX_PER_MPI + 1;
-	unsigned int fcol = ( *(params->mpi.MPI_CART_COORDS.at(params->mpi.MPI_DOMAIN_NUMBER_CART)+1) + 1)*params->mesh.NX_PER_MPI;
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
 
 	twoDimensional::fields F(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
 

@@ -190,34 +190,6 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, arma::mat *
 }
 
 
-void EMF_SOLVER::test_vfield_mat(const simulationParameters * params, arma::mat * m){
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
-		m->randu();
-	}else{
-		arma_rng::set_seed_random();
-		m->randu();
-	}
-
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		m->print("MPI 0");
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
-		m->print("MPI 1 Before");
-
-
-	MPI_passGhosts(params, m);
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
-		m->print("MPI 1 After");
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-	MPI_Abort(params->mpi.MPI_TOPO,-2000);
-}
-
-
 void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, vfield_mat * F){
 	MPI_passGhosts(params, &F->X);
 	MPI_passGhosts(params, &F->Y);
@@ -227,7 +199,7 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, vfield_mat 
 
 // * * * Smoothing * * *
 void EMF_SOLVER::smooth(arma::vec * v, double as){
-	int NX(v->n_elem);
+	int NX = v->n_elem;
 	arma::vec b = zeros(NX);
 	double wc(0.75); 	// center weight
 	double ws(0.125);	// sides weight
@@ -245,9 +217,11 @@ void EMF_SOLVER::smooth(arma::vec * v, double as){
 
 
 void EMF_SOLVER::smooth(arma::mat * m, double as){
-	int NX(m->n_rows);
-	int NY(m->n_cols);
+	int NX = m->n_rows;
+	int NY = m->n_cols;
+
 	arma::mat b = zeros(NX,NY);
+
 	double wc(9.0/16.0);
 	double ws(3.0/32.0);
 	double wcr(1.0/64.0);
@@ -293,10 +267,9 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, oneDimensional
 	MPI_passGhosts(params,&EB->E);
 	MPI_passGhosts(params,&EB->B);
 
-	//Definitions
+	// Indices of subdomain
 	unsigned int iIndex = params->mpi.iIndex;
 	unsigned int fIndex = params->mpi.fIndex;
-
 
 	//There is not x-component of curl(B)
 	EB->B.X.fill(0);
@@ -319,7 +292,6 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, twoDimensional
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-
 	//There is not x-component of curl(B)
 	EB->B.X.submat(irow,icol,frow,fcol)  = - ( EB->E.Z.submat(irow,icol+1,frow,fcol+1) - EB->E.Z.submat(irow,icol,frow,fcol) )/params->mesh.DY;
 
@@ -329,13 +301,12 @@ void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, twoDimensional
 	//z-component
 	EB->B.Z.submat(irow,icol,frow,fcol)  = - ( EB->E.Y.submat(irow+1,icol,frow+1,fcol) - EB->E.Y.submat(irow,icol,frow,fcol) )/params->mesh.DX;
 	EB->B.Z.submat(irow,icol,frow,fcol) +=   ( EB->E.X.submat(irow,icol+1,frow,fcol+1) - EB->E.X.submat(irow,icol,frow,fcol) )/params->mesh.DY;
-
 }
 
 
 void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
-	//B^(N+1) = B^(N) + dt( K1^(N) + 2*V1D.K2^(N) + 2*K3^(N) + K4^(N) )/6
+	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
 
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){ // Runge-Kutta iterations
@@ -431,7 +402,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 
 void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS){
 	//Using the RK4 scheme to advance B.
-	//B^(N+1) = B^(N) + dt( K1^(N) + 2*V1D.K2^(N) + 2*K3^(N) + K4^(N) )/6
+	//B^(N+1) = B^(N) + dt( K1^(N) + 2*K2^(N) + 2*K3^(N) + K4^(N) )/6
 	dt = params->DT/((double)params->numberOfRKIterations);
 
 	for(int RKit=0; RKit<params->numberOfRKIterations; RKit++){ // Runge-Kutta iterations
@@ -1019,7 +990,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	V2D.U.Z /= V2D.n;
 
 	V2D._n /= n_cs;
-	V2D.n /= n_cs;
+	// V2D.n /= n_cs;
 
 
 	V2D.n_.zeros();
@@ -1047,7 +1018,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	V2D.U_.Y /= V2D.n_;
 	V2D.U_.Z /= V2D.n_;
 
-	V2D.n_ /= n_cs;//Dimensionless density
+	// V2D.n_ /= n_cs;//Dimensionless density
 
 
 	if(BAE == 1){
@@ -1074,7 +1045,7 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 		V2D.U__.Y /= V2D.n__;
 		V2D.U__.Z /= V2D.n__;
 
-		V2D.n__ /= n_cs;//Dimensionless density
+		// V2D.n__ /= n_cs;//Dimensionless density
 
 		//Here we use the velocity extrapolation U^(N+1) = 2*U^(N+1/2) - 1.5*U^(N-1/2) + 0.5*U^(N-3/2)
 		V2D.V = 2.0*V2D.U - 1.5*V2D.U_ + 0.5*V2D.U__;
@@ -1185,4 +1156,97 @@ void EMF_SOLVER::advanceEFieldWithVelocityExtrapolation(const simulationParamete
 	#endif
 
 	smooth(&EB->E, params->smoothingParameter);
+}
+
+
+//*** @tests
+void EMF_SOLVER::test_vfield_mat(const simulationParameters * params, arma::mat * m){
+	int NX = m->n_rows;
+	int NY = m->n_cols;
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
+		int cc = 1;
+		for (int ii=1; ii<NX-1; ii++){
+			for (int jj=1; jj<NY-1; jj++){
+				(*m)(ii,jj) = cc;
+				cc += 1;
+			}
+		}
+	}else{
+		int cc = 1;
+		for (int ii=1; ii<NX-1; ii++){
+			for (int jj=1; jj<NY-1; jj++){
+				(*m)(ii,jj) = 2.0*cc;
+				cc += 1;
+			}
+		}
+	}
+
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m->print("MPI 0 Before");
+
+
+	MPI_passGhosts(params, m);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m->print("MPI 0 After");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+	MPI_Abort(params->mpi.MPI_TOPO,-2000);
+}
+
+
+void EMF_SOLVER::test_fillGhosts(const simulationParameters * params, arma::mat * m){
+	int NX = m->n_rows;
+	int NY = m->n_cols;
+
+	m->zeros();
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
+		int cc = 1;
+		for (int ii=1; ii<NX-1; ii++){
+			for (int jj=1; jj<NY-1; jj++){
+				(*m)(ii,jj) = cc;
+				cc += 1;
+			}
+		}
+	}else{
+		int cc = 1;
+		for (int ii=1; ii<NX-1; ii++){
+			for (int jj=1; jj<NY-1; jj++){
+				(*m)(ii,jj) = 2.0*cc;
+				cc += 1;
+			}
+		}
+	}
+
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m->print("MPI 0");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	fillGhosts(m);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
+		m->print("MPI 1 AFTER");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+		m->print("MPI 0 AFTER");
+
+	MPI_Barrier(params->mpi.MPI_TOPO);
+	MPI_Abort(params->mpi.MPI_TOPO,-2000);
 }

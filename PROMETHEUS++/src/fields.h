@@ -59,6 +59,7 @@ class EMF_SOLVER{
 		oneDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 		oneDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
+		arma::vec ne;			// Electron plasma density at time level "l + 1"
 		arma::vec _n;			// Electron plasma density at time level "l + 1"
 		arma::vec n; 			// Total plasma density at time level "l + 1"
 		arma::vec n_; 			// Total plasma density at time level "l - 1/2"
@@ -68,9 +69,6 @@ class EMF_SOLVER{
 		vfield_vec U; 			// Ions' bulk velocity at time level "l + 1/2"
 		vfield_vec U_; 			// Ions' bulk velocity at time level "l - 1/2"
 		vfield_vec U__; 		// Ions' bulk velocity at time level "l - 3/2"
-		vfield_vec Ui; 			// Ions' bulk velocity at time level "l - 3/2"
-		vfield_vec Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
-		vfield_vec Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
 	} V1D;
 
 
@@ -86,18 +84,16 @@ class EMF_SOLVER{
 		twoDimensional::fields  K3; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 		twoDimensional::fields  K4; // Temporary fields of the four stages of the RK calculation of the magnetic field.
 
+		arma::mat ne;			//
 		arma::mat _n;			// Electron plasma density at time level "l + 1"
 		arma::mat n; 			// Total plasma density at time level "l + 1"
 		arma::mat n_; 			// Total plasma density at time level "l - 1/2"
 		arma::mat n__; 			// Total plasma density at time level "l - 3/2"
 
-		vfield_mat V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
+		vfield_mat V; 			//
 		vfield_mat U; 			// Ions' bulk velocity at time level "l + 1/2"
 		vfield_mat U_; 			// Ions' bulk velocity at time level "l - 1/2"
 		vfield_mat U__; 		// Ions' bulk velocity at time level "l - 3/2"
-		vfield_mat Ui; 			// Ions' bulk velocity at time level "l - 3/2"
-		vfield_mat Ui_; 		// Ions' bulk velocity at time level "l - 3/2"
-		vfield_mat Ui__; 		// Ions' bulk velocity at time level "l - 3/2"
 	} V2D;
 
 
@@ -111,7 +107,6 @@ class EMF_SOLVER{
 	void test_vfield_mat(const simulationParameters * params, arma::mat * m);
 
 	void test_fillGhosts(const simulationParameters * params, arma::mat * m);
-
 
 
 	void MPI_passGhosts(const simulationParameters * params, arma::vec * F);
@@ -153,6 +148,8 @@ class EMF_SOLVER{
 	void advanceBField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
 	void advanceBField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
+
+	void advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, bool extrap, bool BAE);
 
 	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const int BAE);
 

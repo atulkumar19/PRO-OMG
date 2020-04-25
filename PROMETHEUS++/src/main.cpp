@@ -123,11 +123,9 @@ int main(int argc, char* argv[]){
         //*** @tomodiify
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
          	// Using the Bashford-Adams extrapolation.
-        	// fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 1);
 			fields_solver.advanceEField(&params, &EB, &IONS, true, true);
         }else{
 			// Using basic velocity extrapolation.
-        	// fields_solver.advanceEFieldWithVelocityExtrapolation(&params, &EB, &IONS, 0);
 			fields_solver.advanceEField(&params, &EB, &IONS, true, false);
 	    }
 

@@ -131,9 +131,6 @@ class EMF_SOLVER{
 
 	void FaradaysLaw(const simulationParameters * params, twoDimensional::fields * EB);
 
-
-	void advanceEField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
-
   public:
 
 	EMF_SOLVER(){};
@@ -149,7 +146,7 @@ class EMF_SOLVER{
 
 	void advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, bool extrap, bool BAE);
 
-	void advanceEFieldWithVelocityExtrapolation(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const int BAE);
+	void advanceEField(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, bool extrap, bool BAE);
 
 
 };

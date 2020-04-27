@@ -497,16 +497,18 @@ EEy = EEy - EEy(1);
 EEz = EEz - EEz(1);
 EE = EE - EE(1);
 
+time = ST.time/ST.params.scales.ionGyroPeriod;
+
 % Figures to show energy conservation
 fig = figure('name','Energy conservation');
 for ss=1:NSPP
     figure(fig)
     subplot(5,1,1)
     hold on;
-    plot(ST.time, Ei(ss,:), '--')
+    plot(time, Ei(ss,:), '--')
     hold off
     box on; grid on;
-    xlim([min(ST.time) max(ST.time)])
+    xlim([min(time) max(time)])
     xlabel('Time (s)','interpreter','latex')
     ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
 end
@@ -514,46 +516,46 @@ end
 figure(fig)
 subplot(5,1,1)
 hold on;
-plot(ST.time, sum(Ei,1))
+plot(time, sum(Ei,1))
 hold off
 box on; grid on;
-xlim([min(ST.time) max(ST.time)])
+xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
 legend(ilabels,'interpreter','latex')
 
 figure(fig);
 subplot(5,1,2)
-plot(ST.time, EBx, 'r--', ST.time, EBy, 'b-.', ST.time, EBz, 'c-.', ST.time, EB, 'k-')
+plot(time, EBx, 'r--', time, EBy, 'b-.', time, EBz, 'c-.', time, EB, 'k-')
 box on; grid on;
-xlim([min(ST.time) max(ST.time)])
+xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_B$ (J/m$^3$)','interpreter','latex')
 legend({'$B_x$', '$B_y$', '$B_z$', '$B$'},'interpreter','latex')
 
 figure(fig);
 subplot(5,1,3)
-plot(ST.time, EEx, 'r--', ST.time, EEy, 'b--', ST.time, EEz, 'c--', ST.time, EE, 'k-')
+plot(time, EEx, 'r--', time, EEy, 'b--', time, EEz, 'c--', time, EE, 'k-')
 box on; grid on;
-xlim([min(ST.time) max(ST.time)])
+xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_E$ (J/m$^3$)','interpreter','latex')
 legend({'$E_x$', '$E_y$', '$E_z$', '$E$'},'interpreter','latex')
 
 figure(fig);
 subplot(5,1,4)
-plot(ST.time, sum(Ei,1),'r', ST.time, EB, 'b-', ST.time, EE, 'k')
+plot(time, sum(Ei,1),'r', time, EB, 'b-', time, EE, 'k')
 box on; grid on;
-xlim([min(ST.time) max(ST.time)])
+xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}$ (J/m$^3$)','interpreter','latex')
 legend({'$K_i$', '$B$', '$E$'},'interpreter','latex')
 
 figure(fig);
 subplot(5,1,5)
-plot(ST.time, ET)
+plot(time, ET)
 box on; grid on;
-xlim([min(ST.time) max(ST.time)])
+xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_T$ (\%)','interpreter','latex')
 
@@ -573,6 +575,8 @@ xNodes = ST.params.geometry.xAxis;
 if (ST.params.dimensionality == 2)
     yNodes = ST.params.geometry.yAxis;
 end
+LX = ST.params.geometry.LX;
+LY = ST.params.geometry.LY;
 
 for ss=1:NS
     NSP = double(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
@@ -582,6 +586,8 @@ for ss=1:NS
     Bp = zeros(NT,ND*NSP,3);
     E = zeros(NT,3,NX,NY);
     B = zeros(NT,3,NX,NY);
+    U = zeros(NT,3,NX,NY);
+    n = zeros(NT,NX,NY);
     
     for ii=1:NT
         for dd=1:ND
@@ -610,11 +616,16 @@ for ss=1:NS
             B(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
             B(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
             B(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
+            
+            n(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).n;
+            U(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.x;
+            U(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.y;
+            U(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.z;
         end
     end
     
     % Iterations to plot
-    its = [1 randi(NT) NT];
+    its = [1 randi(NT-1) NT];
 %     its = [1 1 1];
     
     fig_E = figure;
@@ -711,6 +722,61 @@ for ss=1:NS
             ylabel('$B_y$','Interpreter','latex')
             title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
+        
+        % Number density diagnostic
+        fig_n = figure;
+        
+        xAxis = xNodes;        
+        for it=1:numel(its)
+            F = squeeze( n(its(it),:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it)
+            plot(xAxis,F,'bo-')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$n$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        % Ux
+        for it=1:numel(its)
+            F = squeeze( U(its(it),1,:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it+3)
+            plot(xAxis,F,'bo-')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$U_x$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        % Uy
+        for it=1:numel(its)
+            F = squeeze( U(its(it),2,:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it+6)
+            plot(xAxis,F,'bo-')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$U_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        % Uz
+        for it=1:numel(its)
+            F = squeeze( U(its(it),3,:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it+9)
+            plot(xAxis,F,'bo-')
+            box on; grid on;
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$U_z$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
     else
         % Ex
         xAxis = xNodes + 0.5*DX;
@@ -726,6 +792,10 @@ for ss=1:NS
             subplot(3,3,it)
             surf(XGRID,YGRID,F,'FaceAlpha',0.5)
             hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
+            hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'g.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'g.');hold off
             box on; grid on;colormap(jet)
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
@@ -747,6 +817,10 @@ for ss=1:NS
             subplot(3,3,it+3)
             surf(XGRID,YGRID,F,'FaceAlpha',0.5)
             hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
+            hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'g.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'g.');hold off
             box on; grid on;colormap(jet)
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
@@ -768,6 +842,10 @@ for ss=1:NS
             subplot(3,3,it+6)
             surf(XGRID,YGRID,F,'FaceAlpha',0.5)
             hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
+            hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
+            hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'g.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'g.');hold off
             box on; grid on;colormap(jet)
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
@@ -835,6 +913,69 @@ for ss=1:NS
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
             zlabel('$B_z$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        
+        % Number density diagnostic
+        fig_n = figure;
+        
+        xAxis = xNodes;
+        yAxis = yNodes;
+        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
+        
+        for it=1:numel(its)
+            F = squeeze( n(its(it),:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$n$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        % Ux
+        for it=1:numel(its)
+            F = squeeze( U(its(it),1,:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it+3)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$U_x$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        % Uy
+        for it=1:numel(its)
+            F = squeeze( U(its(it),2,:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it+6)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$U_y$','Interpreter','latex')
+            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
+        end
+        
+        % Uz
+        for it=1:numel(its)
+            F = squeeze( U(its(it),3,:,:) )';
+            
+            figure(fig_n)
+            subplot(4,3,it+9)
+            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
+            box on; grid on;colormap(jet)
+            xlabel('$x$','Interpreter','latex')
+            ylabel('$y$','Interpreter','latex')
+            zlabel('$U_z$','Interpreter','latex')
             title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
         end
     end

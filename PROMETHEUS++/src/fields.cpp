@@ -58,59 +58,61 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 }
 
 
-//*** @tomodify
-void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, arma::vec * F){
+void EMF_SOLVER::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
 	unsigned int iIndex = params->mpi.iIndex;
 	unsigned int fIndex = params->mpi.fIndex;
 
-	arma::vec recvbuf(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
+	arma::vec recvbuf(params->mesh.NX_IN_SIM);
 	arma::vec sendbuf(params->mesh.NX_PER_MPI);
 
-	MPI_ARMA_VEC chunk(params->mesh.NX_PER_MPI);
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
 	//Allgather for x-component
-	sendbuf = F->subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), 1, chunk.type, recvbuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	F->subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvbuf;
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
+	sendbuf = field->subvec(iIndex, fIndex);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+	field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
 }
 
 
-//*** @tomodify
-void EMF_SOLVER::MPI_AllgatherField(const simulationParameters * params, vfield_vec * F){
-	unsigned int iIndex = params->mpi.iIndex;
-	unsigned int fIndex = params->mpi.fIndex;
+void EMF_SOLVER::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
+	MPI_Allgathervec(params, &vfield->X);
+	MPI_Allgathervec(params, &vfield->Y);
+	MPI_Allgathervec(params, &vfield->Z);
+}
 
-	arma::vec recvbuf(params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS);
-	arma::vec sendbuf(params->mesh.NX_PER_MPI);
 
-	MPI_ARMA_VEC chunk(params->mesh.NX_PER_MPI);
+void EMF_SOLVER::MPI_Allgathermat(const simulationParameters * params, arma::mat * field){
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
 
-	MPI_Barrier(params->mpi.MPI_TOPO);
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
+
+	arma::vec recvbuf = zeros(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);
 
 	//Allgather for x-component
-	sendbuf = F->X.subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), 1, chunk.type, recvbuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	F->X.subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvbuf;
+	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
-	MPI_Barrier(params->mpi.MPI_TOPO);
+	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
+		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
+		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*(mpis+1) - 1;
 
-	//Allgather for y-component
-	sendbuf = F->Y.subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), 1, chunk.type, recvbuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	F->Y.subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvbuf;
+		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
+		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
 
-	MPI_Barrier(params->mpi.MPI_TOPO);
+		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NY_PER_MPI + 1;
+		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NY_PER_MPI;
 
-	//Allgather for z-component
-	sendbuf = F->Z.subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), 1, chunk.type, recvbuf.memptr(), 1, chunk.type, params->mpi.MPI_TOPO);
-	F->Z.subvec(1, params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS) = recvbuf;
+		field->submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
+	}
 
-	MPI_Barrier(params->mpi.MPI_TOPO);
+}
+
+
+void EMF_SOLVER::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
+	MPI_Allgathermat(params, &vfield->X);
+	MPI_Allgathermat(params, &vfield->Y);
+	MPI_Allgathermat(params, &vfield->Z);
 }
 
 
@@ -204,7 +206,9 @@ void EMF_SOLVER::MPI_passGhosts(const simulationParameters * params, vfield_mat 
 // * * * Smoothing * * *
 void EMF_SOLVER::smooth(arma::vec * v, double as){
 	int NX = v->n_elem;
+
 	arma::vec b = zeros(NX);
+
 	double wc(0.75); 	// center weight
 	double ws(0.125);	// sides weight
 
@@ -229,6 +233,11 @@ void EMF_SOLVER::smooth(arma::mat * m, double as){
 	double wc(9.0/16.0);
 	double ws(3.0/32.0);
 	double wcr(1.0/64.0);
+	/*
+	double wc(0.25);
+	double ws(0.1250);
+	double wcr(0.0625);
+	*/
 
 	// Step 1: Averaging
 	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);
@@ -260,11 +269,6 @@ void EMF_SOLVER::smooth(vfield_mat * vf, double as){
 	smooth(&vf->Z,as); // z component
 }
 // * * * Smoothing * * *
-
-
-void EMF_SOLVER::equilibrium(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB){
-
-}
 
 
 void EMF_SOLVER::FaradaysLaw(const simulationParameters * params, oneDimensional::fields * EB){//This function calculates -culr(EB->E)
@@ -344,7 +348,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 	} // Runge-Kutta iterations
 
 	if (params->includeElectronInertia){
-		MPI_AllgatherField(params, &EB->B);
+		MPI_Allgathervfield_vec(params, &EB->B);
 
 		// arma::vec n
 		arma::mat M(NX_R, NX_R, fill::zeros);		// Matrix to be inverted to calculate the actual magnetic field
@@ -398,6 +402,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 	}
 #endif
 
+	MPI_Allgathervfield_vec(params, &EB->B);
 	smooth(&EB->B, params->smoothingParameter);
 }
 
@@ -448,6 +453,7 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimension
 	}
 	#endif
 
+	MPI_Allgathervfield_mat(params, &EB->B);
 	smooth(&EB->B, params->smoothingParameter);
 }
 
@@ -667,6 +673,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		}
 	#endif
 
+	MPI_Allgathervfield_vec(params, &EB->E);
 	smooth(&EB->E, params->smoothingParameter);
 }
 
@@ -796,7 +803,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.submat(irow+1,icol,frow+1,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol) )/params->mesh.DX - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
 
 	// Number density at Ex-nodes. Biinear interpolation used.
-	V2D.n_interp = 0.5*( V2D._n.submat(1,1,NX_S-2,NY_S-2) + V2D._n.submat(2,1,NX_S-1,NY_S-2) );
+	V2D.n_interp = 0.5*( V2D.ne.submat(1,1,NX_S-2,NY_S-2) + V2D.ne.submat(2,1,NX_S-1,NY_S-2) );
 
 	// Bz is interpolated to Ex-nodes
 	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
@@ -814,7 +821,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	EB->E.X.submat(irow,icol,frow,fcol) +=   V2D.U_interp % EB->B.Y.submat(irow,icol,frow,fcol);
 
 	// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
-	V2D.dndx = ( V2D._n.submat(2,1,NX_S-1,NY_S-2) - V2D._n.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DX;
+	V2D.dndx = ( V2D.ne.submat(2,1,NX_S-1,NY_S-2) - V2D.ne.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DX;
 
 	EB->E.X.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndx/V2D.n_interp;
 
@@ -828,7 +835,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 										  - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
 
 	// Number density at Ey-nodes. Biinear interpolation used.
-	V2D.n_interp = 0.5*( V2D._n.submat(1,1,NX_S-2,NY_S-2) + V2D._n.submat(1,2,NX_S-2,NY_S-1) );
+	V2D.n_interp = 0.5*( V2D.ne.submat(1,1,NX_S-2,NY_S-2) + V2D.ne.submat(1,2,NX_S-2,NY_S-1) );
 
 	// Bz is interpolated to Ey-nodes
 	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
@@ -846,7 +853,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	EB->E.Y.submat(irow,icol,frow,fcol) += - V2D.U_interp % EB->B.X.submat(irow,icol,frow,fcol);
 
 	// The partial derivative dn/dy is computed using centered finite differences with grid size DY/2
-	V2D.dndy = ( V2D._n.submat(1,2,NX_S-2,NY_S-1) - V2D._n.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DY;
+	V2D.dndy = ( V2D.ne.submat(1,2,NX_S-2,NY_S-1) - V2D.ne.submat(1,1,NX_S-2,NY_S-2) )/params->mesh.DY;
 
 	EB->E.Y.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndy/V2D.n_interp;
 
@@ -860,14 +867,14 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	// By is interpolated to Ez-nodes
 	V2D.B_interp = 0.5*( EB->B.Y.submat(irow,icol,frow,fcol) + EB->B.Y.submat(irow-1,icol,frow-1,fcol) );
 
-	EB->E.Z.submat(irow,icol,frow,fcol) =   ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D._n.submat(1,1,NX_S-2,NY_S-2));
+	EB->E.Z.submat(irow,icol,frow,fcol) =   ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D.ne.submat(1,1,NX_S-2,NY_S-2));
 
 	EB->E.Z.submat(irow,icol,frow,fcol) = - V2D.V.X.submat(1,1,NX_S-2,NY_S-2) % V2D.B_interp;
 
 	// Bx is interpolated to Ez-nodes
 	V2D.B_interp = 0.5*( EB->B.X.submat(irow,icol,frow,fcol) + EB->B.X.submat(irow,icol-1,frow,fcol-1) );
 
-	EB->E.Z.submat(irow,icol,frow,fcol) = - ( curlB.Y.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D._n.submat(1,1,NX_S-2,NY_S-2));
+	EB->E.Z.submat(irow,icol,frow,fcol) = - ( curlB.Y.submat(irow,icol,frow,fcol) % V2D.B_interp )/(F_MU_DS*F_E_DS*V2D.ne.submat(1,1,NX_S-2,NY_S-2));
 
 	EB->E.Z.submat(irow,icol,frow,fcol) =   V2D.V.Y.submat(1,1,NX_S-2,NY_S-2) % V2D.B_interp;
 
@@ -885,6 +892,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 		}
 	#endif
 
+	MPI_Allgathervfield_mat(params, &EB->E);
 	smooth(&EB->E, params->smoothingParameter);
 }
 

@@ -42,8 +42,9 @@ void PIC::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
 
 
 void PIC::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
+
 	arma::vec recvbuf(params->mesh.NX_IN_SIM);
 	arma::vec sendbuf(params->mesh.NX_PER_MPI);
 
@@ -221,7 +222,9 @@ void PIC::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensi
 // * * * Smoothing * * *
 void PIC::smooth(arma::vec * v, double as){
 	int NX(v->n_elem);
+
 	arma::vec b = zeros(NX);
+
 	double wc(0.75); 	// center weight
 	double ws(0.125);	// sides weight
 
@@ -240,10 +243,17 @@ void PIC::smooth(arma::vec * v, double as){
 void PIC::smooth(arma::mat * m, double as){
 	int NX(m->n_rows);
 	int NY(m->n_cols);
+
 	arma::mat b = zeros(NX,NY);
+
 	double wc(9.0/16.0);
 	double ws(3.0/32.0);
 	double wcr(1.0/64.0);
+	/*
+	double wc(0.25);
+	double ws(0.1250);
+	double wcr(0.0625);
+	*/
 
 	// Step 1: Averaging
 	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);

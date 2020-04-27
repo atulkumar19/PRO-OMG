@@ -97,11 +97,14 @@ class EMF_SOLVER{
 	} V2D;
 
 
-	//*** @tomodify
-	void MPI_AllgatherField(const simulationParameters * params, arma::vec * F);
+	void MPI_Allgathervec(const simulationParameters * params, arma::vec * field);
 
-	//*** @tomodify
-	void MPI_AllgatherField(const simulationParameters * params, vfield_vec * F);
+	void MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield);
+
+	void MPI_Allgathermat(const simulationParameters * params, arma::mat * field);
+
+	void MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
+
 
 
 	void test_vfield_mat(const simulationParameters * params, arma::mat * m);
@@ -137,8 +140,6 @@ class EMF_SOLVER{
 
 	EMF_SOLVER(const simulationParameters * params, characteristicScales * CS);
 
-
-	void equilibrium(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, oneDimensional::fields * EB);
 
 	void advanceBField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 

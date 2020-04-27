@@ -464,7 +464,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();
 
-		name = "NY_IN_SIMNY";
+		name = "NY_IN_SIM";
 		int_value = params->mesh.NY_IN_SIM;
 		saveToHDF5(group_geo, name, &int_value);
 		name.clear();

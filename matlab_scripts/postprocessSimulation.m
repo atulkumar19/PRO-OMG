@@ -42,7 +42,7 @@ ST.time = loadTimeVector(ST);
 
 EnergyDiagnostic(ST);
 
-testFieldInterpolation(ST);
+% testFieldInterpolation(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -794,8 +794,8 @@ for ss=1:NS
             hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
             hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
             hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'g.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'g.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'r.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'r.');hold off
             box on; grid on;colormap(jet)
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
@@ -819,8 +819,8 @@ for ss=1:NS
             hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
             hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
             hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'g.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'g.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'r.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'r.');hold off
             box on; grid on;colormap(jet)
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')
@@ -844,8 +844,8 @@ for ss=1:NS
             hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
             hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
             hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'g.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'g.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'r.');hold off
+            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'r.');hold off
             box on; grid on;colormap(jet)
             xlabel('$x$','Interpreter','latex')
             ylabel('$y$','Interpreter','latex')

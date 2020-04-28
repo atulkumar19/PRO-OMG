@@ -42,7 +42,7 @@ FourierAnalysis(ST,'B','z');
 
 EnergyDiagnostic(ST);
 
-testFieldInterpolation(ST);
+% testFieldInterpolation(ST);
 end
 
 function params = loadSimulationParameters(ST)

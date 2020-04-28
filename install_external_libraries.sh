@@ -1,6 +1,5 @@
 #!/bin/bash
 
-USING_C11_STANDARD='yes'
 HDF5_VERSION='hdf5-1.8.16'
 
 rm -r arma_libs/*
@@ -9,20 +8,7 @@ rm -r HDF5/*
 mkdir arma_libs
 mkdir HDF5
 
-if [ "$USING_C11_STANDARD" == "yes" ]
-then
-
 ARMADILLO_VERSION='armadillo-4.000.0'
-sed -i '.backups' 's/CCXXFLAGS=-std=c++0x/CCXXFLAGS =-std=c++11/g' PROMETHEUS/makefile
-sed -i 's/\/\/ arma_rng::set_seed_random();/arma_rng::set_seed_random();/g' PROMETHEUS/sources/randomStart.cpp
-
-else
-
-ARMADILLO_VERSION='armadillo-3.900.6'
-sed -i '.backups' 's/CCXXFLAGS=-std=c++11/CCXXFLAGS=-std=c++0x/g' PROMETHEUS/makefile
-sed -i 's/arma_rng::set_seed_random();/\/\/ arma_rng::set_seed_random();/g' PROMETHEUS/sources/randomStart.cpp
-
-fi
 
 rm -r $HDF5_VERSION$"/"
 

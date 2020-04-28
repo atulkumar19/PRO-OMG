@@ -17,7 +17,7 @@ ARMADILLO_INSTALLATION_FOLDER=$REPO_DIR
 HDF5_INSTALLATION_FOLDER=$HDF5_INSTALLATION_FOLDER"/HDF5"
 ARMADILLO_INSTALLATION_FOLDER=$ARMADILLO_INSTALLATION_FOLDER"/arma_libs"
 
-HDF5_VERSION='hdf5-1.10.16'
+HDF5_VERSION='hdf5-1.10.4'
 ARMADILLO_VERSION='armadillo-9.850.1'
 
 # Delete any existing previous instalation of the libraries
@@ -53,7 +53,7 @@ cd ../
 rm -r $ARMADILLO_VERSION
 else
 echo 'ERROR: Uh-oh! Something went wrong in ARMADILLO installation!'
-exit
+return
 fi
 
 # Local installation of HDF5 library
@@ -79,8 +79,15 @@ cd ../
 rm -r $HDF5_VERSION
 else
 echo 'ERROR: Uh-oh! Something went wrong in HDF5 installation!'
-exit
+return
 fi
+
+# Setting up Makefile and Compile environment variables
+sed -i 's/MPICXX=/'"MPICXX=${MPICXX}/g" PROMETHEUS++/Makefile
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER}/g" PROMETHEUS++/Makefile
+sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER}/g" PROMETHEUS++/Makefile
+
+sed -i 's/ARMA_LIBS/'"${ARMADILLO_INSTALLATION_FOLDER}/g" PROMETHEUS++/Makefile
 
 echo '* * * * * * * * * * * * * * * * * * * * * *'
 echo '*          Installation succeeded         *'

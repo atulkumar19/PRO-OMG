@@ -1,8 +1,8 @@
 #!/bin/bash
 
 REPO_DIR=
-HDF5_INSTALL=
-ARMADILLO_INSTALL=
+HDF5_INSTALL=/lib
+ARMADILLO_INSTALL=/lib
 
 # Available number of cores in system
 NUM_CORES=4
@@ -20,6 +20,7 @@ rm -r ${LOC_OUTPUT_FOLDER}"/"${FILE_ID}
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_INSTALL}:${ARMADILLO_INSTALL}
 
+echo "LD_LIBRARY_PATH: "${LD_LIBRARY_PATH}
 echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
 echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}
 

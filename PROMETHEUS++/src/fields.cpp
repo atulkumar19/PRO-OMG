@@ -238,7 +238,6 @@ void EMF_SOLVER::smooth(arma::mat * m, double as){
 	double ws(0.1250);
 	double wcr(0.0625);
 	*/
-
 	// Step 1: Averaging
 	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);
 

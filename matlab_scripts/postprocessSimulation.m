@@ -477,17 +477,15 @@ for ss=1:NSPP
     
     for ii=1:NT
         for dd=1:ND
-            vx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V(:,1);
-            vy = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V(:,2);
-            vz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V(:,3);
+            g = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).g;
             
-            Ei(ss,ii) = Ei(ss,ii) + sum(vx.^2 + vy.^2 + vz.^2);
+            Ei(ss,ii) = Ei(ss,ii) + sum(g - 1.0)*mi*ST.c^2;
         end
         
         if(ST.params.dimensionality == 1)
-            Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/DX;
+            Ei(ss,ii) = NCP*Ei(ss,ii)/DX;
         else
-            Ei(ss,ii) = 0.5*mi*NCP*Ei(ss,ii)/(DX*DY);
+            Ei(ss,ii) = NCP*Ei(ss,ii)/(DX*DY);
         end
     end
     
@@ -510,6 +508,10 @@ for ii=1:NT
         Bx = ST.params.Bo(1) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
         By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
         Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
+        
+%         Bx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
+%         By = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
+%         Bz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
         
         EBx(ii) = EBx(ii) + sum(sum(Bx.^2));
         EBy(ii) = EBy(ii) + sum(sum(By.^2));
@@ -536,6 +538,12 @@ EEz = 0.5*ST.ep0*EEz;
 EE = EEx + EEy + EEz;
 
 ET = sum(Ei,1) + EE + EB;
+
+% Change in total energy as a percentage of the initial ion energy
+ET_Ei = zeros(NSPP,NT);
+for ss=1:NSPP
+    ET_Ei(ss,:) = 100.0*(ET - ET(1))/Ei(ss,1);
+end
 
 % Relative change in total energy
 ET = 100.0*(ET - ET(1))/ET(1);
@@ -612,6 +620,9 @@ legend({'$K_i$', '$B$', '$E$'},'interpreter','latex')
 figure(fig);
 subplot(5,1,5)
 plot(time, ET)
+for ss=1:NSPP
+    hold on; plot(time, ET_Ei(ss,:),'--'); hold off
+end
 box on; grid on;
 xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')

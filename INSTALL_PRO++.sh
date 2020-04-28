@@ -83,12 +83,40 @@ return
 fi
 
 # Setting up Makefile and Compile environment variables
-sed -i 's/MPICXX=/'"MPICXX=${MPICXX}/g" PROMETHEUS++/Makefile
-sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER}/g" PROMETHEUS++/Makefile
-sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER}/g" PROMETHEUS++/Makefile
+MPICXX_=$(echo ${MPICXX} | sed -e 's/\//_SEP_/g')
+sed -i 's/MPICXX=/'"MPICXX=${MPICXX_}/g" PROMETHEUS++/Makefile
 
-sed -i 's/ARMA_LIBS/'"${ARMADILLO_INSTALLATION_FOLDER}/g" PROMETHEUS++/Makefile
+HDF5_INSTALLATION_FOLDER_=$(echo ${HDF5_INSTALLATION_FOLDER} | sed -e 's/\//_SEP_/g')
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
 
+ARMADILLO_INSTALLATION_FOLDER_=$(echo ${ARMADILLO_INSTALLATION_FOLDER} | sed -e 's/\//_SEP_/g')
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
+
+sed -i 's/_SEP_/\//g' PROMETHEUS++/Makefile
+
+sed -i 's/ARMA_LIBS/'"${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/compile.sh
+sed -i 's/_SEP_/\//g' PROMETHEUS++/compile.sh
+
+# Compile for the first times
+cd PROMETHEUS++
+
+make clean
+
+make info
+
+make all -j4
+
+SYS=$(uname)
+
+if [ ${SYS} = "Darwin" ]; then
+    echo "Additional steps for compilation on OS... DONE!"
+    install_name_tool -change libarmadillo.4.dylib ${ARMADILLO_INSTALLATION_FOLDER}/usr/lib/libarmadillo.4.dylib bin/PROMETHEUS++
+else
+    echo "Not aditional steps are needed at this time... "
+fi
+
+if [ $? -eq 0 ] ; then
 echo '* * * * * * * * * * * * * * * * * * * * * *'
 echo '*          Installation succeeded         *'
 echo '* * * * * * * * * * * * * * * * * * * * * *'
+fi

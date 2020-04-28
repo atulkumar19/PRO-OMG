@@ -83,6 +83,14 @@ return
 fi
 
 # Setting up Makefile and Compile environment variables
+
+cp PRO++FILES/compile.sh PROMETHEUS++/compile.sh
+cp PRO++FILES/Makefile PROMETHEUS++/Makefile
+cp PRO++FILES/run_pro++.sh PROMETHEUS++/run_pro++.sh
+cp PRO++FILES/input_file.input PROMETHEUS++/inputFiles/input_file.input
+cp PRO++FILES/ions_properties.ion PROMETHEUS++/inputFiles/ions_properties.ion
+
+
 MPICXX_=$(echo ${MPICXX} | sed -e 's/\//_SEP_/g')
 sed -i 's/MPICXX=/'"MPICXX=${MPICXX_}/g" PROMETHEUS++/Makefile
 

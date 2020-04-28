@@ -1,4 +1,4 @@
-dimensionality              2
+dimensionality              1
 particleIntegrator          1
 includeElectronInertia      0
 quietStart                  0
@@ -7,12 +7,12 @@ weightingScheme             1
 BC                          1
 loadFields                  0
 numberOfRKIterations        5
-smoothingParameter          2.0E-2
+smoothingParameter          1.0E-5
 filtersPerIterationFields   1
 filtersPerIterationIons     0
 checkSmoothParameter        500
 DTc                         1E-3
-simulationTime              3.0
+simulationTime              10.0
 outputCadence               0.02
 transient                   0
 numberOfParticleSpecies     1
@@ -23,7 +23,7 @@ Te                          1.0E3
 Bo                          2.1
 theta                       0.0
 phi                         0.0
-NX                          32
+NX                          128
 NY                          32
 NZ                          1
 DrL                         1.0

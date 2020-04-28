@@ -41,7 +41,7 @@ tar -xvf $ARMADILLO_VERSION$".tar.xz"
 cd $ARMADILLO_VERSION
 
 # Armadillo installation
-cmake . -DCMAKE_INSTALL_PREFIX:PATH=ARMADILLO_INSTALLATION_FOLDER
+cmake -DCMAKE_INSTALL_PREFIX=$ARMADILLO_INSTALLATION_FOLDER -DDETECT_HDF5=false .
 
 make
 
@@ -88,11 +88,17 @@ sed -i 's/MPICXX=/'"MPICXX=${MPICXX_}/g" PROMETHEUS++/Makefile
 
 HDF5_INSTALLATION_FOLDER_=$(echo ${HDF5_INSTALLATION_FOLDER} | sed -e 's/\//_SEP_/g')
 sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/run_pro++.sh
 
 ARMADILLO_INSTALLATION_FOLDER_=$(echo ${ARMADILLO_INSTALLATION_FOLDER} | sed -e 's/\//_SEP_/g')
-sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
+sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
+sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/run_pro++.sh
+
+REPO_DIR_=$(echo ${REPO_DIR} | sed -e 's/\//_SEP_/g')
+sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/run_pro++.sh
 
 sed -i 's/_SEP_/\//g' PROMETHEUS++/Makefile
+sed -i 's/_SEP_/\//g' PROMETHEUS++/run_pro++.sh
 
 sed -i 's/ARMA_LIBS/'"${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/compile.sh
 sed -i 's/_SEP_/\//g' PROMETHEUS++/compile.sh
@@ -100,23 +106,12 @@ sed -i 's/_SEP_/\//g' PROMETHEUS++/compile.sh
 # Compile for the first times
 cd PROMETHEUS++
 
-make clean
-
-make info
-
-make all -j4
-
-SYS=$(uname)
-
-if [ ${SYS} = "Darwin" ]; then
-    echo "Additional steps for compilation on OS... DONE!"
-    install_name_tool -change libarmadillo.4.dylib ${ARMADILLO_INSTALLATION_FOLDER}/usr/lib/libarmadillo.4.dylib bin/PROMETHEUS++
-else
-    echo "Not aditional steps are needed at this time... "
-fi
+./compile.sh
 
 if [ $? -eq 0 ] ; then
+echo ''
 echo '* * * * * * * * * * * * * * * * * * * * * *'
 echo '*          Installation succeeded         *'
 echo '* * * * * * * * * * * * * * * * * * * * * *'
+echo ''
 fi

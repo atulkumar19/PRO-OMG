@@ -3,7 +3,7 @@ make clean
 
 make info
 
-make all -j4
+make all
 
 SYS=$(uname)
 

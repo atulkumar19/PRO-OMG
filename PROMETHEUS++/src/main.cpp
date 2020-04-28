@@ -132,6 +132,9 @@ int main(int argc, char* argv[]){
 
 			outputIterator++;
 
+		}
+
+		// Estimate simulation time
         if(tt == numberOfIterationsForEstimator){
             t2 = MPI::Wtime();
 

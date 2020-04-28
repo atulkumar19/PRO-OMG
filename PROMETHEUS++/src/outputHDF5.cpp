@@ -610,17 +610,17 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 
     // catch failure caused by the H5File operations
     catch( FileIException error ){
-		error.printError();
+		error.printErrorStack();
     }
 
     // catch failure caused by the DataSet operations
     catch( DataSetIException error ){
-		error.printError();
+		error.printErrorStack();
     }
 
     // catch failure caused by the DataSpace operations
     catch( DataSpaceIException error ){
-		error.printError();
+		error.printErrorStack();
     }
 
 }
@@ -840,15 +840,15 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 
     catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printError();
+		error.printErrorStack();
     }
 }
 
@@ -1064,15 +1064,15 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 	}//End of try block
 
     catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printError();
+		error.printErrorStack();
 	   }
 }
 
@@ -1213,15 +1213,15 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 
 
     catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printError();
+		error.printErrorStack();
     }
 
 	setGhostsToZero(&EB->E.X);
@@ -1364,15 +1364,15 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 
 
     catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printError();
+		error.printErrorStack();
     }
 
 }
@@ -1420,15 +1420,15 @@ template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParam
 	}//End of try block
 
     catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printError();
+		error.printErrorStack();
     }
 
     catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printError();
+		error.printErrorStack();
     }
 
 	saveIonsVariables(params, IONS, CS, it);

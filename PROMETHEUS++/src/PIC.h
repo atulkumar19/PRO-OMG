@@ -36,7 +36,6 @@
 #include "armadillo"
 #include "structures.h"
 #include "boundaryConditions.h"
-#include "generalFunctions.h"
 
 #include "mpi_main.h"
 

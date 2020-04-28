@@ -28,7 +28,6 @@
 #include "PIC.h"
 #include "fields.h"
 #include "units.h"
-#include "generalFunctions.h"
 #include "outputHDF5.h"
 
 #include <omp.h>
@@ -38,8 +37,8 @@ using namespace std;
 using namespace arma;
 
 int main(int argc, char* argv[]){
-	// namespace nDimensional = oneDimensional;
-	namespace nDimensional = twoDimensional;
+	namespace nDimensional = oneDimensional;
+	// namespace nDimensional = twoDimensional;
 
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
@@ -90,9 +89,6 @@ int main(int argc, char* argv[]){
 	EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
 	PIC ionsDynamics; // Initializing the PIC class object.
 
-	//*** @tomodiify
-	// GENERAL_FUNCTIONS genFun;
-
     // Repeat 3 times
     for(int tt=0; tt<3; tt++){
         ionsDynamics.advanceIonsPosition(&params, &IONS, 0);
@@ -107,9 +103,6 @@ int main(int argc, char* argv[]){
 
     for(int tt=0; tt<params.timeIterations; tt++){ // Time iterations.
         if(tt == 0){
-			//*** @tomodiify
-            // genFun.checkStability(&params, &mesh, &CS, &IONS);
-
 			ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
         }else{
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT); // Advance ions' velocity V^(N+1/2).
@@ -117,10 +110,8 @@ int main(int argc, char* argv[]){
 
         ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
-        //*** @tomodiify
         fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
-        //*** @tomodiify
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
          	// Using the Bashford-Adams extrapolation.
 			fields_solver.advanceEField(&params, &EB, &IONS, true, true);
@@ -140,15 +131,6 @@ int main(int argc, char* argv[]){
 			hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
 
 			outputIterator++;
-        }
-
-        //*** @tomodiify
-        // if( (params.checkStability == 1) && fmod((double)(tt+1), params.rateOfChecking) == 0 ){
-        //	genFun.checkStability(&params, &mesh, &CS, &IONS);
-        // }
-
-		//*** @tomodiify
-		// genFun.checkEnergy(&params, &mesh, &CS, &IONS, &EB, tt);
 
         if(tt == numberOfIterationsForEstimator){
             t2 = MPI::Wtime();
@@ -160,9 +142,6 @@ int main(int argc, char* argv[]){
             }
         }
     } // Time iterations.
-
-	//*** @tomodiify
-    // genFun.saveDiagnosticsVariables(&params);
 
 	mpi_main.finalizeCommunications(&params);
 

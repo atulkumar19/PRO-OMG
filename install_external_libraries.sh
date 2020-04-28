@@ -1,18 +1,34 @@
 #!/bin/bash
 
-HDF5_VERSION='hdf5-1.8.16'
+REPO_DIR=$(PWD)
 
-rm -r arma_libs/*
-rm -r HDF5/*
+# * * * * * Please change these variables as required * * * * *
+export CC=gcc
+export CPP=cpp
+export CXX=g++
+export FC=gfortran
 
-mkdir arma_libs
-mkdir HDF5
+MPICXX=mpic++
 
-ARMADILLO_VERSION='armadillo-4.000.0'
+HDF5_INSTALLATION_FOLDER=REPO_DIR
+ARMADILLO_INSTALLATION_FOLDER=REPO_DIR
+# * * * * * Please change these variables as required * * * * *
 
-rm -r $HDF5_VERSION$"/"
+HDF5_VERSION='hdf5-1.10.16'
+ARMADILLO_VERSION='armadillo-9.850.1'
 
-rm -r $ARMADILLO_VERSION$"/"
+# Delete any existing previous instalation of the libraries
+rm -r $HDF5_INSTALLATION_FOLDER"/HDF5"
+rm -r $ARMADILLO_INSTALLATION_FOLDER"/arma_libs"
+
+# Create new folders for local installation of HDF5 and armadillo
+mkdir $HDF5_INSTALLATION_FOLDER"/HDF5"
+mkdir $ARMADILLO_INSTALLATION_FOLDER"/arma_libs"
+
+# Delete existing HDF5 and armadillo build folders
+rm -r $HDF5_VERSION
+rm -r $ARMADILLO_VERSION$
+
 tar -xvf $ARMADILLO_VERSION$".tar.gz"
 
 sed -i 's/unset(CMAKE_INSTALL_PREFIX)/# unset(CMAKE_INSTALL_PREFIX)/g' $ARMADILLO_VERSION$"/CMakeLists.txt"

@@ -24,45 +24,21 @@ OBJ=obj
 LIBS=libs
 BIN=bin
 
+MPICXX=
+CCXXFLAGS=-std=c++11
+CCDEFINEFLAGS=-DHDF5_FLOAT	-DHDF5_SINGLE_FILE	-DCHECKS_ON
+CCFLAGS=$(CCXXFLAGS)	-fopenmp	-O2
+HDF5_INSTALL=
+ARMADILLO_INSTALL=
 
-ifeq ($(UNAME), Darwin)
-    CC=/Users/Leopo/Documents/merging_code/local_mpi/bin/mpic++
-	CCXXFLAGS =-std=c++11
-	CCDEFINEFLAGS=-DONED		-DHDF5_FLOAT		-DHDF5_SINGLE_FILE
-	CCFLAGS = $(CCXXFLAGS)    -fopenmp    -O2
+INCLUDE_HDF5=-I$(HDF_INSTALL)/include
+INCLUDES=-I$(ARMADILLO_INSTALL)/include	-I$(ARMADILLO_INSTALL)/lib	-I$(ARMADILLO_INSTALL)/lib64
+EXTLIB=-L$(HDF_INSTALL)/lib
+LIBSHDF=$(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
+LIB_FLAGS=-L$(ARMADILLO_INSTALL)/lib -L$(ARMADILLO_INSTALL)/lib64
+LIB=-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo -lgfortran
+OMP_LIB_FLAGS=-lgomp
 
-	HDF_INSTALL = ../HDF5
-	# ARMA_LIBS_INSTALL = ../arma_libs_9
-	ARMA_LIBS_INSTALL = ../arma_libs/usr
-
-	INCLUDE_HDF5 = -I$(HDF_INSTALL)/include
-	INCLUDES =	-I$(ARMA_LIBS_INSTALL)/include	-I$(ARMA_LIBS_INSTALL)/lib
-	EXTLIB = -L$(HDF_INSTALL)/lib
-	LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
-	LIB_FLAGS =	-L$(ARMA_LIBS_INSTALL)/lib
-	LIB	=	-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo -lgfortran
-	OMP_LIB_FLAGS =	-lgomp
-endif
-
-ifeq ($(UNAME), Linux)
-	CC=mpic++
-
-	CCXXFLAGS =-std=c++11
-	CCDEFINEFLAGS=-DONED	-DHDF5_FLOAT	-DHDF5_SINGLE_FILE	-DCHECKS_ON
-	CCFLAGS =	$(CCXXFLAGS)	-fopenmp	-O2
-
-	HDF_INSTALL = ../HDF5
-	# ARMA_LIBS_INSTALL = ../arma_libs_9
-	ARMA_LIBS_INSTALL = ../arma_libs/usr
-
-	INCLUDE_HDF5	=	-I$(HDF_INSTALL)/include
-	INCLUDES =	-I$(ARMA_LIBS_INSTALL)/include	-I$(ARMA_LIBS_INSTALL)/lib	-I$(ARMA_LIBS_INSTALL)/lib64
-	EXTLIB	= -L$(HDF_INSTALL)/lib
-	LIBSHDF	= $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5.a
-	LIB_FLAGS =	-L$(ARMA_LIBS_INSTALL)/lib -L$(ARMA_LIBS_INSTALL)/lib64
-	LIB	=	-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo
-	OMP_LIB_FLAGS =	-lgomp
-endif
 
 BINARIES = $(addprefix $(OBJ)/,structures.o\
 main.o	\
@@ -71,7 +47,6 @@ initialize.o	\
 units.o	\
 boundaryConditions.o	\
 fields.o	\
-generalFunctions.o	\
 types.o	\
 outputHDF5.o	\
 mpi_main.o	\
@@ -81,10 +56,10 @@ quietStart.o)
 all: $(BIN)/PROMETHEUS++
 
 $(OBJ)/%.o : $(SRC)/%.cpp
-	$(CC)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
+	$(MPICXX)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
 
 $(BIN)/PROMETHEUS++: $(BINARIES)
-	$(CC)	$(BINARIES)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
+	$(MPICXX)	$(BINARIES)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
 
 
 
@@ -97,10 +72,10 @@ mpi_main.o)
 test: $(BIN)/PRO++TEST
 
 $(OBJ)/%.o : $(SRC)/%.cpp
-	$(CC)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
+	$(MPICXX)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
 
 $(BIN)/PRO++TEST: $(BINARIES_DEV)
-	$(CC)	$(BINARIES_DEV)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
+	$(MPICXX)	$(BINARIES_DEV)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
 
 
 info:

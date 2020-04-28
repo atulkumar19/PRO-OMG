@@ -1,7 +1,8 @@
 #!/bin/bash
-# make clean
+make clean
 
 make info
+
 make all -j4
 
 SYS=$(uname)

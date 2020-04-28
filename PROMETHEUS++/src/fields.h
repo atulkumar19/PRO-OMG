@@ -26,7 +26,6 @@
 #include "armadillo"
 #include "structures.h"
 #include "boundaryConditions.h"
-#include "generalFunctions.h"
 #include "types.h"
 
 #include "mpi_main.h"

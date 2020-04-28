@@ -21,11 +21,6 @@ NUM_OMP_PER_MPI=$((NUM_CORES/NUM_MPI_PROCESSES))
 # Location of outputs folder
 LOC_OUTPUT_FOLDER=${ROOT}"/PROMETHEUS++/outputFiles"
 
-# Identifier for input file. If none used, default input files used.
-# FILE_ID="dispersion_relation"
-# FILE_ID="GC"
-# FILE_ID="warm_plasma"
-
 rm -r ${LOC_OUTPUT_FOLDER}"/"${FILE_ID}
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_PATH}:${ARMA_PATH}
@@ -33,6 +28,4 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_PATH}:${ARMA_PATH}
 echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
 echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}
 
-# mpirun -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER} ${FILE_ID}
-# mpirun --hostfile hostfile -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -np $((NUM_MPI_PROCESSES))  bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER}
 mpirun -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${LOC_OUTPUT_FOLDER}

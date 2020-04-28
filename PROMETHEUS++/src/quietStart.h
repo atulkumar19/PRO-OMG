@@ -48,7 +48,7 @@ template <class IT> class QUIETSTART{
 
     uvec dec; // Sequence of decimal numbers
 
-    double recalculateNumberSuperParticles(const simulationParameters * params, IT *ions);
+    void recalculateNumberSuperParticles(const simulationParameters * params, IT *ions);
 
     vector<int> dec2bin(int dec);
 

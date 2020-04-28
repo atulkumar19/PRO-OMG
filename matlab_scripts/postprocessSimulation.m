@@ -42,7 +42,7 @@ FourierAnalysis(ST,'B','z');
 
 EnergyDiagnostic(ST);
 
-% testFieldInterpolation(ST);
+testFieldInterpolation(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -416,46 +416,66 @@ for ii=1:NX_IN_SIM
     fourierSpacex(:,ii) = fft(hanning(double(NT)).*kSpacex(:,ii));
 end
 
-% y-axis
-kSpacey = zeros(NT,NY_IN_SIM);
-for ii=1:NT
-    kSpacey(ii,:) = fft( squeeze(F(ii,1,:)) );
-end
-
-fourierSpacey = zeros(NT,NY_IN_SIM);
-for ii=1:NY_IN_SIM
-    fourierSpacey(:,ii) = fft( hanning(double(NT)).*kSpacey(:,ii) );
+if (ST.params.dimensionality == 2)
+    % y-axis
+    kSpacey = zeros(NT,NY_IN_SIM);
+    for ii=1:NT
+        kSpacey(ii,:) = fft( squeeze(F(ii,1,:)) );
+    end
+    
+    fourierSpacey = zeros(NT,NY_IN_SIM);
+    for ii=1:NY_IN_SIM
+        fourierSpacey(:,ii) = fft( hanning(double(NT)).*kSpacey(:,ii) );
+    end
 end
 
 wk_fig = figure;
 
-% Propagation along x-axis
-A = fourierSpacex.*conj(fourierSpacex);
-% Magnetoacoustic wave
-z = linspace(0,max([max(xAxis), max(wAxis)]),10);
-
-subplot(1,2,1)
-imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
-hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
-axis xy; colormap(jet); colorbar
-axis([0 max(xAxis) 0 max(wAxis)])
-xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
-ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-title(['$' field '_' component '(x)$'],'interpreter','latex')
-
-% Propagation along x-axis
-A = fourierSpacey.*conj(fourierSpacey);
-% Magnetoacoustic wave
-z = linspace(0,max([max(yAxis), max(wAxis)]),10);
-
-subplot(1,2,2)
-imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
-hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
-axis xy; colormap(jet); colorbar
-axis([0 max(xAxis) 0 max(wAxis)])
-xlabel('$ck_y/\omega_p$', 'Interpreter', 'latex')
-ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-title(['$' field '_' component '(y)$'],'interpreter','latex')
+if (ST.params.dimensionality == 1)
+    % Propagation along x-axis
+    A = fourierSpacex.*conj(fourierSpacex);
+    % Magnetoacoustic wave
+    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
+    
+    figure(wk_fig)
+    imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
+    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    axis xy; colormap(jet); colorbar
+    axis([0 max(xAxis) 0 max(wAxis)])
+    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    title(['$' field '_' component '(x)$'],'interpreter','latex')
+else
+    % Propagation along x-axis
+    A = fourierSpacex.*conj(fourierSpacex);
+    % Magnetoacoustic wave
+    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
+    
+    figure(wk_fig)
+    subplot(1,2,1)
+    imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
+    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    axis xy; colormap(jet); colorbar
+    axis([0 max(xAxis) 0 max(wAxis)])
+    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    title(['$' field '_' component '(x)$'],'interpreter','latex')
+    
+    % Propagation along x-axis
+    A = fourierSpacey.*conj(fourierSpacey);
+    % Magnetoacoustic wave
+    z = linspace(0,max([max(yAxis), max(wAxis)]),10);
+    
+    figure(wk_fig)
+    subplot(1,2,2)
+    imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
+    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    axis xy; colormap(jet); colorbar
+    axis([0 max(xAxis) 0 max(wAxis)])
+    xlabel('$ck_y/\omega_p$', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    title(['$' field '_' component '(y)$'],'interpreter','latex')
+end
 end
 
 function EnergyDiagnostic(ST)

@@ -43,7 +43,7 @@ template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * para
 }
 
 
-template <class IT> double QUIETSTART<IT>::recalculateNumberSuperParticles(const simulationParameters * params, IT * ions){
+template <class IT> void QUIETSTART<IT>::recalculateNumberSuperParticles(const simulationParameters * params, IT * ions){
 	//Definition of the initial number of superparticles for each species
     double exponent;
 	if (params->dimensionality == 1){
@@ -191,17 +191,20 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 	ions->X.col(0) = b2fr;
 	ions->X.col(1) = b3fr;
 
-    // Initialising gyro-angle
 
-    b3fr *= 2.0*M_PI;
+	arma::vec R = randu(ions->NSP);
+	arma_rng::set_seed_random();
+	arma::vec phi = 2.0*M_PI*randu<vec>(ions->NSP);
 
-    vec R = zeros(ions->NSP);
-    for(int ii=0;ii<ions->NSP;ii++)
-        R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
+	arma::vec V2 = ions->VTper*sqrt( -log(1.0 - R) ) % cos(phi);
+	arma::vec V3 = ions->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
 
-	arma::vec V2 = ions->VTper*sqrt( -log( R ) ) % cos(b3fr);
-	arma::vec V3 = ions->VTper*sqrt( -log( R ) ) % sin(b3fr);
-	arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b3fr);
+	arma_rng::set_seed_random();
+	R = randu<vec>(ions->NSP);
+	arma_rng::set_seed_random();
+	phi = 2.0*M_PI*randu<vec>(ions->NSP);
+
+	arma::vec V1 = ions->VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -209,7 +212,7 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 		ions->V(pp,2) = V1(pp)*dot(b1,z) + V2(pp)*dot(b2,z) + V3(pp)*dot(b3,z);
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
-        ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
+		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 

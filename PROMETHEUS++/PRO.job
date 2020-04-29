@@ -1,0 +1,45 @@
+#BSUB -q q_hpc
+#BSUB -n 4
+#BSUB -m 'g3_a'
+#BSUB -J PRO++
+#BSUB -W 1:00
+#BSUB -oo PRO_OUT.%J
+#BSUB -eo PRO_ERR.%J
+
+
+SIM_ID="TEST"
+
+REPO_DIR=/home/jjmb_g/leocg_a/PRO++
+HDF5_INSTALL=/home/jjmb_g/leocg_a/PRO++/HDF5/lib
+ARMADILLO_INSTALL=/home/jjmb_g/leocg_a/PRO++/arma_libs/lib64
+
+# Create output folder
+PATH_TO_TMPU=${TMPU}
+OUTPUT_FOLDER=${PATH_TO_TMPU}/${SIM_ID}
+
+mkdir ${OUTPUT_FOLDER}
+
+cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}
+cp ${REPO_DIR}/PROMETHEUS++/inputFiles/* ${OUTPUT_FOLDER}
+
+
+# Available number of cores in system
+NUM_CORES=4
+
+# Number of MPI processes
+NUM_MPI_PROCESSES=2
+
+# Number of OMP threads per MPI
+NUM_OMP_PER_MPI=$((NUM_CORES/NUM_MPI_PROCESSES))
+
+#OpenMP settings:
+export OMP_NUM_THREADS=$((NUM_OMP_PER_MPI))
+export  HDF5_USE_FILE_LOCKING=FALSE
+
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_INSTALL}:${ARMADILLO_INSTALL}
+
+echo "LD_LIBRARY_PATH: "${LD_LIBRARY_PATH}
+echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
+echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}
+
+mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${OUTPUT_FOLDER}

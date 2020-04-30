@@ -356,7 +356,7 @@ DT = mean(diff(time));
 time = time/ST.params.scales.ionGyroPeriod;
 % *** @tomodify
 NT = int32(ST.numberOfOutputs); % Number of snapshots
-% NT = find((time-3)>0, 1);
+% NT = find((time-2.5)>0, 1);
 
 Df = 1.0/(DT*double(NT));
 fmax = 1.0/(2.0*double(DT)); % Nyquist theorem
@@ -452,7 +452,7 @@ else
     z = linspace(0,max([max(xAxis), max(wAxis)]),10);
     
     figure(wk_fig)
-    subplot(1,2,1)
+    subplot(2,1,1)
     imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
@@ -467,8 +467,8 @@ else
     z = linspace(0,max([max(yAxis), max(wAxis)]),10);
     
     figure(wk_fig)
-    subplot(1,2,2)
-    imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
+    subplot(2,1,2)
+    imagesc(yAxis,wAxis,log10(A(1:NT/2,1:NY_IN_SIM/2)));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
     axis([0 max(xAxis) 0 max(wAxis)])
@@ -502,11 +502,13 @@ for ss=1:NSPP
             Ei(ss,ii) = Ei(ss,ii) + sum(g - 1.0)*mi*ST.c^2;
         end
         
-        if(ST.params.dimensionality == 1)
-            Ei(ss,ii) = NCP*Ei(ss,ii)/DX;
-        else
-            Ei(ss,ii) = NCP*Ei(ss,ii)/(DX*DY);
-        end
+        Ei(ss,ii) = NCP*Ei(ss,ii);
+        
+%         if(ST.params.dimensionality == 1)
+%             Ei(ss,ii) = NCP*Ei(ss,ii)/DX;
+%         else
+%             Ei(ss,ii) = NCP*Ei(ss,ii)/(DX*DY);
+%         end
     end
     
     ilabels{ss} = ['Species ' num2str(ss)];
@@ -528,10 +530,6 @@ for ii=1:NT
         Bx = ST.params.Bo(1) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
         By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
         Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
-        
-%         Bx = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
-%         By = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
-%         Bz = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
         
         EBx(ii) = EBx(ii) + sum(sum(Bx.^2));
         EBy(ii) = EBy(ii) + sum(sum(By.^2));
@@ -556,6 +554,28 @@ EEx = 0.5*ST.ep0*EEx;
 EEy = 0.5*ST.ep0*EEy;
 EEz = 0.5*ST.ep0*EEz;
 EE = EEx + EEy + EEz;
+
+if(ST.params.dimensionality == 1)
+    EBx = EBx*DX;
+    EBy = EBy*DX;
+    EBz = EBz*DX;
+    EB = EB*DX;
+    
+    EEx = EEx*DX;
+    EEy = EEy*DX;
+    EEz = EEz*DX;
+    EE = EE*DX;
+else
+    EBx = EBx*DX*DY;
+    EBy = EBy*DX*DY;
+    EBz = EBz*DX*DY;
+    EB = EB*DX*DY;
+    
+    EEx = EEx*DX*DY;
+    EEy = EEy*DX*DY;
+    EEz = EEz*DX*DY;
+    EE = EE*DX*DY;
+end
 
 ET = sum(Ei,1) + EE + EB;
 

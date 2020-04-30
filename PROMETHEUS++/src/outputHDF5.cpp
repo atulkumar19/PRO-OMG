@@ -340,6 +340,19 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 		saveToHDF5(outputFile, name, &params->dimensionality);
 		name.clear();
 
+		name = "smoothingParameter";
+		cpp_type_value = params->smoothingParameter;
+		saveToHDF5(outputFile, name, &cpp_type_value);
+		name.clear();
+
+		name = "numberOfRKIterations";
+		saveToHDF5(outputFile, name, &params->numberOfRKIterations);
+		name.clear();
+
+		name = "filtersPerIterationFields";
+		saveToHDF5(outputFile, name, &params->filtersPerIterationFields);
+		name.clear();
+
 		name = "numOfDomains";
 		saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
 		name.clear();

@@ -22,6 +22,7 @@
 #include <cmath>
 #include <ctime>
 #include <typeinfo>
+#include <utility>
 
 #include "structures.h"
 #include "initialize.h"
@@ -36,25 +37,23 @@
 using namespace std;
 using namespace arma;
 
-int main(int argc, char* argv[]){
-	// namespace nDimensional = oneDimensional;
-	namespace nDimensional = twoDimensional;
 
+template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
 	MPI_MAIN mpi_main;
 
 	simulationParameters params; 				// Input parameters for the simulation.
-	vector<nDimensional::ionSpecies> IONS; 		// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	vector<IT> IONS; 							// Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	characteristicScales CS;					// Derived type for keeping info about characteristic scales.
-	nDimensional::fields EB; 					// Derived type with variables of electromagnetic fields.
+	FT EB; 										// Derived type with variables of electromagnetic fields.
 
-	INITIALIZE<nDimensional::ionSpecies, nDimensional::fields> init(&params, argc, argv);
+	INITIALIZE<IT, FT> init(&params, argc, argv);
 
 	mpi_main.createMPITopology(&params);
 
 	init.loadIonParameters(&params, &IONS);
 
-	UNITS<nDimensional::ionSpecies, nDimensional::fields> units;
+	UNITS<IT, FT> units;
 
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
@@ -70,7 +69,7 @@ int main(int argc, char* argv[]){
 
 	init.setupIonsInitialCondition(&params, &CS, &IONS); // Calculation of IONS[ii].NCP for each species
 
-	HDF<nDimensional::ionSpecies, nDimensional::fields> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
+	HDF<IT, FT> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
 
 	units.defineTimeStep(&params, &IONS);
 
@@ -123,7 +122,7 @@ int main(int argc, char* argv[]){
         currentTime += params.DT*CS.time;
 
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0){
-			vector<nDimensional::ionSpecies> IONS_OUT = IONS;
+			vector<IT> IONS_OUT = IONS;
 
             // The ions' velocity is advanced in time in order to obtain V^(N+1)
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS_OUT, 0.5*params.DT);
@@ -147,6 +146,20 @@ int main(int argc, char* argv[]){
     } // Time iterations.
 
 	mpi_main.finalizeCommunications(&params);
+}
+
+int main(int argc, char* argv[]){
+	oneDimensional::ionSpecies dummy_ions_1D;
+	oneDimensional::fields dummy_fields_1D;
+
+	twoDimensional::ionSpecies dummy_ions_2D;
+	twoDimensional::fields dummy_fields_2D;
+
+	if (strcmp(argv[1],"1-D") == 0){
+		main_run_simulation<decltype(dummy_ions_1D), decltype(dummy_fields_1D)>(argc, argv);
+	}else{
+		main_run_simulation<decltype(dummy_ions_2D), decltype(dummy_fields_2D)>(argc, argv);
+	}
 
 	return(0);
 }

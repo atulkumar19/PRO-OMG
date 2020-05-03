@@ -172,7 +172,7 @@ public:
 	double pctSupPartOutput; 	//
 	unsigned int nSupPartOutput;//
 
-	double Dn;					//
+	double densityFraction;					//
 
 	double go;					// Initial relativistic gamma
 	double Tpar;				// Parallel temperature.
@@ -234,7 +234,7 @@ public:
 	double pctSupPartOutput; 	//
 	unsigned int nSupPartOutput;//
 
-	double Dn;					//
+	double densityFraction;					//
 
 	double go;					// Initial relativistic gamma
 	double Tpar;				// Parallel temperature.

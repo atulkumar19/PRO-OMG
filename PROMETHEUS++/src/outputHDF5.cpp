@@ -560,8 +560,8 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 			Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
 			name.clear();
 
-			name = "Dn";
-			cpp_type_value = (CPP_TYPE)IONS->at(ii).Dn;
+			name = "densityFraction";
+			cpp_type_value = (CPP_TYPE)IONS->at(ii).densityFraction;
 			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
 			name.clear();
 

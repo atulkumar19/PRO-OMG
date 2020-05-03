@@ -88,6 +88,9 @@ template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParameter
 }
 
 template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
+    MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
+	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
+
     // Error codes
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
@@ -106,9 +109,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->errorCodes[-114] = "Non finite values in By";
     params->errorCodes[-115] = "Non finite values in Bz";
 
-
-	MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
-	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
 
     // Copyright and Licence Info
     if (params->mpi.MPI_DOMAIN_NUMBER == 0){
@@ -133,6 +133,13 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     MPI_Barrier(MPI_COMM_WORLD);
 
+    // Arguments and paths to main function
+    params->PATH = argv[2];
+
+	params->argc = argc;
+	params->argv = argv;
+
+
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 ){
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -146,19 +153,13 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     if(params->mpi.MPI_DOMAIN_NUMBER == 0){
         time_t current_time = std::time(NULL);
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
-        cout << "STARTING SIMULATION ON: " << std::ctime(&current_time) << endl;
+        cout << "STARTING " << params->argv[1] << " SIMULATION ON: " << std::ctime(&current_time) << endl;
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
     }
 
-	params->PATH = argv[1];
-
-	params->argc = argc;
-	params->argv = argv;
-
 	string name;
-
-	if(params->argc > 2){
-		string argv(params->argv[2]);
+	if(params->argc > 3){
+		string argv(params->argv[3]);
 		name = "inputFiles/input_file_" + argv + ".input";
 		params->PATH += "/" + argv;
 	}else{
@@ -178,17 +179,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 		string mkdir_outputs_dir_HDF5 = mkdir_outputs_dir + "/HDF5";
 		sys = mkdir_outputs_dir_HDF5.c_str();
 		rsys = system(sys);
-
-		/*
-        string mkdir_outputs_dir_diagnostics = mkdir_outputs_dir + "/diagnostics";
-		sys = mkdir_outputs_dir_diagnostics.c_str();
-		rsys = system(sys);
-        */
 	}
 
     params->dimensionality = std::stoi( parametersStringMap["dimensionality"] );
-
-	params->particleIntegrator = std::stoi( parametersStringMap["particleIntegrator"] );
 
     if(std::stoi( parametersStringMap["includeElectronInertia"] ) == 1){
         params->includeElectronInertia = true;
@@ -212,8 +205,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->restart = false;
     }
 
-	params->weightingScheme = std::stoi( parametersStringMap["weightingScheme"] );
-
 	params->BC = std::stoi( parametersStringMap["BC"] );
 
 	params->smoothingParameter = std::stod( parametersStringMap["smoothingParameter"] );
@@ -224,11 +215,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->filtersPerIterationIons = std::stoi( parametersStringMap["filtersPerIterationIons"] );
 
-	params->checkSmoothParameter = std::stoi( parametersStringMap["checkSmoothParameter"] );
-
 	params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
-
-	params->transient = (unsigned int)std::stoi( parametersStringMap["transient"] );
 
 	params->numberOfParticleSpecies = std::stoi( parametersStringMap["numberOfParticleSpecies"] );
 
@@ -239,8 +226,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
 
 	params->outputCadence = std::stod( parametersStringMap["outputCadence"] );
-
-	// params->em = new energyMonitor((int)params->numberOfParticleSpecies,(int)params->timeIterations);
 
     // Number of nodes in entire simulation domain
     unsigned int NX = (unsigned int)std::stoi( parametersStringMap["NX"] );
@@ -306,8 +291,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->BGP.theta = std::stod( parametersStringMap["theta"] );
 	params->BGP.phi = std::stod( parametersStringMap["phi"] );
-
-	params->BGP.propVectorAngle = std::stod( parametersStringMap["propVectorAngle"] );
 
 	params->BGP.Bo = std::stod( parametersStringMap["Bo"] );
 
@@ -557,8 +540,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
 
 	string name;
-	if(params->argc > 2){
-		string argv(params->argv[2]);
+	if(params->argc > 3){
+		string argv(params->argv[3]);
 		name = "inputFiles/ions_properties_" + argv + ".ion";
 	}else{
 		name = "inputFiles/ions_properties.ion";
@@ -600,8 +583,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
     		ions.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
     		name.clear();
 
-    		name = "Dn" + ss.str();
-    		ions.Dn = parametersMap[name];
+    		name = "densityFraction" + ss.str();
+    		ions.densityFraction = parametersMap[name];
     		name.clear();
 
     		name = "pctSupPartOutput" + ss.str();
@@ -620,7 +603,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
             ions.Wc = ions.Q*params->BGP.Bo/ions.M;
 
-            ions.Wp = sqrt( ions.Dn*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
+            ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
 
             ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
         	ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);

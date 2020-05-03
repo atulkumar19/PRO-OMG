@@ -456,7 +456,9 @@ else
     imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
-    axis([0 max(xAxis) 0 max(wAxis)])
+    try
+        axis([0 max(xAxis) 0 max(wAxis)])
+    end
     xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
     ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
     title(['$' field '_' component '(x)$'],'interpreter','latex')
@@ -469,9 +471,11 @@ else
     figure(wk_fig)
     subplot(2,1,2)
     imagesc(yAxis,wAxis,log10(A(1:NT/2,1:NY_IN_SIM/2)));
-    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
-    axis([0 max(xAxis) 0 max(wAxis)])
+    try
+        axis([0 max(xAxis) 0 max(wAxis)])
+    end
     xlabel('$ck_y/\omega_p$', 'Interpreter', 'latex')
     ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
     title(['$' field '_' component '(y)$'],'interpreter','latex')

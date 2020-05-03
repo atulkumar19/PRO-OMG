@@ -19,6 +19,7 @@
 #ifndef H_STRUCTURES
 #define H_STRUCTURES
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
@@ -78,26 +79,6 @@ struct mpiParams{
 };
 
 
-struct energyMonitor{
-	int it;
-	double refEnergy;
-	arma::mat ionsEnergy;//(time,species)
-	arma::mat E_fieldEnergy;//(time,components)
-	arma::mat B_fieldEnergy;//(time,components)
-	arma::mat totalEnergy;
-	energyMonitor(){};
-	energyMonitor(int numberOfParticleSpecies,int timeIterations){
-		it = 0;
-		refEnergy = 0.0;
-		ionsEnergy = arma::zeros(timeIterations,numberOfParticleSpecies);
-		E_fieldEnergy = arma::zeros(timeIterations,3);
-		B_fieldEnergy  = arma::zeros(timeIterations,3);
-		totalEnergy = arma::zeros(timeIterations,2);
-	}
-
-};
-
-
 struct meshParams{
 	vfield_vec nodes;
 
@@ -134,8 +115,6 @@ struct backgroundPlasmaParameters{
 
 	double theta; // Spherical polar angle (as measured from z-axis)
 	double phi; // Spherical azimuthal angle (as measured from x-axis)
-
-	double propVectorAngle; // Angle between the z-axis and the propagation vector.
 };
 
 
@@ -150,18 +129,15 @@ struct simulationParameters{
 	char **argv;
 
 	int dimensionality; // Dimensionality of the simulation domain 1-D = 1; 2-D = 2
-	int particleIntegrator; // particleIntegrator=1 (Boris'), particleIntegrator=2 (Vay's), particleIntegrator=3 (Relativistic GC).
 	bool includeElectronInertia;
 	bool quietStart; // Flag for using a quiet start
 
 	bool restart;
-	int weightingScheme; // TOS = 1; TSC (DEFAULT) = 1; NNS = 2; TOS = 3; TSC = 4;
 	int BC; // BC = 1 full periodic, BC = 2
 	int numberOfRKIterations;
 	double smoothingParameter;
 	int timeIterations;
 	double simulationTime; // In units of the shorter ion gyro-period in the simulation
-	int transient;//Transient time (in number of iterations).
 	double DT;//Time step
 	double DTc;//Ciclotron period fraction.
 	int loadFields;
@@ -182,7 +158,6 @@ struct simulationParameters{
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
-	int checkSmoothParameter;
 
 	double ionLarmorRadius;
 	double ionSkinDepth;
@@ -194,8 +169,6 @@ struct simulationParameters{
 	int checkStability;
 	int rateOfChecking;//Each 'rateOfChecking' iterations we use the CLF criteria for the particles to stabilize the simulation
 
-	energyMonitor * em; // Structure to monitor energy conservation
-
 	// MPI parameters
 	mpiParams mpi;
 
@@ -204,6 +177,7 @@ struct simulationParameters{
 
 	types_info typesInfo;
 
+	// Constructor
 	simulationParameters();
 };
 

@@ -84,6 +84,12 @@ fi
 
 # Setting up Makefile and Compile environment variables
 
+rm PROMETHEUS++/compile.sh
+rm PROMETHEUS++/Makefile
+rm PROMETHEUS++/run_pro++.sh
+rm PROMETHEUS++/inputFiles/input_file.input
+rm PROMETHEUS++/inputFiles/ions_properties.ion
+
 cp PRO++FILES/compile.sh PROMETHEUS++/compile.sh
 cp PRO++FILES/Makefile PROMETHEUS++/Makefile
 cp PRO++FILES/run_pro++.sh PROMETHEUS++/run_pro++.sh

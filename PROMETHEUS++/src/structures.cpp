@@ -37,4 +37,6 @@ simulationParameters::simulationParameters(){
 
     twoDimensional::fields EB_2D;
     typesInfo.fields_2D_type = &typeid(EB_2D);
+
+    //std::cout << "1-D Ions Type: " << typesInfo.ionSpecies_1D_type->name() << std::endl;
 }

@@ -318,10 +318,10 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 
 template <class IT, class FT> void UNITS<IT,FT>::dimensionlessForm(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS){
 	// Normalizing physical constants
-	F_E_DS /= CS->charge; // Dimensionless electron charge
-	F_ME_DS /= CS->mass; // Dimensionless electron charge
-	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; // Dimensionless vacuum permittivity
-	F_C_DS /= CS->velocity; // Dimensionless speed of light
+	F_E_DS /= CS->charge; 														// Dimensionless electron charge
+	F_ME_DS /= CS->mass; 														// Dimensionless electron charge
+	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; 	// Dimensionless vacuum permittivity
+	F_C_DS /= CS->velocity; 													// Dimensionless speed of light
 
 	//Normalizing simulation parameters.
 	params->DT /= CS->time;

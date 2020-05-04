@@ -799,7 +799,8 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 	// The Y and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
 	curlB.Y.submat(irow,icol,frow,fcol) = - 0.25*( (EB->B.Z.submat(irow+1,icol,frow+1,fcol) - EB->B.Z.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Z.submat(irow+1,icol-1,frow+1,fcol-1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DX;
-	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.submat(irow+1,icol,frow+1,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol) )/params->mesh.DX - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( EB->B.Y.submat(irow+1,icol,frow+1,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol) )/params->mesh.DX;
+	curlB.Z.submat(irow,icol,frow,fcol) -=  0.5*( (EB->B.X.submat(irow+1,icol,frow+1,fcol) - EB->B.X.submat(irow+1,icol-1,frow+1,fcol-1)) + (EB->B.X.submat(irow,icol,frow,fcol) - EB->B.X.submat(irow,icol-1,frow,fcol-1)) )/params->mesh.DY;
 
 	// Number density at Ex-nodes. Biinear interpolation used.
 	V2D.n_interp = 0.5*( V2D.ne.submat(1,1,NX_S-2,NY_S-2) + V2D.ne.submat(2,1,NX_S-1,NY_S-2) );
@@ -830,14 +831,14 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 	// The X and Z components of curl(B) are computed and linear interpolation used to compute its values at the Ex-nodes.
 	curlB.X.submat(irow,icol,frow,fcol) =   0.25*( (EB->B.Z.submat(irow,icol+1,frow,fcol+1) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol+1,frow-1,fcol+1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
-	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( (EB->B.Y.submat(irow,icol,frow,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Y.submat(irow,icol+1,frow,fcol+1) - EB->B.Y.submat(irow-1,icol+1,frow-1,fcol+1))  )/params->mesh.DX \
-										  - 0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
+	curlB.Z.submat(irow,icol,frow,fcol) =   0.5*( (EB->B.Y.submat(irow,icol,frow,fcol) - EB->B.Y.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Y.submat(irow,icol+1,frow,fcol+1) - EB->B.Y.submat(irow-1,icol+1,frow-1,fcol+1))  )/params->mesh.DX;
+	curlB.Z.submat(irow,icol,frow,fcol) -=  0.5*( EB->B.X.submat(irow,icol+1,frow,fcol+1) - EB->B.X.submat(irow,icol-1,frow,fcol-1) )/params->mesh.DY;
 
 	// Number density at Ey-nodes. Biinear interpolation used.
 	V2D.n_interp = 0.5*( V2D.ne.submat(1,1,NX_S-2,NY_S-2) + V2D.ne.submat(1,2,NX_S-2,NY_S-1) );
 
 	// Bz is interpolated to Ey-nodes
-	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow,icol-1,frow,fcol-1) );
+	V2D.B_interp = 0.5*( EB->B.Z.submat(irow,icol,frow,fcol) + EB->B.Z.submat(irow-1,icol,frow-1,fcol) );
 
 	EB->E.Y.submat(irow,icol,frow,fcol) = - ( curlB.X.submat(irow,icol,frow,fcol) % V2D.B_interp - curlB.Z.submat(irow,icol,frow,fcol) % EB->B.X.submat(irow,icol,frow,fcol) )/( F_MU_DS*F_E_DS*V2D.n_interp );
 
@@ -860,7 +861,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 	// z-component
 
-	curlB.X.submat(irow,icol,frow,fcol) = 0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol,frow-1,fcol) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
+	curlB.X.submat(irow,icol,frow,fcol) =   0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow,icol-1,frow,fcol-1)) + (EB->B.Z.submat(irow-1,icol,frow-1,fcol) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DY;
 	curlB.Y.submat(irow,icol,frow,fcol) = - 0.5*( (EB->B.Z.submat(irow,icol,frow,fcol) - EB->B.Z.submat(irow-1,icol,frow-1,fcol)) + (EB->B.Z.submat(irow,icol-1,frow,fcol-1) - EB->B.Z.submat(irow-1,icol-1,frow-1,fcol-1)) )/params->mesh.DX;
 
 	// By is interpolated to Ez-nodes

@@ -352,8 +352,6 @@ disp(['Lower hybrid frequency: ' num2str(wlh)]);
 time = ST.time;
 DT = mean(diff(time));
 
-% Rescaling of time
-time = time/ST.params.scales.ionGyroPeriod;
 % *** @tomodify
 NT = int32(ST.numberOfOutputs); % Number of snapshots
 % NT = find((time-2.5)>0, 1);
@@ -489,6 +487,7 @@ NSPP = ST.params.ions.numberOfParticleSpecies;
 ND = ST.params.numOfDomains;
 DX = ST.params.geometry.DX;
 DY = ST.params.geometry.DY;
+ionGyroPeriod = ST.params.scales.ionGyroPeriod(1);
 
 % First we calculate the kinetic energy of the simulated ions
 Ei = zeros(NSPP,NT);
@@ -497,7 +496,6 @@ ilabels = {};
 for ss=1:NSPP
     mi = ST.params.ions.(['spp_' num2str(ss)]).M;
     NCP = ST.params.ions.(['spp_' num2str(ss)]).NCP;
-    NSP = ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT;
     
     for ii=1:NT
         for dd=1:ND
@@ -506,13 +504,13 @@ for ss=1:NSPP
             Ei(ss,ii) = Ei(ss,ii) + sum(g - 1.0)*mi*ST.c^2;
         end
         
-        Ei(ss,ii) = NCP*Ei(ss,ii);
+%         Ei(ss,ii) = NCP*Ei(ss,ii);
         
-%         if(ST.params.dimensionality == 1)
-%             Ei(ss,ii) = NCP*Ei(ss,ii)/DX;
-%         else
-%             Ei(ss,ii) = NCP*Ei(ss,ii)/(DX*DY);
-%         end
+        if(ST.params.dimensionality == 1)
+            Ei(ss,ii) = NCP*Ei(ss,ii)/DX;
+        else
+            Ei(ss,ii) = NCP*Ei(ss,ii)/(DX*DY);
+        end
     end
     
     ilabels{ss} = ['Species ' num2str(ss)];
@@ -559,27 +557,27 @@ EEy = 0.5*ST.ep0*EEy;
 EEz = 0.5*ST.ep0*EEz;
 EE = EEx + EEy + EEz;
 
-if(ST.params.dimensionality == 1)
-    EBx = EBx*DX;
-    EBy = EBy*DX;
-    EBz = EBz*DX;
-    EB = EB*DX;
-    
-    EEx = EEx*DX;
-    EEy = EEy*DX;
-    EEz = EEz*DX;
-    EE = EE*DX;
-else
-    EBx = EBx*DX*DY;
-    EBy = EBy*DX*DY;
-    EBz = EBz*DX*DY;
-    EB = EB*DX*DY;
-    
-    EEx = EEx*DX*DY;
-    EEy = EEy*DX*DY;
-    EEz = EEz*DX*DY;
-    EE = EE*DX*DY;
-end
+% if(ST.params.dimensionality == 1)
+%     EBx = EBx*DX;
+%     EBy = EBy*DX;
+%     EBz = EBz*DX;
+%     EB = EB*DX;
+%     
+%     EEx = EEx*DX;
+%     EEy = EEy*DX;
+%     EEz = EEz*DX;
+%     EE = EE*DX;
+% else
+%     EBx = EBx*DX*DY;
+%     EBy = EBy*DX*DY;
+%     EBz = EBz*DX*DY;
+%     EB = EB*DX*DY;
+%     
+%     EEx = EEx*DX*DY;
+%     EEy = EEy*DX*DY;
+%     EEz = EEz*DX*DY;
+%     EE = EE*DX*DY;
+% end
 
 ET = sum(Ei,1) + EE + EB;
 
@@ -607,7 +605,7 @@ EEy = EEy - EEy(1);
 EEz = EEz - EEz(1);
 EE = EE - EE(1);
 
-time = ST.time/ST.params.scales.ionGyroPeriod;
+time = ST.time/ionGyroPeriod;
 
 % Figures to show energy conservation
 fig = figure('name','Energy conservation');
@@ -663,14 +661,15 @@ legend({'$K_i$', '$B$', '$E$'},'interpreter','latex')
 
 figure(fig);
 subplot(5,1,5)
-plot(time, ET)
 for ss=1:NSPP
     hold on; plot(time, ET_Ei(ss,:),'--'); hold off
 end
+hold on;plot(time, ET);hold off
 box on; grid on;
 xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')
 ylabel('$\Delta \mathcal{E}_T$ (\%)','interpreter','latex')
+legend(ilabels,'interpreter','latex')
 
 end
 

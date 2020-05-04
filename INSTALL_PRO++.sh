@@ -90,6 +90,11 @@ rm PROMETHEUS++/run_pro++.sh
 rm PROMETHEUS++/inputFiles/input_file.input
 rm PROMETHEUS++/inputFiles/ions_properties.ion
 
+mkdir PROMETHEUS++/inputFiles
+mkdir PROMETHEUS++/outputFiles
+mkdir PROMETHEUS++/bin
+mkdir PROMETHEUS++/obj
+
 cp PRO++FILES/compile.sh PROMETHEUS++/compile.sh
 cp PRO++FILES/Makefile PROMETHEUS++/Makefile
 cp PRO++FILES/run_pro++.sh PROMETHEUS++/run_pro++.sh

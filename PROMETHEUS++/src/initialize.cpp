@@ -405,7 +405,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
         IONS->X.col(0) = (params->mesh.DX*params->mesh.NX_PER_MPI)*(params->mpi.MPI_DOMAIN_NUMBER + IONS->X.col(0));
     }
 
-    IONS->NCP = (params->BGP.ne*params->mesh.LX)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);
+    IONS->NCP = (IONS->densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
@@ -459,7 +459,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
         IONS->X.col(1) = (params->mesh.DY*params->mesh.NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
     }
 
-    IONS->NCP = (params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);
+    IONS->NCP = (IONS->densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);

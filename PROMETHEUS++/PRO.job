@@ -1,5 +1,6 @@
+ #!/bin/bash
 #BSUB -q q_hpc
-#BSUB -n 16
+#BSUB -n 4
 #BSUB -m 'g3_a'
 #BSUB -J PRO++
 #BSUB -W 72:00
@@ -7,7 +8,8 @@
 #BSUB -eo PRO_ERR.%J
 
 
-SIM_ID="ICE"
+SIM_ID=""
+OUTPUT_FOLDER="TEST_2D"
 
 REPO_DIR=/home/jjmb_g/leocg_a/PRO++
 HDF5_INSTALL=/home/jjmb_g/leocg_a/PRO++/HDF5/lib
@@ -15,7 +17,7 @@ ARMADILLO_INSTALL=/home/jjmb_g/leocg_a/PRO++/arma_libs/lib64
 
 # Create output folder
 PATH_TO_TMPU=${TMPU}
-OUTPUT_FOLDER=${PATH_TO_TMPU}/${SIM_ID}
+OUTPUT_FOLDER=${PATH_TO_TMPU}/${OUTPUT_FOLDER}
 
 rm -rf ${OUTPUT_FOLDER}
 
@@ -25,13 +27,13 @@ cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}
 cp ${REPO_DIR}/PROMETHEUS++/inputFiles/* ${OUTPUT_FOLDER}
 
 # Dimensionality of simulation
-DIMENSIONALITY="1-D"
+DIMENSIONALITY="2-D"
 
 # Available number of cores in system
-NUM_CORES=16
+NUM_CORES=4
 
 # Number of MPI processes
-NUM_MPI_PROCESSES=16
+NUM_MPI_PROCESSES=4
 
 # Number of OMP threads per MPI
 NUM_OMP_PER_MPI=$((NUM_CORES/NUM_MPI_PROCESSES))
@@ -46,4 +48,10 @@ echo "LD_LIBRARY_PATH: "${LD_LIBRARY_PATH}
 echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
 echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}
 
-mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER} ${SIM_ID}
+if [SIM_ID == ""]; then
+	mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER}
+else
+	mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER} ${SIM_ID}
+fi
+
+

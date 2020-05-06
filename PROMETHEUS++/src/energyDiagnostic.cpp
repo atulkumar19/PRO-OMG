@@ -5,9 +5,9 @@
 template <class IT, class FT> ENERGY_DIAGNOSTIC<IT, FT>::ENERGY_DIAGNOSTIC(const simulationParameters * params, const FT * EB, const vector<IT> * IONS){
     kineticEnergyDensity = zeros(IONS->size());
 
-    magneticEnergyDensity = 0.0;
+    magneticEnergyDensity = zeros(3);
 
-    electricEnergyDensity = 0.0;
+    electricEnergyDensity = zeros(3);
 
     computeKineticEnergyDensity(params, IONS);
 
@@ -30,15 +30,21 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
     unsigned int iIndex = params->mpi.iIndex;
 	unsigned int fIndex = params->mpi.fIndex;
 
-    arma::vec E = arma::pow(EB->B.X.subvec(iIndex,fIndex) - params->BGP.Bx, 2) + arma::pow(EB->B.Y.subvec(iIndex,fIndex) - params->BGP.By, 2) + arma::pow(EB->B.Z.subvec(iIndex,fIndex) - params->BGP.Bz, 2);
+    arma::vec E_X = arma::pow(EB->B.X.subvec(iIndex,fIndex) - params->BGP.Bx, 2);
+    arma::vec E_Y = arma::pow(EB->B.Y.subvec(iIndex,fIndex) - params->BGP.By, 2);
+    arma::vec E_Z = arma::pow(EB->B.Z.subvec(iIndex,fIndex) - params->BGP.Bz, 2);
 
-    magneticEnergyDensity = 0.5*arma::sum( E )/F_MU_DS;
+    magneticEnergyDensity(0) = 0.5*arma::sum( E_X )/F_MU_DS;
+    magneticEnergyDensity(1) = 0.5*arma::sum( E_Y )/F_MU_DS;
+    magneticEnergyDensity(2) = 0.5*arma::sum( E_Z )/F_MU_DS;
 
-    E = arma::pow(EB->E.X.subvec(iIndex,fIndex), 2) + arma::pow(EB->E.Y.subvec(iIndex,fIndex), 2) + arma::pow(EB->E.Z.subvec(iIndex,fIndex), 2);
+    E_X = arma::pow(EB->E.X.subvec(iIndex,fIndex), 2);
+    E_Y = arma::pow(EB->E.Y.subvec(iIndex,fIndex), 2);
+    E_Z = arma::pow(EB->E.Z.subvec(iIndex,fIndex), 2);
 
-    electricEnergyDensity = 0.5*F_EPSILON_DS*arma::sum( E );
-
-    // cout << "+ MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | E: " << electricEnergyDensity << " | B: " << magneticEnergyDensity << endl;
+    electricEnergyDensity(0) = 0.5*F_EPSILON_DS*arma::sum( E_X );
+    electricEnergyDensity(1) = 0.5*F_EPSILON_DS*arma::sum( E_Y );
+    electricEnergyDensity(2) = 0.5*F_EPSILON_DS*arma::sum( E_Z );
 }
 
 
@@ -49,13 +55,21 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-    arma::mat E = arma::pow(EB->B.X.submat(irow,icol,frow,fcol) - params->BGP.Bx, 2) + arma::pow(EB->B.Y.submat(irow,icol,frow,fcol) - params->BGP.By, 2) + arma::pow(EB->B.Z.submat(irow,icol,frow,fcol) - params->BGP.Bz, 2);
+    arma::mat E_X = arma::pow(EB->B.X.submat(irow,icol,frow,fcol) - params->BGP.Bx, 2);
+    arma::mat E_Y = arma::pow(EB->B.Y.submat(irow,icol,frow,fcol) - params->BGP.By, 2);
+    arma::mat E_Z = arma::pow(EB->B.Z.submat(irow,icol,frow,fcol) - params->BGP.Bz, 2);
 
-    magneticEnergyDensity = 0.5*arma::sum( arma::sum( E ) )/F_MU_DS;
+    magneticEnergyDensity(0) = 0.5*arma::sum( arma::sum( E_X ) )/F_MU_DS;
+    magneticEnergyDensity(1) = 0.5*arma::sum( arma::sum( E_Y ) )/F_MU_DS;
+    magneticEnergyDensity(2) = 0.5*arma::sum( arma::sum( E_Z ) )/F_MU_DS;
 
-    E = arma::pow(EB->E.X.submat(irow,icol,frow,fcol), 2) + arma::pow(EB->E.Y.submat(irow,icol,frow,fcol), 2) + arma::pow(EB->E.Z.submat(irow,icol,frow,fcol), 2);
+    E_X = arma::pow(EB->E.X.submat(irow,icol,frow,fcol), 2);
+    E_Y = arma::pow(EB->E.Y.submat(irow,icol,frow,fcol), 2);
+    E_Z = arma::pow(EB->E.Z.submat(irow,icol,frow,fcol), 2);
 
-    electricEnergyDensity = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E ) );
+    electricEnergyDensity(0) = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E_X ) );
+    electricEnergyDensity(1) = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E_Y ) );
+    electricEnergyDensity(2) = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E_Z ) );
 }
 
 
@@ -63,11 +77,11 @@ template <class IT, class FT> arma::vec ENERGY_DIAGNOSTIC<IT, FT>::getKineticEne
     return(kineticEnergyDensity);
 }
 
-template <class IT, class FT> double ENERGY_DIAGNOSTIC<IT, FT>::getMagneticEnergyDensity(){
+template <class IT, class FT> arma::vec ENERGY_DIAGNOSTIC<IT, FT>::getMagneticEnergyDensity(){
     return(magneticEnergyDensity);
 }
 
-template <class IT, class FT> double ENERGY_DIAGNOSTIC<IT, FT>::getElectricEnergyDensity(){
+template <class IT, class FT> arma::vec ENERGY_DIAGNOSTIC<IT, FT>::getElectricEnergyDensity(){
     return(electricEnergyDensity);
 }
 

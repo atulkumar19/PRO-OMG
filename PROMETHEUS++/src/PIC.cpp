@@ -92,32 +92,6 @@ void PIC::MPI_Allgathermat(const simulationParameters * params, arma::mat * fiel
 }
 
 
-void PIC::test_vfield_mat(const simulationParameters * params, arma::mat * m){
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
-		m->randu();
-	}else{
-		arma_rng::set_seed_random();
-		m->randu();
-	}
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		m->print("MPI 0");
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
-		m->print("MPI 1 Before");
-
-	MPI_Allgathermat(params, m);
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 1)
-		m->print("MPI 1 After");
-
-	MPI_Barrier(params->mpi.MPI_TOPO);
-	MPI_Abort(params->mpi.MPI_TOPO,-2000);
-}
-
-
 void PIC::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
 	MPI_Allgathermat(params, &vfield->X);
 	MPI_Allgathermat(params, &vfield->Y);
@@ -614,35 +588,6 @@ void PIC::extrapolateIonVelocity(const simulationParameters * params, twoDimensi
 	IONS->nv_ = IONS->nv;
 
 	eiv(params, IONS);
-}
-
-
-void PIC::test(const simulationParameters * params){
-	arma::mat m  = zeros(10,9);
-
-	for (int ii=0; ii<m.n_rows; ii++){
-		for (int jj=0; jj<m.n_cols; jj++){
-			m(ii,jj) = ii*m.n_cols + jj + 1;
-		}
-	}
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		m.print("m");
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	include4GhostsContributions(&m);
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		m.print("Ghosts");
-
-	fillGhosts(&m);
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		m.print("PBC");
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Abort(MPI_COMM_WORLD,-1000);
 }
 
 

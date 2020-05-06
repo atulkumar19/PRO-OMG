@@ -42,6 +42,8 @@ FourierAnalysis(ST,'B','z');
 
 EnergyDiagnostic(ST);
 
+EnergyConservation(ST);
+
 % testFieldInterpolation(ST);
 end
 
@@ -489,6 +491,10 @@ DX = ST.params.geometry.DX;
 DY = ST.params.geometry.DY;
 ionGyroPeriod = ST.params.scales.ionGyroPeriod(1);
 
+kineticEnergyDensity = zeros(NSPP,NT);
+electricEnergyDensity = zeros(1,NT);
+magneticEnergyDensity = zeros(1,NT);
+
 % First we calculate the kinetic energy of the simulated ions
 Ei = zeros(NSPP,NT);
 ilabels = {};
@@ -502,6 +508,8 @@ for ss=1:NSPP
             g = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).g;
             
             Ei(ss,ii) = Ei(ss,ii) + sum(g - 1.0)*mi*ST.c^2;
+            
+            kineticEnergyDensity(ss,ii) = kineticEnergyDensity(ss,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.ions.(['spp_' num2str(ss)]).kineticEnergyDensity;
         end
         
 %         Ei(ss,ii) = NCP*Ei(ss,ii);
@@ -653,6 +661,142 @@ legend({'$E_x$', '$E_y$', '$E_z$', '$E$'},'interpreter','latex')
 figure(fig);
 subplot(5,1,4)
 plot(time, sum(Ei,1),'r', time, EB, 'b-', time, EE, 'k')
+box on; grid on;
+xlim([min(time) max(time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}$ (J/m$^3$)','interpreter','latex')
+legend({'$K_i$', '$B$', '$E$'},'interpreter','latex')
+
+figure(fig);
+subplot(5,1,5)
+for ss=1:NSPP
+    hold on; plot(time, ET_Ei(ss,:),'--'); hold off
+end
+hold on;plot(time, ET);hold off
+box on; grid on;
+xlim([min(time) max(time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_T$ (\%)','interpreter','latex')
+legend(ilabels,'interpreter','latex')
+
+end
+
+
+function EnergyConservation(ST)
+% Diagnostic to monitor energy transfer/conservation
+NT = ST.numberOfOutputs;
+NSPP = ST.params.ions.numberOfParticleSpecies;
+ND = ST.params.numOfDomains;
+DX = ST.params.geometry.DX;
+DY = ST.params.geometry.DY;
+ionGyroPeriod = ST.params.scales.ionGyroPeriod(1);
+
+kineticEnergyDensity = zeros(NSPP,NT);
+electricEnergyDensity = zeros(4,NT);
+magneticEnergyDensity = zeros(4,NT);
+
+% First we calculate the kinetic energy of the simulated ions
+ilabels = {};
+
+for ss=1:NSPP
+    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
+    NCP = ST.params.ions.(['spp_' num2str(ss)]).NCP;
+    
+    for ii=1:NT
+        for dd=1:ND           
+            kineticEnergyDensity(ss,ii) = kineticEnergyDensity(ss,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.ions.(['spp_' num2str(ss)]).kineticEnergyDensity;
+        end
+        
+    ilabels{ss} = ['Species ' num2str(ss)];
+    end
+end
+ilabels{NSPP + 1} = 'Total';
+
+
+% Energy of electromagnetic fields
+for ii=1:NT
+    for dd=1:ND
+        electricEnergyDensity(1,ii) = electricEnergyDensity(1,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.X;
+        electricEnergyDensity(2,ii) = electricEnergyDensity(2,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.Y;
+        electricEnergyDensity(3,ii) = electricEnergyDensity(3,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.Z;
+        
+        magneticEnergyDensity(1,ii) = magneticEnergyDensity(1,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.X;
+        magneticEnergyDensity(2,ii) = magneticEnergyDensity(2,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.Y;
+        magneticEnergyDensity(3,ii) = magneticEnergyDensity(3,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.Z;
+    end
+end
+
+electricEnergyDensity(4,:) = sum(electricEnergyDensity(1:3,:),1);
+magneticEnergyDensity(4,:) = sum(magneticEnergyDensity(1:3,:),1);
+
+ET = kineticEnergyDensity + electricEnergyDensity(4,:) + magneticEnergyDensity(4,:);
+
+% Change in total energy as a percentage of the initial ion energy
+ET_Ei = zeros(NSPP,NT);
+for ss=1:NSPP
+    ET_Ei(ss,:) = 100.0*(ET - ET(1))/kineticEnergyDensity(ss,1);
+end
+
+% Relative change in total energy
+ET = 100.0*(ET - ET(1))/ET(1);
+
+% Change in kinetic energy w.r.t. initial condition
+kineticEnergyDensity = kineticEnergyDensity - kineticEnergyDensity(:,1);
+
+% Change in magnetic energy w.r.t. initial condition
+magneticEnergyDensity = magneticEnergyDensity - magneticEnergyDensity(:,1);
+
+% Change in electric energy w.r.t. initial condition
+electricEnergyDensity = electricEnergyDensity - electricEnergyDensity(:,1);
+
+time = ST.time/ionGyroPeriod;
+
+% Figures to show energy conservation
+fig = figure('name','Energy conservation');
+for ss=1:NSPP
+    figure(fig)
+    subplot(5,1,1)
+    hold on;
+    plot(time, kineticEnergyDensity(ss,:), '--')
+    hold off
+    box on; grid on;
+    xlim([min(time) max(time)])
+    xlabel('Time (s)','interpreter','latex')
+    ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
+end
+
+figure(fig)
+subplot(5,1,1)
+hold on;
+plot(time, sum(kineticEnergyDensity,1))
+hold off
+box on; grid on;
+xlim([min(time) max(time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
+legend(ilabels,'interpreter','latex')
+
+figure(fig);
+subplot(5,1,2)
+plot(time, magneticEnergyDensity)
+box on; grid on;
+xlim([min(time) max(time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_B$ (J/m$^3$)','interpreter','latex')
+legend({'$B_x$', '$B_y$', '$B_z$', '$B$'},'interpreter','latex')
+
+figure(fig);
+subplot(5,1,3)
+plot(time, electricEnergyDensity)
+box on; grid on;
+xlim([min(time) max(time)])
+xlabel('Time (s)','interpreter','latex')
+ylabel('$\Delta \mathcal{E}_E$ (J/m$^3$)','interpreter','latex')
+legend({'$E_x$', '$E_y$', '$E_z$', '$E$'},'interpreter','latex')
+
+figure(fig);
+subplot(5,1,4)
+plot(time, sum(kineticEnergyDensity,1),'r', time, magneticEnergyDensity, 'b-', time, electricEnergyDensity, 'k')
 box on; grid on;
 xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')

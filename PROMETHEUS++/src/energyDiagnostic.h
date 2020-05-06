@@ -34,9 +34,9 @@ template <class IT, class FT> class ENERGY_DIAGNOSTIC{
 
     arma::vec kineticEnergyDensity;
 
-    double magneticEnergyDensity;
+    arma::vec magneticEnergyDensity;
 
-    double electricEnergyDensity;
+    arma::vec electricEnergyDensity;
 
 
     void computeKineticEnergyDensity(const simulationParameters * params, const vector<IT> * IONS);
@@ -52,9 +52,9 @@ public:
 
     arma::vec getKineticEnergyDensity();
 
-    double getMagneticEnergyDensity();
+    arma::vec getMagneticEnergyDensity();
 
-    double getElectricEnergyDensity();
+    arma::vec getElectricEnergyDensity();
 
 };
 

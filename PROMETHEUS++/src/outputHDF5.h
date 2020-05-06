@@ -51,6 +51,15 @@ template <class IT, class FT> class HDF{
 	#endif
 
 
+	void MPI_Allgathervec(const simulationParameters * params, arma::vec * field);
+
+	void MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield);
+
+	void MPI_Allgathermat(const simulationParameters * params, arma::mat * field);
+
+	void MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
+
+
 	void saveToHDF5(H5File * file, string name, int * value);
 
 	void saveToHDF5(H5File * file, string name, CPP_TYPE * value);

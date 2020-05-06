@@ -18,6 +18,63 @@
 
 #include "outputHDF5.h"
 
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
+
+	arma::vec recvbuf(params->mesh.NX_IN_SIM);
+	arma::vec sendbuf(params->mesh.NX_PER_MPI);
+
+	//Allgather for x-component
+	sendbuf = field->subvec(iIndex, fIndex);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+	field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+}
+
+
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
+	MPI_Allgathervec(params, &vfield->X);
+	MPI_Allgathervec(params, &vfield->Y);
+	MPI_Allgathervec(params, &vfield->Z);
+}
+
+
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathermat(const simulationParameters * params, arma::mat * field){
+	unsigned int irow = params->mpi.irow;
+	unsigned int frow = params->mpi.frow;
+
+	unsigned int icol = params->mpi.icol;
+	unsigned int fcol = params->mpi.fcol;
+
+	arma::vec recvbuf = zeros(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI);
+
+	//Allgather for x-component
+	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+
+	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
+		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
+		unsigned int fe = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*(mpis+1) - 1;
+
+		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
+		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
+
+		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NY_PER_MPI + 1;
+		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NY_PER_MPI;
+
+		field->submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ie,fe), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
+	}
+
+}
+
+
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
+	MPI_Allgathermat(params, &vfield->X);
+	MPI_Allgathermat(params, &vfield->Y);
+	MPI_Allgathermat(params, &vfield->Z);
+}
+
 
 #ifdef HDF5_FLOAT
 template <class IT, class FT> void HDF<IT,FT>::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
@@ -1094,20 +1151,6 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
-	fillGhosts(&EB->E.X);
-	fillGhosts(&EB->E.Y);
-	fillGhosts(&EB->E.Z);
-
-	fillGhosts(&EB->B.X);
-	fillGhosts(&EB->B.Y);
-	fillGhosts(&EB->B.Z);
-
-	// oneDimensional::fields F(params->mesh.NX_IN_SIM + 2);
-
-	// computeFieldsOnNonStaggeredGrid(EB, &F);
-
-	oneDimensional::fields F = *EB;
-
 	try{
 		string name;
 		string path;
@@ -1148,10 +1191,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//x-component of electric field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->eField*F.E.X.subvec(iIndex,fIndex);
+				vec_values = CS->eField*EB->E.X.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->eField*F.E.X.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.X.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1159,10 +1202,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//y-component of electric field
 				name = "y";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->eField*F.E.Y.subvec(iIndex,fIndex);
+				vec_values = CS->eField*EB->E.Y.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->eField*F.E.Y.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Y.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1170,10 +1213,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//z-component of electric field
 				name = "z";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->eField*F.E.Z.subvec(iIndex,fIndex);
+				vec_values = CS->eField*EB->E.Z.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->eField*F.E.Z.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->eField*EB->E.Z.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1185,10 +1228,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//x-component of magnetic field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*F.B.X.subvec(iIndex,fIndex);
+				vec_values = CS->bField*EB->B.X.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*F.B.X.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->bField*EB->B.X.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1196,10 +1239,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//y-component of magnetic field
 				name = "y";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*F.B.Y.subvec(iIndex,fIndex);
+				vec_values = CS->bField*EB->B.Y.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*F.B.Y.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->bField*EB->B.Y.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1207,10 +1250,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//z-component of magnetic field
 				name = "z";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*F.B.Z.subvec(iIndex,fIndex);
+				vec_values = CS->bField*EB->B.Z.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*F.B.Z.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->bField*EB->B.Z.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1255,10 +1298,6 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-	twoDimensional::fields F(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-
-	computeFieldsOnNonStaggeredGrid(EB, &F);
-
 	try{
 		string name;
 		string path;
@@ -1299,10 +1338,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//x-component of electric field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				mat_values = CS->eField*F.E.X.submat(irow,icol,frow,fcol);
+				mat_values = CS->eField*EB->E.X.submat(irow,icol,frow,fcol);
 				saveToHDF5(group_ionSpecies, name, &mat_values);
 				#elif defined HDF5_FLOAT
-				fmat_values = conv_to<fmat>::from( CS->eField*F.E.X.submat(irow,icol,frow,fcol) );
+				fmat_values = conv_to<fmat>::from( CS->eField*EB->E.X.submat(irow,icol,frow,fcol) );
 				saveToHDF5(group_field, name, &fmat_values);
 				#endif
 				name.clear();
@@ -1310,10 +1349,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//y-component of electric field
 				name = "y";
 				#ifdef HDF5_DOUBLE
-				mat_values = CS->eField*F.E.Y.submat(irow,icol,frow,fcol);
+				mat_values = CS->eField*EB->E.Y.submat(irow,icol,frow,fcol);
 				saveToHDF5(group_ionSpecies, name, &mat_values);
 				#elif defined HDF5_FLOAT
-				fmat_values = conv_to<fmat>::from( CS->eField*F.E.Y.submat(irow,icol,frow,fcol) );
+				fmat_values = conv_to<fmat>::from( CS->eField*EB->E.Y.submat(irow,icol,frow,fcol) );
 				saveToHDF5(group_field, name, &fmat_values);
 				#endif
 				name.clear();
@@ -1321,10 +1360,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//z-component of electric field
 				name = "z";
 				#ifdef HDF5_DOUBLE
-				mat_values = CS->eField*F.E.Z.submat(irow,icol,frow,fcol);
+				mat_values = CS->eField*EB->E.Z.submat(irow,icol,frow,fcol);
 				saveToHDF5(group_ionSpecies, name, &mat_values);
 				#elif defined HDF5_FLOAT
-				fmat_values = conv_to<fmat>::from( CS->eField*F.E.Z.submat(irow,icol,frow,fcol) );
+				fmat_values = conv_to<fmat>::from( CS->eField*EB->E.Z.submat(irow,icol,frow,fcol) );
 				saveToHDF5(group_field, name, &fmat_values);
 				#endif
 				name.clear();
@@ -1336,10 +1375,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//x-component of magnetic field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				mat_values = CS->bField*F.B.X.submat(irow,icol,frow,fcol);
+				mat_values = CS->bField*EB->B.X.submat(irow,icol,frow,fcol);
 				saveToHDF5(group_ionSpecies, name, &mat_values);
 				#elif defined HDF5_FLOAT
-				fmat_values = conv_to<fmat>::from( CS->bField*F.B.X.submat(irow,icol,frow,fcol) );
+				fmat_values = conv_to<fmat>::from( CS->bField*EB->B.X.submat(irow,icol,frow,fcol) );
 				saveToHDF5(group_field, name, &fmat_values);
 				#endif
 				name.clear();
@@ -1347,10 +1386,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//y-component of magnetic field
 				name = "y";
 				#ifdef HDF5_DOUBLE
-				mat_values = CS->bField*F.B.Y.submat(irow,icol,frow,fcol);
+				mat_values = CS->bField*EB->B.Y.submat(irow,icol,frow,fcol);
 				saveToHDF5(group_ionSpecies, name, &mat_values);
 				#elif defined HDF5_FLOAT
-				fmat_values = conv_to<fmat>::from( CS->bField*F.B.Y.submat(irow,icol,frow,fcol) );
+				fmat_values = conv_to<fmat>::from( CS->bField*EB->B.Y.submat(irow,icol,frow,fcol) );
 				saveToHDF5(group_field, name, &fmat_values);
 				#endif
 				name.clear();
@@ -1358,10 +1397,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 				//z-component of magnetic field
 				name = "z";
 				#ifdef HDF5_DOUBLE
-				mat_values = CS->bField*F.B.Z.submat(irow,icol,frow,fcol);
+				mat_values = CS->bField*EB->B.Z.submat(irow,icol,frow,fcol);
 				saveToHDF5(group_ionSpecies, name, &mat_values);
 				#elif defined HDF5_FLOAT
-				fmat_values = conv_to<fmat>::from( CS->bField*F.B.Z.submat(irow,icol,frow,fcol) );
+				fmat_values = conv_to<fmat>::from( CS->bField*EB->B.Z.submat(irow,icol,frow,fcol) );
 				saveToHDF5(group_field, name, &fmat_values);
 				#endif
 				name.clear();
@@ -1398,9 +1437,9 @@ template <class IT, class FT> void HDF<IT,FT>::saveEnergy(const simulationParame
 
 	arma::vec kineticEnergyDensity = energyOutputs.getKineticEnergyDensity();
 
-	double magneticEnergyDensity = energyOutputs.getMagneticEnergyDensity();
+	arma::vec magneticEnergyDensity = energyOutputs.getMagneticEnergyDensity();
 
-	double electricEnergyDensity = energyOutputs.getElectricEnergyDensity();
+	arma::vec electricEnergyDensity = energyOutputs.getElectricEnergyDensity();
 
 	try{
 		string path;
@@ -1461,18 +1500,56 @@ template <class IT, class FT> void HDF<IT,FT>::saveEnergy(const simulationParame
 		Group * group_fields = new Group( group_energy->createGroup( name ) );
 		name.clear();
 
-		name = "electricEnergyDensity";
-		units = CS->vacuumPermittivity*pow(CS->eField,2);
-		cpp_type_value = units*electricEnergyDensity;
-		saveToHDF5(group_fields, name, &cpp_type_value);
+		name = "E";
+		Group * group_efield = new Group( group_fields->createGroup( name ) );
 		name.clear();
 
-		name = "magneticEnergyDensity";
-		units = pow(CS->bField,2)/CS->vacuumPermeability;
-		cpp_type_value = units*magneticEnergyDensity;
-		saveToHDF5(group_fields, name, &cpp_type_value);
+		name = "X";
+		units = CS->vacuumPermittivity*pow(CS->eField,2);
+		cpp_type_value = units*electricEnergyDensity(0);
+		saveToHDF5(group_efield, name, &cpp_type_value);
 		name.clear();
-		
+
+		name = "Y";
+		units = CS->vacuumPermittivity*pow(CS->eField,2);
+		cpp_type_value = units*electricEnergyDensity(1);
+		saveToHDF5(group_efield, name, &cpp_type_value);
+		name.clear();
+
+		name = "Z";
+		units = CS->vacuumPermittivity*pow(CS->eField,2);
+		cpp_type_value = units*electricEnergyDensity(2);
+		saveToHDF5(group_efield, name, &cpp_type_value);
+		name.clear();
+
+		delete group_efield;
+
+		name = "B";
+		Group * group_bfield = new Group( group_fields->createGroup( name ) );
+		name.clear();
+
+		name = "X";
+		units = pow(CS->bField,2)/CS->vacuumPermeability;
+		cpp_type_value = units*magneticEnergyDensity(0);
+		saveToHDF5(group_bfield, name, &cpp_type_value);
+		name.clear();
+
+		name = "Y";
+		units = pow(CS->bField,2)/CS->vacuumPermeability;
+		cpp_type_value = units*magneticEnergyDensity(1);
+		saveToHDF5(group_bfield, name, &cpp_type_value);
+		name.clear();
+
+		name = "Z";
+		units = pow(CS->bField,2)/CS->vacuumPermeability;
+		cpp_type_value = units*magneticEnergyDensity(2);
+		saveToHDF5(group_bfield, name, &cpp_type_value);
+		name.clear();
+
+		delete group_bfield;
+
+		name.clear();
+
 		delete group_fields;
 		// Fields energy
 

@@ -58,10 +58,6 @@ class PIC{
 
 protected:
 
-	void test(const simulationParameters * params);
-
-	void test_vfield_mat(const simulationParameters * params, arma::mat * m);
-
 	void MPI_AllreduceVec(const simulationParameters * params, arma::vec * v);
 
 	void MPI_AllreduceMat(const simulationParameters * params, arma::mat * m);

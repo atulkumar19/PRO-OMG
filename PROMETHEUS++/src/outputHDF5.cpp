@@ -1102,9 +1102,11 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 	fillGhosts(&EB->B.Y);
 	fillGhosts(&EB->B.Z);
 
-	oneDimensional::fields F(params->mesh.NX_IN_SIM + 2);
+	// oneDimensional::fields F(params->mesh.NX_IN_SIM + 2);
 
-	computeFieldsOnNonStaggeredGrid(EB, &F);
+	// computeFieldsOnNonStaggeredGrid(EB, &F);
+
+	oneDimensional::fields F = *EB;
 
 	try{
 		string name;
@@ -1391,6 +1393,111 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 }
 
 
+template <class IT, class FT> void HDF<IT,FT>::saveEnergy(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it){
+	ENERGY_DIAGNOSTIC<IT,FT> energyOutputs(params, EB, IONS);
+
+	arma::vec kineticEnergyDensity = energyOutputs.getKineticEnergyDensity();
+
+	double magneticEnergyDensity = energyOutputs.getMagneticEnergyDensity();
+
+	double electricEnergyDensity = energyOutputs.getElectricEnergyDensity();
+
+	try{
+		string path;
+		string name;
+		stringstream iteration;
+		stringstream dn;
+
+		double units;
+		CPP_TYPE cpp_type_value;
+		arma::vec vec_values;
+		arma::fvec fvec_values;
+
+		iteration << it;
+		dn << params->mpi.MPI_DOMAIN_NUMBER_CART;
+
+		path = params->PATH + "/HDF5/";
+		name = path + "file_D" + dn.str() + ".h5";
+		const H5std_string	FILE_NAME( name );
+		name.clear();
+
+		H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_RDWR );//Open an existing file.
+
+		name = "/" + iteration.str();
+		Group * group_iteration = new Group( outputFile->openGroup( name ) );
+		name.clear();
+
+		name = "energy";
+		Group * group_energy = new Group( group_iteration->createGroup( name ) );
+		name.clear();
+
+		// Ions energy
+		name = "ions";
+		Group * group_ions = new Group( group_energy->createGroup( name ) );
+		name.clear();
+
+		for(int ii=0; ii<IONS->size(); ii++){//Iterations over the ion species.
+			stringstream ionSpec;
+			ionSpec << (ii+1);
+
+			name = "spp_" + ionSpec.str();
+			Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
+			name.clear();
+
+			name = "kineticEnergyDensity";
+			units = CS->mass*pow(CS->velocity,2)/CS->length;
+			cpp_type_value = units*kineticEnergyDensity(ii);
+			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+			name.clear();
+
+			delete group_ionSpecies;
+		}//Iterations over the ion species.
+
+		delete group_ions;
+		// Ions energy
+
+		// Fields energy
+		name = "fields";
+		Group * group_fields = new Group( group_energy->createGroup( name ) );
+		name.clear();
+
+		name = "electricEnergyDensity";
+		units = CS->vacuumPermittivity*pow(CS->eField,2);
+		cpp_type_value = units*electricEnergyDensity;
+		saveToHDF5(group_fields, name, &cpp_type_value);
+		name.clear();
+
+		name = "magneticEnergyDensity";
+		units = pow(CS->bField,2)/CS->vacuumPermeability;
+		cpp_type_value = units*magneticEnergyDensity;
+		saveToHDF5(group_fields, name, &cpp_type_value);
+		name.clear();
+		
+		delete group_fields;
+		// Fields energy
+
+		delete group_energy;
+
+		delete group_iteration;
+
+		delete outputFile;
+	}//End of try block
+
+    catch( FileIException error ){// catch failure caused by the H5File operations
+		error.printErrorStack();
+    }
+
+    catch( DataSetIException error ){// catch failure caused by the DataSet operations
+		error.printErrorStack();
+    }
+
+    catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
+		error.printErrorStack();
+	   }
+
+}
+
+
 template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it, double totalTime){
 
 	try{
@@ -1448,6 +1555,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParam
 
 	saveFieldsVariables(params, EB, CS, it);
 
+	saveEnergy(params, IONS, EB, CS, it);
 }
 
 

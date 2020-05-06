@@ -138,51 +138,37 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
 
 
 template <class IT, class FT> void UNITS<IT,FT>::broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS){
-
-	// Define MPI type for characteristicScales structure.
-	int numStructElem(13);
-	int structLength[13] = {1,1,1,1,1,1,1,1,1,1,1,1,1};
-	MPI_Aint displ[13];
-	MPI_Datatype csTypes[13] = {MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE,\
-		MPI_DOUBLE};
-	MPI_Datatype MPI_CS;
-
-	MPI_Get_address(&CS->time,&displ[0]);
-	MPI_Get_address(&CS->velocity,&displ[1]);
-	MPI_Get_address(&CS->momentum,&displ[2]);
-	MPI_Get_address(&CS->length,&displ[3]);
-	MPI_Get_address(&CS->mass,&displ[4]);
-	MPI_Get_address(&CS->charge,&displ[5]);
-	MPI_Get_address(&CS->density,&displ[6]);
-	MPI_Get_address(&CS->eField,&displ[7]);
-	MPI_Get_address(&CS->bField,&displ[8]);
-	MPI_Get_address(&CS->pressure,&displ[9]);
-	MPI_Get_address(&CS->temperature,&displ[10]);
-	MPI_Get_address(&CS->magneticMoment,&displ[11]);
-	MPI_Get_address(&CS->resistivity,&displ[12]);
-
-	for(int ii=numStructElem-1;ii>=0;ii--)
-		displ[ii] -= displ[0];
-
-	MPI_Type_create_struct(numStructElem,structLength,displ,csTypes,&MPI_CS);
-	MPI_Type_commit(&MPI_CS);
-
 	MPI_Barrier(params->mpi.MPI_TOPO);
 
-	MPI_Bcast(CS, 1, MPI_CS, 0, params->mpi.MPI_TOPO);
+	MPI_Bcast(&CS->time, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 
-	MPI_Type_free(&MPI_CS);
+	MPI_Bcast(&CS->velocity, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->momentum, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->length, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->mass, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->charge, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->density, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->eField, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->bField, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->pressure, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->temperature, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->magneticMoment, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->resistivity, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->vacuumPermeability, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
+
+	MPI_Bcast(&CS->vacuumPermittivity, 1, MPI_DOUBLE, 0, params->mpi.MPI_TOPO);
 }
 
 
@@ -296,6 +282,8 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 	CS->pressure = CS->bField*CS->velocity*CS->velocity*CS->charge*CS->density*CS->time;
 	CS->resistivity = CS->bField/(CS->charge*CS->density);
 	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
+	CS->vacuumPermittivity = (pow(CS->length*CS->charge,2)*CS->density)/(CS->mass*pow(CS->velocity,2));
+	CS->vacuumPermeability = CS->mass/( CS->density*pow(CS->charge*CS->velocity*CS->time,2) );
 
 	if(params->mpi.MPI_DOMAIN_NUMBER_CART == 0){
 		cout << "+ Average mass: " << scientific << CS->mass << fixed << " kg" << endl;
@@ -311,6 +299,8 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 		cout << "+ Temperature: " << scientific << CS->temperature << fixed << " K" << endl;
 		cout << "+ Magnetic moment: " << scientific << CS->magneticMoment << fixed << " A*m^2" << endl;
 		cout << "+ Resistivity: " << scientific << CS->magneticMoment << fixed << " Ohms*m" << endl;
+		cout << "+ Vacuum permittivity: " << scientific << CS->vacuumPermittivity << fixed << "" << endl;
+		cout << "+ Vacuum permeability: " << scientific << CS->vacuumPermeability << fixed << "" << endl;
 		cout << endl << "* * * * * * * * * * * * CHARACTERISTIC SCALES IN SIMULATION DEFINED  * * * * * * * * * * * * * * * * * *" << endl;
 	}
 }
@@ -318,10 +308,12 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 
 template <class IT, class FT> void UNITS<IT,FT>::dimensionlessForm(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS){
 	// Normalizing physical constants
-	F_E_DS /= CS->charge; 														// Dimensionless electron charge
-	F_ME_DS /= CS->mass; 														// Dimensionless electron charge
-	F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; 	// Dimensionless vacuum permittivity
-	F_C_DS /= CS->velocity; 													// Dimensionless speed of light
+	F_E_DS /= CS->charge; 					// Dimensionless electron charge
+	F_ME_DS /= CS->mass; 					// Dimensionless electron charge
+	// F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; 	// Dimensionless vacuum permittivity
+	F_MU_DS /= CS->vacuumPermeability; 		// Dimensionless vacuum permeability
+	F_EPSILON_DS /= CS->vacuumPermittivity;	// Dimensionless vacuum permittivity
+	F_C_DS /= CS->velocity; 				// Dimensionless speed of light
 
 	//Normalizing simulation parameters.
 	params->DT /= CS->time;

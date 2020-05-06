@@ -40,18 +40,20 @@ LIB=-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo #-lgfortran
 OMP_LIB_FLAGS=-lgomp
 
 
-BINARIES = $(addprefix $(OBJ)/,structures.o\
-main.o	\
-PIC.o	\
-initialize.o	\
-units.o	\
+BINARIES = $(addprefix $(OBJ)/,structures.o	\
+main.o					\
+PIC.o					\
+initialize.o			\
+units.o					\
 boundaryConditions.o	\
-fields.o	\
-types.o	\
-outputHDF5.o	\
-mpi_main.o	\
-randomStart.o	\
-quietStart.o)
+fields.o				\
+types.o					\
+outputHDF5.o			\
+mpi_main.o				\
+randomStart.o			\
+quietStart.o			\
+energyDiagnostic.o)
+
 
 all: $(BIN)/PROMETHEUS++
 

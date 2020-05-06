@@ -672,48 +672,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     EB->B.X.fill(params->BGP.Bx); // x
     EB->B.Y.fill(params->BGP.By); // y
     EB->B.Z.fill(params->BGP.Bz); // z
-
-    //*** @todelete
-    /*
-    arma::vec xAxis = params->mesh.nodes.X + 0.5*params->mesh.DX;
-    for(int ii=1; ii<(NY-1); ii++){
-        EB->B.Z.col(ii).subvec(1,NX-2) += 0.5*params->BGP.Bz*cos(2.0*M_PI*xAxis/params->mesh.LX);
-    }
-    */
-
-    //*** @todelete
-    /*
-    arma::vec xAxis = params->mesh.nodes.X;
-    for(int ii=1; ii<(NY-1); ii++){
-        EB->B.X.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
-        EB->E.Y.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
-        EB->E.Z.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
-    }
-
-    xAxis = params->mesh.nodes.X + 0.5*params->mesh.DX;
-    for(int ii=1; ii<(NY-1); ii++){
-        EB->E.X.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
-        EB->B.Y.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
-        EB->B.Z.col(ii).subvec(1,NX-2) = cos(2.0*M_PI*xAxis/params->mesh.LX);
-    }
-    */
-
-    //*** @todelete
-    /*
-    arma::rowvec yAxis = conv_to<rowvec>::from( params->mesh.nodes.Y + 0.5*params->mesh.DY );
-    for(int ii=1; ii<(NX-1); ii++){
-        EB->B.X.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
-        EB->B.Z.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
-        EB->E.Y.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
-    }
-
-    yAxis = conv_to<rowvec>::from( params->mesh.nodes.Y );
-    for(int ii=1; ii<(NX-1); ii++){
-        EB->E.X.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
-        EB->E.Z.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
-        EB->B.Y.row(ii).subvec(1,NY-2) = cos(2.0*M_PI*yAxis/params->mesh.LY);
-    }
-    */
 }
 
 

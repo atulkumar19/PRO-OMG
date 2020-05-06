@@ -196,6 +196,8 @@ struct characteristicScales{
 	double temperature;
 	double magneticMoment;
 	double resistivity;
+	double vacuumPermeability;
+	double vacuumPermittivity;
 
 	characteristicScales(){
 		time = 0.0;
@@ -208,6 +210,8 @@ struct characteristicScales{
 		bField = 0.0;
 		pressure = 0.0;
 		magneticMoment = 0.0;
+		vacuumPermeability = 0.0;
+		vacuumPermittivity = 0.0;
 	}
 };
 

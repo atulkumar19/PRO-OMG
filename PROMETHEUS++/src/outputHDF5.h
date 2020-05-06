@@ -32,6 +32,7 @@
 #include "structures.h"
 #include "boundaryConditions.h"
 #include "types.h"
+#include "energyDiagnostic.h"
 
 #include "H5Cpp.h"
 
@@ -79,7 +80,7 @@ template <class IT, class FT> class HDF{
 	void saveToHDF5(Group * group, string name, arma::mat * values);
 
 	void saveToHDF5(Group * group, string name, arma::fmat * values);
-	
+
 
 	void computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G);
 
@@ -96,6 +97,9 @@ template <class IT, class FT> class HDF{
 	void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it);
 
 	void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
+
+
+	void saveEnergy(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it);
 
 public:
 

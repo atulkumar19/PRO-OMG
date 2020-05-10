@@ -20,12 +20,14 @@
 
 template <class IT> RANDOMSTART<IT>::RANDOMSTART(const simulationParameters * params){
 	// Unitary vector along B field
-	b1 = {sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0), \
-	      sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0),\
-		  cos(params->BGP.theta*M_PI/180.0)};
+	b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
+	b1 = arma::normalise(b1);
 
-	// Unitary vector perpendicular to b1
-	b2 = arma::cross(b1,y);
+	if (arma::dot(b1,y) < PRO_ZERO){
+		b2 = arma::cross(b1,y);
+	}else{
+		b2 = arma::cross(b1,z);
+	}
 
 	// Unitary vector perpendicular to b1 and b2
 	b3 = arma::cross(b1,b2);

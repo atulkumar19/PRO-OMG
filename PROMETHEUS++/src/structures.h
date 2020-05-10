@@ -34,6 +34,7 @@
 
 
 // Physical constants
+#define PRO_ZERO 1.0E-15	// Definition of zero in PROMETHEUS
 #define F_E 1.602176E-19	// Electron charge in C (absolute value)
 #define F_ME 9.109382E-31	// Electron mass in kg
 #define F_MP 1.672621E-27	// Proton mass in kg

@@ -40,7 +40,7 @@ FourierAnalysis(ST,'B','z');
 % FourierAnalysis(ST,'E','y');
 % FourierAnalysis(ST,'E','z');
 
-EnergyDiagnostic(ST);
+% EnergyDiagnostic(ST);
 
 EnergyConservation(ST);
 

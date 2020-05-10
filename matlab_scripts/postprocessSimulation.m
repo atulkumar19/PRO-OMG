@@ -44,7 +44,7 @@ FourierAnalysis(ST,'B','z');
 
 EnergyConservation(ST);
 
-% testFieldInterpolation(ST);
+testFieldInterpolation(ST);
 end
 
 function params = loadSimulationParameters(ST)
@@ -429,6 +429,22 @@ if (ST.params.dimensionality == 2)
     end
 end
 
+
+% Frequency spectra
+F = fourierSpacex(1:numel(wAxis),1:numel(xAxis));
+A = F.*conj(F); % (w,k)
+NK = numel(xAxis)/4;
+Spectrum_x = sum(A(:,1:NK),2)*Dk;
+% Spectrum_x = flip(Spectrum_x);
+
+if (ST.params.dimensionality == 2)
+    F = fourierSpacey(1:numel(wAxis),1:numel(yAxis));
+    A = F.*conj(F); % (w,k)
+    NK = numel(yAxis)/4;
+    Spectrum_y = sum(A(:,1:NK),2)*Dk;
+%     Spectrum_y = flip(Spectrum_y);
+end
+
 wk_fig = figure;
 
 if (ST.params.dimensionality == 1)
@@ -438,10 +454,21 @@ if (ST.params.dimensionality == 1)
     z = linspace(0,max([max(xAxis), max(wAxis)]),10);
     
     figure(wk_fig)
-    imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
+    subplot(1,4,1)
+    ax = plot(log10(Spectrum_x),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+    box on; grid on; grid minor
+    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    
+    figure(wk_fig)
+    subplot(1,4,[2 4])
+    imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
-    axis([0 max(xAxis) 0 max(wAxis)])
+    try
+        axis([0 max(xAxis) 0 max(wAxis)])
+    end
     xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
     ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
     title(['$' field '_' component '(x)$'],'interpreter','latex')
@@ -452,7 +479,15 @@ else
     z = linspace(0,max([max(xAxis), max(wAxis)]),10);
     
     figure(wk_fig)
-    subplot(2,1,1)
+    subplot(2,4,1)
+    ax = plot(log10(Spectrum_x),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+    box on; grid on; grid minor
+    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    
+    figure(wk_fig)
+    subplot(2,4,[2 4])
     imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
@@ -469,7 +504,15 @@ else
     z = linspace(0,max([max(yAxis), max(wAxis)]),10);
     
     figure(wk_fig)
-    subplot(2,1,2)
+    subplot(2,4,5)
+    ax = plot(log10(Spectrum_y),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+    box on; grid on; grid minor
+    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    
+    figure(wk_fig)
+    subplot(2,4,[6 8])
     imagesc(yAxis,wAxis,log10(A(1:NT/2,1:NY_IN_SIM/2)));
     hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
     axis xy; colormap(jet); colorbar
@@ -729,7 +772,7 @@ end
 electricEnergyDensity(4,:) = sum(electricEnergyDensity(1:3,:),1);
 magneticEnergyDensity(4,:) = sum(magneticEnergyDensity(1:3,:),1);
 
-ET = kineticEnergyDensity + electricEnergyDensity(4,:) + magneticEnergyDensity(4,:);
+ET = sum(kineticEnergyDensity,1) + electricEnergyDensity(4,:) + magneticEnergyDensity(4,:);
 
 % Change in total energy as a percentage of the initial ion energy
 ET_Ei = zeros(NSPP,NT);
@@ -796,7 +839,7 @@ legend({'$E_x$', '$E_y$', '$E_z$', '$E$'},'interpreter','latex')
 
 figure(fig);
 subplot(5,1,4)
-plot(time, sum(kineticEnergyDensity,1),'r', time, magneticEnergyDensity, 'b-', time, electricEnergyDensity, 'k')
+plot(time, sum(kineticEnergyDensity,1),'r', time, magneticEnergyDensity(4,:), 'b-', time, electricEnergyDensity(4,:), 'k')
 box on; grid on;
 xlim([min(time) max(time)])
 xlabel('Time (s)','interpreter','latex')

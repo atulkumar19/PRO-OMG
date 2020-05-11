@@ -208,9 +208,13 @@ void EMF_SOLVER::smooth(arma::vec * v, double as){
 	int NX = v->n_elem;
 
 	arma::vec b = zeros(NX);
-
+	/*
 	double wc(0.75); 	// center weight
 	double ws(0.125);	// sides weight
+	*/
+
+	double wc(0.5); 	// center weight
+	double ws(0.25);	// sides weight
 
 	//Step 1: Averaging process
 	b.subvec(1, NX-2) = v->subvec(1, NX-2);
@@ -229,15 +233,15 @@ void EMF_SOLVER::smooth(arma::mat * m, double as){
 	int NY = m->n_cols;
 
 	arma::mat b = zeros(NX,NY);
-
+	/*
 	double wc(9.0/16.0);
 	double ws(3.0/32.0);
 	double wcr(1.0/64.0);
-	/*
+	*/
 	double wc(0.25);
 	double ws(0.1250);
 	double wcr(0.0625);
-	*/
+
 	// Step 1: Averaging
 	b.submat(1,1,NX-2,NY-2) = m->submat(1,1,NX-2,NY-2);
 

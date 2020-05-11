@@ -44,7 +44,7 @@ FourierAnalysis(ST,'B','z');
 
 EnergyConservation(ST);
 
-testFieldInterpolation(ST);
+% testFieldInterpolation(ST);
 end
 
 function params = loadSimulationParameters(ST)

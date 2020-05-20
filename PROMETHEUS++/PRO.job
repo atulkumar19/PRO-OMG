@@ -1,15 +1,15 @@
- #!/bin/bash
+#!/bin/bash
 #BSUB -q q_hpc
-#BSUB -n 4
-#BSUB -m 'g3_a'
+#BSUB -n 16
+#BSUB -m 'g2_a'
 #BSUB -J PRO++
 #BSUB -W 72:00
 #BSUB -oo PRO_OUT.%J
 #BSUB -eo PRO_ERR.%J
 
 
-SIM_ID=""
-OUTPUT_FOLDER="TEST_2D"
+SIM_ID="2D"
+OUTPUT_FOLDER="2D_64x64_De_perp"
 
 REPO_DIR=/home/jjmb_g/leocg_a/PRO++
 HDF5_INSTALL=/home/jjmb_g/leocg_a/PRO++/HDF5/lib
@@ -24,16 +24,18 @@ rm -rf ${OUTPUT_FOLDER}
 mkdir ${OUTPUT_FOLDER}
 
 cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}
-cp ${REPO_DIR}/PROMETHEUS++/inputFiles/* ${OUTPUT_FOLDER}
+cp ${REPO_DIR}/PROMETHEUS++/inputFiles/input_file_${SIM_ID}.input ${OUTPUT_FOLDER}
+cp ${REPO_DIR}/PROMETHEUS++/inputFiles/ions_properties_${SIM_ID}.ion ${OUTPUT_FOLDER}
+
 
 # Dimensionality of simulation
 DIMENSIONALITY="2-D"
 
 # Available number of cores in system
-NUM_CORES=4
+NUM_CORES=16
 
 # Number of MPI processes
-NUM_MPI_PROCESSES=4
+NUM_MPI_PROCESSES=16
 
 # Number of OMP threads per MPI
 NUM_OMP_PER_MPI=$((NUM_CORES/NUM_MPI_PROCESSES))
@@ -49,9 +51,7 @@ echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
 echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}
 
 if [SIM_ID == ""]; then
-	mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER}
+        mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER}
 else
-	mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER} ${SIM_ID}
+        mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER} ${SIM_ID}
 fi
-
-

@@ -333,16 +333,20 @@ qi = ST.params.ions.spp_1.Q;
 mi = ST.params.ions.spp_1.M;
 Bo = sqrt(dot(ST.params.Bo,ST.params.Bo));
 
-wci = qi*Bo/mi; % Ion cyclotron frequency
-wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
-
+ne = ST.params.ions.ne;
 ni = ST.params.ions.ne;
 wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
+
+wci = qi*Bo/mi; % Ion cyclotron frequency
+wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
 
 wci = double(wci);
 wce = double(wce);
 wpi = double(wpi);
 
+% Alfven speed
+VA = Bo/sqrt( ST.mu0*ne*mi );
+VA = double(VA);
 
 % Lower hybrid frequency
 wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );
@@ -380,6 +384,8 @@ kAxis = 2.0*pi*kAxis;
 yAxis = ST.c*kAxis/wpi;
 % % % % % % Fourier variables % % % % % % 
 
+% Whistlers dispersion relation
+k_wh = sqrt( (1 + (VA/ST.c)^2)*( wAxis.^2./(1 + wAxis) ) );
 
 F = zeros(NT,NX_IN_SIM,NY_IN_SIM);
 
@@ -406,43 +412,51 @@ for ii=1:NT
 end
 
 % x-axis
-kSpacex = zeros(NT,NX_IN_SIM);
+kSpacex = zeros(NT, NX_IN_SIM, 1);
 for ii=1:NT
-    kSpacex(ii,:) = fft( squeeze(F(ii,:,1)) );
+    for jj=1:1
+        kSpacex(ii,:,jj) = fft( squeeze(F(ii,:,jj)) );
+    end
 end
 
-fourierSpacex = zeros(NT,NX_IN_SIM);
+fourierSpacex = zeros(NT, NX_IN_SIM, 1);
 for ii=1:NX_IN_SIM
-    fourierSpacex(:,ii) = fft(hanning(double(NT)).*kSpacex(:,ii));
+    for jj=1:1
+        fourierSpacex(:,ii,jj) = fft(hanning(double(NT)).*kSpacex(:,ii,jj));
+    end
 end
+
 
 if (ST.params.dimensionality == 2)
     % y-axis
-    kSpacey = zeros(NT,NY_IN_SIM);
+    kSpacey = zeros(NT,1,NY_IN_SIM);
     for ii=1:NT
-        kSpacey(ii,:) = fft( squeeze(F(ii,1,:)) );
+        for jj=1:1
+            kSpacey(ii,jj,:) = fft( squeeze(F(ii,jj,:)) );
+        end
     end
     
-    fourierSpacey = zeros(NT,NY_IN_SIM);
+    fourierSpacey = zeros(NT,1, NY_IN_SIM);
     for ii=1:NY_IN_SIM
-        fourierSpacey(:,ii) = fft( hanning(double(NT)).*kSpacey(:,ii) );
+        for jj=1:1
+            fourierSpacey(:,jj,ii) = fft( hanning(double(NT)).*kSpacey(:,jj,ii) );
+        end
     end
 end
 
+FX = squeeze( mean(fourierSpacex.*conj(fourierSpacex), 3) );
 
 % Frequency spectra
-F = fourierSpacex(1:numel(wAxis),1:numel(xAxis));
-A = F.*conj(F); % (w,k)
+A = FX(1:numel(wAxis),1:numel(xAxis));
 NK = numel(xAxis)/4;
 Spectrum_x = sum(A(:,1:NK),2)*Dk;
-% Spectrum_x = flip(Spectrum_x);
 
 if (ST.params.dimensionality == 2)
-    F = fourierSpacey(1:numel(wAxis),1:numel(yAxis));
-    A = F.*conj(F); % (w,k)
+    FY = squeeze( mean(fourierSpacey.*conj(fourierSpacey), 2) );
+    
+    A = FY(1:numel(wAxis),1:numel(yAxis));
     NK = numel(yAxis)/4;
     Spectrum_y = sum(A(:,1:NK),2)*Dk;
-%     Spectrum_y = flip(Spectrum_y);
 end
 
 wk_fig = figure;
@@ -465,6 +479,7 @@ if (ST.params.dimensionality == 1)
     subplot(1,4,[2 4])
     imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(k_wh, wAxis,'k--');hold off;
     axis xy; colormap(jet); colorbar
     try
         axis([0 max(xAxis) 0 max(wAxis)])
@@ -474,7 +489,7 @@ if (ST.params.dimensionality == 1)
     title(['$' field '_' component '(x)$'],'interpreter','latex')
 else
     % Propagation along x-axis
-    A = fourierSpacex.*conj(fourierSpacex);
+    A = FX(1:numel(wAxis),1:numel(xAxis));
     % Magnetoacoustic wave
     z = linspace(0,max([max(xAxis), max(wAxis)]),10);
     
@@ -488,8 +503,9 @@ else
     
     figure(wk_fig)
     subplot(2,4,[2 4])
-    imagesc(xAxis,wAxis,log10(A(1:NT/2,1:NX_IN_SIM/2)));
+    imagesc(xAxis,wAxis,log10(A));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(k_wh, wAxis,'k--');hold off;
     axis xy; colormap(jet); colorbar
     try
         axis([0 max(xAxis) 0 max(wAxis)])
@@ -499,7 +515,7 @@ else
     title(['$' field '_' component '(x)$'],'interpreter','latex')
     
     % Propagation along x-axis
-    A = fourierSpacey.*conj(fourierSpacey);
+    A = FY(1:numel(wAxis),1:numel(yAxis));
     % Magnetoacoustic wave
     z = linspace(0,max([max(yAxis), max(wAxis)]),10);
     
@@ -513,8 +529,9 @@ else
     
     figure(wk_fig)
     subplot(2,4,[6 8])
-    imagesc(yAxis,wAxis,log10(A(1:NT/2,1:NY_IN_SIM/2)));
+    imagesc(yAxis,wAxis,log10(A));
     hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(k_wh, wAxis,'k--');hold off;
     axis xy; colormap(jet); colorbar
     try
         axis([0 max(xAxis) 0 max(wAxis)])

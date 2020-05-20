@@ -1484,7 +1484,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveEnergy(const simulationParame
 			name.clear();
 
 			name = "kineticEnergyDensity";
-			units = CS->mass*pow(CS->velocity,2)/CS->length;
+			units = (params->dimensionality == 1) ? ( CS->mass*pow(CS->velocity,2)/CS->length ) : ( CS->mass*pow(CS->velocity,2)/pow(CS->length,2) );
 			cpp_type_value = units*kineticEnergyDensity(ii);
 			saveToHDF5(group_ionSpecies, name, &cpp_type_value);
 			name.clear();

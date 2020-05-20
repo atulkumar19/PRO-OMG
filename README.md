@@ -82,17 +82,10 @@ Users using HDF5 versions earlier than 1.8.16 are highly encouraged to follow AL
 
 ### INSTALATION STEPS ###
 
-1. Open install_external_libraries.sh with a text editor and change the option USING_C11_STANDARD to 'yes' or 'no'. This depending if your compiler support the [C++11 standard](http://www.cprogramming.com/c++11/what-is-c++0x.html) or not.
-
-2. Check your versions of C and C++ compilers. To do so, type '*gcc --version*' and '*g++ --version*' on your Terminal.
-
-3. If your versions are higher than 4.4, you have to install the 4.4 versions, too. **Do not uninstall your current versions**, you can install the 4.4 versions along with any other versions on your computer.
-
-4. If you had to install the 4.4 versions of the GNU compilers, then change the line "*CC='gcc -m64' ./configure --prefix=$PREFIX --enable-cxx --enable-production*" to "*CC='gcc-4.4 -m64' ./configure --prefix=$PREFIX --enable-cxx --enable-production*" in the install_external_libraries.sh file.
-
-5. Type the following command on the terminal you are currently working on "*. ./install_external_libraries.sh*", in case you are installing PROMETHEUS++ in a linux computer, or "*. ./install_external_libraries_macos.sh*" if you are on Mac OS. **Note the space between the two full stops**, this is necessary if you want the installation to be done.
-
-6. Your installation will be complete when you get the message "Installation succeeded".
+1. In a system terminal cd to your repo top folder.
+2. Modify the file INSTALL_PRO++.sh to include the compilers (including absolute path if not default system compilers) that you will be using. You can modify *CC*, *CPP*, *CXX*, *FC*, and *MPICXX*.
+3. In the terminal, type the following command: "*. ./INSTALL_PRO++.sh*"
+4. Check for completion status. The installer will install Armadillo C++ first, then HDF5, and finally will build the code.
 
 # PROBLEMS DURING INSTALLATION? #
 

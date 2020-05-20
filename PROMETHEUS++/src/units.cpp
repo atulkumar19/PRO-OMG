@@ -57,9 +57,6 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
 	// Minimum time step defined by CFL condition for whistler waves
 	DT_CFL_W = 0.5*pow(params->mesh.DX/params->ionSkinDepth, 2.0)*params->ionGyroPeriod/( M_PI*M_PI*sqrt((double)params->dimensionality) );
 
-	//*** @todelete
-	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | DT: "   << scientific << params->DTc*params->ionGyroPeriod << " | DT_I: "  << DT_CFL_I << " | DT_W: "  << DT_CFL_W << fixed << endl;
-
 	// We gather DT_CFL_I from all MPI processes
 	double * DT_CFL_I_MPI;
 

@@ -49,10 +49,10 @@ template <class IT> void QUIETSTART<IT>::recalculateNumberSuperParticles(const s
 	//Definition of the initial number of superparticles for each species
     double exponent;
 	if (params->dimensionality == 1){
-		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
+		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
 	    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
 	}else{
-		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0)); //*** @tomodify
+		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
 	    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
 	}
 

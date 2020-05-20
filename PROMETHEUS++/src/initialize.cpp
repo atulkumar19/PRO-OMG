@@ -459,8 +459,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeIonsArrays(const
         IONS->X.col(0) *= params->mesh.DX*params->mesh.NX_IN_SIM;
         IONS->X.col(1) *= params->mesh.DY*params->mesh.NY_IN_SIM;
     }else{
-        IONS->X.col(0) = (params->mesh.DX*params->mesh.NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0)); //*** @tomodify
-        IONS->X.col(1) = (params->mesh.DY*params->mesh.NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1)); //*** @tomodify
+        IONS->X.col(0) = (params->mesh.DX*params->mesh.NX_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[0] + IONS->X.col(0));
+        IONS->X.col(1) = (params->mesh.DY*params->mesh.NY_PER_MPI)*(params->mpi.MPI_CART_COORDS_2D[1] + IONS->X.col(1));
     }
 
     IONS->NCP = (IONS->densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->NSP*params->mpi.NUMBER_MPI_DOMAINS);

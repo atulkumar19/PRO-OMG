@@ -28,13 +28,9 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-% FO_test_1D(ST);
-
-% FO_test_2D(ST);
-
-% FourierAnalysis(ST,'B','x');
-% FourierAnalysis(ST,'B','y');
-FourierAnalysis(ST,'B','z');
+% FourierAnalysis(ST,'B','x', False);
+% FourierAnalysis(ST,'B','y', False);
+FourierAnalysis(ST,'B','z', False);
 
 % FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
@@ -151,167 +147,11 @@ for ii=1:ST.numberOfOutputs
     time(ii) = ST.data.(['D0_O' num2str(ii-1)]).time;
 end
 
+disp(["Simulation time analysed: " + num2str(time(end)/ST.params.scales.ionGyroPeriod(1)) ])
 end
 
 
-function FO_test_1D(ST)
-% Function for testing ExB drift of a GC particle in constant perpendicular
-% electric and magnetic fields.
-NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfParticleSpecies);
-ND = int64(ST.params.numOfDomains);
-DX = int64(ST.params.geometry.DX);
-
-
-ilabels = {};
-
-for ss=1:NSPP
-    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
-    qi = ST.params.ions.(['spp_' num2str(ss)]).Q;
-    NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
-    NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
-    NPARTICLES = ND*NSP;
-    
-    X = zeros(NPARTICLES,NT);
-    V = zeros(NPARTICLES,3,NT);
-    
-    for ii=1:NT
-        for dd=1:ND
-            iIndex = NSP*(dd - 1) + 1;
-            fIndex = iIndex + NSP - 1;
-            
-            X(iIndex:fIndex,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
-            V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
-        end
-    end
-    
-    ilabels{ss} = ['Species ' num2str(ss)];
-    
-    % Time
-    t = ST.time;
-    
-    % Plot test particle position and velocity
-    ii = randi(NPARTICLES);
-    
-    x = squeeze(X(ii,:));
-    v = squeeze(V(ii,:,:));
-    
-    fig = figure;
-    subplot(4,1,1)
-    plot(t, x, 'b.')
-    xlabel('Time [s]','interpreter','latex')
-    ylabel('$X(t)$ [m]','interpreter','latex')
-    
-    figure(fig)
-    subplot(4,1,2)
-    plot(t, v(1,:), 'b.')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_x$ [m/s]','interpreter','latex')
-    
-    figure(fig)
-    subplot(4,1,3)
-    plot(t, v(2,:), 'b.')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_y$ [m/s]','interpreter','latex')
-    
-    figure(fig)
-    subplot(4,1,4)
-    plot(t, v(3,:), 'b.')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_y$ [m/s]','interpreter','latex')
-    
-end
-
-
-end
-
-function FO_test_2D(ST)
-% Function for testing ExB drift of a GC particle in constant perpendicular
-% electric and magnetic fields.
-NT = int64(ST.numberOfOutputs);
-NSPP = int64(ST.params.ions.numberOfParticleSpecies);
-ND = int64(ST.params.numOfDomains);
-DX = int64(ST.params.geometry.DX);
-
-
-ilabels = {};
-
-for ss=1:NSPP
-    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
-    qi = ST.params.ions.(['spp_' num2str(ss)]).Q;
-    NCP = int64(ST.params.ions.(['spp_' num2str(ss)]).NCP);
-    NSP = int64(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
-    NPARTICLES = ND*NSP;
-    Wc = qi*ST.params.Bo(3)/mi;
-    Eo = 1.0E5;
-    Bo = ST.params.Bo(3);
-    
-    X = zeros(NPARTICLES,2,NT);
-    V = zeros(NPARTICLES,3,NT);
-    
-    for ii=1:NT
-        for dd=1:ND
-            iIndex = NSP*(dd - 1) + 1;
-            fIndex = iIndex + NSP - 1;
-            
-            X(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
-            V(iIndex:fIndex,:,ii) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).V;
-        end
-    end
-    
-    ilabels{ss} = ['Species ' num2str(ss)];
-    
-    % Time
-    t = ST.time;
-    
-    % Plot test particle position and velocity
-    ii = randi(NPARTICLES);
-    
-    x = squeeze(X(ii,:,:));
-    v = squeeze(V(ii,:,:));
-    
-    xs = v(1,1)*sin(Wc*t)/Wc - (v(2,1) + Eo/Bo)*cos(Wc*t)/Wc + x(1,1) + (v(2,1) + Eo/Bo)/Wc;
-    xs = mod(xs,ST.params.geometry.LX);
-    xs(xs<0) = xs(xs<0) + ST.params.geometry.LX;
-    
-    ys = v(1,1)*cos(Wc*t)/Wc + (v(2,1) + Eo/Bo)*sin(Wc*t)/Wc - Eo*t/Bo + x(2,1) - v(1,1)/Wc;
-    ys = mod(ys,ST.params.geometry.LY);
-    ys(ys<0) = ys(ys<0) + ST.params.geometry.LY;
-    
-    vxs = v(1,1)*cos(Wc*t) + (v(2,1) + Eo/Bo)*sin(Wc*t);
-    vys = -v(1,1)*sin(Wc*t) + (v(2,1) + Eo/Bo)*cos(Wc*t) - Eo/Bo;
-    
-    fig = figure;
-    subplot(4,1,1)
-    plot(x(1,:), x(2,:), 'b.', xs,ys,'r.', x(1,1), x(2,1),'sm', xs(1),ys(1),'go')
-    xlabel('$X$ [m]','interpreter','latex')
-    ylabel('$Y$ [m]','interpreter','latex')
-    
-    figure(fig)
-    subplot(4,1,2)
-    plot(t, v(1,:), 'b.',t,vxs,'r')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_x$ [m/s]','interpreter','latex')
-    
-    figure(fig)
-    subplot(4,1,3)
-    plot(t, v(2,:), 'b.',t,vys,'r')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_y$ [m/s]','interpreter','latex')
-    
-    figure(fig)
-    subplot(4,1,4)
-    plot(t, v(3,:), 'b.')
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$V_y$ [m/s]','interpreter','latex')
-    
-end
-
-
-end
-
-
-function FourierAnalysis(ST,field,component)
+function FourierAnalysis(ST, field, component, find_maxima)
 if strcmp(component,'x')
     component_num = 1;
 elseif strcmp(component,'y')
@@ -326,7 +166,7 @@ NX_PER_MPI = ST.params.geometry.NX; % Number of cells per domain
 NX_IN_SIM = ST.params.geometry.NX_IN_SIM; % Number of cells in the whole domain
 NY_PER_MPI = ST.params.geometry.NY; % Number of cells per domain
 NY_IN_SIM = ST.params.geometry.NY_IN_SIM; % Number of cells in the whole domain
-SPLIT_DIRECTION = ST.params.geometry.SPLIT_DIRECTION;
+% SPLIT_DIRECTION = ST.params.geometry.SPLIT_DIRECTION;
 
 % Plasma parameters
 qi = ST.params.ions.spp_1.Q;
@@ -386,6 +226,10 @@ yAxis = ST.c*kAxis/wpi;
 
 % Whistlers dispersion relation
 k_wh = sqrt( (1 + (VA/ST.c)^2)*( wAxis.^2./(1 + wAxis) ) );
+
+% Ion cyclotron wave dispersion relation
+
+k_ic = @(w) sqrt( (wci/wpi)^2*(w.^2.*(1.0 + (wpi/wci)^2 - w)./(1 - w)) );
 
 F = zeros(NT,NX_IN_SIM,NY_IN_SIM);
 
@@ -448,15 +292,38 @@ FX = squeeze( mean(fourierSpacex.*conj(fourierSpacex), 3) );
 
 % Frequency spectra
 A = FX(1:numel(wAxis),1:numel(xAxis));
-NK = numel(xAxis)/4;
+NK = floor( numel(xAxis)/3 );
 Spectrum_x = sum(A(:,1:NK),2)*Dk;
+
+% % Local maxima
+if (find_maxima)
+    num_max = 5;
+    FX_max = zeros(num_max, numel(xAxis));
+    wx_max = zeros(num_max, numel(xAxis));
+    try
+        for ii=1:numel(xAxis)
+            [FX_max(:,ii), wx_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
+        end
+    end
+end
+
 
 if (ST.params.dimensionality == 2)
     FY = squeeze( mean(fourierSpacey.*conj(fourierSpacey), 2) );
     
     A = FY(1:numel(wAxis),1:numel(yAxis));
-    NK = numel(yAxis)/4;
+    NK = floor( numel(yAxis)/3 );
     Spectrum_y = sum(A(:,1:NK),2)*Dk;
+    
+    if (find_maxima)
+        FY_max = zeros(num_max, numel(yAxis));
+        wy_max = zeros(num_max, numel(yAxis));
+        try
+            for ii=1:numel(yAxis)
+                [FY_max(:,ii), wy_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
+            end
+        end
+    end
 end
 
 wk_fig = figure;
@@ -480,6 +347,15 @@ if (ST.params.dimensionality == 1)
     imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     hold on;plot(k_wh, wAxis,'k--');hold off;
+    w_ic = linspace(0,1,100);
+    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+    if (find_maxima)
+        for ii=1:numel(xAxis)
+            hold on; 
+            plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');
+            hold off
+        end
+    end
     axis xy; colormap(jet); colorbar
     try
         axis([0 max(xAxis) 0 max(wAxis)])
@@ -506,6 +382,13 @@ else
     imagesc(xAxis,wAxis,log10(A));
     hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
     hold on;plot(k_wh, wAxis,'k--');hold off;
+    w_ic = linspace(0,1,100);
+    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+    if (find_maxima)
+        for ii=1:numel(xAxis)
+            hold on; plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');hold off
+        end
+    end
     axis xy; colormap(jet); colorbar
     try
         axis([0 max(xAxis) 0 max(wAxis)])
@@ -532,6 +415,13 @@ else
     imagesc(yAxis,wAxis,log10(A));
     hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
     hold on;plot(k_wh, wAxis,'k--');hold off;
+    w_ic = linspace(0,1,100);
+    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+    if (find_maxima)
+        for ii=1:numel(yAxis)
+            hold on; plot(yAxis(ii)*ones(1,num_max), wy_max(:,ii),'gx');hold off
+        end
+    end
     axis xy; colormap(jet); colorbar
     try
         axis([0 max(xAxis) 0 max(wAxis)])

@@ -36,7 +36,8 @@ template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * para
 
     recalculateNumberSuperParticles(params, ions);
 
-	unsigned int NTSP = (unsigned int)((int)(2*ions->NSP)*params->mpi.NUMBER_MPI_DOMAINS); // Number of super-particles in entire simulation
+	// Number of super-particles in entire simulation
+	unsigned int NTSP = (unsigned int)((int)(2*ions->NSP)*params->mpi.NUMBER_MPI_DOMAINS);
 
     QUIETSTART::dec = zeros<uvec>(NTSP);
     for(unsigned int ii=1; ii<NTSP; ii++){
@@ -117,71 +118,13 @@ template <class IT> void QUIETSTART<IT>::bit_reversedFractions_base3(const simul
 	}
 }
 
-
-//This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 1D3V.
-template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions){
-    ions->X = zeros<mat>(ions->NSP,3);
-    ions->V = zeros<mat>(ions->NSP,3);
-	ions->Ppar = zeros(ions->NSP);
-    ions->g = zeros(ions->NSP);
-    ions->mu = zeros(ions->NSP);
-
-	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
-	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
-
-    // Initialising positions
-    vec b2fr = zeros(ions->NSP);
-    bit_reversedFractions_base2(params, ions->NSP, &b2fr);
-
-    ions->X.col(0) = b2fr;
-
-    // Initialising gyro-angle
-
-    vec b3fr = zeros(ions->NSP);
-    bit_reversedFractions_base3(params, ions->NSP, &b3fr);
-
-    b3fr *= 2.0*M_PI;
-
-    vec R = zeros(ions->NSP);
-    for(int ii=0;ii<ions->NSP;ii++)
-        R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
-
-	arma::vec V2 = ions->VTper*sqrt( -log( R ) ) % cos(b3fr);
-	arma::vec V3 = ions->VTper*sqrt( -log( R ) ) % sin(b3fr);
-
-    /*
-    srand(time(NULL));
-    double randPhase( (int)(rand()%100)/100.0);
-    randPhase *= 2.0*M_PI;
-
-    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b3fr + randPhase);
-    */
-	arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b3fr);
-
-	for(int pp=0;pp<ions->NSP;pp++){
-		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
-		ions->V(pp,1) = V1(pp)*dot(b1,y) + V2(pp)*dot(b2,y) + V3(pp)*dot(b3,y);
-		ions->V(pp,2) = V1(pp)*dot(b1,z) + V2(pp)*dot(b2,z) + V3(pp)*dot(b3,z);
-
-		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
-        ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
-		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
-	}
-
-    ions->avg_mu = mean(ions->mu);
-}
-
-
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 2D3V.
-template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions){
+template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, IT * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
     ions->g = zeros(ions->NSP);
     ions->mu = zeros(ions->NSP);
-
-	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
-	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
 
     // Initialising positions
 	vec b2fr = zeros(ions->NSP);
@@ -193,20 +136,17 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 	ions->X.col(0) = b2fr;
 	ions->X.col(1) = b3fr;
 
+	b2fr *= 2.0*M_PI;
+	b3fr *= 2.0*M_PI;
 
-	arma::vec R = randu(ions->NSP);
-	arma_rng::set_seed_random();
-	arma::vec phi = 2.0*M_PI*randu<vec>(ions->NSP);
+	unsigned int iInd = ions->NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
+	vec R = zeros(ions->NSP);
+	for(int ii=0;ii<ions->NSP;ii++)
+		R(ii) = ((double)QUIETSTART::dec(ii + iInd) + 0.5 )/ions->NSP;
 
-	arma::vec V2 = ions->VTper*sqrt( -log(1.0 - R) ) % cos(phi);
-	arma::vec V3 = ions->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
-
-	arma_rng::set_seed_random();
-	R = randu<vec>(ions->NSP);
-	arma_rng::set_seed_random();
-	phi = 2.0*M_PI*randu<vec>(ions->NSP);
-
-	arma::vec V1 = ions->VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
+	arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % cos(b2fr);
+	arma::vec V2 = ions->VTper*sqrt( -log( R ) ) % cos(b3fr);
+	arma::vec V3 = ions->VTper*sqrt( -log( R ) ) % sin(b3fr);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -222,106 +162,37 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 }
 
 
-//This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 1D3V
-template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions){
-    ions->X = zeros<mat>(ions->NSP,3);
-    ions->V = zeros<mat>(ions->NSP,3);
-	ions->g = zeros(ions->NSP);
-    ions->Ppar = zeros(ions->NSP);
-    ions->mu = zeros(ions->NSP);
-
-	//ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
-	//ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
-
-    // Initialising positions
-    vec b2fr = zeros(ions->NSP);
-    bit_reversedFractions_base2(params, ions->NSP, &b2fr);
-
-    ions->X.col(0) = b2fr;
-
-    // Initialising gyro-angle
-
-    vec b3fr = zeros(ions->NSP);
-    bit_reversedFractions_base3(params, ions->NSP, &b3fr);
-
-    b3fr *= 2.0*M_PI;
-
-    vec R = zeros(ions->NSP);
-    for(int ii=0;ii<ions->NSP;ii++)
-        R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
-
-	vec tmp = randu<vec>(ions->NSP*params->mpi.NUMBER_MPI_DOMAINS);
-	unsigned int iInd = ions->NSP*params->mpi.MPI_DOMAIN_NUMBER_CART;
-	unsigned int fInd = iInd + ions->NSP - 1;
-
-	vec phi = 2.0*M_PI*tmp.subvec(iInd,fInd);
-
-    arma::vec V2 = ions->VTper*cos(phi);
-	arma::vec V3 = ions->VTper*sin(phi);
-
-    /*
-    srand(time(NULL));
-    double randPhase( (int)(rand()%100)/100.0);
-    randPhase *= 2.0*M_PI;
-
-    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(phi + randPhase);
-    */
-    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(phi);
-
-	for(int pp=0;pp<ions->NSP;pp++){
-		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
-		ions->V(pp,1) = V1(pp)*dot(b1,y) + V2(pp)*dot(b2,y) + V3(pp)*dot(b3,y);
-		ions->V(pp,2) = V1(pp)*dot(b1,z) + V2(pp)*dot(b2,z) + V3(pp)*dot(b3,z);
-
-		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
-        ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
-		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
-	}
-
-    ions->avg_mu = mean(ions->mu);
-}
-
-
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution in 2D3V
-template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions){
+template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, IT * ions){
     ions->X = zeros<mat>(ions->NSP,3);
     ions->V = zeros<mat>(ions->NSP,3);
 	ions->g = zeros(ions->NSP);
     ions->Ppar = zeros(ions->NSP);
     ions->mu = zeros(ions->NSP);
 
-	//ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
-	//ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
-
     // Initialising positions
-    vec b2fr = zeros(ions->NSP);
+	vec b2fr = zeros(ions->NSP);
     bit_reversedFractions_base2(params, ions->NSP, &b2fr);
 
-	b2fr *= 2.0*M_PI;
-
-    ions->X.col(0) = cos(b2fr);
-	ions->X.col(1) = sin(b2fr);
-
-    // Initialising gyro-angle
-
-    vec b3fr = zeros(ions->NSP);
+	vec b3fr = zeros(ions->NSP);
     bit_reversedFractions_base3(params, ions->NSP, &b3fr);
 
-    b3fr *= 2.0*M_PI;
+	ions->X.col(0) = b2fr;
+	ions->X.col(1) = b3fr;
 
-    vec R = zeros(ions->NSP);
-    for(int ii=0;ii<ions->NSP;ii++)
-        R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
+    // Initialising gyro-angle
+    b2fr *= 2.0*M_PI;
+	b3fr *= 2.0*M_PI;
+	
+	unsigned int iInd = ions->NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
+	vec R = zeros(ions->NSP);
+	for(int ii=0;ii<ions->NSP;ii++)
+		R(ii) = ((double)QUIETSTART::dec(ii + iInd) + 0.5 )/ions->NSP;
 
-	vec tmp = randu<vec>(ions->NSP*params->mpi.NUMBER_MPI_DOMAINS);
-	unsigned int iInd = ions->NSP*params->mpi.MPI_DOMAIN_NUMBER_CART;
-	unsigned int fInd = iInd + ions->NSP - 1;
+    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b2fr);
+	arma::vec V2 = ions->VTper*cos(b3fr);
+	arma::vec V3 = ions->VTper*sin(b3fr);
 
-	vec phi = 2.0*M_PI*tmp.subvec(iInd,fInd);
-
-    arma::vec V2 = ions->VTper*cos(phi);
-	arma::vec V3 = ions->VTper*sin(phi);
-    arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(phi);
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);

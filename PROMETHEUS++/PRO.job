@@ -8,8 +8,8 @@
 #BSUB -eo PRO_ERR.%J
 
 
-SIM_ID="2D"
-OUTPUT_FOLDER="2D_64x64_De_perp"
+SIM_ID="ICE_2D_perp"
+OUTPUT_FOLDER="ICE"
 
 REPO_DIR=/home/jjmb_g/leocg_a/PRO++
 HDF5_INSTALL=/home/jjmb_g/leocg_a/PRO++/HDF5/lib
@@ -49,6 +49,12 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_INSTALL}:${ARMADILLO_INSTALL}
 echo "LD_LIBRARY_PATH: "${LD_LIBRARY_PATH}
 echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
 echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}
+
+echo "- - - - - - - - - - - - - - - - - LSF ENVIRONMENT VARIABLES - - - - - - - - - - - - - - - - - -"
+echo "HOSTS: "${LSB_MCPU_HOSTS}
+echo "Number of processes for job: "${LSB_MAX_NUM_PROCESSORSi}
+echo "Number of threads for job: "${LSB_MAX_THREADS_RUSAGE}
+echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 
 if [SIM_ID == ""]; then
         mpirun -np $((NUM_MPI_PROCESSES)) -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) -x HDF5_USE_FILE_LOCKING=FALSE bin/PROMETHEUS++ ${DIMENSIONALITY} ${OUTPUT_FOLDER}

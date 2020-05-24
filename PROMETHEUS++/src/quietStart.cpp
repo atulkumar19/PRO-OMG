@@ -139,10 +139,10 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 	b2fr *= 2.0*M_PI;
 	b3fr *= 2.0*M_PI;
 
-	unsigned int iInd = ions->NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
+	//unsigned int iInd = ions->NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
 	vec R = zeros(ions->NSP);
 	for(int ii=0;ii<ions->NSP;ii++)
-		R(ii) = ((double)QUIETSTART::dec(ii + iInd) + 0.5 )/ions->NSP;
+		R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
 
 	arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % cos(b2fr);
 	arma::vec V2 = ions->VTper*sqrt( -log( R ) ) % cos(b3fr);
@@ -183,11 +183,11 @@ template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simu
     // Initialising gyro-angle
     b2fr *= 2.0*M_PI;
 	b3fr *= 2.0*M_PI;
-	
-	unsigned int iInd = ions->NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
+
+	//unsigned int iInd = ions->NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
 	vec R = zeros(ions->NSP);
 	for(int ii=0;ii<ions->NSP;ii++)
-		R(ii) = ((double)QUIETSTART::dec(ii + iInd) + 0.5 )/ions->NSP;
+		R(ii) = ((double)QUIETSTART::dec(ii) + 0.5 )/ions->NSP;
 
     arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b2fr);
 	arma::vec V2 = ions->VTper*cos(b3fr);

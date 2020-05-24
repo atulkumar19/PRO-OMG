@@ -23,9 +23,9 @@ rm -rf ${OUTPUT_FOLDER}/${SIM_ID}
 
 mkdir ${OUTPUT_FOLDER}
 
-cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}
-cp ${REPO_DIR}/PROMETHEUS++/inputFiles/input_file_${SIM_ID}.input ${OUTPUT_FOLDER}
-cp ${REPO_DIR}/PROMETHEUS++/inputFiles/ions_properties_${SIM_ID}.ion ${OUTPUT_FOLDER}
+cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}/${SIM_ID}
+cp ${REPO_DIR}/PROMETHEUS++/inputFiles/input_file_${SIM_ID}.input ${OUTPUT_FOLDER}/${SIM_ID}
+cp ${REPO_DIR}/PROMETHEUS++/inputFiles/ions_properties_${SIM_ID}.ion ${OUTPUT_FOLDER}/${SIM_ID}
 
 
 # Dimensionality of simulation

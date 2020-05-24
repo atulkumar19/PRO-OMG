@@ -19,7 +19,7 @@ ARMADILLO_INSTALL=/home/jjmb_g/leocg_a/PRO++/arma_libs/lib64
 PATH_TO_TMPU=${TMPU}
 OUTPUT_FOLDER=${PATH_TO_TMPU}/${OUTPUT_FOLDER}
 
-rm -rf ${OUTPUT_FOLDER}
+rm -rf ${OUTPUT_FOLDER}/${SIM_ID}
 
 mkdir ${OUTPUT_FOLDER}
 

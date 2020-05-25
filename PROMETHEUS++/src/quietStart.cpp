@@ -136,6 +136,7 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 	ions->X.col(0) = b2fr;
 	ions->X.col(1) = b3fr;
 
+	/*
 	b2fr *= 2.0*M_PI;
 	b3fr *= 2.0*M_PI;
 
@@ -147,6 +148,21 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 	arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % cos(b2fr);
 	arma::vec V2 = ions->VTper*sqrt( -log( R ) ) % cos(b3fr);
 	arma::vec V3 = ions->VTper*sqrt( -log( R ) ) % sin(b3fr);
+	*/
+	arma::vec R = randu(ions->NSP);
+	arma_rng::set_seed_random();
+	arma::vec phi = 2.0*M_PI*randu<vec>(ions->NSP);
+
+	arma::vec V2 = ions->VTper*sqrt( -log(1.0 - R) ) % cos(phi);
+	arma::vec V3 = ions->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
+
+	arma_rng::set_seed_random();
+	R = randu<vec>(ions->NSP);
+	arma_rng::set_seed_random();
+	phi = 2.0*M_PI*randu<vec>(ions->NSP);
+
+	arma::vec V1 = ions->VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
+
 
 	for(int pp=0;pp<ions->NSP;pp++){
 		ions->V(pp,0) = V1(pp)*dot(b1,x) + V2(pp)*dot(b2,x) + V3(pp)*dot(b3,x);
@@ -180,6 +196,7 @@ template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simu
 	ions->X.col(0) = b2fr;
 	ions->X.col(1) = b3fr;
 
+	/*
     // Initialising gyro-angle
     b2fr *= 2.0*M_PI;
 	b3fr *= 2.0*M_PI;
@@ -192,6 +209,18 @@ template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simu
     arma::vec V1 = ions->VTpar*sqrt( -log( R ) ) % sin(b2fr);
 	arma::vec V2 = ions->VTper*cos(b3fr);
 	arma::vec V3 = ions->VTper*sin(b3fr);
+	*/
+	arma::vec R = randu(ions->NSP);
+	arma_rng::set_seed_random();
+	arma::vec phi = 2.0*M_PI*randu<vec>(ions->NSP);
+
+	arma::vec V2 = ions->VTper*cos(phi);
+	arma::vec V3 = ions->VTper*sin(phi);
+
+	arma_rng::set_seed_random();
+	phi = 2.0*M_PI*randu<vec>(ions->NSP);
+
+	arma::vec V1 = ions->VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
 
 
 	for(int pp=0;pp<ions->NSP;pp++){

@@ -28,9 +28,10 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-% FourierAnalysis(ST,'B','x', False);
-% FourierAnalysis(ST,'B','y', False);
-% FourierAnalysis(ST,'B','z', False);
+% FourierAnalysis(ST,'B','x', false);
+% FourierAnalysis(ST,'B','y', false);
+FourierAnalysis(ST,'B','z', false);
+% FourierAnalysis_(ST,'B','z', false);
 
 % FourierAnalysis(ST,'E','x');
 % FourierAnalysis(ST,'E','y');
@@ -283,6 +284,287 @@ if (ST.params.dimensionality == 2)
     fourierSpacey = zeros(NT,1, NY_IN_SIM);
     for ii=1:NY_IN_SIM
         for jj=1:1
+            fourierSpacey(:,jj,ii) = fft( hanning(double(NT)).*kSpacey(:,jj,ii) );
+        end
+    end
+end
+
+FX = squeeze( mean(fourierSpacex.*conj(fourierSpacex), 3) );
+
+% Frequency spectra
+A = FX(1:numel(wAxis),1:numel(xAxis));
+NK = floor( numel(xAxis)/3 );
+Spectrum_x = sum(A(:,1:NK),2)*Dk;
+
+% % Local maxima
+if (find_maxima)
+    num_max = 5;
+    FX_max = zeros(num_max, numel(xAxis));
+    wx_max = zeros(num_max, numel(xAxis));
+    try
+        for ii=1:numel(xAxis)
+            [FX_max(:,ii), wx_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
+        end
+    end
+end
+
+
+if (ST.params.dimensionality == 2)
+    FY = squeeze( mean(fourierSpacey.*conj(fourierSpacey), 2) );
+    
+    A = FY(1:numel(wAxis),1:numel(yAxis));
+    NK = floor( numel(yAxis)/3 );
+    Spectrum_y = sum(A(:,1:NK),2)*Dk;
+    
+    if (find_maxima)
+        FY_max = zeros(num_max, numel(yAxis));
+        wy_max = zeros(num_max, numel(yAxis));
+        try
+            for ii=1:numel(yAxis)
+                [FY_max(:,ii), wy_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
+            end
+        end
+    end
+end
+
+wk_fig = figure;
+
+if (ST.params.dimensionality == 1)
+    % Propagation along x-axis
+    A = fourierSpacex.*conj(fourierSpacex);
+    % Magnetoacoustic wave
+    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
+    
+    figure(wk_fig)
+    subplot(1,4,1)
+    ax = plot(log10(Spectrum_x),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+    box on; grid on; grid minor
+    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    
+    figure(wk_fig)
+    subplot(1,4,[2 4])
+    imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
+    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(k_wh, wAxis,'k--');hold off;
+    w_ic = linspace(0,1,100);
+    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+    if (find_maxima)
+        for ii=1:numel(xAxis)
+            hold on; 
+            plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');
+            hold off
+        end
+    end
+    axis xy; colormap(jet); colorbar
+    try
+        axis([0 max(xAxis) 0 max(wAxis)])
+    end
+    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    title(['$' field '_' component '(x)$'],'interpreter','latex')
+else
+    % Propagation along x-axis
+    A = FX(1:numel(wAxis),1:numel(xAxis));
+    % Magnetoacoustic wave
+    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
+    
+    figure(wk_fig)
+    subplot(2,4,1)
+    ax = plot(log10(Spectrum_x),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+    box on; grid on; grid minor
+    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    
+    figure(wk_fig)
+    subplot(2,4,[2 4])
+    imagesc(xAxis,wAxis,log10(A));
+    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(k_wh, wAxis,'k--');hold off;
+    w_ic = linspace(0,1,100);
+    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+    if (find_maxima)
+        for ii=1:numel(xAxis)
+            hold on; plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');hold off
+        end
+    end
+    axis xy; colormap(jet); colorbar
+    try
+        axis([0 max(xAxis) 0 max(wAxis)])
+    end
+    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    title(['$' field '_' component '(x)$'],'interpreter','latex')
+    
+    % Propagation along x-axis
+    A = FY(1:numel(wAxis),1:numel(yAxis));
+    % Magnetoacoustic wave
+    z = linspace(0,max([max(yAxis), max(wAxis)]),10);
+    
+    figure(wk_fig)
+    subplot(2,4,5)
+    ax = plot(log10(Spectrum_y),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+    box on; grid on; grid minor
+    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    
+    figure(wk_fig)
+    subplot(2,4,[6 8])
+    imagesc(yAxis,wAxis,log10(A));
+    hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
+    hold on;plot(k_wh, wAxis,'k--');hold off;
+    w_ic = linspace(0,1,100);
+    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+    if (find_maxima)
+        for ii=1:numel(yAxis)
+            hold on; plot(yAxis(ii)*ones(1,num_max), wy_max(:,ii),'gx');hold off
+        end
+    end
+    axis xy; colormap(jet); colorbar
+    try
+        axis([0 max(xAxis) 0 max(wAxis)])
+    end
+    xlabel('$ck_y/\omega_p$', 'Interpreter', 'latex')
+    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+    title(['$' field '_' component '(y)$'],'interpreter','latex')
+end
+end
+
+function FourierAnalysis_(ST, field, component, find_maxima)
+if strcmp(component,'x')
+    component_num = 1;
+elseif strcmp(component,'y')
+    component_num = 2;
+elseif strcmp(component,'z')
+    component_num = 3;
+end
+
+
+ND = ST.params.numOfDomains; % Number of domains
+NX_PER_MPI = ST.params.geometry.NX; % Number of cells per domain
+NX_IN_SIM = ST.params.geometry.NX_IN_SIM; % Number of cells in the whole domain
+NY_PER_MPI = ST.params.geometry.NY; % Number of cells per domain
+NY_IN_SIM = ST.params.geometry.NY_IN_SIM; % Number of cells in the whole domain
+% SPLIT_DIRECTION = ST.params.geometry.SPLIT_DIRECTION;
+
+% Plasma parameters
+qi = ST.params.ions.spp_1.Q;
+mi = ST.params.ions.spp_1.M;
+Bo = sqrt(dot(ST.params.Bo,ST.params.Bo));
+
+ne = ST.params.ions.ne;
+ni = ST.params.ions.ne;
+wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
+
+wci = qi*Bo/mi; % Ion cyclotron frequency
+wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
+
+wci = double(wci);
+wce = double(wce);
+wpi = double(wpi);
+
+% Alfven speed
+VA = Bo/sqrt( ST.mu0*ne*mi );
+VA = double(VA);
+
+% Lower hybrid frequency
+wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );
+wlh = wlh/wci;
+
+disp(['Lower hybrid frequency: ' num2str(wlh)]);
+
+% % % % % % Fourier variables % % % % % % 
+time = ST.time;
+DT = mean(diff(time));
+
+% *** @tomodify
+NT = int32(ST.numberOfOutputs); % Number of snapshots
+% NT = find((time-2.5)>0, 1);
+
+Df = 1.0/(DT*double(NT));
+fmax = 1.0/(2.0*double(DT)); % Nyquist theorem
+fAxis = 0:Df:fmax-Df;
+
+wAxis = 2*pi*fAxis/wci;
+
+
+DX = ST.params.geometry.DX;
+Dk = 1.0/(DX*double(NX_IN_SIM));
+kmax = 1.0/(2.0*DX);
+kAxis = 0:Dk:kmax-Dk;
+kAxis = 2.0*pi*kAxis;
+xAxis = ST.c*kAxis/wpi;
+
+DY = ST.params.geometry.DY;
+Dk = 1.0/(DY*double(NY_IN_SIM));
+kmax = 1.0/(2.0*DY);
+kAxis = 0:Dk:kmax-Dk;
+kAxis = 2.0*pi*kAxis;
+yAxis = ST.c*kAxis/wpi;
+% % % % % % Fourier variables % % % % % % 
+
+% Whistlers dispersion relation
+k_wh = sqrt( (1 + (VA/ST.c)^2)*( wAxis.^2./(1 + wAxis) ) );
+
+% Ion cyclotron wave dispersion relation
+
+k_ic = @(w) sqrt( (wci/wpi)^2*(w.^2.*(1.0 + (wpi/wci)^2 - w)./(1 - w)) );
+
+F = zeros(NT,NX_IN_SIM,NY_IN_SIM);
+
+for ii=1:NT
+    for dd=1:ND   
+        if (ST.params.geometry.SPLIT_DIRECTION == 0)
+            ix = (dd-1)*NX_PER_MPI + 1;
+            fx = dd*NX_PER_MPI;
+            iy = 1;
+            fy = NY_PER_MPI;
+        else
+            ix = 1;
+            fx = NX_PER_MPI;
+            iy = (dd-1)*NY_PER_MPI + 1;
+            fy = dd*NY_PER_MPI;
+        end
+        
+        if strcmp(field,'B')
+            F(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component)  - ST.params.Bo(component_num);
+        else
+            F(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
+        end
+    end
+end
+
+% x-axis
+kSpacex = zeros(NT, NX_IN_SIM, NY_IN_SIM);
+for ii=1:NT
+    for jj=1:NY_IN_SIM
+        kSpacex(ii,:,jj) = fft( squeeze(F(ii,:,jj)) );
+    end
+end
+
+fourierSpacex = zeros(NT, NX_IN_SIM, NY_IN_SIM);
+for ii=1:NX_IN_SIM
+    for jj=1:NY_IN_SIM
+        fourierSpacex(:,ii,jj) = fft(hanning(double(NT)).*kSpacex(:,ii,jj));
+    end
+end
+
+
+if (ST.params.dimensionality == 2)
+    % y-axis
+    kSpacey = zeros(NT,NX_IN_SIM,NY_IN_SIM);
+    for ii=1:NT
+        for jj=1:NX_IN_SIM
+            kSpacey(ii,jj,:) = fft( squeeze(F(ii,jj,:)) );
+        end
+    end
+    
+    fourierSpacey = zeros(NT,NX_IN_SIM, NY_IN_SIM);
+    for ii=1:NY_IN_SIM
+        for jj=1:NX_IN_SIM
             fourierSpacey(:,jj,ii) = fft( hanning(double(NT)).*kSpacey(:,jj,ii) );
         end
     end

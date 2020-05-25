@@ -206,9 +206,9 @@ public:
 	arma::vec wxr_;				// Particles' weights w.r.t. the vertices of the grid cells
 
 	arma::vec n; 				// Ion density at time level "l + 1"
-	arma::vec n_; 				// Ion density at time level "l - 1;
-	arma::vec n__; 				// Ion density at time level "l - 2;
-	arma::vec n___; 			// Ion density at time level "l - 3;
+	arma::vec n_; 				// Ion density at time level "l"
+	arma::vec n__; 				// Ion density at time level "l - 1"
+	arma::vec n___; 			// Ion density at time level "l - 2"
 	vfield_vec nv; 				// Ion bulk velocity at time level "l + 1/2"
 	vfield_vec nv_; 			// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 			// Ion bulk velocity at time level "l - 3/2"
@@ -268,9 +268,9 @@ public:
 	arma::vec wyr;				// Particles' weights w.r.t. the vertices of the grid cells
 
 	arma::mat n; 		// Ion density at time level "l + 1"
-	arma::mat n_; 		// Ion density at time level "l - 1;
-	arma::mat n__; 		// Ion density at time level "l - 2;
-	arma::mat n___; 	// Ion density at time level "l - 3;
+	arma::mat n_; 		// Ion density at time level "l"
+	arma::mat n__; 		// Ion density at time level "l - 1"
+	arma::mat n___; 	// Ion density at time level "l - 2"
 	vfield_mat nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"

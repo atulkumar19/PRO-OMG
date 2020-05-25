@@ -540,14 +540,14 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 			V1D.n__.zeros();
 			V1D.U__.zeros();
 			for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
-				fillGhosts(&IONS->at(ii).n__);
+				fillGhosts(&IONS->at(ii).n___);
 				fillGhosts(&IONS->at(ii).nv__.X);
 				fillGhosts(&IONS->at(ii).nv__.Y);
 				fillGhosts(&IONS->at(ii).nv__.Z);
 
 				// Ions density at time level "l - 3/2"
 				// n(l-3/2) = ( n(l-1) + n(l-2) )/2
-				V1D.n__ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) );
+				V1D.n__ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.subvec(iIndex - 1,fIndex + 1) + IONS->at(ii).n___.subvec(iIndex - 1,fIndex + 1) );
 
 				//sum_k[ Z_k*n_k*u_k ]
 				V1D.U__.X += IONS->at(ii).Z*IONS->at(ii).nv__.X.subvec(iIndex-1,fIndex+1);
@@ -571,6 +571,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		V1D.V = V1D.U;
 		V1D.ne = V1D.n;
 	}
+
 
 	// We compute the curl(B).
 	vfield_vec curlB(NX_T);
@@ -698,7 +699,6 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 	// We calculate the number density and bulk velocities at time level "l + 1/2"
 	V2D.n.zeros();
 	V2D.U.zeros();
-
 	for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 			fillGhosts(&IONS->at(ii).n);
 			fillGhosts(&IONS->at(ii).nv.X);
@@ -727,7 +727,6 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 		V2D._n.zeros();
 		V2D.n_.zeros();
 		V2D.U_.zeros();
-
 		for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
 			fillGhosts(&IONS->at(ii).n);
 			fillGhosts(&IONS->at(ii).n_);
@@ -759,16 +758,15 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 		if(BAE){
 			V2D.n__.zeros();
 			V2D.U__.zeros();
-
 			for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
-				fillGhosts(&IONS->at(ii).n__);
+				fillGhosts(&IONS->at(ii).n___);
 				fillGhosts(&IONS->at(ii).nv__.X);
 				fillGhosts(&IONS->at(ii).nv__.Y);
 				fillGhosts(&IONS->at(ii).nv__.Z);
 
 				// Ions density at time level "l - 3/2"
 				// n(l-3/2) = ( n(l-1) + n(l-2) )/2
-				V2D.n__ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.submat(irow-1,icol-1,frow+1,fcol+1) + IONS->at(ii).n__.submat(irow-1,icol-1,frow+1,fcol+1) );
+				V2D.n__ += 0.5*IONS->at(ii).Z*( IONS->at(ii).n__.submat(irow-1,icol-1,frow+1,fcol+1) + IONS->at(ii).n___.submat(irow-1,icol-1,frow+1,fcol+1) );
 
 				//sum_k[ Z_k*n_k*u_k ]
 				V2D.U__.X += IONS->at(ii).Z*IONS->at(ii).nv__.X.submat(irow-1,icol-1,frow+1,fcol+1);

@@ -20,7 +20,7 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeKineticEner
     for(int ss=0; ss<IONS->size(); ss++){
         kineticEnergyDensity(ss) = arma::sum(IONS->at(ss).g - 1.0)*IONS->at(ss).NCP*IONS->at(ss).M*F_C_DS*F_C_DS;
 
-        kineticEnergyDensity(ss) = (params->dimensionality == 1) ? (kineticEnergyDensity(ss)/params->mesh.DX) : (kineticEnergyDensity(ss)/(params->mesh.DX*params->mesh.DY));
+        kineticEnergyDensity(ss) = (params->dimensionality == 1) ? (kineticEnergyDensity(ss)/params->mesh.LX) : (kineticEnergyDensity(ss)/(params->mesh.LX*params->mesh.LY));
     }
 }
 
@@ -38,6 +38,8 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
     magneticEnergyDensity(1) = 0.5*arma::sum( E_Y )/F_MU_DS;
     magneticEnergyDensity(2) = 0.5*arma::sum( E_Z )/F_MU_DS;
 
+    magneticEnergyDensity /= (double)params->mesh.NX_IN_SIM;
+
     E_X = arma::pow(EB->E.X.subvec(iIndex,fIndex), 2);
     E_Y = arma::pow(EB->E.Y.subvec(iIndex,fIndex), 2);
     E_Z = arma::pow(EB->E.Z.subvec(iIndex,fIndex), 2);
@@ -45,6 +47,8 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
     electricEnergyDensity(0) = 0.5*F_EPSILON_DS*arma::sum( E_X );
     electricEnergyDensity(1) = 0.5*F_EPSILON_DS*arma::sum( E_Y );
     electricEnergyDensity(2) = 0.5*F_EPSILON_DS*arma::sum( E_Z );
+
+    electricEnergyDensity /= (double)params->mesh.NX_IN_SIM;
 }
 
 
@@ -63,6 +67,8 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
     magneticEnergyDensity(1) = 0.5*arma::sum( arma::sum( E_Y ) )/F_MU_DS;
     magneticEnergyDensity(2) = 0.5*arma::sum( arma::sum( E_Z ) )/F_MU_DS;
 
+    magneticEnergyDensity /= (double)(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
+
     E_X = arma::pow(EB->E.X.submat(irow,icol,frow,fcol), 2);
     E_Y = arma::pow(EB->E.Y.submat(irow,icol,frow,fcol), 2);
     E_Z = arma::pow(EB->E.Z.submat(irow,icol,frow,fcol), 2);
@@ -70,6 +76,8 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
     electricEnergyDensity(0) = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E_X ) );
     electricEnergyDensity(1) = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E_Y ) );
     electricEnergyDensity(2) = 0.5*F_EPSILON_DS*arma::sum( arma::sum( E_Z ) );
+
+    electricEnergyDensity /= (double)(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM);
 }
 
 

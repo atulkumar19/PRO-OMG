@@ -64,20 +64,9 @@ public:
 
     QUIETSTART(const simulationParameters * params, IT * ions);
 
-/*
-	void maxwellianVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions);
-
-	void maxwellianVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions);
-*/
 	void maxwellianVelocityDistribution(const simulationParameters * params, IT * ions);
 
 	void ringLikeVelocityDistribution(const simulationParameters * params, IT * ions);
-
-/*
-    void ringLikeVelocityDistribution(const simulationParameters * params, oneDimensional::ionSpecies * ions);
-
-	void ringLikeVelocityDistribution(const simulationParameters * params, twoDimensional::ionSpecies * ions);
-*/
 
 };
 

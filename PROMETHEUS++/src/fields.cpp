@@ -72,10 +72,50 @@ void EMF_SOLVER::MPI_Allgathervec(const simulationParameters * params, arma::vec
 }
 
 
+/*
 void EMF_SOLVER::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
 	MPI_Allgathervec(params, &vfield->X);
 	MPI_Allgathervec(params, &vfield->Y);
 	MPI_Allgathervec(params, &vfield->Z);
+}
+*/
+
+void EMF_SOLVER::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
+	unsigned int iIndex = params->mpi.iIndex;
+	unsigned int fIndex = params->mpi.fIndex;
+
+	arma::vec sendbuf = arma::zeros(3*params->mesh.NX_PER_MPI);
+	arma::vec recvbuf = arma::zeros(3*params->mesh.NX_IN_SIM);
+
+	// Generate send buffer with subdomains of X, Y, and Z components of vector field
+	sendbuf.subvec(0, params->mesh.NX_PER_MPI-1) 							= vfield->X.subvec(iIndex, fIndex);
+	sendbuf.subvec(params->mesh.NX_PER_MPI, 2*params->mesh.NX_PER_MPI-1) 	= vfield->Y.subvec(iIndex, fIndex);
+	sendbuf.subvec(2*params->mesh.NX_PER_MPI, 3*params->mesh.NX_PER_MPI-1) 	= vfield->Z.subvec(iIndex, fIndex);
+
+	MPI_Allgather(sendbuf.memptr(), 3*params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), 3*params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+
+	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
+		int ie = mpis*params->mesh.NX_PER_MPI + 1;
+		int fe = (mpis + 1)*params->mesh.NX_PER_MPI;
+
+		// x-component
+		int ii = 3*mpis*params->mesh.NX_PER_MPI;
+		int fi = (1 + 3*mpis)*params->mesh.NX_PER_MPI - 1;
+
+		vfield->X.subvec(ie,fe) = recvbuf.subvec(ii,fi);
+
+		// y-component
+		ii = (3*mpis + 1)*params->mesh.NX_PER_MPI;
+		fi = (2 + 3*mpis)*params->mesh.NX_PER_MPI - 1;
+
+		vfield->Y.subvec(ie,fe) = recvbuf.subvec(ii,fi);
+
+		// z-component
+		ii = (3*mpis + 2)*params->mesh.NX_PER_MPI;
+		fi = (3 + 3*mpis)*params->mesh.NX_PER_MPI - 1;
+
+		vfield->Z.subvec(ie,fe) = recvbuf.subvec(ii,fi);
+	}
 }
 
 

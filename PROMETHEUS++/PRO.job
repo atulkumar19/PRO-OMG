@@ -1,14 +1,15 @@
 #!/bin/bash
 #BSUB -q q_hpc
-#BSUB -n 16
-#BSUB -m 'g2_a'
+#BSUB -n 64
+###BSUB -R "span[hosts=1]"
+#BSUB -m 'g3_a'
 #BSUB -J PRO++
 #BSUB -W 72:00
 #BSUB -oo PRO_OUT.%J
 #BSUB -eo PRO_ERR.%J
 
 
-SIM_ID="ICE_2D_perp"
+SIM_ID="1D_ICE_BASE"
 OUTPUT_FOLDER="ICE"
 
 REPO_DIR=/home/jjmb_g/leocg_a/PRO++
@@ -16,26 +17,26 @@ HDF5_INSTALL=/home/jjmb_g/leocg_a/PRO++/HDF5/lib
 ARMADILLO_INSTALL=/home/jjmb_g/leocg_a/PRO++/arma_libs/lib64
 
 # Create output folder
-PATH_TO_TMPU=${TMPU}
-OUTPUT_FOLDER=${PATH_TO_TMPU}/${OUTPUT_FOLDER}
+PATH_TO_STORAGE=${TMPU}
+OUTPUT_FOLDER=${PATH_TO_STORAGE}/${OUTPUT_FOLDER}
 
 rm -rf ${OUTPUT_FOLDER}/${SIM_ID}
 
 mkdir ${OUTPUT_FOLDER}
 
-cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}/${SIM_ID}
-cp ${REPO_DIR}/PROMETHEUS++/inputFiles/input_file_${SIM_ID}.input ${OUTPUT_FOLDER}/${SIM_ID}
-cp ${REPO_DIR}/PROMETHEUS++/inputFiles/ions_properties_${SIM_ID}.ion ${OUTPUT_FOLDER}/${SIM_ID}
+#cp ${REPO_DIR}/PROMETHEUS++/PRO.job ${OUTPUT_FOLDER}/${SIM_ID}
+#cp ${REPO_DIR}/PROMETHEUS++/inputFiles/input_file_${SIM_ID}.input ${OUTPUT_FOLDER}/${SIM_ID}
+#cp ${REPO_DIR}/PROMETHEUS++/inputFiles/ions_properties_${SIM_ID}.ion ${OUTPUT_FOLDER}/${SIM_ID}
 
 
 # Dimensionality of simulation
-DIMENSIONALITY="2-D"
+DIMENSIONALITY="1-D"
 
 # Available number of cores in system
-NUM_CORES=16
+NUM_CORES=64
 
 # Number of MPI processes
-NUM_MPI_PROCESSES=16
+NUM_MPI_PROCESSES=65
 
 # Number of OMP threads per MPI
 NUM_OMP_PER_MPI=$((NUM_CORES/NUM_MPI_PROCESSES))
@@ -46,6 +47,7 @@ export  HDF5_USE_FILE_LOCKING=FALSE
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HDF5_INSTALL}:${ARMADILLO_INSTALL}
 
+echo "Output Folder: "${OUTPUT_FOLDER}
 echo "LD_LIBRARY_PATH: "${LD_LIBRARY_PATH}
 echo "Number of MPI processes: "${NUM_MPI_PROCESSES}
 echo "Number of OMP threads per MPI: "${NUM_OMP_PER_MPI}

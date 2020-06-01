@@ -33,7 +33,7 @@ void PIC::MPI_AllreduceVec(const simulationParameters * params, arma::vec * v){
 
 
 void PIC::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
-	arma::mat recvbuf = zeros(m->n_rows,m->n_cols);
+	arma::mat recvbuf = zeros(m->n_rows, m->n_cols);
 
 	MPI_Allreduce(m->memptr(), recvbuf.memptr(), m->n_elem, MPI_DOUBLE, MPI_SUM, params->mpi.MPI_TOPO);
 

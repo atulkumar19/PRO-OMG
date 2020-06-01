@@ -5,12 +5,12 @@ restart                     0
 BC                          1
 loadFields                  0
 numberOfRKIterations        5
-smoothingParameter          2.5E-3
+smoothingParameter          1.0E-4
 filtersPerIterationFields   1
 filtersPerIterationIons     0
 DTc                         1.0E-2
 simulationTime              5.0
-outputCadence               0.02
+outputCadence               0.01
 numberOfParticleSpecies     1
 numberOfTracerSpecies       0
 ne                          1.0E19
@@ -18,9 +18,9 @@ Te                          1.0E3
 Bo                          2.1
 theta                       0.0
 phi                         0.0
-NX                          1024
+NX                          128
 NY                          1
 NZ                          1
 DrL                         1.0
 dp                          -1
-outputs_variables           {B,E,g}
+outputs_variables           {B,E}

@@ -105,8 +105,6 @@ template <class IT, class FT> class HDF{
 
 	void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it);
 
-	void armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector);
-
 
 	void saveEnergy(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it);
 

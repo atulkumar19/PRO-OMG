@@ -76,25 +76,6 @@ template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_mat(const sim
 }
 
 
-#ifdef HDF5_FLOAT
-template <class IT, class FT> void HDF<IT,FT>::armaCastDoubleToFloat(vec * doubleVector, fvec * floatVector){
-	int N_ELEM((*doubleVector).n_elem);
-	int ii;
-	(*floatVector).set_size(N_ELEM);
-
-	#pragma omp parallel shared(doubleVector, floatVector) private(ii)
-	{
-		#pragma omp for
-		for(ii=0;ii<N_ELEM;ii++){
-			(*floatVector)(ii) = (float)(*doubleVector)(ii);
-		}
-	}//End of the parallel region
-
-
-}
-#endif
-
-
 // Function to save a single integer value
 template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, int * value){
 	H5std_string nameSpace( name );

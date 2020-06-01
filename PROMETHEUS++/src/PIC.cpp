@@ -298,7 +298,7 @@ void PIC::assignCell(const simulationParameters * params, oneDimensional::ionSpe
 
 	#pragma omp single
 	{
-	LOGIC = ( X > 0 );//If , aux > 0, then the particle is on the right of the meshnode
+	LOGIC = ( X > 0 ); // If , aux > 0, then the particle is on the right of the meshnode
 	X = abs(X);
 	}
 

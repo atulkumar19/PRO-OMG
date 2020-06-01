@@ -18,6 +18,11 @@
 
 #include "types.h"
 
+vfield_vec::vfield_vec(unsigned int N){
+	X = arma::zeros(N);
+	Y = arma::zeros(N);
+	Z = arma::zeros(N);
+}
 
 vfield_vec vfield_vec::operator+(vfield_vec R) {
 	vfield_vec T;
@@ -121,6 +126,14 @@ void vfield_vec::fill(double value){
 	X.fill(value);
 	Y.fill(value);
 	Z.fill(value);
+}
+
+
+
+vfield_mat::vfield_mat(unsigned int N, unsigned int M){
+	X = arma::zeros(N,M);
+	Y = arma::zeros(N,M);
+	Z = arma::zeros(N,M);
 }
 
 

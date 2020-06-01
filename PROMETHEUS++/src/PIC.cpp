@@ -274,50 +274,37 @@ void PIC::assignCell(const simulationParameters * params, oneDimensional::ionSpe
 
 	int NSP(IONS->NSP);//number of superparticles
 
-	arma::vec X = zeros(NSP);
-	uvec LOGIC;
+	double X = 0.0;
+	bool LOGIC;
 
 	IONS->wxc.zeros();
 	IONS->wxl.zeros();
 	IONS->wxr.zeros();
 
-	#pragma omp parallel shared(IONS, X, NSP, LOGIC)
-	{
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++)
+	#pragma omp parallel for default(none) shared(IONS, params) private(X, LOGIC) firstprivate(NSP)
+	for(int ii=0; ii<NSP; ii++){
 		IONS->mn(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
 
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++){
 		if(IONS->mn(ii) != params->mesh.NX_IN_SIM){
-			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii));
+			X = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii));
 		}else{
-			X(ii) = IONS->X(ii,0) - params->mesh.LX;
+			X = IONS->X(ii,0) - params->mesh.LX;
+		}
+
+		// If , X > 0, then the particle is on the right of the meshnode
+		LOGIC = X > 0.0;
+		X = abs(X);
+
+		IONS->wxc(ii) = 0.75 - (X/params->mesh.DX)*(X/params->mesh.DX);
+
+		if(LOGIC){
+			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+		}else{
+			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
 		}
 	}
-
-	#pragma omp single
-	{
-	LOGIC = ( X > 0 ); // If , aux > 0, then the particle is on the right of the meshnode
-	X = abs(X);
-	}
-
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++)
-		IONS->wxc(ii) = 0.75 - (X(ii)/params->mesh.DX)*(X(ii)/params->mesh.DX);
-
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++){
-		if(LOGIC(ii) == 1){
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
-		}else{
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
-		}
-	}
-
-	}//End of the parallel region
 
     #ifdef CHECKS_ON
 	if(!IONS->mn.is_finite()){
@@ -340,14 +327,10 @@ void PIC::assignCell(const simulationParameters * params, twoDimensional::ionSpe
 
 	int NSP(IONS->NSP);//number of superparticles
 
-	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | NSP: " << NSP << " | RNSP: " << IONS->wxc.n_elem << endl;
-	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->wxc.n_elem << " | " << IONS->wxr.n_elem << " | " << IONS->wxl.n_elem << " | " << IONS->wyc.n_elem << " | " << IONS->wyr.n_elem << " | " << IONS->wyl.n_elem << endl;
-	// cout << "MPI: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " | " << IONS->mn.n_rows << " | " << IONS->X.n_rows << endl;
-
-	arma::vec X = zeros(NSP);
-	arma::vec Y = zeros(NSP);
-	uvec LOGIC_X;
-	uvec LOGIC_Y;
+	double X;
+	double Y;
+	bool LOGIC_X;
+	bool LOGIC_Y;
 
 	IONS->wxc.zeros();
 	IONS->wxl.zeros();
@@ -357,64 +340,50 @@ void PIC::assignCell(const simulationParameters * params, twoDimensional::ionSpe
 	IONS->wyl.zeros();
 	IONS->wyr.zeros();
 
-	#pragma omp parallel shared(IONS, X, Y, NSP, LOGIC_X, LOGIC_Y)
-	{
-	#pragma omp for
+	#pragma omp parallel for default(none) shared(IONS, params) private(X, Y, LOGIC_X, LOGIC_Y) firstprivate(NSP)
 	for(int ii=0; ii<NSP; ii++){
 		IONS->mn(ii,0) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
 		IONS->mn(ii,1) = floor((IONS->X(ii,1) + 0.5*params->mesh.DY)/params->mesh.DY);
-	}
 
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++){
 		if(IONS->mn(ii,0) != params->mesh.NX_IN_SIM){
-			X(ii) = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii,0));
+			X = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii,0));
 		}else{
-			X(ii) = IONS->X(ii,0) - params->mesh.LX;
+			X = IONS->X(ii,0) - params->mesh.LX;
 		}
 
 		if(IONS->mn(ii,1) != params->mesh.NY_IN_SIM){
-			Y(ii) = IONS->X(ii,1) - params->mesh.nodes.Y(IONS->mn(ii,1));
+			Y = IONS->X(ii,1) - params->mesh.nodes.Y(IONS->mn(ii,1));
 		}else{
-			Y(ii) = IONS->X(ii,1) - params->mesh.LY;
-		}
-	}
-
-	#pragma omp single
-	{
-	LOGIC_X = ( X > 0 );//If , aux > 0, then the particle is on the right of the meshnode
-	X = abs(X);
-
-	LOGIC_Y = ( Y > 0 );//If , aux > 0, then the particle is on the right of the meshnode
-	Y = abs(Y);
-	}
-
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++){
-		IONS->wxc(ii) = 0.75 - (X(ii)/params->mesh.DX)*(X(ii)/params->mesh.DX);
-		IONS->wyc(ii) = 0.75 - (Y(ii)/params->mesh.DY)*(Y(ii)/params->mesh.DY);
-	}
-
-	#pragma omp for
-	for(int ii=0; ii<NSP; ii++){
-		if(LOGIC_X(ii) == 1){
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
-		}else{
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX - X(ii))/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX)*(1.5 - (params->mesh.DX + X(ii))/params->mesh.DX);
+			Y = IONS->X(ii,1) - params->mesh.LY;
 		}
 
-		if(LOGIC_Y(ii) == 1){
-			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY);
-			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY);
+		LOGIC_X = X > 0;
+		// If X > 0, then the particle is on the right of the meshnode
+		X = abs(X);
+
+		// If Y > 0, then the particle is on the right of the meshnode
+		LOGIC_Y = Y > 0;
+		Y = abs(Y);
+
+		IONS->wxc(ii) = 0.75 - (X/params->mesh.DX)*(X/params->mesh.DX);
+		IONS->wyc(ii) = 0.75 - (Y/params->mesh.DY)*(Y/params->mesh.DY);
+
+		if(LOGIC_X){
+			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
 		}else{
-			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY - Y(ii))/params->mesh.DY);
-			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY)*(1.5 - (params->mesh.DY + Y(ii))/params->mesh.DY);
+			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+		}
+
+		if(LOGIC_Y){
+			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY + Y)/params->mesh.DY)*(1.5 - (params->mesh.DY + Y)/params->mesh.DY);
+			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY - Y)/params->mesh.DY)*(1.5 - (params->mesh.DY - Y)/params->mesh.DY);
+		}else{
+			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY - Y)/params->mesh.DY)*(1.5 - (params->mesh.DY - Y)/params->mesh.DY);
+			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY + Y)/params->mesh.DY)*(1.5 - (params->mesh.DY + Y)/params->mesh.DY);
 		}
 	}
-
-	}//End of the parallel region
 
     #ifdef CHECKS_ON
 	if(!IONS->mn.is_finite()){
@@ -424,12 +393,14 @@ void PIC::assignCell(const simulationParameters * params, twoDimensional::ionSpe
 }
 
 
-void PIC::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB){
-	if(A->n_elem != B->n_elem){
-		cerr<<"\nERROR: The number of elements of A and B, unable to calculate AxB.\n";
-		exit(1);
-	}
+void PIC::crossProduct(const arma::vec A, const arma::vec B, arma::vec * AxB){
+	(*AxB)(0) = A(1)*B(2) - A(2)*B(1);
+	(*AxB)(1) = A(2)*B(0) - A(0)*B(2);
+	(*AxB)(2) = A(0)*B(1) - A(1)*B(0);
+}
 
+
+void PIC::crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB){
 	AxB->set_size(A->n_rows, 3);//Here we set up the size of the matrix AxB.
 
 	AxB->col(0) = A->col(1)%B->col(2) - A->col(2)%B->col(1);//(AxB)_x
@@ -451,11 +422,10 @@ void PIC::eiv(const simulationParameters * params, oneDimensional::ionSpecies * 
 	int NSP(IONS->NSP);
 	IONS->nv.zeros(); // Setting to zero the ions' bulk velocity
 
-	vfield_vec nv;
-	nv.zeros(params->mesh.NX_IN_SIM + 4);
-
-	#pragma omp parallel shared(params, IONS) firstprivate(nv)
+	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
+		vfield_vec nv(params->mesh.NX_IN_SIM + 4);
+
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
 			int ix = IONS->mn(ii) + 2;
@@ -512,11 +482,10 @@ void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * 
 	int NSP(IONS->NSP);
 	IONS->nv.zeros(); // Setting to zero the ions' bulk velocity
 
-	vfield_mat nv;
-	nv.zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4);
-
-	#pragma omp parallel shared(params, IONS) firstprivate(nv)
+	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
+		vfield_mat nv(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4);
+
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
 			int ix = IONS->mn(ii,0) + 2;
@@ -602,12 +571,13 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NSP(IONS->NSP);
-	arma::vec n = zeros(params->mesh.NX_IN_SIM + 4); // Four ghosht cells considereds
 
 	IONS->n.zeros(); // Setting to zero the ion density.
 
-	#pragma omp parallel shared(params, IONS, NSP) firstprivate(n)
+	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
+		arma::vec n = zeros(params->mesh.NX_IN_SIM + 4); // Four ghosht cells considereds
+
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
 			int ix = IONS->mn(ii) + 2;
@@ -641,12 +611,13 @@ void PIC::eid(const simulationParameters * params, twoDimensional::ionSpecies * 
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NSP(IONS->NSP);
-	arma::mat n = zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4); // Four ghosht cells considereds
 
 	IONS->n.zeros(); // Setting to zero the ion density.
 
-	#pragma omp parallel shared(params, IONS, NSP) firstprivate(n)
+	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
+		arma::mat n = zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4); // Four ghosht cells considereds
+
 		#pragma omp for
 		for(int ii=0; ii<NSP; ii++){
 			int ix = IONS->mn(ii,0) + 2;
@@ -734,7 +705,7 @@ void PIC::interpolateVectorField(const simulationParameters * params, const oneD
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
-	#pragma omp parallel for shared(NSP, params, IONS, F, field_X, field_Y, field_Z)
+	#pragma omp parallel for default(none) shared(params, IONS, F, field_X, field_Y, field_Z) firstprivate(NSP)
 	for(int ii=0; ii<NSP; ii++){
 		int ix = IONS->mn(ii) + 2;
 
@@ -787,7 +758,7 @@ void PIC::interpolateVectorField(const simulationParameters * params, const twoD
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
-	#pragma omp parallel for shared(NSP, params, IONS, F, field_X, field_Y, field_Z)
+	#pragma omp parallel for default(none) shared(params, IONS, F, field_X, field_Y, field_Z) firstprivate(NSP)
 	for(int ii=0; ii<NSP; ii++){
 		int ix = IONS->mn(ii,0) + 2;
 		int iy = IONS->mn(ii,1) + 2;
@@ -868,46 +839,44 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 		IONS->at(ii).B = Bp;
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-		int NSP(IONS->at(ii).NSP);
-		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
-		arma::vec gp(IONS->at(ii).NSP);
-		arma::vec sigma(IONS->at(ii).NSP);
-		arma::vec us(IONS->at(ii).NSP);
-		arma::vec s(IONS->at(ii).NSP);
-		arma::mat U(IONS->at(ii).NSP, 3);
-		arma::mat VxB(IONS->at(ii).NSP, 3);
-		arma::mat tau(IONS->at(ii).NSP, 3);
-		arma::mat up(IONS->at(ii).NSP, 3);
-		arma::mat t(IONS->at(ii).NSP, 3);
-		arma::mat upxt(IONS->at(ii).NSP, 3);
+		int NSP = IONS->at(ii).NSP;
+		double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
 
-		crossProduct(&IONS->at(ii).V, &Bp, &VxB);//VxB
-
-		#pragma omp parallel shared(IONS, Ep, Bp, U, gp, sigma, us, s, VxB, tau, up, t, upxt) firstprivate(A, NSP)
+		#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
 		{
+			double gp;
+			double sigma;
+			double us;
+			double s;
+			arma::rowvec U = arma::zeros<rowvec>(3);
+			arma::rowvec VxB = arma::zeros<rowvec>(3);
+			arma::rowvec tau = arma::zeros<rowvec>(3);
+			arma::rowvec up = arma::zeros<rowvec>(3);
+			arma::rowvec t = arma::zeros<rowvec>(3);
+			arma::rowvec upxt = arma::zeros<rowvec>(3);
+
 			#pragma omp for
 			for(int ip=0;ip<NSP;ip++){
+				VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+
 				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
-				U.row(ip) = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+				U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
-				U.row(ip) += 0.5*A*(Ep.row(ip) + VxB.row(ip)); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
-				tau.row(ip) = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
-				up.row(ip) = U.row(ip) + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-				gp(ip) = sqrt( 1.0 + dot(up.row(ip), up.row(ip))/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
-				sigma(ip) = gp(ip)*gp(ip) - dot(tau.row(ip), tau.row(ip)); // sigma = gammap^2 - tau*tau';
-				us(ip) = dot(up.row(ip), tau.row(ip))/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
-				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( dot(tau.row(ip), tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
-				t.row(ip) = tau.row(ip)/IONS->at(ii).g(ip); 			// t = tau/gamma;
-				s(ip) = 1.0/( 1.0 + dot(t.row(ip), t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
-			}
+				U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
+				tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+				up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+				gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+				sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
+				us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+				t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
+				s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
 
-			#pragma omp critical
-			crossProduct(&up, &t, &upxt);
+				upxt = arma::cross(up, t);
 
-			#pragma omp for
-			for(int ip=0;ip<NSP;ip++){
-				U.row(ip) = s(ip)*( up.row(ip) + dot(up.row(ip), t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
-				IONS->at(ii).V.row(ip) = U.row(ip)/IONS->at(ii).g(ip);	// V = U_L/gamma;
+				U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
+				IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
+
 			}
 		} // End of parallel region
 
@@ -953,46 +922,44 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 		IONS->at(ii).B = Bp;
 
 		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-		int NSP(IONS->at(ii).NSP);
-		double A(IONS->at(ii).Q*DT/IONS->at(ii).M);//A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
-		arma::vec gp(IONS->at(ii).NSP);
-		arma::vec sigma(IONS->at(ii).NSP);
-		arma::vec us(IONS->at(ii).NSP);
-		arma::vec s(IONS->at(ii).NSP);
-		arma::mat U(IONS->at(ii).NSP, 3);
-		arma::mat VxB(IONS->at(ii).NSP, 3);
-		arma::mat tau(IONS->at(ii).NSP, 3);
-		arma::mat up(IONS->at(ii).NSP, 3);
-		arma::mat t(IONS->at(ii).NSP, 3);
-		arma::mat upxt(IONS->at(ii).NSP, 3);
+		int NSP = IONS->at(ii).NSP;
+		double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
 
-		crossProduct(&IONS->at(ii).V, &Bp, &VxB);//VxB
-
-		#pragma omp parallel shared(IONS, Ep, Bp, U, gp, sigma, us, s, VxB, tau, up, t, upxt) firstprivate(A, NSP)
+		#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
 		{
+			double gp;
+			double sigma;
+			double us;
+			double s;
+			arma::rowvec U = arma::zeros<rowvec>(3);
+			arma::rowvec VxB = arma::zeros<rowvec>(3);
+			arma::rowvec tau = arma::zeros<rowvec>(3);
+			arma::rowvec up = arma::zeros<rowvec>(3);
+			arma::rowvec t = arma::zeros<rowvec>(3);
+			arma::rowvec upxt = arma::zeros<rowvec>(3);
+
 			#pragma omp for
 			for(int ip=0;ip<NSP;ip++){
+				VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+
 				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
-				U.row(ip) = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+				U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
-				U.row(ip) += 0.5*A*(Ep.row(ip) + VxB.row(ip)); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
-				tau.row(ip) = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
-				up.row(ip) = U.row(ip) + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-				gp(ip) = sqrt( 1.0 + dot(up.row(ip), up.row(ip))/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
-				sigma(ip) = gp(ip)*gp(ip) - dot(tau.row(ip), tau.row(ip)); // sigma = gammap^2 - tau*tau';
-				us(ip) = dot(up.row(ip), tau.row(ip))/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
-				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma(ip) + sqrt( sigma(ip)*sigma(ip) + 4.0*( dot(tau.row(ip), tau.row(ip)) + us(ip)*us(ip) ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
-				t.row(ip) = tau.row(ip)/IONS->at(ii).g(ip); 			// t = tau/gamma;
-				s(ip) = 1.0/( 1.0 + dot(t.row(ip), t.row(ip)) ); // s = 1/(1 + t*t'); % variable 's' in paper
-			}
+				U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
+				tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+				up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+				gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+				sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
+				us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+				t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
+				s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
 
-			#pragma omp critical
-			crossProduct(&up, &t, &upxt);
+				upxt = arma::cross(up, t);
 
-			#pragma omp for
-			for(int ip=0;ip<NSP;ip++){
-				U.row(ip) = s(ip)*( up.row(ip) + dot(up.row(ip), t.row(ip))*t.row(ip)+ upxt.row(ip) ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
-				IONS->at(ii).V.row(ip) = U.row(ip)/IONS->at(ii).g(ip);	// V = U_L/gamma;
+				U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
+				IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
+
 			}
 		} // End of parallel region
 
@@ -1017,7 +984,8 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 		int NSP(IONS->at(ii).NSP);
-		#pragma omp parallel shared(params, IONS, ii) firstprivate(DT, NSP)
+
+		#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
 		{
 			#pragma omp for
 			for(int ip=0; ip<NSP; ip++){
@@ -1050,7 +1018,8 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<twoDim
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 
 		int NSP(IONS->at(ii).NSP);
-		#pragma omp parallel shared(params, IONS, ii) firstprivate(DT, NSP)
+
+		#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
 		{
 			#pragma omp for
 			for(int ip=0; ip<NSP; ip++){

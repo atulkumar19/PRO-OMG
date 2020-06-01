@@ -94,6 +94,8 @@ protected:
 	void smooth(vfield_mat * vf, double as);
 
 
+	void crossProduct(const arma::vec A, const arma::vec B, arma::vec * AxB);
+
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
 

@@ -67,7 +67,7 @@ public:
 	arma::vec Z;
 
 	vfield_vec(){};
-	vfield_vec(unsigned int N) : X(N), Y(N), Z(N) {}
+	vfield_vec(unsigned int N);
 
 	~vfield_vec(){};
 
@@ -99,7 +99,7 @@ public:
 	arma::mat Z;
 
 	vfield_mat(){};
-	vfield_mat(unsigned int N, unsigned int M) : X(N,M), Y(N,M), Z(N,M) {}
+	vfield_mat(unsigned int N, unsigned int M);
 
 	~vfield_mat(){};
 

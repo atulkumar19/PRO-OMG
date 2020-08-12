@@ -33,8 +33,6 @@ using namespace arma;
 
 template <class IT, class FT> class UNITS{
 
-	void dimensionlessForm(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS);
-
 	void broadcastCharacteristicScales(simulationParameters * params, characteristicScales * CS);
 
 	void broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS);

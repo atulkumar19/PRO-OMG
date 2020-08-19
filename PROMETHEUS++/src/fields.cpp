@@ -91,7 +91,7 @@ void EMF_SOLVER::MPI_Allgathermat(const simulationParameters * params, arma::mat
 
 	//Allgather for x-component
 	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
 	for (int mpis=0; mpis<params->mpi.MPIS_FIELDS; mpis++){
 		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
@@ -207,14 +207,14 @@ void EMF_SOLVER::MPI_Gathermat(const simulationParameters * params, arma::mat * 
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-	arma::vec recvbuf = zeros(params->mesh.NUM_NODES_IN_SIM);
-	arma::vec sendbuf = zeros(params->mesh.NUM_NODES_PER_MPI);
+	arma::vec recvbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NUM_CELLS_PER_MPI);
 
 	// First, we gather the vector at the root (rank 0) process of the COMM MPI communicator for fields
 	if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR){
 		sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
 
-		MPI_Gather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, 0, params->mpi.COMM);
+		MPI_Gather(sendbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, 0, params->mpi.COMM);
 
 		if (params->mpi.IS_FIELDS_ROOT){
 			for (int mpis=0; mpis<params->mpi.MPIS_FIELDS; mpis++){

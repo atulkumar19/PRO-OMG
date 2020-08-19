@@ -187,18 +187,16 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
+	MPI_Comm_free(&params->mpi.COMM);
+
 	MPI_Finalize();
 
 	finalized = MPI::Is_finalized();
 
-	MPI_Comm_free(&params->mpi.MPI_TOPO);
-
-	MPI_Comm_free(&params->mpi.COMM);
-
 	if(finalized)
-		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " FINALIZED" << endl;
+		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER << " FINALIZED" << endl;
 	else
-		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER_CART << " NOT FINALIZED - ERROR" << endl;
+		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER << " NOT FINALIZED - ERROR" << endl;
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
 		cout << "* * * * * * * * * * * * MPI COMMUNICATIONS FINALIZED * * * * * * * * * * * * * * * * * *" << endl;

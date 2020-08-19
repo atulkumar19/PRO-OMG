@@ -252,8 +252,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->mesh.NZ_IN_SIM = 1;
         params->mesh.NZ_PER_MPI = 1;
 
-        params->mesh.NUM_NODES_PER_MPI = params->mesh.NX_PER_MPI;
-        params->mesh.NUM_NODES_IN_SIM = params->mesh.NX_IN_SIM;
+        params->mesh.NUM_CELLS_PER_MPI = params->mesh.NX_PER_MPI;
+        params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM;
     }else{
         if ((fmod(NX, 2.0) > 0.0) || (fmod(NY, 2.0) > 0.0)){
             MPI_Barrier(params->mpi.MPI_TOPO);
@@ -281,8 +281,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->mesh.NZ_IN_SIM = 1;
         params->mesh.NZ_PER_MPI = 1;
 
-        params->mesh.NUM_NODES_PER_MPI = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI;
-        params->mesh.NUM_NODES_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
+        params->mesh.NUM_CELLS_PER_MPI = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI;
+        params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
     }
 
 
@@ -395,8 +395,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     }
     //Checking integrity of the initial condition
 
-    IONS->NCP = (IONS->densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->NSP*params->mpi.MPIS_PARTICLES);
-
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
 }
@@ -430,8 +428,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
         // The position array contains a number of elements that it should not have
     }
     //Checking integrity of the initial condition
-
-    IONS->NCP = (IONS->densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->NSP*params->mpi.MPIS_PARTICLES);
 
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, IONS);
@@ -513,20 +509,22 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
     			} // switch
     		} // if(params->restart)
 
-            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
-
             initializeParticlesArrays(params, &IONS->at(ii));
 
             initializeBulkVariablesArrays(params, &IONS->at(ii));
 
         }else if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR){
-            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
-
             initializeBulkVariablesArrays(params, &IONS->at(ii));
         }
 
         MPI_Bcast(&IONS->at(ii).NSP, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
         MPI_Bcast(&IONS->at(ii).nSupPartOutput, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
+
+        if (params->dimensionality == 1)
+            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
+        else
+            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
+
 
         if(params->mpi.MPI_DOMAIN_NUMBER == 0){
             cout << "iON SPECIES: " << (ii + 1) << endl;
@@ -630,11 +628,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.LarmorRadius = ions.VTper/ions.Wc;
 
             //Definition of the initial total number of superparticles for each species
-            if (params->dimensionality == 1){
-                ions.NSP = ceil(ions.NPC*(double)params->mesh.NX_IN_SIM/(double)params->mpi.MPIS_PARTICLES);
-            }else{
-                ions.NSP = ceil(ions.NPC*(double)(params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM)/(double)params->mpi.MPIS_PARTICLES);
-            }
+            ions.NSP = ceil( ions.NPC*(double)params->mesh.NUM_CELLS_IN_SIM/(double)params->mpi.MPIS_PARTICLES );
 
     		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
 

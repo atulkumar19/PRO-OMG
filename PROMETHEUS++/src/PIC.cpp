@@ -127,11 +127,11 @@ void PIC::MPI_Allgathermat(const simulationParameters * params, arma::mat * fiel
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-	arma::vec recvbuf = zeros(params->mesh.NUM_NODES_IN_SIM);
-	arma::vec sendbuf = zeros(params->mesh.NUM_NODES_PER_MPI);
+	arma::vec recvbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NUM_CELLS_PER_MPI);
 
 	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
 	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
 		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
@@ -194,17 +194,17 @@ void PIC::MPI_Recvvfield_vec(const simulationParameters * params, vfield_vec * v
 
 void PIC::MPI_Recvmat(const simulationParameters * params, arma::mat * field){
 	// Then, we send the vector from root process of fields to root process of particles
-	arma::vec recvbuf = zeros(params->mesh.NUM_NODES_IN_SIM);
-	arma::vec sendbuf = zeros(params->mesh.NUM_NODES_IN_SIM);
+	arma::vec recvbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
 
 	sendbuf = vectorise(field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM));
 
 	if (params->mpi.IS_FIELDS_ROOT){
-		MPI_Send(sendbuf.memptr(), params->mesh.NUM_NODES_IN_SIM, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD);
+		MPI_Send(sendbuf.memptr(), params->mesh.NUM_CELLS_IN_SIM, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD);
 	}
 
 	if (params->mpi.IS_PARTICLES_ROOT){
-		MPI_Recv(recvbuf.memptr(), params->mesh.NUM_NODES_IN_SIM, MPI_DOUBLE, params->mpi.FIELDS_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(recvbuf.memptr(), params->mesh.NUM_CELLS_IN_SIM, MPI_DOUBLE, params->mpi.FIELDS_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) = reshape(recvbuf, params->mesh.NX_IN_SIM, params->mesh.NY_IN_SIM);
 	}
@@ -213,7 +213,7 @@ void PIC::MPI_Recvmat(const simulationParameters * params, arma::mat * field){
 	if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
 		sendbuf = vectorise(field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM));
 
-		MPI_Bcast(sendbuf.memptr(), params->mesh.NUM_NODES_IN_SIM, MPI_DOUBLE, 0, params->mpi.COMM);
+		MPI_Bcast(sendbuf.memptr(), params->mesh.NUM_CELLS_IN_SIM, MPI_DOUBLE, 0, params->mpi.COMM);
 
 		field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) = reshape(sendbuf, params->mesh.NX_IN_SIM, params->mesh.NY_IN_SIM);
 	}

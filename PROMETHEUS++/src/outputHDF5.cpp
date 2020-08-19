@@ -51,7 +51,7 @@ template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathermat(const simulation
 
 	//Allgather for x-component
 	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
 	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
 		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
@@ -356,7 +356,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 			saveToHDF5(outputFile, name, &params->filtersPerIterationFields);
 			name.clear();
 
-			name = "numOfDomains";
+			name = "numOfMPIs";
 			saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
 			name.clear();
 
@@ -735,16 +735,18 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 				}else if(params->outputs_variables.at(ov) == "n"){
 
-					//Saving ions species density
-					name = "n";
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).n.subvec(iIndex,fIndex)/CS->length;
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).n.subvec(iIndex,fIndex)/CS->length);
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
+					if (params->mpi.IS_PARTICLES_ROOT){
+						//Saving ions species density
+						name = "n";
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM)/CS->length;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM)/CS->length);
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
 
 				}else if(params->outputs_variables.at(ov) == "g"){
 
@@ -795,42 +797,44 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 				}else if(params->outputs_variables.at(ov) == "U"){
 
-					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
+					if (params->mpi.IS_PARTICLES_ROOT){
+						Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
 
-					//x-component species bulk velocity
-					name = "x";
-					#ifdef HDF5_DOUBLE
-					vec_values = CS->velocity*IONS->at(ii).nv.X.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.X.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex));
-					saveToHDF5(group_bulkVelocity, name, &fvec_values);
-					#endif
-					name.clear();
+						//x-component species bulk velocity
+						name = "x";
+						#ifdef HDF5_DOUBLE
+						vec_values = CS->velocity*IONS->at(ii).nv.X.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.X.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM));
+						saveToHDF5(group_bulkVelocity, name, &fvec_values);
+						#endif
+						name.clear();
 
-					//x-component species bulk velocity
-					name = "y";
-					#ifdef HDF5_DOUBLE
-					vec_values = CS->velocity*IONS->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.Y.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex));
-					saveToHDF5(group_bulkVelocity, name, &fvec_values);
-					#endif
-					name.clear();
+						//x-component species bulk velocity
+						name = "y";
+						#ifdef HDF5_DOUBLE
+						vec_values = CS->velocity*IONS->at(ii).nv.Y.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.Y.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM));
+						saveToHDF5(group_bulkVelocity, name, &fvec_values);
+						#endif
+						name.clear();
 
-					//x-component species bulk velocity
-					name = "z";
-					#ifdef HDF5_DOUBLE
-					vec_values = CS->velocity*IONS->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.Z.subvec(iIndex,fIndex)/IONS->at(ii).n.subvec(iIndex,fIndex));
-					saveToHDF5(group_bulkVelocity, name, &fvec_values);
-					#endif
-					name.clear();
+						//x-component species bulk velocity
+						name = "z";
+						#ifdef HDF5_DOUBLE
+						vec_values = CS->velocity*IONS->at(ii).nv.Z.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv.Z.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n.subvec(1,params->mesh.NX_IN_SIM));
+						saveToHDF5(group_bulkVelocity, name, &fvec_values);
+						#endif
+						name.clear();
 
-					delete group_bulkVelocity;
+						delete group_bulkVelocity;
+					}
 				}
 			}
 
@@ -941,16 +945,18 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 				}else if(params->outputs_variables.at(ov) == "n"){
 
-					//Saving ions species density
-					name = "n";
-					#ifdef HDF5_DOUBLE
-					mat_values = IONS->at(ii).n.submat(irow,icol,frow,fcol)/(CS->length*CS->length);
-					saveToHDF5(group_ionSpecies, name, &mat_values);
-					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from( IONS->at(ii).n.submat(irow,icol,frow,fcol)/(CS->length*CS->length) );
-					saveToHDF5(group_ionSpecies, name, &fmat_values);
-					#endif
-					name.clear();
+					if (params->mpi.IS_PARTICLES_ROOT){
+						//Saving ions species density
+						name = "n";
+						#ifdef HDF5_DOUBLE
+						mat_values = IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/(CS->length*CS->length);
+						saveToHDF5(group_ionSpecies, name, &mat_values);
+						#elif defined HDF5_FLOAT
+						fmat_values = conv_to<fmat>::from( IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/(CS->length*CS->length) );
+						saveToHDF5(group_ionSpecies, name, &fmat_values);
+						#endif
+						name.clear();
+					}
 
 				}else if(params->outputs_variables.at(ov) == "g"){
 
@@ -997,42 +1003,44 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 
 				}else if(params->outputs_variables.at(ov) == "U"){
 
-					Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
+					if (params->mpi.IS_PARTICLES_ROOT){
+						Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
 
-					//x-component species bulk velocity
-					name = "x";
-					#ifdef HDF5_DOUBLE
-					mat_values = CS->velocity*IONS->at(ii).nv.X.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol);
-					saveToHDF5(group_ionSpecies, name, &mat_values);
-					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.X.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol) );
-					saveToHDF5(group_bulkVelocity, name, &fmat_values);
-					#endif
-					name.clear();
+						//x-component species bulk velocity
+						name = "x";
+						#ifdef HDF5_DOUBLE
+						mat_values = CS->velocity*IONS->at(ii).nv.X.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM);
+						saveToHDF5(group_ionSpecies, name, &mat_values);
+						#elif defined HDF5_FLOAT
+						fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.X.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) );
+						saveToHDF5(group_bulkVelocity, name, &fmat_values);
+						#endif
+						name.clear();
 
-					//y-component species bulk velocity
-					name = "y";
-					#ifdef HDF5_DOUBLE
-					mat_values = CS->velocity*IONS->at(ii).nv.Y.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol);
-					saveToHDF5(group_ionSpecies, name, &mat_values);
-					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.Y.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol) );
-					saveToHDF5(group_bulkVelocity, name, &fmat_values);
-					#endif
-					name.clear();
+						//y-component species bulk velocity
+						name = "y";
+						#ifdef HDF5_DOUBLE
+						mat_values = CS->velocity*IONS->at(ii).nv.Y.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM);
+						saveToHDF5(group_ionSpecies, name, &mat_values);
+						#elif defined HDF5_FLOAT
+						fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.Y.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) );
+						saveToHDF5(group_bulkVelocity, name, &fmat_values);
+						#endif
+						name.clear();
 
-					//z-component species bulk velocity
-					name = "z";
-					#ifdef HDF5_DOUBLE
-					mat_values = CS->velocity*IONS->at(ii).nv.Z.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol);
-					saveToHDF5(group_ionSpecies, name, &mat_values);
-					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.Z.submat(irow,icol,frow,fcol)/IONS->at(ii).n.submat(irow,icol,frow,fcol) );
-					saveToHDF5(group_bulkVelocity, name, &fmat_values);
-					#endif
-					name.clear();
+						//z-component species bulk velocity
+						name = "z";
+						#ifdef HDF5_DOUBLE
+						mat_values = CS->velocity*IONS->at(ii).nv.Z.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM);
+						saveToHDF5(group_ionSpecies, name, &mat_values);
+						#elif defined HDF5_FLOAT
+						fmat_values = conv_to<fmat>::from( CS->velocity*IONS->at(ii).nv.Z.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM)/IONS->at(ii).n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) );
+						saveToHDF5(group_bulkVelocity, name, &fmat_values);
+						#endif
+						name.clear();
 
-					delete group_bulkVelocity;
+						delete group_bulkVelocity;
+					}
 				}
 			}
 

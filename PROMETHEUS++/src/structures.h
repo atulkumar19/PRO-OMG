@@ -29,6 +29,11 @@
 #include<omp.h>
 #include "mpi.h"
 
+#define FIELDS_MPI_COLOR 0
+#define PARTICLES_MPI_COLOR 1
+#define FIELDS_TAG 100
+#define PARTICLES_TAG 200
+
 #define float_zero 1E-7
 #define double_zero 1E-15
 
@@ -53,12 +58,26 @@ extern double F_C_DS; 		// Dimensionless vacuum permittivity
 struct mpiParams{
 	int NUMBER_MPI_DOMAINS;
 	int MPI_DOMAIN_NUMBER;
+	int FIELDS_ROOT_WORLD_RANK;
+	int PARTICLES_ROOT_WORLD_RANK;
+
+	int MPIS_FIELDS;
+	int MPIS_PARTICLES;
 
 	int MPI_DOMAINS_ALONG_X_AXIS;
 	int MPI_DOMAINS_ALONG_Y_AXIS;
 	int MPI_DOMAINS_ALONG_Z_AXIS;
 
 	MPI_Comm MPI_TOPO; // Cartesian topology
+
+	// Particle pusher and field solver communicator params
+	int COMM_COLOR;
+	int COMM_SIZE;
+	int COMM_RANK;
+	MPI_Comm COMM;
+
+	bool IS_FIELDS_ROOT;
+	bool IS_PARTICLES_ROOT;
 
 	int MPI_CART_COORDS_1D[1];
 	int MPI_CART_COORDS_2D[2];
@@ -91,8 +110,8 @@ struct meshParams{
 	int NY_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 	int NZ_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
 
-	int NUM_NODES_IN_SIM; // Number of mesh nodes in the entire simulation domain (no ghost nodes considered)
-	int NUM_NODES_PER_MPI; // Number of mesh nodes in each MPI process (no ghost nodes considered)
+	int NUM_CELLS_IN_SIM; // Number of mesh nodes in the entire simulation domain (no ghost nodes considered)
+	int NUM_CELLS_PER_MPI; // Number of mesh nodes in each MPI process (no ghost nodes considered)
 
 	double DX;
 	double DY;

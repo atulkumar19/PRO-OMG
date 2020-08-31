@@ -41,6 +41,64 @@ void PIC::MPI_AllreduceMat(const simulationParameters * params, arma::mat * m){
 }
 
 
+void PIC::MPI_SendVec(const simulationParameters * params, arma::vec * v){
+	// We send the vector from root process of particles to root process of fields
+	if (params->mpi.IS_PARTICLES_ROOT){
+		MPI_Send(v->memptr(), v->n_elem, MPI_DOUBLE, params->mpi.FIELDS_ROOT_WORLD_RANK, PARTICLES_TAG, MPI_COMM_WORLD);
+	}
+
+	if (params->mpi.IS_FIELDS_ROOT){
+		MPI_Recv(v->memptr(), v->n_elem, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, PARTICLES_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+
+	// Then, the vevtor is broadcasted to all processes in the fields communicator
+	if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR)
+		MPI_Bcast(v->memptr(), v->n_elem, MPI_DOUBLE, 0, params->mpi.COMM);
+}
+
+
+void PIC::MPI_ReduceVec(const simulationParameters * params, arma::vec * v){
+	arma::vec recvbuf = zeros(v->n_elem);
+
+	// We reduce the vector at the root process of particles
+	if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+		MPI_Reduce(v->memptr(), recvbuf.memptr(), v->n_elem, MPI_DOUBLE, MPI_SUM, 0, params->mpi.COMM);
+
+		if (params->mpi.IS_PARTICLES_ROOT)
+			*v = recvbuf;
+	}
+}
+
+
+void PIC::MPI_SendMat(const simulationParameters * params, arma::mat * m){
+	// We send the vector from root process of particles to root process of fields
+	if (params->mpi.IS_PARTICLES_ROOT){
+		MPI_Send(m->memptr(), m->n_elem, MPI_DOUBLE, params->mpi.FIELDS_ROOT_WORLD_RANK, PARTICLES_TAG, MPI_COMM_WORLD);
+	}
+
+	if (params->mpi.IS_FIELDS_ROOT){
+		MPI_Recv(m->memptr(), m->n_elem, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, PARTICLES_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+
+	// Then, the vevtor is broadcasted to all processes in the fields communicator
+	if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR)
+		MPI_Bcast(m->memptr(), m->n_elem, MPI_DOUBLE, 0, params->mpi.COMM);
+}
+
+
+void PIC::MPI_ReduceMat(const simulationParameters * params, arma::mat * m){
+	arma::mat recvbuf = zeros(m->n_rows, m->n_cols);
+
+	// We reduce the vector at the root process of particles
+	if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+		MPI_Reduce(m->memptr(), recvbuf.memptr(), m->n_elem, MPI_DOUBLE, MPI_SUM, 0, params->mpi.COMM);
+
+		if (params->mpi.IS_PARTICLES_ROOT)
+			*m = recvbuf;
+	}
+}
+
+
 void PIC::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
 	unsigned int iIndex = params->mpi.iIndex;
 	unsigned int fIndex = params->mpi.fIndex;
@@ -55,51 +113,10 @@ void PIC::MPI_Allgathervec(const simulationParameters * params, arma::vec * fiel
 }
 
 
-/*
 void PIC::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
 	MPI_Allgathervec(params, &vfield->X);
 	MPI_Allgathervec(params, &vfield->Y);
 	MPI_Allgathervec(params, &vfield->Z);
-}
-*/
-
-
-void PIC::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
-	unsigned int iIndex = params->mpi.iIndex;
-	unsigned int fIndex = params->mpi.fIndex;
-
-	arma::vec sendbuf = arma::zeros(3*params->mesh.NX_PER_MPI);
-	arma::vec recvbuf = arma::zeros(3*params->mesh.NX_IN_SIM);
-
-	// Generate send buffer with subdomains of X, Y, and Z components of vector field
-	sendbuf.subvec(0, params->mesh.NX_PER_MPI-1) 							= vfield->X.subvec(iIndex, fIndex);
-	sendbuf.subvec(params->mesh.NX_PER_MPI, 2*params->mesh.NX_PER_MPI-1) 	= vfield->Y.subvec(iIndex, fIndex);
-	sendbuf.subvec(2*params->mesh.NX_PER_MPI, 3*params->mesh.NX_PER_MPI-1) 	= vfield->Z.subvec(iIndex, fIndex);
-
-	MPI_Allgather(sendbuf.memptr(), 3*params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), 3*params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-
-	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
-		unsigned int ie = mpis*params->mesh.NX_PER_MPI + 1;
-		unsigned int fe = (mpis + 1)*params->mesh.NX_PER_MPI;
-
-		// x-component
-		unsigned int ii = 3*mpis*params->mesh.NX_PER_MPI;
-		unsigned int fi = (1 + 3*mpis)*params->mesh.NX_PER_MPI - 1;
-
-		vfield->X.subvec(ie,fe) = recvbuf.subvec(ii,fi);
-
-		// y-component
-		ii = (3*mpis + 1)*params->mesh.NX_PER_MPI;
-		fi = (2 + 3*mpis)*params->mesh.NX_PER_MPI - 1;
-
-		vfield->Y.subvec(ie,fe) = recvbuf.subvec(ii,fi);
-
-		// z-component
-		ii = (3*mpis + 2)*params->mesh.NX_PER_MPI;
-		fi = (3 + 3*mpis)*params->mesh.NX_PER_MPI - 1;
-
-		vfield->Z.subvec(ie,fe) = recvbuf.subvec(ii,fi);
-	}
 }
 
 
@@ -110,11 +127,11 @@ void PIC::MPI_Allgathermat(const simulationParameters * params, arma::mat * fiel
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-	arma::vec recvbuf = zeros(params->mesh.NUM_NODES_IN_SIM);
-	arma::vec sendbuf = zeros(params->mesh.NUM_NODES_PER_MPI);
+	arma::vec recvbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NUM_CELLS_PER_MPI);
 
 	sendbuf = vectorise(field->submat(irow,icol,frow,fcol));
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+	MPI_Allgather(sendbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NUM_CELLS_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
 
 	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
 		unsigned int ie = params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*mpis;
@@ -132,59 +149,81 @@ void PIC::MPI_Allgathermat(const simulationParameters * params, arma::mat * fiel
 }
 
 
-/*
 void PIC::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
 	MPI_Allgathermat(params, &vfield->X);
 	MPI_Allgathermat(params, &vfield->Y);
 	MPI_Allgathermat(params, &vfield->Z);
 }
-*/
 
 
-void PIC::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
-	unsigned int irow = params->mpi.irow;
-	unsigned int frow = params->mpi.frow;
+void PIC::MPI_Recvvec(const simulationParameters * params, arma::vec * field){
+	// We send the vector from root process of fields to root process of particles
+	arma::vec recvbuf(params->mesh.NX_IN_SIM);
+	arma::vec sendbuf(params->mesh.NX_IN_SIM);
 
-	unsigned int icol = params->mpi.icol;
-	unsigned int fcol = params->mpi.fcol;
+	sendbuf = field->subvec(1, params->mesh.NX_IN_SIM);
 
-	arma::vec sendbuf = zeros(3*params->mesh.NUM_NODES_PER_MPI);
-	arma::vec recvbuf = zeros(3*params->mesh.NUM_NODES_IN_SIM);
-
-	// Generate send buffer with subdomains of X, Y, and Z components of vector field
-	sendbuf.subvec(0, params->mesh.NUM_NODES_PER_MPI-1) 									= vectorise(vfield->X.submat(irow,icol,frow,fcol));
-	sendbuf.subvec(params->mesh.NUM_NODES_PER_MPI, 2*params->mesh.NUM_NODES_PER_MPI-1) 		= vectorise(vfield->Y.submat(irow,icol,frow,fcol));
-	sendbuf.subvec(2*params->mesh.NUM_NODES_PER_MPI, 3*params->mesh.NUM_NODES_PER_MPI-1) 	= vectorise(vfield->Z.submat(irow,icol,frow,fcol));
-
-	MPI_Allgather(sendbuf.memptr(), 3*params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), 3*params->mesh.NUM_NODES_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-
-	// MPI_Abort(params->mpi.MPI_TOPO, -1000);
-
-	for (int mpis=0; mpis<params->mpi.NUMBER_MPI_DOMAINS; mpis++){
-		unsigned int ir = *(params->mpi.MPI_CART_COORDS.at(mpis))*params->mesh.NX_PER_MPI + 1;
-		unsigned int fr = ( *(params->mpi.MPI_CART_COORDS.at(mpis)) + 1)*params->mesh.NX_PER_MPI;
-
-		unsigned int ic = *(params->mpi.MPI_CART_COORDS.at(mpis)+1)*params->mesh.NY_PER_MPI + 1;
-		unsigned int fc = ( *(params->mpi.MPI_CART_COORDS.at(mpis)+1) + 1)*params->mesh.NY_PER_MPI;
-
-		// x-component
-		unsigned int ii = 3*mpis*params->mesh.NUM_NODES_PER_MPI;
-		unsigned int fi = (1 + 3*mpis)*params->mesh.NUM_NODES_PER_MPI - 1;
-
-		vfield->X.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ii,fi), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
-
-		// y-component
-		ii = (3*mpis + 1)*params->mesh.NUM_NODES_PER_MPI;
-		fi = (2 + 3*mpis)*params->mesh.NUM_NODES_PER_MPI - 1;
-
-		vfield->Y.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ii,fi), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
-
-		// z-component
-		ii = (3*mpis + 2)*params->mesh.NUM_NODES_PER_MPI;
-		fi = (3 + 3*mpis)*params->mesh.NUM_NODES_PER_MPI - 1;
-
-		vfield->Z.submat(ir,ic,fr,fc) = reshape(recvbuf.subvec(ii,fi), params->mesh.NX_PER_MPI, params->mesh.NY_PER_MPI);
+	if (params->mpi.IS_FIELDS_ROOT){
+		MPI_Send(sendbuf.memptr(), params->mesh.NX_IN_SIM, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD);
 	}
+
+	if (params->mpi.IS_PARTICLES_ROOT){
+		MPI_Recv(recvbuf.memptr(), params->mesh.NX_IN_SIM, MPI_DOUBLE, params->mpi.FIELDS_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+	}
+
+	// Then, the fields is broadcasted to all processes in the particles communicator COMM
+	if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+		sendbuf = field->subvec(1, params->mesh.NX_IN_SIM);
+
+		MPI_Bcast(sendbuf.memptr(), params->mesh.NX_IN_SIM, MPI_DOUBLE, 0, params->mpi.COMM);
+
+		field->subvec(1, params->mesh.NX_IN_SIM) = sendbuf;
+	}
+}
+
+
+
+void PIC::MPI_Recvvfield_vec(const simulationParameters * params, vfield_vec * vfield){
+	MPI_Recvvec(params, &vfield->X);
+	MPI_Recvvec(params, &vfield->Y);
+	MPI_Recvvec(params, &vfield->Z);
+}
+
+
+void PIC::MPI_Recvmat(const simulationParameters * params, arma::mat * field){
+	// Then, we send the vector from root process of fields to root process of particles
+	arma::vec recvbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
+	arma::vec sendbuf = zeros(params->mesh.NUM_CELLS_IN_SIM);
+
+	sendbuf = vectorise(field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM));
+
+	if (params->mpi.IS_FIELDS_ROOT){
+		MPI_Send(sendbuf.memptr(), params->mesh.NUM_CELLS_IN_SIM, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD);
+	}
+
+	if (params->mpi.IS_PARTICLES_ROOT){
+		MPI_Recv(recvbuf.memptr(), params->mesh.NUM_CELLS_IN_SIM, MPI_DOUBLE, params->mpi.FIELDS_ROOT_WORLD_RANK, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) = reshape(recvbuf, params->mesh.NX_IN_SIM, params->mesh.NY_IN_SIM);
+	}
+
+	// Finally, the fields is broadcasted to all processes in the particles communicator COMM
+	if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+		sendbuf = vectorise(field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM));
+
+		MPI_Bcast(sendbuf.memptr(), params->mesh.NUM_CELLS_IN_SIM, MPI_DOUBLE, 0, params->mpi.COMM);
+
+		field->submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) = reshape(sendbuf, params->mesh.NX_IN_SIM, params->mesh.NY_IN_SIM);
+	}
+}
+
+
+void PIC::MPI_Recvvfield_mat(const simulationParameters * params, vfield_mat * vfield){
+	MPI_Recvmat(params, &vfield->X);
+	MPI_Recvmat(params, &vfield->Y);
+	MPI_Recvmat(params, &vfield->Z);
 }
 
 
@@ -246,40 +285,6 @@ void PIC::include4GhostsContributions(arma::mat * m){
 }
 
 // * * * Ghost contributions * * *
-
-//! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
-
-//! Linear interpolation is used to calculate the values of the fields in a non-staggered grid.
-void PIC::computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G){
-	int NX = F->E.X.n_elem;
-
-	G->E.X.subvec(1,NX-2) = 0.5*( F->E.X.subvec(1,NX-2) + F->E.X.subvec(0,NX-3) );
-	G->E.Y.subvec(1,NX-2) = F->E.Y.subvec(1,NX-2);
-	G->E.Z.subvec(1,NX-2) = F->E.Z.subvec(1,NX-2);
-
-	G->B.X.subvec(1,NX-2) = F->B.X.subvec(1,NX-2);
-	G->B.Y.subvec(1,NX-2) = 0.5*( F->B.Y.subvec(1,NX-2) + F->B.Y.subvec(0,NX-3) );
-	G->B.Z.subvec(1,NX-2) = 0.5*( F->B.Z.subvec(1,NX-2) + F->B.Z.subvec(0,NX-3) );
-}
-
-
-
-//! Function to interpolate electromagnetic fields from staggered grid to non-staggered grid.
-
-//! Bilinear interpolation is used to calculate the values of the fields in a non-staggered grid.
-void PIC::computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G){
-	int NX = F->E.X.n_rows;
-	int NY = F->E.X.n_cols;
-
-	G->E.X.submat(1,1,NX-2,NY-2) = 0.5*( F->E.X.submat(0,1,NX-3,NY-2) + F->E.X.submat(1,1,NX-2,NY-2) );
-	G->E.Y.submat(1,1,NX-2,NY-2) = 0.5*( F->E.Y.submat(1,0,NX-2,NY-3) + F->E.Y.submat(1,1,NX-2,NY-2) );
-	G->E.Z.submat(1,1,NX-2,NY-2) = F->E.Z.submat(1,1,NX-2,NY-2);
-
-	G->B.X.submat(1,1,NX-2,NY-2) = 0.5*( F->B.X.submat(1,0,NX-2,NY-3) + F->B.X.submat(1,1,NX-2,NY-2) );
-	G->B.Y.submat(1,1,NX-2,NY-2) = 0.5*( F->B.Y.submat(0,1,NX-3,NY-2) + F->B.Y.submat(1,1,NX-2,NY-2) );
-	G->B.Z.submat(1,1,NX-2,NY-2) = 0.25*( F->B.Z.submat(0,0,NX-3,NY-3) + F->B.Z.submat(1,0,NX-2,NY-3) + F->B.Z.submat(0,1,NX-3,NY-2) + F->B.Z.submat(1,1,NX-2,NY-2) );
-}
-
 
 
 // * * * Smoothing * * *
@@ -905,81 +910,85 @@ void PIC::interpolateElectromagneticFields(const simulationParameters * params, 
 
 
 void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
-	MPI_Allgathervfield_vec(params, &EB->E);
-	MPI_Allgathervfield_vec(params, &EB->B);
+	MPI_Recvvfield_vec(params, &EB->E);
+	MPI_Recvvfield_vec(params, &EB->B);
 
-	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	fillGhosts(EB);
-	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-
-	oneDimensional::fields EB_(params->mesh.NX_IN_SIM + 2);
-
-	computeFieldsOnNonStaggeredGrid(EB,&EB_);
-
-	fillGhosts(&EB_);
 
 	for(int ii=0; ii<IONS->size(); ii++){//structure to iterate over all the ion species.
-		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
-		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+			arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
+			arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
-		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
+			interpolateElectromagneticFields(params, &IONS->at(ii), EB, &Ep, &Bp);
 
-		IONS->at(ii).E = Ep;
-		IONS->at(ii).B = Bp;
+			IONS->at(ii).E = Ep;
+			IONS->at(ii).B = Bp;
 
-		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-		int NSP = IONS->at(ii).NSP;
-		double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
+			//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
+			int NSP = IONS->at(ii).NSP;
+			double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
 
-		#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
-		{
-			double gp;
-			double sigma;
-			double us;
-			double s;
-			arma::rowvec U = arma::zeros<rowvec>(3);
-			arma::rowvec VxB = arma::zeros<rowvec>(3);
-			arma::rowvec tau = arma::zeros<rowvec>(3);
-			arma::rowvec up = arma::zeros<rowvec>(3);
-			arma::rowvec t = arma::zeros<rowvec>(3);
-			arma::rowvec upxt = arma::zeros<rowvec>(3);
+			#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
+			{
+				double gp;
+				double sigma;
+				double us;
+				double s;
+				arma::rowvec U = arma::zeros<rowvec>(3);
+				arma::rowvec VxB = arma::zeros<rowvec>(3);
+				arma::rowvec tau = arma::zeros<rowvec>(3);
+				arma::rowvec up = arma::zeros<rowvec>(3);
+				arma::rowvec t = arma::zeros<rowvec>(3);
+				arma::rowvec upxt = arma::zeros<rowvec>(3);
 
-			#pragma omp for
-			for(int ip=0;ip<NSP;ip++){
-				VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+				#pragma omp for
+				for(int ip=0;ip<NSP;ip++){
+					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
 
-				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
-				U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
+					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
-				U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
-				tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
-				up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-				gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
-				sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
-				us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
-				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
-				t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
-				s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
+					U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
+					tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+					up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+					gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+					sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
+					us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+					IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+					t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
+					s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
 
-				upxt = arma::cross(up, t);
+					upxt = arma::cross(up, t);
 
-				U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
-				IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
+					U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
+					IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
 
-			}
-		} // End of parallel region
+				}
+			} // End of parallel region
 
-		extrapolateIonVelocity(params, &IONS->at(ii));
+			extrapolateIonVelocity(params, &IONS->at(ii));
+		}
 
-		// Reduce operation for including contribution of bulk velocity of all MPIs
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.X);
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).nv.Z);
-
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Z);
 
 		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
 			smooth(&IONS->at(ii).nv, params->smoothingParameter);
 
+		// Densities at various time levels are sent to fields processes
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv.X);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv.Z);
+
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.X);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.Y);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.Z);
+
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.X);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Y);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Z);
 	}//structure to iterate over all the ion species.
 
 	// Ghosts cells might be set to zero if needed, but before saving to HDF5 ghost cells need to be filled again.
@@ -988,153 +997,167 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 
 void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
-	MPI_Allgathervfield_mat(params, &EB->E);
-	MPI_Allgathervfield_mat(params, &EB->B);
+	MPI_Recvvfield_mat(params, &EB->E);
+	MPI_Recvvfield_mat(params, &EB->B);
 
-	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
 	fillGhosts(EB);
-	// The electric and magntic fields in EB are defined in their staggered positions, not in the vertex nodes.
-
-	twoDimensional::fields EB_(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-
-	computeFieldsOnNonStaggeredGrid(EB,&EB_);
-
-	fillGhosts(&EB_);
 
 	for(int ii=0; ii<IONS->size(); ii++){//structure to iterate over all the ion species.
-		arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
-		arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+			arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
+			arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
-		interpolateElectromagneticFields(params, &IONS->at(ii), &EB_, &Ep, &Bp);
+			interpolateElectromagneticFields(params, &IONS->at(ii), EB, &Ep, &Bp);
 
-		IONS->at(ii).E = Ep;
-		IONS->at(ii).B = Bp;
+			IONS->at(ii).E = Ep;
+			IONS->at(ii).B = Bp;
 
-		//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-		int NSP = IONS->at(ii).NSP;
-		double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
+			//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
+			int NSP = IONS->at(ii).NSP;
+			double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
 
-		#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
-		{
-			double gp;
-			double sigma;
-			double us;
-			double s;
-			arma::rowvec U = arma::zeros<rowvec>(3);
-			arma::rowvec VxB = arma::zeros<rowvec>(3);
-			arma::rowvec tau = arma::zeros<rowvec>(3);
-			arma::rowvec up = arma::zeros<rowvec>(3);
-			arma::rowvec t = arma::zeros<rowvec>(3);
-			arma::rowvec upxt = arma::zeros<rowvec>(3);
+			#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
+			{
+				double gp;
+				double sigma;
+				double us;
+				double s;
+				arma::rowvec U = arma::zeros<rowvec>(3);
+				arma::rowvec VxB = arma::zeros<rowvec>(3);
+				arma::rowvec tau = arma::zeros<rowvec>(3);
+				arma::rowvec up = arma::zeros<rowvec>(3);
+				arma::rowvec t = arma::zeros<rowvec>(3);
+				arma::rowvec upxt = arma::zeros<rowvec>(3);
 
-			#pragma omp for
-			for(int ip=0;ip<NSP;ip++){
-				VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+				#pragma omp for
+				for(int ip=0;ip<NSP;ip++){
+					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
 
-				IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
-				U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
+					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
+					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
-				U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
-				tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
-				up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-				gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
-				sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
-				us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
-				IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
-				t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
-				s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
+					U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
+					tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
+					up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
+					gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+					sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
+					us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+					IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
+					t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
+					s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
 
-				upxt = arma::cross(up, t);
+					upxt = arma::cross(up, t);
 
-				U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
-				IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
+					U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
+					IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
 
-			}
-		} // End of parallel region
+				}
+			} // End of parallel region
 
-		extrapolateIonVelocity(params, &IONS->at(ii));
+			extrapolateIonVelocity(params, &IONS->at(ii));
+		}
 
-		// Reduce operation for including contribution of bulk velocity of all MPIs
-		PIC::MPI_AllreduceMat(params, &IONS->at(ii).nv.X);
-		PIC::MPI_AllreduceMat(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_AllreduceMat(params, &IONS->at(ii).nv.Z);
-
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.X);
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Z);
 
 		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
 			smooth(&IONS->at(ii).nv, params->smoothingParameter);
 
+		// Densities at various time levels are sent to fields processes
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv.X);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Z);
+
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.X);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Y);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Z);
+
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.X);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Y);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Z);
 	}//structure to iterate over all the ion species.
 }
 
 
 void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
-
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+			int NSP(IONS->at(ii).NSP);
 
-		int NSP(IONS->at(ii).NSP);
+			#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
+			{
+				#pragma omp for
+				for(int ip=0; ip<NSP; ip++){
+					IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
 
-		#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
-		{
-			#pragma omp for
-			for(int ip=0; ip<NSP; ip++){
-				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
+	                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX);//x
 
-                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX);//x
+	                if(IONS->at(ii).X(ip,0) < 0)
+	        			IONS->at(ii).X(ip,0) += params->mesh.LX;
+				}
+			}//End of the parallel region
 
-                if(IONS->at(ii).X(ip,0) < 0)
-        			IONS->at(ii).X(ip,0) += params->mesh.LX;
-			}
-		}//End of the parallel region
+			PIC::assignCell(params, &IONS->at(ii));
 
-		PIC::assignCell(params, &IONS->at(ii));
+			//Once the ions have been pushed,  we extrapolate the density at the node grids.
+			extrapolateIonDensity(params, &IONS->at(ii));
+		}
 
-		//Once the ions have been pushed,  we extrapolate the density at the node grids.
-		extrapolateIonDensity(params, &IONS->at(ii));
-
-		PIC::MPI_AllreduceVec(params, &IONS->at(ii).n);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).n);
 
 		for (int jj=0; jj<params->filtersPerIterationIons; jj++)
 			smooth(&IONS->at(ii).n, params->smoothingParameter);
 
-	}//structure to iterate over all the ion species.
+		// Densities at various time levels are sent to fields processes
+		PIC::MPI_SendVec(params, &IONS->at(ii).n);
+		PIC::MPI_SendVec(params, &IONS->at(ii).n_);
+		PIC::MPI_SendVec(params, &IONS->at(ii).n__);
+		PIC::MPI_SendVec(params, &IONS->at(ii).n___);
+	} // structure to iterate over all the ion species.
 }
 
 
 void PIC::advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT){
-
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+			int NSP(IONS->at(ii).NSP);
 
-		int NSP(IONS->at(ii).NSP);
+			#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
+			{
+				#pragma omp for
+				for(int ip=0; ip<NSP; ip++){
+					IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0); // x
+					IONS->at(ii).X(ip,1) += DT*IONS->at(ii).V(ip,1); // y
 
-		#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
-		{
-			#pragma omp for
-			for(int ip=0; ip<NSP; ip++){
-				IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0); // x
-				IONS->at(ii).X(ip,1) += DT*IONS->at(ii).V(ip,1); // y
+	                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX); // Periodic condition along x-axis
+					IONS->at(ii).X(ip,1) = fmod(IONS->at(ii).X(ip,1), params->mesh.LY); // Periodic condition along y-axis
 
-                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX); // Periodic condition along x-axis
-				IONS->at(ii).X(ip,1) = fmod(IONS->at(ii).X(ip,1), params->mesh.LY); // Periodic condition along y-axis
+	                if(IONS->at(ii).X(ip,0) < 0)
+	        			IONS->at(ii).X(ip,0) += params->mesh.LX;
 
-                if(IONS->at(ii).X(ip,0) < 0)
-        			IONS->at(ii).X(ip,0) += params->mesh.LX;
+					if(IONS->at(ii).X(ip,1) < 0)
+		        		IONS->at(ii).X(ip,1) += params->mesh.LY;
+				}
+			}//End of the parallel region
 
-				if(IONS->at(ii).X(ip,1) < 0)
-	        		IONS->at(ii).X(ip,1) += params->mesh.LY;
-			}
-		}//End of the parallel region
+			PIC::assignCell(params, &IONS->at(ii));
 
-		PIC::assignCell(params, &IONS->at(ii));
+			extrapolateIonDensity(params, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
+		}
 
-		extrapolateIonDensity(params, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
-
-		PIC::MPI_AllreduceMat(params, &IONS->at(ii).n);
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).n);
 
 		for (int jj=0; jj<params->filtersPerIterationIons; jj++)
 			smooth(&IONS->at(ii).n, params->smoothingParameter);
 
+		// Densities at various time levels are sent to fields processes
+		PIC::MPI_SendMat(params, &IONS->at(ii).n);
+		PIC::MPI_SendMat(params, &IONS->at(ii).n_);
+		PIC::MPI_SendMat(params, &IONS->at(ii).n__);
+		PIC::MPI_SendMat(params, &IONS->at(ii).n___);
 	}//structure to iterate over all the ion species.
 }
 

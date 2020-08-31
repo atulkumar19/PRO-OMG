@@ -39,8 +39,8 @@ void backwardPBC_2D(mat * C){
 void fillGhosts(vec * C){
 	int NX = C->n_elem;
 
-	(*C)(0) = (*C)(NX-2);//X=0 face.
-	(*C)(NX-1) = (*C)(1);//X=NX-1 face.
+	(*C)(0) = (*C)(NX-2); // X = 0 face.
+	(*C)(NX-1) = (*C)(1); // X = NX-1 face.
 }
 
 
@@ -87,8 +87,8 @@ void fillGhosts(twoDimensional::fields * F){
 void setGhostsToZero(vec * C){
 	int NX = C->n_elem;
 
-	(*C)(0) = 0;//X=0 face.
-	(*C)(NX-1) = 0;//X=NX-1 face.
+	(*C)(0) = 0; // X = 0 face.
+	(*C)(NX-1) = 0; // X = NX-1 face.
 }
 
 void setGhostsToZero(mat * C){

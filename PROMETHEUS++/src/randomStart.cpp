@@ -35,15 +35,17 @@ template <class IT> RANDOMSTART<IT>::RANDOMSTART(const simulationParameters * pa
 
 
 template <class IT> void RANDOMSTART<IT>::ringLikeVelocityDistribution(const simulationParameters * params, IT * ions){
-
+	arma_rng::set_seed_random();
 	ions->X = randu<mat>(ions->NSP,3);
+
 	ions->V = zeros(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
 	ions->g = zeros(ions->NSP);
 	ions->mu = zeros(ions->NSP);
 
-	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
-	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
+	// We scale the positions
+	ions->X.col(0) *= params->mesh.LX;
+	ions->X.col(1) *= params->mesh.LY;
 
 	arma::vec R = randu(ions->NSP);
 	arma_rng::set_seed_random();
@@ -73,15 +75,17 @@ template <class IT> void RANDOMSTART<IT>::ringLikeVelocityDistribution(const sim
 
 //This function creates a Maxwellian velocity distribution for ions with a homogeneous spatial distribution.
 template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution(const simulationParameters * params, IT * ions){
-
+	arma_rng::set_seed_random();
 	ions->X = randu<mat>(ions->NSP,3);
+
 	ions->V = zeros(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
 	ions->g = zeros(ions->NSP);
 	ions->mu = zeros(ions->NSP);
 
-	// ions->VTper = sqrt(2.0*F_KB*ions->Tper/ions->M);
-	// ions->VTpar = sqrt(2.0*F_KB*ions->Tpar/ions->M);
+	// We scale the positions
+	ions->X.col(0) *= params->mesh.LX;
+	ions->X.col(1) *= params->mesh.LY;
 
 	arma::vec R = randu(ions->NSP);
 	arma_rng::set_seed_random();

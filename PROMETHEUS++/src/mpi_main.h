@@ -46,8 +46,6 @@ public:
 	//! Constructor of MPI_MAIN
 	MPI_MAIN(){};
 
-	void mpi_function(simulationParameters * params);
-
 	void createMPITopology(simulationParameters * params);
 
 	void finalizeCommunications(simulationParameters * params);

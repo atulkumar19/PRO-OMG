@@ -104,6 +104,17 @@ class EMF_SOLVER{
 
 	void MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
 
+	void MPI_SendVec(const simulationParameters * params, arma::vec * v);
+
+	void MPI_SendMat(const simulationParameters * params, arma::mat * m);
+
+	void MPI_Gathervec(const simulationParameters * params, arma::vec * field);
+
+	void MPI_Gathervfield_vec(const simulationParameters * params, vfield_vec * vfield);
+
+	void MPI_Gathermat(const simulationParameters * params, arma::mat * field);
+
+	void MPI_Gathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
 
 	void MPI_passGhosts(const simulationParameters * params, arma::vec * F);
 

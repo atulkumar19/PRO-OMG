@@ -109,7 +109,8 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
         ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
-        fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+
+		fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
          	// Using the Bashford-Adams extrapolation.
@@ -119,7 +120,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 			fields_solver.advanceEField(&params, &EB, &IONS, true, false);
 	    }
 
-        currentTime += params.DT*CS.time;
+		currentTime += params.DT*CS.time;
 
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0){
 			vector<IT> IONS_OUT = IONS;
@@ -130,7 +131,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 			hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
 
 			outputIterator++;
-
 		}
 
 		// Estimate simulation time
@@ -139,7 +139,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
 			double estimatedSimulationTime = ( (double)params.timeIterations*(t2 - t1)/(double)numberOfIterationsForEstimator )/60.0;
 
-			if(params.mpi.MPI_DOMAIN_NUMBER_CART == 0){
+			if(params.mpi.MPI_DOMAIN_NUMBER == 0){
                 cout << "ESTIMATED TIME OF COMPLETION: " << estimatedSimulationTime <<" MINUTES" << endl;
             }
         }

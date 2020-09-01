@@ -38,17 +38,17 @@ template <class IT, class FT> class ENERGY_DIAGNOSTIC{
 
     arma::vec electricEnergyDensity;
 
-public:
-
-    ENERGY_DIAGNOSTIC(const simulationParameters * params);
-
 
     void computeKineticEnergyDensity(const simulationParameters * params, const vector<IT> * IONS);
+
 
     void computeElectromagneticEnergyDensity(const simulationParameters * params, const oneDimensional::fields * EB);
 
     void computeElectromagneticEnergyDensity(const simulationParameters * params, const twoDimensional::fields * EB);
 
+public:
+
+    ENERGY_DIAGNOSTIC(const simulationParameters * params, const FT * EB, const vector<IT> * IONS);
 
     arma::vec getKineticEnergyDensity();
 

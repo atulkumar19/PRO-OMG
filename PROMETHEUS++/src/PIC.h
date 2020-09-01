@@ -62,14 +62,6 @@ protected:
 
 	void MPI_AllreduceMat(const simulationParameters * params, arma::mat * m);
 
-	void MPI_SendVec(const simulationParameters * params, arma::vec * v);
-
-	void MPI_ReduceVec(const simulationParameters * params, arma::vec * v);
-
-	void MPI_SendMat(const simulationParameters * params, arma::mat * m);
-
-	void MPI_ReduceMat(const simulationParameters * params, arma::mat * m);
-
 	void MPI_Allgathervec(const simulationParameters * params, arma::vec * field);
 
 	void MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield);
@@ -78,13 +70,6 @@ protected:
 
 	void MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield);
 
-	void MPI_Recvvec(const simulationParameters * params, arma::vec * field);
-
-	void MPI_Recvvfield_vec(const simulationParameters * params, vfield_vec * vfield);
-
-	void MPI_Recvmat(const simulationParameters * params, arma::mat * field);
-
-	void MPI_Recvvfield_mat(const simulationParameters * params, vfield_mat * vfield);
 
 	void include4GhostsContributions(arma::vec * v);
 
@@ -93,6 +78,11 @@ protected:
 	void fill4Ghosts(arma::vec * v);
 
 	void fill4Ghosts(arma::mat * m);
+
+
+	void computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G);
+
+	void computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G);
 
 
 	void smooth(arma::vec * v, double as);

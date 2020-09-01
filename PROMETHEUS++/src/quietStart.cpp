@@ -37,7 +37,7 @@ template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * para
     recalculateNumberSuperParticles(params, ions);
 
 	// Number of super-particles in entire simulation
-	unsigned int NTSP = (unsigned int)((int)(2*ions->NSP)*params->mpi.MPIS_PARTICLES);
+	unsigned int NTSP = (unsigned int)((int)(2*ions->NSP)*params->mpi.NUMBER_MPI_DOMAINS);
 
     QUIETSTART::dec = zeros<uvec>(NTSP);
     for(unsigned int ii=1; ii<NTSP; ii++){
@@ -48,9 +48,15 @@ template <class IT> QUIETSTART<IT>::QUIETSTART(const simulationParameters * para
 
 template <class IT> void QUIETSTART<IT>::recalculateNumberSuperParticles(const simulationParameters * params, IT * ions){
 	//Definition of the initial number of superparticles for each species
-    double exponent = ceil(log(ions->NPC*params->mesh.NUM_CELLS_IN_SIM)/log(2.0));
+    double exponent;
+	if (params->dimensionality == 1){
+		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
+	    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
+	}else{
+		exponent = ceil(log(ions->NPC*params->mesh.NX_PER_MPI*params->mesh.NY_PER_MPI*params->mpi.NUMBER_MPI_DOMAINS)/log(2.0));
+	    ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.NUMBER_MPI_DOMAINS );
+	}
 
-	ions->NSP = ceil( pow(2.0,exponent)/(double)params->mpi.MPIS_PARTICLES );
 
 	ions->nSupPartOutput = floor( (ions->pctSupPartOutput/100.0)*ions->NSP );
 }
@@ -83,7 +89,8 @@ template <class IT> void QUIETSTART<IT>::bit_reversedFractions_base2(const simul
     for(unsigned int ii=0;ii<sf;ii++)
         fracs(ii) = 1.0/pow(2.0,(double)(ii+1));
 
-	unsigned int iInd = NSP*((unsigned int)params->mpi.COMM_RANK);
+	// unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_CART_COORDS_1D[0]);
+	unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
 	for(unsigned int ii=0;ii<NSP;ii++){
 		vector<int> bin = dec2bin(QUIETSTART::dec(ii + iInd));
 		for(unsigned int jj=0;jj<bin.size();jj++){
@@ -101,8 +108,8 @@ template <class IT> void QUIETSTART<IT>::bit_reversedFractions_base3(const simul
     for(unsigned int ii=0;ii<sf;ii++)
         fracs(ii) = 1.0/pow(3.0,(double)(ii+1));
 
-
-	unsigned int iInd = NSP*((unsigned int)params->mpi.COMM_RANK);
+	// unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_CART_COORDS_1D[0]);
+	unsigned int iInd = NSP*((unsigned int)params->mpi.MPI_DOMAIN_NUMBER_CART);
 	for(unsigned int ii=0;ii<NSP;ii++){
 		vector<int> b3 = dec2b3(QUIETSTART::dec(ii + iInd));
 		for(unsigned int jj=0;jj<b3.size();jj++){
@@ -128,10 +135,6 @@ template <class IT> void QUIETSTART<IT>::maxwellianVelocityDistribution(const si
 
 	ions->X.col(0) = b2fr;
 	ions->X.col(1) = b3fr;
-
-	// We scale the positions
-	ions->X.col(0) *= params->mesh.LX;
-	ions->X.col(1) *= params->mesh.LY;
 
 	arma::vec R = randu(ions->NSP);
 	arma_rng::set_seed_random();
@@ -179,10 +182,6 @@ template <class IT> void QUIETSTART<IT>::ringLikeVelocityDistribution(const simu
 
 	ions->X.col(0) = b2fr;
 	ions->X.col(1) = b3fr;
-
-	// We scale the positions
-	ions->X.col(0) *= params->mesh.LX;
-	ions->X.col(1) *= params->mesh.LY;
 
 	arma::vec R = randu(ions->NSP);
 	arma_rng::set_seed_random();

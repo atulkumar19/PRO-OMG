@@ -2,12 +2,16 @@
 
 // Constructors
 
-template <class IT, class FT> ENERGY_DIAGNOSTIC<IT, FT>::ENERGY_DIAGNOSTIC(const simulationParameters * params){
-    kineticEnergyDensity = zeros(params->numberOfParticleSpecies);
+template <class IT, class FT> ENERGY_DIAGNOSTIC<IT, FT>::ENERGY_DIAGNOSTIC(const simulationParameters * params, const FT * EB, const vector<IT> * IONS){
+    kineticEnergyDensity = zeros(IONS->size());
 
     magneticEnergyDensity = zeros(3);
 
     electricEnergyDensity = zeros(3);
+
+    computeKineticEnergyDensity(params, IONS);
+
+    computeElectromagneticEnergyDensity(params, EB);
 }
 
 

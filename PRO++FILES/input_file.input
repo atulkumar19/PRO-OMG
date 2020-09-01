@@ -1,5 +1,4 @@
 dimensionality              1
-mpisForFields               2
 includeElectronInertia      0
 quietStart                  1
 restart                     0

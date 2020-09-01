@@ -91,19 +91,22 @@ template <class IT, class FT> class HDF{
 	void saveToHDF5(Group * group, string name, arma::fmat * values);
 
 
-	void saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS, const characteristicScales * CS, const Group * group_iteration);
+	void computeFieldsOnNonStaggeredGrid(oneDimensional::fields * F, oneDimensional::fields * G);
 
-	void saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS, const characteristicScales * CS, const Group * group_iteration);
-
-
-	void saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const Group * group_iteration);
-
-	void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const Group * group_iteration);
+	void computeFieldsOnNonStaggeredGrid(twoDimensional::fields * F, twoDimensional::fields * G);
 
 
-	void saveIonsEnergy(const simulationParameters * params, const vector<IT> * IONS, const characteristicScales * CS, const Group * group_iteration);
+	void saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it);
 
-	void saveFieldsEnergy(const simulationParameters * params, FT * EB, const characteristicScales * CS, const Group * group_iteration);
+	void saveIonsVariables(const simulationParameters * params, const vector<twoDimensional::ionSpecies> * IONS, const characteristicScales * CS, const int it);
+
+
+	void saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const int it);
+
+	void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const int it);
+
+
+	void saveEnergy(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it);
 
 public:
 

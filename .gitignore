@@ -1,3 +1,15 @@
 *.o
 */*.o
 .DS_Store
+HDF5/
+arma_libs/
+PROMETHEUS++/Makefile
+PROMETHEUS++/compile.sh
+PROMETHEUS++/run_pro++.sh
+PROMETHEUS++/bin/
+PROMETHEUS++/inputFiles/
+PROMETHEUS++/outputFiles/
+PROMETHEUS++/nohup*
+*.fig
+PROMETHEUS++/*.csv
+PROMETHEUS++/run_pro++-debugg.sh

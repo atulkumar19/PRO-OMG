@@ -308,6 +308,18 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	// Parsing list of variables in outputs
 	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
 	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
+              //This loads non-homegeneous plasma profiles via an external file
+                          int nn = params->PATH.length();
+                          std::string inputFilePath = params->PATH.substr(0,nn-12);
+                          std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
+                          std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
+                          std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
+                          std::string fileName4= inputFilePath + "/inputFiles/Bz_norm_profile.txt"; //Path to load the external file
+            
+                          params->PP.ne.load(fileName1);    //Ion density profile 
+                          params->PP.Tpar.load(fileName2);  //Parallel ion profile 
+                          params->PP.Tper.load(fileName3);  //Perpendicular ion profile 
+                          params->PP.Bz.load(fileName4);    //B-field profile 
 }
 
 
@@ -480,8 +492,13 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
     							qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
     						}else{
                                 RANDOMSTART<IT> rs(params);
-    							rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
+    							//rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
+                                                                                                  //***@non-uniform
+                                                                                                  rs.maxwellianVelocityDistribution_nonhomogeneous(params, &IONS->at(ii));
     						}
+                                                                                    
+                                                                                    
+
 
     						break;
     						}
@@ -669,17 +686,18 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
-    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
+                int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
+                EB->zeros(NX);
+                arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
+                arma::vec S = linspace(0,params->mesh.LX,200); 
+                arma::vec BBz(NX,1);
+                interp1(S,params->PP.Bz,ss,BBz); //interpolates Bz profile in simulation domain
+                EB->B.X.fill(params->BGP.Bx); // x
+                EB->B.Y.fill(params->BGP.By); // y
+                EB->B.Z = (params->BGP.Bz)*BBz; // z; Creates a magnetic field profile varying with X
+                
 
-    EB->zeros(NX);
 
-    EB->E.X.fill(0.0); // x
-    EB->E.Y.fill(0.0); // x
-    EB->E.Z.fill(0.0); // x
-
-    EB->B.X.fill(params->BGP.Bx); // x
-    EB->B.Y.fill(params->BGP.By); // y
-    EB->B.Z.fill(params->BGP.Bz); // z
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB){

@@ -137,6 +137,15 @@ struct backgroundPlasmaParameters{
 	double phi; // Spherical azimuthal angle (as measured from x-axis)
 };
 
+struct plasmaProfiles{
+	arma::vec ne;
+              arma::vec Tpar;
+              arma::vec Tper;
+              arma::vec Bz;
+              arma::vec Br;
+              arma::vec s;
+};
+
 
 struct simulationParameters{
 	// List of variables in the outputs
@@ -175,6 +184,7 @@ struct simulationParameters{
 	int numberOfTracerSpecies; // This species are not self-consistently evolved with the fields
 
 	backgroundPlasmaParameters BGP;
+                          plasmaProfiles PP;
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;

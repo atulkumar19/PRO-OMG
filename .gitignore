@@ -12,4 +12,5 @@ PROMETHEUS++/outputFiles/
 PROMETHEUS++/nohup*
 *.fig
 PROMETHEUS++/*.csv
-PROMETHEUS++/run_pro++-debugg.sh
+PROMETHEUS++/*.sh
+PROMETHEUS++/*.map

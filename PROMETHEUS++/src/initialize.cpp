@@ -688,13 +688,20 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
                 int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
                 EB->zeros(NX);
-                arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
-                arma::vec S = linspace(0,params->mesh.LX,200); 
-                arma::vec BBz(NX,1);
-                interp1(S,params->PP.Bz,ss,BBz); //interpolates Bz profile in simulation domain
+               
                 EB->B.X.fill(params->BGP.Bx); // x
                 EB->B.Y.fill(params->BGP.By); // y
-                EB->B.Z = (params->BGP.Bz)*BBz; // z; Creates a magnetic field profile varying with X
+                if (params->quietStart){
+                EB->B.Z.fill(params->BGP.Bz);
+                                }else{
+                                arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
+                                arma::vec S = linspace(0,params->mesh.LX,200); 
+                                arma::vec BBz(NX,1);
+                                interp1(S,params->PP.Bz,ss,BBz); //interpolates Bz profile in simulation domain
+                                EB->B.Z = (params->BGP.Bz)*BBz; // z; Creates a magnetic field profile varying with X
+                                }                
+
+               
                 
 
 

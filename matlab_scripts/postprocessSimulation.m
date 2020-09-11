@@ -6,11 +6,9 @@ function ST = postprocessSimulation(path)
 % ST = postprocessSimulation('../PROMETHEUS++/outputFiles/GC/HDF5/')
 % ST = postprocessSimulation('../PROMETHEUS++/Tests/warm_plasma/HDF5/')
 
-
-% Physical constants
-
 close all
 
+% Physical constants
 ST.kB = 1.38E-23; % Boltzmann constant
 ST.mu0 = (4E-7)*pi; % Magnetic permeability of vacuum
 ST.ep0 = 8.854E-12; % Electric permittivity of vacuum
@@ -28,25 +26,19 @@ ST = loadData(ST);
 
 ST.time = loadTimeVector(ST);
 
-% FourierAnalysis(ST,'B','x', false);
-% FourierAnalysis(ST,'B','y', false);
-FourierAnalysis(ST,'B','z', false);
-% FourierAnalysis_(ST,'B','z', false);
-
-% FourierAnalysis(ST,'E','x');
-% FourierAnalysis(ST,'E','y');
-% FourierAnalysis(ST,'E','z');
-
-% EnergyDiagnostic(ST);
-
 EnergyConservation(ST);
 
-% testFieldInterpolation(ST);
+if (ST.params.dimensionality == 1)
+    FourierAnalysis1D(ST,'B','z');
+else
+    FourierAnalysis2D(ST,'B','z');
 end
+end
+
 
 function params = loadSimulationParameters(ST)
 params = struct;
-info = h5info([ST.path 'main_D0.h5']);
+info = h5info([ST.path 'main.h5']);
 
 params.info = info;
 
@@ -78,21 +70,25 @@ end
 end
 
 function ST = loadData(ST)
-ST.data = struct;
+ST.fields_data = struct;
+ST.ions_data = struct;
 
-numberOfOutputs = [];
 
-for ff=1:ST.params.numOfDomains
-    info = h5info([ST.path ['file_D' num2str(ff-1) '.h5']]);
+% First, we load ions data
+numberOfOutputs_ions = [];
+
+for ff=1:ST.params.numMPIsParticles
+    info = h5info([ST.path ['PARTICLES_FILE_' num2str(ff-1) '.h5']]);
     
-    numberOfOutputs(ff)= numel(info.Groups);
+    numberOfOutputs_ions(ff)= numel(info.Groups);
+%     numberOfOutputs_ions(ff)= 5000; 
     
     for ii=1:numel(info.Groups)
         groupName = strsplit(info.Groups(ii).Name,'/');
         
         for jj=1:numel(info.Groups(ii).Datasets)
             datasetName = info.Groups(ii).Datasets(jj).Name;
-            ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(datasetName) = ...
+            ST.ions_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(datasetName) = ...
                 h5read(info.Filename, ['/' groupName{end} '/' datasetName]);
         end
         
@@ -102,7 +98,7 @@ for ff=1:ST.params.numOfDomains
                 
                 for kk=1:numel(info.Groups(ii).Groups(jj).Datasets)
                     datasetName = info.Groups(ii).Groups(jj).Datasets(kk).Name;
-                    ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(datasetName) = ...
+                    ST.ions_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(datasetName) = ...
                         h5read(info.Filename, [info.Groups(ii).Groups(jj).Name '/' datasetName]);
                 end
                 
@@ -113,7 +109,7 @@ for ff=1:ST.params.numOfDomains
                         for ll=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Datasets)
                             datasetName = info.Groups(ii).Groups(jj).Groups(kk).Datasets(ll).Name;
                             
-                            ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(datasetName) = ...
+                            ST.ions_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(datasetName) = ...
                                 h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Name '/' datasetName]);
                         end
                         
@@ -124,7 +120,7 @@ for ff=1:ST.params.numOfDomains
                                 for mm=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets)
                                     datasetName = info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets(mm).Name;
                                     
-                                    ST.data.(['D' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(subSubSubGroupName{end}).(datasetName) = ...
+                                    ST.ions_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(subSubSubGroupName{end}).(datasetName) = ...
                                         h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Name '/' datasetName]);
                                 end
                             end
@@ -138,21 +134,81 @@ for ff=1:ST.params.numOfDomains
     end
 end
 
-ST.numberOfOutputs = min(numberOfOutputs);
+% Then, we load fields data
+numberOfOutputs_fields = [];
+
+for ff=1:ST.params.numMPIsFields
+    info = h5info([ST.path ['FIELDS_FILE_' num2str(ff-1) '.h5']]);
+    
+    numberOfOutputs_fields(ff)= numel(info.Groups);
+%     numberOfOutputs_fields(ff)= 5000;%
+    
+    for ii=1:numel(info.Groups)
+        groupName = strsplit(info.Groups(ii).Name,'/');
+        
+        for jj=1:numel(info.Groups(ii).Datasets)
+            datasetName = info.Groups(ii).Datasets(jj).Name;
+            ST.fields_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(datasetName) = ...
+                h5read(info.Filename, ['/' groupName{end} '/' datasetName]);
+        end
+        
+        if ~isempty(info.Groups(ii).Groups)
+            for jj=1:numel(info.Groups(ii).Groups)
+                subGroupName = strsplit(info.Groups(ii).Groups(jj).Name,'/');
+                
+                for kk=1:numel(info.Groups(ii).Groups(jj).Datasets)
+                    datasetName = info.Groups(ii).Groups(jj).Datasets(kk).Name;
+                    ST.fields_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(datasetName) = ...
+                        h5read(info.Filename, [info.Groups(ii).Groups(jj).Name '/' datasetName]);
+                end
+                
+                if ~isempty(info.Groups(ii).Groups(jj).Groups)
+                    for kk=1:numel(info.Groups(ii).Groups(jj).Groups)
+                        subSubGroupName = strsplit(info.Groups(ii).Groups(jj).Groups(kk).Name,'/');
+                        
+                        for ll=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Datasets)
+                            datasetName = info.Groups(ii).Groups(jj).Groups(kk).Datasets(ll).Name;
+                            
+                            ST.fields_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(datasetName) = ...
+                                h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Name '/' datasetName]);
+                        end
+                        
+                        if ~isempty(info.Groups(ii).Groups(jj).Groups(kk).Groups)
+                            for ll=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Groups)
+                                subSubSubGroupName = strsplit(info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Name,'/');
+                                
+                                for mm=1:numel(info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets)
+                                    datasetName = info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Datasets(mm).Name;
+                                    
+                                    ST.fields_data.(['MPI' num2str(ff-1) '_O' groupName{end}]).(subGroupName{end}).(subSubGroupName{end}).(subSubSubGroupName{end}).(datasetName) = ...
+                                        h5read(info.Filename, [info.Groups(ii).Groups(jj).Groups(kk).Groups(ll).Name '/' datasetName]);
+                                end
+                            end
+                        end
+                    end
+                end
+                
+            end
+        end
+        
+    end
+end
+
+ST.numberOfOutputs = min([numberOfOutputs_ions numberOfOutputs_fields]);
 end
 
 function time = loadTimeVector(ST)
 time = zeros(1,ST.numberOfOutputs);
 
 for ii=1:ST.numberOfOutputs
-    time(ii) = ST.data.(['D0_O' num2str(ii-1)]).time;
+    time(ii) = ST.ions_data.(['MPI0_O' num2str(ii-1)]).time;
 end
 
 disp(["Simulation time analysed: " + num2str(time(end)/ST.params.scales.ionGyroPeriod(1)) ])
 end
 
 
-function FourierAnalysis(ST, field, component, find_maxima)
+function FourierAnalysis1D(ST, field, component)
 if strcmp(component,'x')
     component_num = 1;
 elseif strcmp(component,'y')
@@ -162,7 +218,159 @@ elseif strcmp(component,'z')
 end
 
 
-ND = ST.params.numOfDomains; % Number of domains
+NMPI_P = ST.params.numMPIsParticles;
+NMPI_F = ST.params.numMPIsFields;
+NX_PER_MPI = ST.params.geometry.NX; % Number of cells per domain
+NX_IN_SIM = ST.params.geometry.NX_IN_SIM; % Number of cells in the whole domain
+
+% Plasma parameters
+qi = ST.params.ions.spp_1.Q;
+mi = ST.params.ions.spp_1.M;
+Bo = sqrt(dot(ST.params.Bo,ST.params.Bo));
+
+ne = ST.params.ions.ne;
+ni = ST.params.ions.ne;
+wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
+
+wci = qi*Bo/mi; % Ion cyclotron frequency
+wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
+
+wci = double(wci);
+wce = double(wce);
+wpi = double(wpi);
+
+tauci = 2*pi/wci;
+
+% Alfven speed
+VA = Bo/sqrt( ST.mu0*ne*mi );
+VA = double(VA);
+
+% Lower hybrid frequency
+wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );
+wlh = wlh/wci;
+
+disp(['Lower hybrid frequency: ' num2str(wlh)]);
+
+% % % % % % Fourier variables % % % % % % 
+time = ST.time;
+DT = mean(diff(time));
+
+% Dimensionless time in units of ion cyclotron period
+time = time/tauci;
+
+% *** @tomodify
+NT = int32(ST.numberOfOutputs); % Number of snapshots
+% NT = find((time-2.5)>0, 1);
+
+Df = 1.0/(DT*double(NT));
+fmax = 1.0/(2.0*double(DT)); % Nyquist theorem
+fAxis = 0:Df:fmax-Df;
+
+wAxis = 2*pi*fAxis/wci;
+
+
+DX = ST.params.geometry.DX;
+Dk = 1.0/(DX*double(NX_IN_SIM));
+kmax = 1.0/(2.0*DX);
+kAxis = 0:Dk:kmax-Dk;
+kAxis = 2.0*pi*kAxis;
+xAxis = ST.c*kAxis/wpi;
+% % % % % % Fourier variables % % % % % % 
+
+% Whistlers dispersion relation
+k_wh = sqrt( (1 + (VA/ST.c)^2)*( wAxis.^2./(1 + wAxis) ) );
+
+% Ion cyclotron wave dispersion relation
+
+k_ic = @(w) sqrt( (wci/wpi)^2*(w.^2.*(1.0 + (wpi/wci)^2 - w)./(1 - w)) );
+
+F = zeros(NT,NX_IN_SIM);
+
+for ii=1:NT
+    for dd=1:NMPI_F
+        ix = (dd-1)*NX_PER_MPI + 1;
+        fx = dd*NX_PER_MPI;
+            
+        if strcmp(field,'B')
+            F(ii,ix:fx) = ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component)  - ST.params.Bo(component_num);
+        else
+            F(ii,ix:fx) = ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
+        end
+    end
+end
+
+
+% NK = floor( numel(xAxis)/2 );
+
+% one-to-one comparative with 2-D simulations
+NK = numel(xAxis);
+NW = numel(wAxis);
+
+% x-axis
+kSpacex = zeros(NT, NK);
+for ii=1:NT
+    A = fft( squeeze(F(ii,:)) );
+    kSpacex(ii,:) = A(1:NK);
+end
+
+
+fourierSpacex = zeros(NW, NK);
+for ii=1:NK
+    A = fft(hanning(double(NT)).* kSpacex(:,ii) );
+    fourierSpacex(:,ii) = A(1:NW);
+end
+
+FX = squeeze( fourierSpacex.*conj(fourierSpacex) );
+Spectrum_x = sum(FX,2)/NK;
+
+Spectrum_x = Spectrum_x/double(NX_IN_SIM);
+
+
+wk_fig = figure;
+
+
+% Propagation along x-axis
+A = FX;
+% Magnetoacoustic wave
+z = linspace(0,max([max(xAxis), max(wAxis)]),10);
+
+figure(wk_fig)
+subplot(1,4,1)
+ax = plot(log10(Spectrum_x),wAxis,'k');
+%     set(ax.Parent(1),'XDir','reverse')
+box on; grid on; grid minor
+xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
+ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+
+figure(wk_fig)
+subplot(1,4,[2 4])
+imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
+hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
+hold on;plot(k_wh, wAxis,'k--');hold off;
+w_ic = linspace(0,1,100);
+hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
+axis xy; colormap(jet); colorbar
+try
+    axis([0 max(xAxis) 0 max(wAxis)])
+end
+xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
+ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
+title(['$' field '_' component '(x)$'],'interpreter','latex')
+end
+
+
+function FourierAnalysis2D(ST, field, component)
+if strcmp(component,'x')
+    component_num = 1;
+elseif strcmp(component,'y')
+    component_num = 2;
+elseif strcmp(component,'z')
+    component_num = 3;
+end
+
+
+NMPI_P = ST.params.numMPIsParticles;
+NMPI_F = ST.params.numMPIsFields;
 NX_PER_MPI = ST.params.geometry.NX; % Number of cells per domain
 NX_IN_SIM = ST.params.geometry.NX_IN_SIM; % Number of cells in the whole domain
 NY_PER_MPI = ST.params.geometry.NY; % Number of cells per domain
@@ -185,6 +393,8 @@ wci = double(wci);
 wce = double(wce);
 wpi = double(wpi);
 
+tauci = 2*pi/wci;
+
 % Alfven speed
 VA = Bo/sqrt( ST.mu0*ne*mi );
 VA = double(VA);
@@ -198,6 +408,8 @@ disp(['Lower hybrid frequency: ' num2str(wlh)]);
 % % % % % % Fourier variables % % % % % % 
 time = ST.time;
 DT = mean(diff(time));
+
+time = time/tauci;
 
 % *** @tomodify
 NT = int32(ST.numberOfOutputs); % Number of snapshots
@@ -235,7 +447,7 @@ k_ic = @(w) sqrt( (wci/wpi)^2*(w.^2.*(1.0 + (wpi/wci)^2 - w)./(1 - w)) );
 F = zeros(NT,NX_IN_SIM,NY_IN_SIM);
 
 for ii=1:NT
-    for dd=1:ND   
+    for dd=1:NMPI_F
         if (ST.params.geometry.SPLIT_DIRECTION == 0)
             ix = (dd-1)*NX_PER_MPI + 1;
             fx = dd*NX_PER_MPI;
@@ -249,667 +461,186 @@ for ii=1:NT
         end
         
         if strcmp(field,'B')
-            F(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component)  - ST.params.Bo(component_num);
+            F(ii,ix:fx,iy:fy) = ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component)  - ST.params.Bo(component_num);
         else
-            F(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
-        end
-    end
-end
-
-% x-axis
-kSpacex = zeros(NT, NX_IN_SIM, 1);
-for ii=1:NT
-    for jj=1:1
-        kSpacex(ii,:,jj) = fft( squeeze(F(ii,:,jj)) );
-    end
-end
-
-fourierSpacex = zeros(NT, NX_IN_SIM, 1);
-for ii=1:NX_IN_SIM
-    for jj=1:1
-        fourierSpacex(:,ii,jj) = fft(hanning(double(NT)).*kSpacex(:,ii,jj));
-    end
-end
-
-
-if (ST.params.dimensionality == 2)
-    % y-axis
-    kSpacey = zeros(NT,1,NY_IN_SIM);
-    for ii=1:NT
-        for jj=1:1
-            kSpacey(ii,jj,:) = fft( squeeze(F(ii,jj,:)) );
-        end
-    end
-    
-    fourierSpacey = zeros(NT,1, NY_IN_SIM);
-    for ii=1:NY_IN_SIM
-        for jj=1:1
-            fourierSpacey(:,jj,ii) = fft( hanning(double(NT)).*kSpacey(:,jj,ii) );
-        end
-    end
-end
-
-FX = squeeze( mean(fourierSpacex.*conj(fourierSpacex), 3) );
-
-% Frequency spectra
-A = FX(1:numel(wAxis),1:numel(xAxis));
-NK = floor( numel(xAxis)/3 );
-Spectrum_x = sum(A(:,1:NK),2)*Dk;
-
-% % Local maxima
-if (find_maxima)
-    num_max = 5;
-    FX_max = zeros(num_max, numel(xAxis));
-    wx_max = zeros(num_max, numel(xAxis));
-    try
-        for ii=1:numel(xAxis)
-            [FX_max(:,ii), wx_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
+            F(ii,ix:fx,iy:fy) = ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
         end
     end
 end
 
 
-if (ST.params.dimensionality == 2)
-    FY = squeeze( mean(fourierSpacey.*conj(fourierSpacey), 2) );
-    
-    A = FY(1:numel(wAxis),1:numel(yAxis));
-    NK = floor( numel(yAxis)/3 );
-    Spectrum_y = sum(A(:,1:NK),2)*Dk;
-    
-    if (find_maxima)
-        FY_max = zeros(num_max, numel(yAxis));
-        wy_max = zeros(num_max, numel(yAxis));
-        try
-            for ii=1:numel(yAxis)
-                [FY_max(:,ii), wy_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
-            end
-        end
-    end
-end
-
-wk_fig = figure;
-
-if (ST.params.dimensionality == 1)
-    % Propagation along x-axis
-    A = fourierSpacex.*conj(fourierSpacex);
-    % Magnetoacoustic wave
-    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
-    
-    figure(wk_fig)
-    subplot(1,4,1)
-    ax = plot(log10(Spectrum_x),wAxis,'k');
-%     set(ax.Parent(1),'XDir','reverse')
-    box on; grid on; grid minor
-    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    
-    figure(wk_fig)
-    subplot(1,4,[2 4])
-    imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
-    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
-    hold on;plot(k_wh, wAxis,'k--');hold off;
-    w_ic = linspace(0,1,100);
-    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
-    if (find_maxima)
-        for ii=1:numel(xAxis)
-            hold on; 
-            plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');
-            hold off
-        end
-    end
-    axis xy; colormap(jet); colorbar
-    try
-        axis([0 max(xAxis) 0 max(wAxis)])
-    end
-    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    title(['$' field '_' component '(x)$'],'interpreter','latex')
+% 2D FFT
+if floor(NX_IN_SIM/2) < numel(xAxis)
+    NKx = floor(NX_IN_SIM/2);
 else
-    % Propagation along x-axis
-    A = FX(1:numel(wAxis),1:numel(xAxis));
-    % Magnetoacoustic wave
-    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
-    
-    figure(wk_fig)
-    subplot(2,4,1)
-    ax = plot(log10(Spectrum_x),wAxis,'k');
-%     set(ax.Parent(1),'XDir','reverse')
-    box on; grid on; grid minor
-    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    
-    figure(wk_fig)
-    subplot(2,4,[2 4])
-    imagesc(xAxis,wAxis,log10(A));
-    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
-    hold on;plot(k_wh, wAxis,'k--');hold off;
-    w_ic = linspace(0,1,100);
-    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
-    if (find_maxima)
-        for ii=1:numel(xAxis)
-            hold on; plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');hold off
-        end
-    end
-    axis xy; colormap(jet); colorbar
-    try
-        axis([0 max(xAxis) 0 max(wAxis)])
-    end
-    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    title(['$' field '_' component '(x)$'],'interpreter','latex')
-    
-    % Propagation along x-axis
-    A = FY(1:numel(wAxis),1:numel(yAxis));
-    % Magnetoacoustic wave
-    z = linspace(0,max([max(yAxis), max(wAxis)]),10);
-    
-    figure(wk_fig)
-    subplot(2,4,5)
-    ax = plot(log10(Spectrum_y),wAxis,'k');
-%     set(ax.Parent(1),'XDir','reverse')
-    box on; grid on; grid minor
-    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    
-    figure(wk_fig)
-    subplot(2,4,[6 8])
-    imagesc(yAxis,wAxis,log10(A));
-    hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
-    hold on;plot(k_wh, wAxis,'k--');hold off;
-    w_ic = linspace(0,1,100);
-    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
-    if (find_maxima)
-        for ii=1:numel(yAxis)
-            hold on; plot(yAxis(ii)*ones(1,num_max), wy_max(:,ii),'gx');hold off
-        end
-    end
-    axis xy; colormap(jet); colorbar
-    try
-        axis([0 max(xAxis) 0 max(wAxis)])
-    end
-    xlabel('$ck_y/\omega_p$', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    title(['$' field '_' component '(y)$'],'interpreter','latex')
-end
+    NKx = numel(xAxis);
 end
 
-function FourierAnalysis_(ST, field, component, find_maxima)
-if strcmp(component,'x')
-    component_num = 1;
-elseif strcmp(component,'y')
-    component_num = 2;
-elseif strcmp(component,'z')
-    component_num = 3;
-end
-
-
-ND = ST.params.numOfDomains; % Number of domains
-NX_PER_MPI = ST.params.geometry.NX; % Number of cells per domain
-NX_IN_SIM = ST.params.geometry.NX_IN_SIM; % Number of cells in the whole domain
-NY_PER_MPI = ST.params.geometry.NY; % Number of cells per domain
-NY_IN_SIM = ST.params.geometry.NY_IN_SIM; % Number of cells in the whole domain
-% SPLIT_DIRECTION = ST.params.geometry.SPLIT_DIRECTION;
-
-% Plasma parameters
-qi = ST.params.ions.spp_1.Q;
-mi = ST.params.ions.spp_1.M;
-Bo = sqrt(dot(ST.params.Bo,ST.params.Bo));
-
-ne = ST.params.ions.ne;
-ni = ST.params.ions.ne;
-wpi = sqrt(ni*((qi)^2)/(mi*ST.ep0));
-
-wci = qi*Bo/mi; % Ion cyclotron frequency
-wce = ST.qe*Bo/ST.me; % Electron cyclotron frequency
-
-wci = double(wci);
-wce = double(wce);
-wpi = double(wpi);
-
-% Alfven speed
-VA = Bo/sqrt( ST.mu0*ne*mi );
-VA = double(VA);
-
-% Lower hybrid frequency
-wlh = sqrt( wpi^2*wci*wce/( wci*wce + wpi^2 ) );
-wlh = wlh/wci;
-
-disp(['Lower hybrid frequency: ' num2str(wlh)]);
-
-% % % % % % Fourier variables % % % % % % 
-time = ST.time;
-DT = mean(diff(time));
-
-% *** @tomodify
-NT = int32(ST.numberOfOutputs); % Number of snapshots
-% NT = find((time-2.5)>0, 1);
-
-Df = 1.0/(DT*double(NT));
-fmax = 1.0/(2.0*double(DT)); % Nyquist theorem
-fAxis = 0:Df:fmax-Df;
-
-wAxis = 2*pi*fAxis/wci;
-
-
-DX = ST.params.geometry.DX;
-Dk = 1.0/(DX*double(NX_IN_SIM));
-kmax = 1.0/(2.0*DX);
-kAxis = 0:Dk:kmax-Dk;
-kAxis = 2.0*pi*kAxis;
-xAxis = ST.c*kAxis/wpi;
-
-DY = ST.params.geometry.DY;
-Dk = 1.0/(DY*double(NY_IN_SIM));
-kmax = 1.0/(2.0*DY);
-kAxis = 0:Dk:kmax-Dk;
-kAxis = 2.0*pi*kAxis;
-yAxis = ST.c*kAxis/wpi;
-% % % % % % Fourier variables % % % % % % 
-
-% Whistlers dispersion relation
-k_wh = sqrt( (1 + (VA/ST.c)^2)*( wAxis.^2./(1 + wAxis) ) );
-
-% Ion cyclotron wave dispersion relation
-
-k_ic = @(w) sqrt( (wci/wpi)^2*(w.^2.*(1.0 + (wpi/wci)^2 - w)./(1 - w)) );
-
-F = zeros(NT,NX_IN_SIM,NY_IN_SIM);
-
-for ii=1:NT
-    for dd=1:ND   
-        if (ST.params.geometry.SPLIT_DIRECTION == 0)
-            ix = (dd-1)*NX_PER_MPI + 1;
-            fx = dd*NX_PER_MPI;
-            iy = 1;
-            fy = NY_PER_MPI;
-        else
-            ix = 1;
-            fx = NX_PER_MPI;
-            iy = (dd-1)*NY_PER_MPI + 1;
-            fy = dd*NY_PER_MPI;
-        end
-        
-        if strcmp(field,'B')
-            F(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component)  - ST.params.Bo(component_num);
-        else
-            F(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.(field).(component);
-        end
-    end
-end
-
-% x-axis
-kSpacex = zeros(NT, NX_IN_SIM, NY_IN_SIM);
-for ii=1:NT
-    for jj=1:NY_IN_SIM
-        kSpacex(ii,:,jj) = fft( squeeze(F(ii,:,jj)) );
-    end
-end
-
-fourierSpacex = zeros(NT, NX_IN_SIM, NY_IN_SIM);
-for ii=1:NX_IN_SIM
-    for jj=1:NY_IN_SIM
-        fourierSpacex(:,ii,jj) = fft(hanning(double(NT)).*kSpacex(:,ii,jj));
-    end
-end
-
-
-if (ST.params.dimensionality == 2)
-    % y-axis
-    kSpacey = zeros(NT,NX_IN_SIM,NY_IN_SIM);
-    for ii=1:NT
-        for jj=1:NX_IN_SIM
-            kSpacey(ii,jj,:) = fft( squeeze(F(ii,jj,:)) );
-        end
-    end
-    
-    fourierSpacey = zeros(NT,NX_IN_SIM, NY_IN_SIM);
-    for ii=1:NY_IN_SIM
-        for jj=1:NX_IN_SIM
-            fourierSpacey(:,jj,ii) = fft( hanning(double(NT)).*kSpacey(:,jj,ii) );
-        end
-    end
-end
-
-FX = squeeze( mean(fourierSpacex.*conj(fourierSpacex), 3) );
-
-% Frequency spectra
-A = FX(1:numel(wAxis),1:numel(xAxis));
-NK = floor( numel(xAxis)/3 );
-Spectrum_x = sum(A(:,1:NK),2)*Dk;
-
-% % Local maxima
-if (find_maxima)
-    num_max = 5;
-    FX_max = zeros(num_max, numel(xAxis));
-    wx_max = zeros(num_max, numel(xAxis));
-    try
-        for ii=1:numel(xAxis)
-            [FX_max(:,ii), wx_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
-        end
-    end
-end
-
-
-if (ST.params.dimensionality == 2)
-    FY = squeeze( mean(fourierSpacey.*conj(fourierSpacey), 2) );
-    
-    A = FY(1:numel(wAxis),1:numel(yAxis));
-    NK = floor( numel(yAxis)/3 );
-    Spectrum_y = sum(A(:,1:NK),2)*Dk;
-    
-    if (find_maxima)
-        FY_max = zeros(num_max, numel(yAxis));
-        wy_max = zeros(num_max, numel(yAxis));
-        try
-            for ii=1:numel(yAxis)
-                [FY_max(:,ii), wy_max(:,ii)] = findpeaks(A(:,ii), wAxis, 'NPeaks', num_max, 'MinPeakDistance', 1.0);
-            end
-        end
-    end
-end
-
-wk_fig = figure;
-
-if (ST.params.dimensionality == 1)
-    % Propagation along x-axis
-    A = fourierSpacex.*conj(fourierSpacex);
-    % Magnetoacoustic wave
-    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
-    
-    figure(wk_fig)
-    subplot(1,4,1)
-    ax = plot(log10(Spectrum_x),wAxis,'k');
-%     set(ax.Parent(1),'XDir','reverse')
-    box on; grid on; grid minor
-    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    
-    figure(wk_fig)
-    subplot(1,4,[2 4])
-    imagesc(xAxis,wAxis,log10(A(1:numel(wAxis),1:numel(xAxis))));
-    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
-    hold on;plot(k_wh, wAxis,'k--');hold off;
-    w_ic = linspace(0,1,100);
-    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
-    if (find_maxima)
-        for ii=1:numel(xAxis)
-            hold on; 
-            plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');
-            hold off
-        end
-    end
-    axis xy; colormap(jet); colorbar
-    try
-        axis([0 max(xAxis) 0 max(wAxis)])
-    end
-    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    title(['$' field '_' component '(x)$'],'interpreter','latex')
+if floor(NY_IN_SIM/2) < numel(yAxis)
+    NKy = floor(NY_IN_SIM/2);
 else
-    % Propagation along x-axis
-    A = FX(1:numel(wAxis),1:numel(xAxis));
-    % Magnetoacoustic wave
-    z = linspace(0,max([max(xAxis), max(wAxis)]),10);
-    
-    figure(wk_fig)
-    subplot(2,4,1)
-    ax = plot(log10(Spectrum_x),wAxis,'k');
-%     set(ax.Parent(1),'XDir','reverse')
-    box on; grid on; grid minor
-    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    
-    figure(wk_fig)
-    subplot(2,4,[2 4])
-    imagesc(xAxis,wAxis,log10(A));
-    hold on;plot(xAxis, wlh*ones(size(xAxis)),'k--',z,z,'k--');hold off;
-    hold on;plot(k_wh, wAxis,'k--');hold off;
-    w_ic = linspace(0,1,100);
-    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
-    if (find_maxima)
-        for ii=1:numel(xAxis)
-            hold on; plot(xAxis(ii)*ones(1,num_max), wx_max(:,ii),'gx');hold off
-        end
-    end
-    axis xy; colormap(jet); colorbar
-    try
-        axis([0 max(xAxis) 0 max(wAxis)])
-    end
-    xlabel('$ck_x/\omega_p$', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    title(['$' field '_' component '(x)$'],'interpreter','latex')
-    
-    % Propagation along x-axis
-    A = FY(1:numel(wAxis),1:numel(yAxis));
-    % Magnetoacoustic wave
-    z = linspace(0,max([max(yAxis), max(wAxis)]),10);
-    
-    figure(wk_fig)
-    subplot(2,4,5)
-    ax = plot(log10(Spectrum_y),wAxis,'k');
-%     set(ax.Parent(1),'XDir','reverse')
-    box on; grid on; grid minor
-    xlabel('Intensity ($log_{10}$)', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    
-    figure(wk_fig)
-    subplot(2,4,[6 8])
-    imagesc(yAxis,wAxis,log10(A));
-    hold on;plot(yAxis, wlh*ones(size(yAxis)),'k--',z,z,'k--');hold off;
-    hold on;plot(k_wh, wAxis,'k--');hold off;
-    w_ic = linspace(0,1,100);
-    hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis, ones(size(xAxis)), 'k--');hold off;
-    if (find_maxima)
-        for ii=1:numel(yAxis)
-            hold on; plot(yAxis(ii)*ones(1,num_max), wy_max(:,ii),'gx');hold off
-        end
-    end
-    axis xy; colormap(jet); colorbar
-    try
-        axis([0 max(xAxis) 0 max(wAxis)])
-    end
-    xlabel('$ck_y/\omega_p$', 'Interpreter', 'latex')
-    ylabel('$\omega/\Omega_i$', 'Interpreter', 'latex')
-    title(['$' field '_' component '(y)$'],'interpreter','latex')
-end
+    NKy = numel(yAxis);
 end
 
-function EnergyDiagnostic(ST)
-% Diagnostic to monitor energy transfer/conservation
-NT = ST.numberOfOutputs;
-NSPP = ST.params.ions.numberOfParticleSpecies;
-ND = ST.params.numOfDomains;
-DX = ST.params.geometry.DX;
-DY = ST.params.geometry.DY;
-ionGyroPeriod = ST.params.scales.ionGyroPeriod(1);
-
-kineticEnergyDensity = zeros(NSPP,NT);
-electricEnergyDensity = zeros(1,NT);
-magneticEnergyDensity = zeros(1,NT);
-
-% First we calculate the kinetic energy of the simulated ions
-Ei = zeros(NSPP,NT);
-ilabels = {};
-
-for ss=1:NSPP
-    mi = ST.params.ions.(['spp_' num2str(ss)]).M;
-    NCP = ST.params.ions.(['spp_' num2str(ss)]).NCP;
-    
-    for ii=1:NT
-        for dd=1:ND
-            g = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).g;
-            
-            Ei(ss,ii) = Ei(ss,ii) + sum(g - 1.0)*mi*ST.c^2;
-            
-            kineticEnergyDensity(ss,ii) = kineticEnergyDensity(ss,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.ions.(['spp_' num2str(ss)]).kineticEnergyDensity;
-        end
-        
-%         Ei(ss,ii) = NCP*Ei(ss,ii);
-        
-        if(ST.params.dimensionality == 1)
-            Ei(ss,ii) = NCP*Ei(ss,ii)/DX;
-        else
-            Ei(ss,ii) = NCP*Ei(ss,ii)/(DX*DY);
-        end
-    end
-    
-    ilabels{ss} = ['Species ' num2str(ss)];
+if floor(NT/2) < numel(wAxis)
+    NW = floor(NT/2);
+else
+    NW = numel(wAxis);
 end
-ilabels{NSPP + 1} = 'Total';
 
-
-% Energy of electromagnetic fields
-EBx = zeros(1,NT);
-EBy = zeros(1,NT);
-EBz = zeros(1,NT);
-
-EEx = zeros(1,NT);
-EEy = zeros(1,NT);
-EEz = zeros(1,NT);
-
+kSpace = zeros(NT,NKx,NKy);
 for ii=1:NT
-    for dd=1:ND
-        Bx = ST.params.Bo(1) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
-        By = ST.params.Bo(2) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
-        Bz = ST.params.Bo(3) - ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
-        
-        EBx(ii) = EBx(ii) + sum(sum(Bx.^2));
-        EBy(ii) = EBy(ii) + sum(sum(By.^2));
-        EBz(ii) = EBz(ii) + sum(sum(Bz.^2));
-        
-        Ex = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.x;
-        Ey = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.y;
-        Ez = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.z;
-        
-        EEx(ii) = EEx(ii) + sum(sum(Ex.^2));
-        EEy(ii) = EEy(ii) + sum(sum(Ey.^2));
-        EEz(ii) = EEz(ii) + sum(sum(Ez.^2));
-    end
+    A = fft2(squeeze(F(ii,:,:)));
+    kSpace(ii,:,:) = A(1:NKx,1:NKy);
 end
 
-EBx = 0.5*EBx/ST.mu0;
-EBy = 0.5*EBy/ST.mu0;
-EBz = 0.5*EBz/ST.mu0;
-EB = EBx + EBy + EBz;
 
-EEx = 0.5*ST.ep0*EEx;
-EEy = 0.5*ST.ep0*EEy;
-EEz = 0.5*ST.ep0*EEz;
-EE = EEx + EEy + EEz;
+A = fft(kSpace,NT,1);
+fourierSpace = zeros(NW,NKx,NKy);
+fourierSpace = A(1:NW,:,:);
 
-% if(ST.params.dimensionality == 1)
-%     EBx = EBx*DX;
-%     EBy = EBy*DX;
-%     EBz = EBz*DX;
-%     EB = EB*DX;
-%     
-%     EEx = EEx*DX;
-%     EEy = EEy*DX;
-%     EEz = EEz*DX;
-%     EE = EE*DX;
-% else
-%     EBx = EBx*DX*DY;
-%     EBy = EBy*DX*DY;
-%     EBz = EBz*DX*DY;
-%     EB = EB*DX*DY;
-%     
-%     EEx = EEx*DX*DY;
-%     EEy = EEy*DX*DY;
-%     EEz = EEz*DX*DY;
-%     EE = EE*DX*DY;
-% end
+% NKxi = floor(NKx/2);
+% NKyi = floor(NKy/2);
 
-ET = sum(Ei,1) + EE + EB;
+% one-to-one comparison with 1-D simulations
+NKxi = NKx;
+NKyi = NKy;
 
-% Change in total energy as a percentage of the initial ion energy
-ET_Ei = zeros(NSPP,NT);
-for ss=1:NSPP
-    ET_Ei(ss,:) = 100.0*(ET - ET(1))/Ei(ss,1);
-end
+fig = figure;
 
-% Relative change in total energy
-ET = 100.0*(ET - ET(1))/ET(1);
 
-% Change in kinetic energy w.r.t. initial condition
-Ei = Ei - Ei(:,1);
+% Magnetoacoustic wave
+z = linspace(0,max([max(xAxis), max(wAxis)]),10);
 
-% Change in magnetic energy w.r.t. initial condition
-EBx = EBx - EBx(1);
-EBy = EBy - EBy(1);
-EBz = EBz - EBz(1);
-EB = EB - EB(1);
-
-% Change in electric energy w.r.t. initial condition
-EEx = EEx - EEx(1);
-EEy = EEy - EEy(1);
-EEz = EEz - EEz(1);
-EE = EE - EE(1);
-
-time = ST.time/ionGyroPeriod;
-
-% Figures to show energy conservation
-fig = figure('name','Energy conservation');
-for ss=1:NSPP
-    figure(fig)
-    subplot(5,1,1)
-    hold on;
-    plot(time, Ei(ss,:), '--')
-    hold off
-    box on; grid on;
-    xlim([min(time) max(time)])
-    xlabel('Time (s)','interpreter','latex')
-    ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
-end
+% w-kx space (ky=0)
+A = squeeze(fourierSpace(:,:,1));
+A = log10(A.*conj(A));
 
 figure(fig)
-subplot(5,1,1)
-hold on;
-plot(time, sum(Ei,1))
-hold off
-box on; grid on;
-xlim([min(time) max(time)])
-xlabel('Time (s)','interpreter','latex')
-ylabel('$\Delta \mathcal{E}_K$ (J/m$^3$)','interpreter','latex')
-legend(ilabels,'interpreter','latex')
+subplot(3,6,[2 3])
+imagesc(xAxis(1:NKx), wAxis(1:NW), A)
+hold on;plot(xAxis(1:NKx), wlh*ones(size(xAxis(1:NKx))),'k--',z,z,'k--');hold off;
+hold on;plot(k_wh, wAxis,'k--');hold off;
+w_ic = linspace(0,1,100);
+hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis(1:NKx), ones(size(xAxis(1:NKx))), 'k--');hold off;
+xlabel('$K_x$', 'Interpreter', 'latex')
+ylabel('$\omega$', 'Interpreter', 'latex')
+axis xy; box on; grid on;
+colormap(jet)
 
-figure(fig);
-subplot(5,1,2)
-plot(time, EBx, 'r--', time, EBy, 'b-.', time, EBz, 'c-.', time, EB, 'k-')
-box on; grid on;
-xlim([min(time) max(time)])
-xlabel('Time (s)','interpreter','latex')
-ylabel('$\Delta \mathcal{E}_B$ (J/m$^3$)','interpreter','latex')
-legend({'$B_x$', '$B_y$', '$B_z$', '$B$'},'interpreter','latex')
+A = squeeze(fourierSpace(:,1:NKxi,1));
+A = A.*conj(A);
+A = log10(sum(A,2)/NKxi);
 
-figure(fig);
-subplot(5,1,3)
-plot(time, EEx, 'r--', time, EEy, 'b--', time, EEz, 'c--', time, EE, 'k-')
+figure(fig)
+subplot(3,6,1)
+plot(A, wAxis(1:NW))
+ylabel('$\omega$', 'Interpreter', 'latex')
 box on; grid on;
-xlim([min(time) max(time)])
-xlabel('Time (s)','interpreter','latex')
-ylabel('$\Delta \mathcal{E}_E$ (J/m$^3$)','interpreter','latex')
-legend({'$E_x$', '$E_y$', '$E_z$', '$E$'},'interpreter','latex')
 
-figure(fig);
-subplot(5,1,4)
-plot(time, sum(Ei,1),'r', time, EB, 'b-', time, EE, 'k')
-box on; grid on;
-xlim([min(time) max(time)])
-xlabel('Time (s)','interpreter','latex')
-ylabel('$\Delta \mathcal{E}$ (J/m$^3$)','interpreter','latex')
-legend({'$K_i$', '$B$', '$E$'},'interpreter','latex')
+% w-kx space (ky integrated)
+A = fourierSpace(:,:,1:1:NKyi);
+A = log10( sum(A.*conj(A),3)/NKyi );
 
-figure(fig);
-subplot(5,1,5)
-for ss=1:NSPP
-    hold on; plot(time, ET_Ei(ss,:),'--'); hold off
-end
-hold on;plot(time, ET);hold off
+figure(fig)
+subplot(3,6,[5 6])
+imagesc(xAxis(1:NKx), wAxis(1:NW), A)
+hold on;plot(xAxis(1:NKx), wlh*ones(size(xAxis(1:NKx))),'k--',z,z,'k--');hold off;
+hold on;plot(k_wh, wAxis,'k--');hold off;
+w_ic = linspace(0,1,100);
+hold on;plot(k_ic(w_ic), w_ic,'k--', xAxis(1:NKx), ones(size(xAxis(1:NKx))), 'k--');hold off;
+xlabel('$K_x$', 'Interpreter', 'latex')
+ylabel('$\omega$', 'Interpreter', 'latex')
+axis xy; box on; grid on;
+colormap(jet)
+
+A = fourierSpace(:,1:NKxi,1:1:NKyi);
+A = A.*conj(A);
+A = sum(A,3)/NKyi;
+A = sum(A,2)/NKxi;
+A = log10(A);
+
+figure(fig)
+subplot(3,6,4)
+plot(A, wAxis(1:NW))
+ylabel('$\omega$', 'Interpreter', 'latex')
 box on; grid on;
-xlim([min(time) max(time)])
-xlabel('Time (s)','interpreter','latex')
-ylabel('$\Delta \mathcal{E}_T$ (\%)','interpreter','latex')
-legend(ilabels,'interpreter','latex')
+
+
+% Magnetoacoustic wave
+z = linspace(0,max([max(yAxis), max(yAxis)]),10);
+
+% w-ky space (kx=0)
+A = squeeze(fourierSpace(:,1,:));
+A = log10(A.*conj(A));
+
+figure(fig)
+subplot(3,6,[8 9])
+imagesc(yAxis(1:NKy), wAxis(1:NW), A)
+hold on;plot(yAxis(1:NKy), wlh*ones(size(yAxis(1:NKy))),'k--',z,z,'k--');hold off;
+hold on;plot(k_wh, wAxis,'k--');hold off;
+w_ic = linspace(0,1,100);
+hold on;plot(k_ic(w_ic), w_ic,'k--', yAxis(1:NKy), ones(size(yAxis(1:NKy))), 'k--');hold off;
+xlabel('$K_y$', 'Interpreter', 'latex')
+ylabel('$\omega$', 'Interpreter', 'latex')
+axis xy; box on; grid on;
+colormap(jet)
+
+
+A = squeeze(fourierSpace(:,1,1:1:NKyi));
+A = A.*conj(A);
+A = log10(sum(A,2)/NKxi);
+
+figure(fig)
+subplot(3,6,7)
+plot(A, wAxis(1:NW))
+ylabel('$\omega$', 'Interpreter', 'latex')
+box on; grid on;
+
+% w-ky space (kx integrated)
+A = fourierSpace(:,1:1:NKxi,:);
+A = log10( squeeze(sum(A.*conj(A),2))/NKxi );
+
+figure(fig)
+subplot(3,6,[11 12])
+imagesc(yAxis(1:NKy), wAxis(1:NW), A)
+hold on;plot(yAxis(1:NKy), wlh*ones(size(yAxis(1:NKy))),'k--',z,z,'k--');hold off;
+hold on;plot(k_wh, wAxis,'k--');hold off;
+w_ic = linspace(0,1,100);
+hold on;plot(k_ic(w_ic), w_ic,'k--', yAxis(1:NKy), ones(size(yAxis(1:NKy))), 'k--');hold off;
+xlabel('$K_y$', 'Interpreter', 'latex')
+ylabel('$\omega$', 'Interpreter', 'latex')
+axis xy; box on; grid on;
+colormap(jet)
+
+
+A = fourierSpace(:,1:1:NKxi,1:NKyi);
+A = A.*conj(A);
+A = sum(A,3)/NKyi;
+A = sum(A,2)/NKxi;
+A = log10(A);
+
+figure(fig)
+subplot(3,6,10)
+plot(A, wAxis(1:NW))
+ylabel('$\omega$', 'Interpreter', 'latex')
+box on; grid on;
+
+% Frequency spectrum (kx and ky integrated)
+A = fourierSpace(:,1:1:NKxi,1:1:NKyi);
+A = sum(sum(A.*conj(A),3),2)/(NKxi*NKyi);
+A = A/double(NX_IN_SIM*NY_IN_SIM);
+A = log10(A);
+
+figure(fig)
+subplot(3,6,[14 17])
+plot(wAxis(1:NW), A)
+ylabel('$\omega$', 'Interpreter', 'latex')
+axis xy; box on; grid on;
+colormap(jet)
+
+
+
 
 end
 
@@ -918,7 +649,8 @@ function EnergyConservation(ST)
 % Diagnostic to monitor energy transfer/conservation
 NT = ST.numberOfOutputs;
 NSPP = ST.params.ions.numberOfParticleSpecies;
-ND = ST.params.numOfDomains;
+NMPI_P = ST.params.numMPIsParticles;
+NMPI_F = ST.params.numMPIsFields;
 DX = ST.params.geometry.DX;
 DY = ST.params.geometry.DY;
 ionGyroPeriod = ST.params.scales.ionGyroPeriod(1);
@@ -935,8 +667,8 @@ for ss=1:NSPP
     NCP = ST.params.ions.(['spp_' num2str(ss)]).NCP;
     
     for ii=1:NT
-        for dd=1:ND           
-            kineticEnergyDensity(ss,ii) = kineticEnergyDensity(ss,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.ions.(['spp_' num2str(ss)]).kineticEnergyDensity;
+        for dd=1:NMPI_P           
+            kineticEnergyDensity(ss,ii) = kineticEnergyDensity(ss,ii) + ST.ions_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.ions.(['spp_' num2str(ss)]).kineticEnergyDensity;
         end
         
     ilabels{ss} = ['Species ' num2str(ss)];
@@ -947,14 +679,14 @@ ilabels{NSPP + 1} = 'Total';
 
 % Energy of electromagnetic fields
 for ii=1:NT
-    for dd=1:ND
-        electricEnergyDensity(1,ii) = electricEnergyDensity(1,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.X;
-        electricEnergyDensity(2,ii) = electricEnergyDensity(2,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.Y;
-        electricEnergyDensity(3,ii) = electricEnergyDensity(3,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.Z;
+    for dd=1:NMPI_F
+        electricEnergyDensity(1,ii) = electricEnergyDensity(1,ii) + ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.X;
+        electricEnergyDensity(2,ii) = electricEnergyDensity(2,ii) + ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.Y;
+        electricEnergyDensity(3,ii) = electricEnergyDensity(3,ii) + ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.E.Z;
         
-        magneticEnergyDensity(1,ii) = magneticEnergyDensity(1,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.X;
-        magneticEnergyDensity(2,ii) = magneticEnergyDensity(2,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.Y;
-        magneticEnergyDensity(3,ii) = magneticEnergyDensity(3,ii) + ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.Z;
+        magneticEnergyDensity(1,ii) = magneticEnergyDensity(1,ii) + ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.X;
+        magneticEnergyDensity(2,ii) = magneticEnergyDensity(2,ii) + ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.Y;
+        magneticEnergyDensity(3,ii) = magneticEnergyDensity(3,ii) + ST.fields_data.(['MPI' num2str(dd-1) '_O' num2str(ii-1)]).energy.fields.B.Z;
     end
 end
 
@@ -1050,424 +782,3 @@ legend(ilabels,'interpreter','latex')
 end
 
 
-function testFieldInterpolation(ST)
-% Diagnostic to monitor energy transfer/conservation
-NT = ST.numberOfOutputs;
-NS = ST.params.ions.numberOfParticleSpecies;
-ND = ST.params.numOfDomains;
-NX = double(ST.params.geometry.NX);
-NY = double(ST.params.geometry.NY);
-DX = ST.params.geometry.DX;
-DY = ST.params.geometry.DY;
-xNodes = ST.params.geometry.xAxis;
-if (ST.params.dimensionality == 2)
-    yNodes = ST.params.geometry.yAxis;
-end
-LX = ST.params.geometry.LX;
-LY = ST.params.geometry.LY;
-
-for ss=1:NS
-    NSP = double(ST.params.ions.(['spp_' num2str(ss)]).NSP_OUT);
-    
-    X = zeros(NT,ND*NSP,ST.params.dimensionality);
-    Ep = zeros(NT,ND*NSP,3);
-    Bp = zeros(NT,ND*NSP,3);
-    E = zeros(NT,3,NX,NY);
-    B = zeros(NT,3,NX,NY);
-    U = zeros(NT,3,NX,NY);
-    n = zeros(NT,NX,NY);
-    
-    for ii=1:NT
-        for dd=1:ND
-            iIndex = (dd-1)*NSP + 1;
-            fIndex = dd*NSP;
-            X(ii,iIndex:fIndex,:) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).X;
-            Ep(ii,iIndex:fIndex,:) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).E;
-            Bp(ii,iIndex:fIndex,:) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).B;
-            
-            if (ST.params.geometry.SPLIT_DIRECTION == 0)
-                ix = (dd-1)*NX + 1;
-                fx = dd*NX;
-                iy = 1;
-                fy = NY;
-            else
-                ix = 1;
-                fx = NX;
-                iy = (dd-1)*NY + 1;
-                fy = dd*NY;
-            end
-            
-            E(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.x;
-            E(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.y;
-            E(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.E.z;
-            
-            B(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.x;
-            B(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.y;
-            B(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).fields.B.z;
-            
-            n(ii,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).n;
-            U(ii,1,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.x;
-            U(ii,2,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.y;
-            U(ii,3,ix:fx,iy:fy) = ST.data.(['D' num2str(dd-1) '_O' num2str(ii-1)]).ions.(['spp_' num2str(ss)]).U.z;
-        end
-    end
-    
-    % Iterations to plot
-    its = [1 randi(NT-1) NT];
-    %     its = [1 1 1];
-    
-    fig_E = figure;
-    fig_B = figure;
-    
-    if (ST.params.dimensionality == 1)
-        % Ex
-        xAxis = xNodes + 0.5*DX;
-        for it=1:numel(its)
-            F = squeeze( E(its(it),1,:,:) );
-            Fp = squeeze( Ep(its(it),:,1) );
-            
-            figure(fig_E)
-            subplot(3,3,it)
-            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$E_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Ey
-        xAxis = xNodes;
-        for it=1:numel(its)
-            F = squeeze( E(its(it),2,:,:) );
-            Fp = squeeze( Ep(its(it),:,2) );
-            
-            figure(fig_E)
-            subplot(3,3,it+3)
-            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$E_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Ez
-        xAxis = xNodes;
-        for it=1:numel(its)
-            F = squeeze( E(its(it),3,:,:) );
-            Fp = squeeze( Ep(its(it),:,3) );
-            
-            figure(fig_E)
-            subplot(3,3,it+6)
-            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$E_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        
-        % Bx
-        xAxis = xNodes;
-        for it=1:numel(its)
-            F = squeeze( B(its(it),1,:,:) );
-            Fp = squeeze( Bp(its(it),:,1) );
-            
-            figure(fig_B)
-            subplot(3,3,it)
-            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$B_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % By
-        xAxis = xNodes + 0.5*DX;
-        for it=1:numel(its)
-            F = squeeze( B(its(it),2,:,:) );
-            Fp = squeeze( Bp(its(it),:,2) );
-            
-            figure(fig_B)
-            subplot(3,3,it+3)
-            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$B_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Bz
-        xAxis = xNodes + 0.5*DX;
-        for it=1:numel(its)
-            F = squeeze( B(its(it),3,:,:) );
-            Fp = squeeze( Bp(its(it),:,3) );
-            
-            figure(fig_B)
-            subplot(3,3,it+6)
-            plot(xAxis,F,'bo-', X(its(it),:),Fp,'k.')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$B_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Number density diagnostic
-        fig_n = figure;
-        
-        xAxis = xNodes;
-        for it=1:numel(its)
-            F = squeeze( n(its(it),:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it)
-            plot(xAxis,F,'bo-')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$n$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Ux
-        for it=1:numel(its)
-            F = squeeze( U(its(it),1,:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it+3)
-            plot(xAxis,F,'bo-')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$U_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Uy
-        for it=1:numel(its)
-            F = squeeze( U(its(it),2,:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it+6)
-            plot(xAxis,F,'bo-')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$U_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Uz
-        for it=1:numel(its)
-            F = squeeze( U(its(it),3,:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it+9)
-            plot(xAxis,F,'bo-')
-            box on; grid on;
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$U_z$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-    else
-        % Ex
-        xAxis = xNodes + 0.5*DX;
-        yAxis = yNodes;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( E(its(it),1,:,:) )';
-            Fp = squeeze( Ep(its(it),:,1) );
-            Xp = squeeze(X(its(it),:,:));
-            
-            figure(fig_E)
-            subplot(3,3,it)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
-            hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'r.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'r.');hold off
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$E_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Ey
-        xAxis = xNodes;
-        yAxis = yNodes + 0.5*DY;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( E(its(it),2,:,:) )';
-            Fp = squeeze( Ep(its(it),:,2) );
-            Xp = squeeze(X(its(it),:,:));
-            
-            figure(fig_E)
-            subplot(3,3,it+3)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
-            hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'r.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'r.');hold off
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$E_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Ez
-        xAxis = xNodes;
-        yAxis = yNodes;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( E(its(it),3,:,:) )';
-            Fp = squeeze( Ep(its(it),:,3) );
-            Xp = squeeze(X(its(it),:,:));
-            
-            figure(fig_E)
-            subplot(3,3,it+6)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
-            hold on;scatter3(Xp(:,1)+LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1)-LX,Xp(:,2),Fp,'b.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)+LY,Fp,'r.');hold off
-            hold on;scatter3(Xp(:,1),Xp(:,2)-LY,Fp,'r.');hold off
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$E_z$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Bx
-        xAxis = xNodes;
-        yAxis = yNodes + 0.5*DY;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( B(its(it),1,:,:) )';
-            Fp = squeeze( Bp(its(it),:,1) );
-            Xp = squeeze(X(its(it),:,:));
-            
-            figure(fig_B)
-            subplot(3,3,it)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$B_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % By
-        xAxis = xNodes + 0.5*DX;
-        yAxis = yNodes;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( B(its(it),2,:,:) )';
-            Fp = squeeze( Bp(its(it),:,2) );
-            Xp = squeeze(X(its(it),:,:));
-            
-            figure(fig_B)
-            subplot(3,3,it+3)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$B_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Bz
-        xAxis = xNodes;
-        yAxis = yNodes;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( B(its(it),3,:,:) )';
-            Fp = squeeze( Bp(its(it),:,3) );
-            Xp = squeeze(X(its(it),:,:));
-            
-            figure(fig_B)
-            subplot(3,3,it+6)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            hold on;scatter3(Xp(:,1),Xp(:,2),Fp,'k.');hold off
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$B_z$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        
-        % Number density diagnostic
-        fig_n = figure;
-        
-        xAxis = xNodes;
-        yAxis = yNodes;
-        [XGRID,YGRID] = meshgrid(xAxis,yAxis);
-        
-        for it=1:numel(its)
-            F = squeeze( n(its(it),:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$n$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Ux
-        for it=1:numel(its)
-            F = squeeze( U(its(it),1,:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it+3)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$U_x$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Uy
-        for it=1:numel(its)
-            F = squeeze( U(its(it),2,:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it+6)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$U_y$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-        
-        % Uz
-        for it=1:numel(its)
-            F = squeeze( U(its(it),3,:,:) )';
-            
-            figure(fig_n)
-            subplot(4,3,it+9)
-            surf(XGRID,YGRID,F,'FaceAlpha',0.5)
-            box on; grid on;colormap(jet)
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
-            zlabel('$U_z$','Interpreter','latex')
-            title(['$t$=' num2str(ST.time(its(it))) ' s'],'Interpreter','latex')
-        end
-    end
-    
-    
-end
-end

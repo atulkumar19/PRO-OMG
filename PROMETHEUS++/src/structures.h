@@ -141,7 +141,7 @@ struct plasmaProfiles{
 	arma::vec ne;
               arma::vec Tpar;
               arma::vec Tper;
-              arma::vec Bz;
+              arma::vec Bx;
               arma::vec Br;
               arma::vec s;
 };

@@ -314,12 +314,12 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
                           std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
                           std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
                           std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
-                          std::string fileName4= inputFilePath + "/inputFiles/Bz_norm_profile.txt"; //Path to load the external file
+                          std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
             
                           params->PP.ne.load(fileName1);    //Ion density profile 
                           params->PP.Tpar.load(fileName2);  //Parallel ion profile 
                           params->PP.Tper.load(fileName3);  //Perpendicular ion profile 
-                          params->PP.Bz.load(fileName4);    //B-field profile 
+                          params->PP.Bx.load(fileName4);    //B-field profile 
 }
 
 
@@ -689,16 +689,16 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                 int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
                 EB->zeros(NX);
                
-                EB->B.X.fill(params->BGP.Bx); // x
+                EB->B.Z.fill(params->BGP.Bz); // Z
                 EB->B.Y.fill(params->BGP.By); // y
                 if (params->quietStart){
-                EB->B.Z.fill(params->BGP.Bz);
+                EB->B.X.fill(params->BGP.Bx);
                                 }else{
                                 arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
                                 arma::vec S = linspace(0,params->mesh.LX,200); 
-                                arma::vec BBz(NX,1);
-                                interp1(S,params->PP.Bz,ss,BBz); //interpolates Bz profile in simulation domain
-                                EB->B.Z = (params->BGP.Bz)*BBz; // z; Creates a magnetic field profile varying with X
+                                arma::vec BBx(NX,1);
+                                interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
+                                EB->B.X = (params->BGP.Bx)*BBx; // z; Creates a magnetic field profile varying with X
                                 }                
 
                

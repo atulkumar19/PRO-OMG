@@ -132,6 +132,7 @@ struct backgroundPlasmaParameters{
 	double Bx;
 	double By;
 	double Bz;
+              double Rphi0;
 
 	double theta; // Spherical polar angle (as measured from z-axis)
 	double phi; // Spherical azimuthal angle (as measured from x-axis)
@@ -142,6 +143,7 @@ struct plasmaProfiles{
               arma::vec Tpar;
               arma::vec Tper;
               arma::vec Bx;
+              arma::vec Rphi;
               arma::vec Br;
               arma::vec s;
 };

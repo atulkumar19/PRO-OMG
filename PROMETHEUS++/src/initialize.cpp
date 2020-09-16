@@ -225,6 +225,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
 	params->BGP.ne = std::stod( parametersStringMap["ne"] );
+              params->BGP.Rphi0 = std::stod( parametersStringMap["Rphi0"] );
 
 	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
 
@@ -689,16 +690,24 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                 int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
                 EB->zeros(NX);
                
+                if (params->quietStart){
                 EB->B.Z.fill(params->BGP.Bz); // Z
                 EB->B.Y.fill(params->BGP.By); // y
-                if (params->quietStart){
-                EB->B.X.fill(params->BGP.Bx);
+                EB->B.X.fill(params->BGP.Bx); // x
                                 }else{
+                               
                                 arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
                                 arma::vec S = linspace(0,params->mesh.LX,200); 
                                 arma::vec BBx(NX,1);
                                 interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
+                                
                                 EB->B.X = (params->BGP.Bx)*BBx; // z; Creates a magnetic field profile varying with X
+                                arma::vec dBx = zeros(NX);
+                                dBx.subvec(0,NX-2) =  diff(EB->B.X)/(params->mesh.DX);
+                                dBx(NX-1) = dBx(NX-2);
+                                EB->B.Y=-0.5*(params->BGP.Rphi0)*dBx;
+                                EB->B.Z=-0.5*(params->BGP.Rphi0)*dBx;
+                                
                                 }                
 
                

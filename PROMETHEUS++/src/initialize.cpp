@@ -538,11 +538,15 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
         MPI_Bcast(&IONS->at(ii).NSP, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
         MPI_Bcast(&IONS->at(ii).nSupPartOutput, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
 
-        if (params->dimensionality == 1)
-            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
-        else
+        if (params->dimensionality == 1){
+	    double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
+ 	    double SNeDx=sum((params->BGP.ne)*(params->PP.ne))*Ds;
+	    cout<<"The value of SNeDx is "<<SNeDx<<endl;
+	   IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));}
+           // IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
+        else{
             IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
-
+	}
 
         if(params->mpi.MPI_DOMAIN_NUMBER == 0){
             cout << "iON SPECIES: " << (ii + 1) << endl;
@@ -697,7 +701,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                                 }else{
                                
                                 arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
-                                arma::vec S = linspace(0,params->mesh.LX,200); 
+                                arma::vec S = linspace(0,params->mesh.LX,2048); 
                                 arma::vec BBx(NX,1);
                                 interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
                                 

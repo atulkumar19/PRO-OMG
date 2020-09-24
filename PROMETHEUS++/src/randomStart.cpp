@@ -118,7 +118,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution(const s
 template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * params, IT * ions, double X, double V3, double V2, double V1){
             
 	
-              arma::vec S = linspace(0,params->mesh.LX,200);
+              arma::vec S = linspace(0,params->mesh.LX,2048);
               arma::vec xx(1,1);
               xx(0,0)= X;
               			
@@ -137,14 +137,14 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
                 interp1(S,params->PP.Tpar,xx,TT1);
                 T1 =  (ions->Tpar)*TT1(0,0);   //Temperature profile in z
               
-              double k3=sqrt((ions->M)/(2.0*M_PI*F_KB*T3));
+        double k3=sqrt((ions->M)/(2.0*M_PI*F_KB*T3));
 	double k2=sqrt((ions->M)/(2.0*M_PI*F_KB*T2));
 	double k1=sqrt((ions->M)/(2.0*M_PI*F_KB*T1));
 	double s3=sqrt((ions->M)/(2.0*F_KB*T3));
 	double s2=sqrt((ions->M)/(2.0*F_KB*T2));
 	double s1=sqrt((ions->M)/(2.0*F_KB*T1));
 
-	double h= (k1*k2*k3)*exp(-(((V1*V1)*(s1*s1))+((V2*V2)*(s2*s2))+((V3*V3)*(s3*s3)))); // Pdf for 3-Velocities with temperature profile
+	double h= (k1*k2*k3)*exp(-sqrt(2)*(((V1*V1)*(s1*s1))+((V2*V2)*(s2*s2))+((V3*V3)*(s3*s3)))); // Pdf for 3-Velocities with temperature profile
               
               
               double g=0.0;  
@@ -199,9 +199,9 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
 
                 while(iterator < ions->NSP){
                         X_test = uniform_distribution(generator)*params->mesh.LX;
-                        V3_test= 6*(ions->VTper)*((uniform_distribution(generator))-0.5);
-                        V2_test= 6*(ions->VTper)*((uniform_distribution(generator))-0.5);
-                        V1_test= 6*(ions->VTpar)*((uniform_distribution(generator))-0.5);
+                        V3_test= 10*(ions->VTper)*((uniform_distribution(generator))-0.5);
+                        V2_test= 10*(ions->VTper)*((uniform_distribution(generator))-0.5);
+                        V1_test= 10*(ions->VTpar)*((uniform_distribution(generator))-0.5);
 
                 ratio = target(params, ions, X_test,V3_test, V2_test, V1_test)/target(params, ions,  X(iterator - 1),V3(iterator - 1),V2(iterator - 1),V1(iterator - 1));
 

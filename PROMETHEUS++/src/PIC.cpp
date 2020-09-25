@@ -18,6 +18,8 @@
 
 #include "PIC.h"
 
+
+
 PIC::PIC(){
 
 }
@@ -1080,22 +1082,78 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 }
 
 
+
 void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
+	arma::vec x = {1.0, 0.0, 0.0};
+	arma::vec y = {0.0, 1.0, 0.0};
+	arma::vec z = {0.0, 0.0, 1.0};
+
+	arma::vec b1; // Unitary vector along B field
+	arma::vec b2; // Unitary vector perpendicular to b1
+	arma::vec b3; // Unitary vector perpendicular to b1 and b2
+
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
 			int NSP(IONS->at(ii).NSP);
 
-			#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
+			#pragma omp parallel default(none) shared(params, IONS, x, y, z) firstprivate(DT, NSP, ii, b1, b2, b3)
 			{
 				#pragma omp for
-				for(int ip=0; ip<NSP; ip++){
+				for(int ip=0; ip<NSP; ip++)
+                                                        {
 					IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
 
+
+                                                if((IONS->at(ii).X(ip,0) < 0)||(IONS->at(ii).X(ip,0) > params->mesh.LX))
+                                                       {
+	        																			 				IONS->at(ii).X(ip,0) = params->mesh.LX/2;
+
+
+                                                        arma::vec R = randu(1);
+                                                        arma_rng::set_seed_random();
+                                                        arma::vec phi = 2.0*M_PI*randu<vec>(1);
+
+                                                        arma::vec V2 = IONS->at(ii).VTper*cos(phi);
+                                                        arma::vec V3 = IONS->at(ii).VTper*sin(phi);
+
+                                                        arma_rng::set_seed_random();
+                                                        phi = 2.0*M_PI*randu<vec>(1);
+
+                                                        arma::vec V1 = IONS->at(ii).VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
+
+																								// Creating magnetic field unit vectors:
+
+																								b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
+																								b1 = arma::normalise(b1);
+
+																								if (arma::dot(b1,y) < PRO_ZERO){
+																									b2 = arma::cross(b1,y);
+																								}else{
+																									b2 = arma::cross(b1,z);
+																								}
+
+																								// Unitary vector perpendicular to b1 and b2
+																								b3 = arma::cross(b1,b2);
+
+                                                        IONS->at(ii).V(ip,0) = V1(0)*dot(b1,x) + V2(0)*dot(b2,x) + V3(0)*dot(b3,x);
+                                                        IONS->at(ii).V(ip,1) = V1(0)*dot(b1,y) + V2(0)*dot(b2,y) + V3(0)*dot(b3,y);
+                                                        IONS->at(ii).V(ip,2) = V1(0)*dot(b1,z) + V2(0)*dot(b2,z) + V3(0)*dot(b3,z);
+
+                                                        IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 - dot(IONS->at(ii).V.row(ip),IONS->at(ii).V.row(ip))/(F_C*F_C) );
+                                                        IONS->at(ii).mu(ip) = 0.5*IONS->at(ii).g(ip)*IONS->at(ii).g(ip)*IONS->at(ii).M*( V2(0)*V2(0) + V3(0)*V3(0) )/params->BGP.Bo;
+                                                        IONS->at(ii).Ppar(ip) = IONS->at(ii).g(ip)*IONS->at(ii).M*V1(0);
+                                                        IONS->at(ii).avg_mu = mean(IONS->at(ii).mu);
+
+
+
+				}
+/***************previous BC*************
 	                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX);//x
 
 	                if(IONS->at(ii).X(ip,0) < 0)
 	        			IONS->at(ii).X(ip,0) += params->mesh.LX;
+                                                        ************************/
 				}
 			}//End of the parallel region
 

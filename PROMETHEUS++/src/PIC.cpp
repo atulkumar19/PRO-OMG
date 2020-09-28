@@ -1107,15 +1107,20 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 
                                                 if((IONS->at(ii).X(ip,0) < 0)||(IONS->at(ii).X(ip,0) > params->mesh.LX))
                                                        {
-	        																			 				IONS->at(ii).X(ip,0) = params->mesh.LX/2;
 
+																												arma::vec R = randu(1);
+																												arma_rng::set_seed_random();
+																												arma::vec phi = 2.0*M_PI*randu<vec>(1);
 
-                                                        arma::vec R = randu(1);
+																												// Gaussian distribution in space for particle position:
+	        																			 				IONS->at(ii).X(ip,0) = params->mesh.LX/2 + 0.5*sqrt( -2*log(R(1)) )*cos(phi(1));
+
                                                         arma_rng::set_seed_random();
-                                                        arma::vec phi = 2.0*M_PI*randu<vec>(1);
+																												R = randu(1);
+                                                        phi = 2.0*M_PI*randu<vec>(1);
 
-                                                        arma::vec V2 = IONS->at(ii).VTper*cos(phi);
-                                                        arma::vec V3 = IONS->at(ii).VTper*sin(phi);
+                                                        arma::vec V2 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % cos(phi);
+                                                        arma::vec V3 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % sin(phi);
 
                                                         arma_rng::set_seed_random();
                                                         phi = 2.0*M_PI*randu<vec>(1);

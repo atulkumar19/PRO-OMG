@@ -701,7 +701,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                                 }else{
                                
                                 arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
-                                arma::vec S = linspace(0,params->mesh.LX,2048); 
+                                arma::vec S = linspace(0,params->mesh.LX,200); 
                                 arma::vec BBx(NX,1);
                                 interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
                                 

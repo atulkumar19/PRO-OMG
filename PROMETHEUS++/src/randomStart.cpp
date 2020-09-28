@@ -118,7 +118,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution(const s
 template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * params, IT * ions, double X, double V3, double V2, double V1){
 
 
-              arma::vec S = linspace(0,params->mesh.LX,2048);
+              arma::vec S = linspace(0,params->mesh.LX,200);
               arma::vec xx(1,1);
               xx(0,0)= X;
 

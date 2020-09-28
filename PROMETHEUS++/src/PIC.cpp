@@ -1113,7 +1113,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 																												arma::vec phi = 2.0*M_PI*randu<vec>(1);
 
 																												// Gaussian distribution in space for particle position:
-	        																			 				IONS->at(ii).X(ip,0) = params->mesh.LX/2 + 0.5*sqrt( -2*log(R(1)) )*cos(phi(1));
+	        																			 				IONS->at(ii).X(ip,0) = params->mesh.LX/2  + 1.0*sqrt( -2*log(R(0)) )*cos(phi(0));
 
                                                         arma_rng::set_seed_random();
 																												R = randu(1);

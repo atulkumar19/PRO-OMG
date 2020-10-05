@@ -106,7 +106,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         }else{
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT); // Advance ions' velocity V^(N+1/2).
         }
-
+        //if(tt==14){
+                //cout<<"There is going to an error error"<<endl;
+               // }
         ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
 

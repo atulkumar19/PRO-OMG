@@ -5,7 +5,6 @@ HDF5/
 arma_libs/
 PROMETHEUS++/Makefile
 PROMETHEUS++/compile.sh
-PROMETHEUS++/run_pro++.sh
 PROMETHEUS++/bin/
 PROMETHEUS++/inputFiles/
 PROMETHEUS++/outputFiles/
@@ -13,9 +12,6 @@ PROMETHEUS++/nohup*
 *.fig
 PROMETHEUS++/*.csv
 <<<<<<< Updated upstream
-PROMETHEUS++/*.sh
 PROMETHEUS++/*.map
-=======
-PROMETHEUS++/run_pro++-debugg.sh
-debug*
+======
 >>>>>>> Stashed changes

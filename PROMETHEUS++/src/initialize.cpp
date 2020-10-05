@@ -316,7 +316,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
                           std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
                           std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
                           std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
-            
+                         
                           params->PP.ne.load(fileName1);    //Ion density profile 
                           params->PP.Tpar.load(fileName2);  //Parallel ion profile 
                           params->PP.Tper.load(fileName3);  //Perpendicular ion profile 
@@ -699,20 +699,21 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                 EB->B.Y.fill(params->BGP.By); // y
                 EB->B.X.fill(params->BGP.Bx); // x
                                 }else{
-                               
-                                arma::vec ss = linspace(0,params->mesh.LX,NX); //creates S as a linear function of space
-                                arma::vec S = linspace(0,params->mesh.LX,200); 
+                                
+                                int nTable=200; //Number of elements from the table profile
+                                arma::vec ss = linspace(0,params->mesh.LX,NX); //Queiry points
+                                arma::vec S = linspace(0,params->mesh.LX,nTable); // x-vector from the table
                                 arma::vec BBx(NX,1);
                                 interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
-                                
                                 EB->B.X = (params->BGP.Bx)*BBx; // z; Creates a magnetic field profile varying with X
-                                arma::vec dBx = zeros(NX);
-                                dBx.subvec(0,NX-2) =  diff(EB->B.X)/(params->mesh.DX);
-                                dBx(NX-1) = dBx(NX-2);
-                                EB->B.Y=-0.5*(params->BGP.Rphi0)*dBx;
-                                EB->B.Z=-0.5*(params->BGP.Rphi0)*dBx;
                                 
-                                }                
+                                arma::vec dBx(nTable,1); 
+                                dBx.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*(params->BGP.Bx)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
+                                dBx(nTable-1) = dBx(nTable-2);
+                               
+                                interp1(S,dBx,ss,EB->B.Y); //  Populates EB->B.Y on Queiry points
+                                EB->B.Z = EB->B.Y;
+                               }                
 
                
                 

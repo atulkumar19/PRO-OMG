@@ -705,19 +705,15 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                                 arma::vec S = linspace(0,params->mesh.LX,nTable); // x-vector from the table
                                 arma::vec BBx(NX,1);
                                 interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
-                                EB->B.X = (params->BGP.Bx)*BBx; // z; Creates a magnetic field profile varying with X
+                                EB->B.X = (params->BGP.Bx)*BBx;  //Creates a magnetic field profile varying with X
                                 
                                 arma::vec dBx(nTable,1); 
                                 dBx.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*(params->BGP.Bx)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
                                 dBx(nTable-1) = dBx(nTable-2);
                                
                                 interp1(S,dBx,ss,EB->B.Y); //  Populates EB->B.Y on Queiry points
-                                EB->B.Z = EB->B.Y;
+                                EB->B.Z.fill(params->BGP.Bz);
                                }                
-
-               
-                
-
 
 }
 

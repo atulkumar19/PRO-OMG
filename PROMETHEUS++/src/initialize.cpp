@@ -224,8 +224,11 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
-	params->BGP.ne = std::stod( parametersStringMap["ne"] );
-              params->BGP.Rphi0 = std::stod( parametersStringMap["Rphi0"] );
+	params->BGP.ne    = std::stod( parametersStringMap["ne"] );
+          
+          params->PP.nTable = std::stod( parametersStringMap["nTable"] );
+          
+          params->BGP.Rphi0 = std::stod( parametersStringMap["Rphi0"] );
 
 	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
 
@@ -309,18 +312,11 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	// Parsing list of variables in outputs
 	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
 	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
-              //This loads non-homegeneous plasma profiles via an external file
-                          int nn = params->PATH.length();
-                          std::string inputFilePath = params->PATH.substr(0,nn-12);
-                          std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
-                          std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
-                          std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
-                          std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
-                         
-                          params->PP.ne.load(fileName1);    //Ion density profile 
-                          params->PP.Tpar.load(fileName2);  //Parallel ion profile 
-                          params->PP.Tper.load(fileName3);  //Perpendicular ion profile 
-                          params->PP.Bx.load(fileName4);    //B-field profile 
+          
+        // loading and rescaling plasma profiles obtained from external files
+
+        
+             
 }
 
 
@@ -690,6 +686,53 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS){
+            //This loads non-homegeneous plasma profiles via an external file
+            int nn = params->PATH.length();
+            std::string inputFilePath = params->PATH.substr(0,nn-12);
+            std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
+            std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
+            std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
+            std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
+           
+            //Reading normalized plasma profiles from external files
+            params->PP.ne.load(fileName1);    //Ion density profile 
+            params->PP.Tpar.load(fileName2);  //Parallel ion profile 
+            params->PP.Tper.load(fileName3);  //Perpendicular ion profile 
+            params->PP.Bx.load(fileName4);    //B-field profile 
+            
+            //Rescaling profiles
+            //params->PP.ne   *= params->BGP.ne; 
+            params->PP.Tpar *= IONS->at(0).Tpar;
+            params->PP.Tper *= IONS->at(0).Tper;
+            params->PP.Bx   *= params->BGP.Bo;
+            
+            //Interpolates Plasma profiles to mesh points
+            int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
+            int nTable = params->PP.nTable; //Number of elements from the table profile
+            arma::vec ss = linspace(0,params->mesh.LX,NX); //Queiry points
+            arma::vec xTable = linspace(0,params->mesh.LX,nTable); // x-vector from the table
+            
+            interp1(xTable,params->PP.Bx,ss,params->PP.Bx_i); //interpolates Bz profile on mesh points
+          
+            
+            arma::vec Br(nTable,1); 
+            Br.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
+            Br(nTable-1) = Br(nTable-2);
+           
+            interp1(xTable,Br,ss,params->PP.Br_i); //  Populates Br profiles on mesh points
+            
+            arma::vec dBr(nTable,1); 
+            dBr.subvec(0,nTable-2) = diff(Br)/(params->mesh.LX/nTable);
+            dBr(nTable-1) = dBr(nTable-2);
+           
+            interp1(xTable,dBr,ss,params->PP.dBrdx_i); // Populates dBr profiles on mesh points
+            
+
+
+
+}
+
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
                 int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
                 EB->zeros(NX);
@@ -699,19 +742,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                 EB->B.Y.fill(params->BGP.By); // y
                 EB->B.X.fill(params->BGP.Bx); // x
                                 }else{
-                                
-                                int nTable=200; //Number of elements from the table profile
-                                arma::vec ss = linspace(0,params->mesh.LX,NX); //Queiry points
-                                arma::vec S = linspace(0,params->mesh.LX,nTable); // x-vector from the table
-                                arma::vec BBx(NX,1);
-                                interp1(S,params->PP.Bx,ss,BBx); //interpolates Bz profile in simulation domain
-                                EB->B.X = (params->BGP.Bx)*BBx;  //Creates a magnetic field profile varying with X
-                                
-                                arma::vec dBx(nTable,1); 
-                                dBx.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*(params->BGP.Bx)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
-                                dBx(nTable-1) = dBx(nTable-2);
-                               
-                                interp1(S,dBx,ss,EB->B.Y); //  Populates EB->B.Y on Queiry points
+                                EB->B.X = params->PP.Bx_i;  //Creates a magnetic field profile varying with X
+                                EB->B.Y = params->PP.Br_i;
                                 EB->B.Z.fill(params->BGP.Bz);
                                }                
 

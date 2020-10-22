@@ -660,7 +660,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
                     
                     //Removing the contribution of curlB_ext generated due to nonuniform B-field
-                    curlB.Z.subvec(iIndex,fIndex) = 0.0*(0.5*((params->PP.Br_i.subvec(iIndex+1,fIndex+1))-(params->PP.Br_i.subvec(iIndex-1,fIndex-1)))/params->mesh.DX);
+                    curlB.Z.subvec(iIndex,fIndex) = 0.0*(params->PP.dBrdx_i.subvec(iIndex,fIndex));
                    
 		EB->E.zeros();
 
@@ -685,11 +685,11 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 		// y-component
 
-		EB->E.Y.subvec(iIndex,fIndex) =( ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) ));
+		EB->E.Y.subvec(iIndex,fIndex) = ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) );
 
-		EB->E.Y.subvec(iIndex,fIndex) +=  ( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+		EB->E.Y.subvec(iIndex,fIndex) +=   V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex);
 
-		EB->E.Y.subvec(iIndex,fIndex) += (- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+		EB->E.Y.subvec(iIndex,fIndex) += - V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
 		// Including electron inertia term
 		if (params->includeElectronInertia){
@@ -700,11 +700,11 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 		// The y-component of Curl(B) has been calculated above at the right places. Note that Ey-nodes and Ez-nodes are the same.
 
-		EB->E.Z.subvec(iIndex,fIndex) = ( - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2)));
+		EB->E.Z.subvec(iIndex,fIndex) = - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2));
 
-		EB->E.Z.subvec(iIndex,fIndex) +=( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+		EB->E.Z.subvec(iIndex,fIndex) += - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex);
 
-		EB->E.Z.subvec(iIndex,fIndex) +=(   V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+		EB->E.Z.subvec(iIndex,fIndex) +=   V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex);
 
 		// Including electron inertia term
 		if (params->includeElectronInertia){

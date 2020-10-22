@@ -1097,7 +1097,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
 			int NSP(IONS->at(ii).NSP);
 
-			#pragma omp parallel default(none) shared(params, IONS, x, y, z) firstprivate(DT, NSP, ii, b1, b2, b3)
+			#pragma omp parallel default(none) shared(params, IONS, x, y, z,std::cout) firstprivate(DT, NSP, ii, b1, b2, b3)
 			{
 				#pragma omp for
 				for(int ip=0; ip<NSP; ip++)
@@ -1112,8 +1112,26 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
                                                         arma::vec phi = 2.0*M_PI*randu<vec>(1);
 
                                                         // Gaussian distribution in space for particle position:
-                                                        IONS->at(ii).X(ip,0) = params->mesh.LX/2  + (params->mesh.LX/10.0)*sqrt( -2*log(R(0)) )*cos(phi(0));
-                                                    
+                                                        double Xcenter = params->mesh.LX/2;
+                                                        double sigmaX  = params->mesh.LX/10;
+                                                        double Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
+                                                        double dLX = abs(Xnew - Xcenter);
+                                                        
+                                                        
+                                                        while(dLX > params->mesh.LX/2){
+                                                             std::cout<<"Out of bound X= "<< Xnew;
+                                                             arma_rng::set_seed_random();
+                                                             R = randu(1);
+                                                             phi = 2.0*M_PI*randu<vec>(1);
+                                                             
+                                                             Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
+                                                             dLX  = abs(Xnew - Xcenter);
+                                                             std::cout<< "Out of bound corrected X= " << Xnew;
+                                                        }
+                                                        
+                                                        IONS->at(ii).X(ip,0) = Xnew;
+                                                        
+                                                        //Box Muller in velocity space
                                                         arma_rng::set_seed_random();
                                                         R = randu(1);
                                                         phi = 2.0*M_PI*randu<vec>(1);

@@ -84,7 +84,8 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
 				CFL_W = true;
 			}
 
-			params->DT = (CFL_I || CFL_W) ? 0.25*DT : DT; // We use half the CFL time step to ensure numerical stability
+			//params->DT = (CFL_I || CFL_W) ? 0.25*DT : DT; // We use half the CFL time step to ensure numerical stability
+                              params->DT = 0.5*DT_CFL_I; // We use half the CFL time step to ensure numerical stability
 
 			params->timeIterations = (int)ceil( params->simulationTime*params->ionGyroPeriod/params->DT );
 

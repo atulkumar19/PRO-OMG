@@ -68,6 +68,8 @@ public:
 	void loadMeshGeometry(simulationParameters * params, fundamentalScales * FS);
 
 	void loadIonParameters(simulationParameters * params, vector<IT> * IONS);
+          
+          void loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS);
 
 	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<IT> * IONS);
 

@@ -125,17 +125,17 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
                 double T3=0.0;
                 arma::vec TT3(1,1);
                 interp1(S,params->PP.Tper,xx,TT3);
-                T3 = (ions->Tper)*TT3(0,0);   //Temperature profile in x
+                T3 = TT3(0,0);   //Temperature profile in x
 
                 double T2=0.0;
                 arma::vec TT2(1,1);
                 interp1(S,params->PP.Tper,xx,TT2);
-                T2 =  (ions->Tper)*TT2(0,0);   //Temperature profile in y
+                T2 = TT2(0,0);   //Temperature profile in y
 
                 double T1=0.0;
                 arma::vec TT1(1,1);
                 interp1(S,params->PP.Tpar,xx,TT1);
-                T1 =  (ions->Tpar)*TT1(0,0);   //Temperature profile in z
+                T1 = TT1(0,0);   //Temperature profile in z
 
         double k3=sqrt((ions->M)/(2.0*M_PI*F_KB*T3));
 	double k2=sqrt((ions->M)/(2.0*M_PI*F_KB*T2));

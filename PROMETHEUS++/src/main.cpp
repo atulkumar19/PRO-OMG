@@ -62,10 +62,13 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
 
 	init.loadMeshGeometry(&params, &FS);
+          
+          init.loadPlasmaProfiles(&params, &IONS); //Reads & loads plasma profiles from external files
 
 	units.spatialScalesSanityCheck(&params, &FS);
 
 	init.initializeFields(&params, &EB);
+          
 
 	init.setupIonsInitialCondition(&params, &CS, &IONS); // Calculation of IONS[ii].NCP for each species
 
@@ -112,7 +115,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
 
-		fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
          	// Using the Bashford-Adams extrapolation.

@@ -931,12 +931,15 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 			int NSP = IONS->at(ii).NSP;
 			double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
 
-			#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
+			#pragma omp parallel default(none) shared(IONS, params,Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
 			{
 				double gp;
 				double sigma;
 				double us;
 				double s;
+                                        double dBx;
+                                        double magMom;
+                                        double Vpersq;
 				arma::rowvec U = arma::zeros<rowvec>(3);
 				arma::rowvec VxB = arma::zeros<rowvec>(3);
 				arma::rowvec tau = arma::zeros<rowvec>(3);
@@ -947,6 +950,11 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				#pragma omp for
 				for(int ip=0;ip<NSP;ip++){
 					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+                                                  //Overwriting the x-component of VxB to simulate mirror force
+                                                  dBx = Bp(ip,1)/(-0.5*params->BGP.Rphi0);
+                                                  Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
+                                                  magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
+                                                  VxB(0) = - (magMom/(fabs(IONS->at(ii).Q)))*dBx;
 
 					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
 					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
@@ -1091,14 +1099,16 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
     arma::vec b1; // Unitary vector along B field
     arma::vec b2; // Unitary vector perpendicular to b1
     arma::vec b3; // Unitary vector perpendicular to b1 and b2
-
+    
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
 			int NSP(IONS->at(ii).NSP);
+                             // int pCount=0;
 
 			#pragma omp parallel default(none) shared(params, IONS, x, y, z,std::cout) firstprivate(DT, NSP, ii, b1, b2, b3)
 			{
+                                        int pc=0;
 				#pragma omp for
 				for(int ip=0; ip<NSP; ip++)
                                                         {
@@ -1106,7 +1116,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 
                                                        if((IONS->at(ii).X(ip,0) < 0)||(IONS->at(ii).X(ip,0) > params->mesh.LX))
                                                        {
-
+                                                        //pc += 1;
                                                         arma::vec R = randu(1);
                                                         arma_rng::set_seed_random();
                                                         arma::vec phi = 2.0*M_PI*randu<vec>(1);
@@ -1142,7 +1152,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
                                                         arma_rng::set_seed_random();
                                                         phi = 2.0*M_PI*randu<vec>(1);
 
-                                                        arma::vec V1 = IONS->at(ii).VTpar*sqrt( -log(1.0 - R) ) % sin(phi);
+                                                        arma::vec V1 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % sin(phi);
 
                                                         // Creating magnetic field unit vectors:
 
@@ -1170,13 +1180,13 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 
 
 				}
-                              /***************previous BC*************
-	                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX);//x
-
-	                if(IONS->at(ii).X(ip,0) < 0)
-	        			IONS->at(ii).X(ip,0) += params->mesh.LX;
-                                                        ************************/
+                                      
+                              
 				}
+                              //#pragma omp critical 
+                              
+                              //pCount += pc;
+                              
 			}//End of the parallel region
 
 			PIC::assignCell(params, &IONS->at(ii));

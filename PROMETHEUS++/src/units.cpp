@@ -315,10 +315,19 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->BGP.Bx /= CS->bField;
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
-
+          params->BGP.Rphi0 /= CS->length;
+          
+	params->PP.ne_i /= CS->density;
+	params->PP.Tpar_i /= CS->temperature;
+          params->PP.Tper_i /= CS->temperature;
+	params->PP.Bx_i /= CS->bField;
+	params->PP.Br_i /= CS->bField;
+	params->PP.dBrdx_i /= CS->bField/CS->length;
+          
 	params->ionLarmorRadius /= CS->length;
 	params->ionSkinDepth /= CS->length;
 	params->ionGyroPeriod /= CS->time;
+          
 	//Normalizing simulation parameters.
 
 	//Normalizing the mesh.

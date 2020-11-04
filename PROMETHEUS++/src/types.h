@@ -183,6 +183,7 @@ public:
 	double Wc;					// Average cyclotron frequency.
 	double Wp;					// Plasma frequency.
 	double avg_mu; 				// Average magnetic moment
+             
 
 	arma::mat X; 				// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.

@@ -717,7 +717,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulat
           
             
             arma::vec Br(nTable,1); 
-            Br.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
+            Br.subvec(0,nTable-2) = -0.5*(params->ionLarmorRadius)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
             Br(nTable-1) = Br(nTable-2);
            
             interp1(xTable,Br,ss,params->PP.Br_i); //  Populates Br profiles on mesh points
@@ -744,7 +744,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
                                 }else{
                                 EB->B.X = params->PP.Bx_i;  //Creates a magnetic field profile varying with X
                                 EB->B.Y = params->PP.Br_i;
-                                EB->B.Z.fill(params->BGP.Bz);
+                                EB->B.Z = params->PP.Br_i;
                                }                
 
 }

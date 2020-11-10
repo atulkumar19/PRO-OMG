@@ -931,15 +931,29 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 			int NSP = IONS->at(ii).NSP;
 			double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
 
-			#pragma omp parallel default(none) shared(IONS, params,Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
+			//#pragma omp parallel default(none) shared(IONS, params,Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
 			{
 				double gp;
 				double sigma;
 				double us;
 				double s;
+                                        double omega_ci;
+                                        double rL_i;
                                         double dBx;
                                         double magMom;
                                         double Vpersq;
+                                        double Vper;
+                                        double sinPhi;
+                                        double cosPhi;
+                                        double UUx;
+                                        double UUy;
+                                        double UUz;
+                                        double d1;
+                                        double d2;
+                                        double d3;
+                                        
+                                     
+                                        
 				arma::rowvec U = arma::zeros<rowvec>(3);
 				arma::rowvec VxB = arma::zeros<rowvec>(3);
 				arma::rowvec tau = arma::zeros<rowvec>(3);
@@ -947,14 +961,50 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				arma::rowvec t = arma::zeros<rowvec>(3);
 				arma::rowvec upxt = arma::zeros<rowvec>(3);
 
-				#pragma omp for
+				//#pragma omp for
 				for(int ip=0;ip<NSP;ip++){
-					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+					//VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
                                                   //Overwriting the x-component of VxB to simulate mirror force
-                                                  dBx = Bp(ip,1)/(-0.5*params->BGP.Rphi0);
+                                                  
+    
+                                                  dBx = Bp(ip,1)/(-0.5*params->ionLarmorRadius);
+                                                  
                                                   Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
+                                                 
+                                                  Vper = sqrt(Vpersq);
+                                                  omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
+                                                  rL_i = fabs(Vper/omega_ci);
+                                                  UUx = arma::as_scalar(IONS->at(ii).V(ip,0));
+                                                  UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
+                                                  UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
+                                                  
+                                                  cosPhi = -(UUz/Vper);
+                                                  sinPhi = +(UUy/Vper);
+                                                  //Bp(ip,1) = -0.5*rL_i*cosPhi*dBx;
+                                                  //Bp(ip,2) = -0.5*rL_i*sinPhi*dBx;
                                                   magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
-                                                  VxB(0) = - (magMom/(fabs(IONS->at(ii).Q)))*dBx;
+                                                  
+                                                  //VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+                                                  cout<<"Vy is equal to "<< IONS->at(ii).V(ip,1)<<endl;
+                                                  cout<<"Vz is equal to "<< IONS->at(ii).V(ip,2)<<endl;
+                                                  cout<<"cosPhi is equal to "<< cosPhi<<endl;
+                                                  cout<<"sinPhi is equal to "<< sinPhi<<endl;
+                                                  
+                                                  VxB(0) = -(magMom/(fabs(IONS->at(ii).Q)))*dBx;
+                                                  VxB(1) = -UUx*(-0.5*rL_i*sinPhi*dBx) + UUz*Bp(ip,0);
+                                                  VxB(2) = +UUx*(-0.5*rL_i*cosPhi*dBx) - UUy*Bp(ip,0);
+                                                  d1=UUy*sinPhi;
+                                                  d2=UUy*sinPhi;
+                                                  d3=d1-d2;
+                                                  cout<<"VysinPhi is equal to "<<UUy*sinPhi<<endl;
+                                                  cout<<"VzcosPhi is equal to "<<d2<<endl;
+                                                  
+
+                                                  
+                                                  cout<<"VysinPhi-VzcosPhi is equal to "<< d3 <<endl;
+                                                  
+                                                
+                                                  
 
 					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
 					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);

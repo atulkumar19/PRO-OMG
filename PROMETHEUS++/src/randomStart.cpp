@@ -175,9 +175,9 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
 	arma::vec V1(ions->NSP); //Velocity profile in Z
 
               double X_test = 0.0;
-              double V3_test= -1.0;
-              double V2_test= -1.0;
-              double V1_test= -1.0;
+              double V3_test= 0.25*ions->VTpar;
+              double V2_test= 0.1*ions->VTpar;
+              double V1_test= 0.5*ions->VTpar;
 
 
 
@@ -192,10 +192,10 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
 	unsigned int iterator = 1;
 
               double ratio = 0.0;
-              X(0)=0.0;
-              V3(0)=0.0;
-              V2(0)=0.0;
-              V1(0)=0.0;
+              X(0)  = 0.5*params->mesh.LX;
+              V3(0) = 0.25*ions->VTpar;
+              V2(0) = 0.1*ions->VTpar;
+              V1(0) = 0.5*ions->VTpar;
 
                 while(iterator < ions->NSP){
                         X_test = uniform_distribution(generator)*params->mesh.LX;

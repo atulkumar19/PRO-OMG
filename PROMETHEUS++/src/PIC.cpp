@@ -951,6 +951,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
                                         double d1;
                                         double d2;
                                         double d3;
+                                        double Term;
                                         
                                      
                                         
@@ -963,14 +964,9 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 				//#pragma omp for
 				for(int ip=0;ip<NSP;ip++){
-					//VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
-                                                  //Overwriting the x-component of VxB to simulate mirror force
-                                                  
-    
-                                                  dBx = Bp(ip,1)/(-0.5*params->ionLarmorRadius);
-                                                  
+                                        
+                                                  dBx = Bp(ip,1)/(-0.5*params->BGP.Rphi0); //for Phi_f = 0
                                                   Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
-                                                 
                                                   Vper = sqrt(Vpersq);
                                                   omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
                                                   rL_i = fabs(Vper/omega_ci);
@@ -980,32 +976,24 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
                                                   
                                                   cosPhi = -(UUz/Vper);
                                                   sinPhi = +(UUy/Vper);
-                                                  //Bp(ip,1) = -0.5*rL_i*cosPhi*dBx;
-                                                  //Bp(ip,2) = -0.5*rL_i*sinPhi*dBx;
-                                                  magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
+                                                 
+                                                  Bp(ip,1) = -0.5*(params->BGP.Rphi0*sqrt(params->BGP.Bo/Bp(ip,0))+rL_i*cosPhi)*dBx;
+                                                  Bp(ip,2) = -0.5*(rL_i*sinPhi)*dBx;
                                                   
-                                                  //VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
-                                                  cout<<"Vy is equal to "<< IONS->at(ii).V(ip,1)<<endl;
-                                                  cout<<"Vz is equal to "<< IONS->at(ii).V(ip,2)<<endl;
-                                                  cout<<"cosPhi is equal to "<< cosPhi<<endl;
-                                                  cout<<"sinPhi is equal to "<< sinPhi<<endl;
+                                                  VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
                                                   
-                                                  VxB(0) = -(magMom/(fabs(IONS->at(ii).Q)))*dBx;
-                                                  VxB(1) = -UUx*(-0.5*rL_i*sinPhi*dBx) + UUz*Bp(ip,0);
-                                                  VxB(2) = +UUx*(-0.5*rL_i*cosPhi*dBx) - UUy*Bp(ip,0);
-                                                  d1=UUy*sinPhi;
-                                                  d2=UUy*sinPhi;
-                                                  d3=d1-d2;
-                                                  cout<<"VysinPhi is equal to "<<UUy*sinPhi<<endl;
-                                                  cout<<"VzcosPhi is equal to "<<d2<<endl;
+                                                  //Overwriting the x-component of VxB to simulate mirror force
+                                                  //magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
+                                                  //VxB(0) = -(magMom/(fabs(IONS->at(ii).Q)))*dBx;
+                                                  //VxB(1) = -UUx*(-0.5*rL_i*sinPhi*dBx) + UUz*Bp(ip,0);
+                                                  //VxB(2) = +UUx*(-0.5*rL_i*cosPhi*dBx) - UUy*Bp(ip,0);
                                                   
-
                                                   
-                                                  cout<<"VysinPhi-VzcosPhi is equal to "<< d3 <<endl;
+                                                  //To check KE conservation
+                                                  //Term = dot(VxB,IONS->at(ii).V.row(ip));
+                                                  //Term *= CS->velocity*CS->velocity*CS->bField;
+                                                  //cout<<"The change in KE is " <<Term<<endl;
                                                   
-                                                
-                                                  
-
 					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
 					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
@@ -1204,7 +1192,8 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 
                                                         arma::vec V1 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % sin(phi);
 
-                                                        // Creating magnetic field unit vectors:
+                                                        // Creating magnetic field unit vectors: 
+                                                        //Unit vectors have to take care of non-unifoprm B-field - To be done later
 
                                                         b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
                                                         b1 = arma::normalise(b1);

@@ -83,9 +83,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
 	// Definition of variables for advancing in time particles and fields.
 	double t1 = 0.0;
-    double t2 = 0.0;
-    double currentTime = 0.0;
-    int outputIterator = 0;
+          double t2 = 0.0;
+          double currentTime = 0.0;
+          int outputIterator = 0;
 	int numberOfIterationsForEstimator = 1000;
 
 	EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.

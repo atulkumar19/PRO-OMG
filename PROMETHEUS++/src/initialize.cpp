@@ -305,9 +305,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
 	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
 
-    params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
-    params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
-    params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
+          params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
+          params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
+          params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
 
 	// Parsing list of variables in outputs
 	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
@@ -538,7 +538,9 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 	    double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
  	    double SNeDx=sum((params->BGP.ne)*(params->PP.ne))*Ds;
 	    //cout<<"The value of SNeDx is "<<SNeDx<<endl;
-	   IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));}
+	   IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
+             //cout<<"NCP is "<<IONS->at(ii).NCP<<endl;
+             }
            // IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
         else{
             IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
@@ -641,9 +643,14 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
 
             ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
-        	ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
+        	  
+            ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
 
             ions.LarmorRadius = ions.VTper/ions.Wc;
+            
+            //Initializing the events counter
+            ions.pCount.zeros(1);
+            ions.eCount.zeros(1);
 
             //Definition of the initial total number of superparticles for each species
             ions.NSP = ceil( ions.NPC*(double)params->mesh.NUM_CELLS_IN_SIM/(double)params->mpi.MPIS_PARTICLES );

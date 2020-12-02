@@ -697,7 +697,28 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "V"){
+				 }else if(params->outputs_variables.at(ov) == "pCount"){
+                                                  
+					name = "pCount";
+					ivec_values = IONS->at(ii).pCount;
+					saveToHDF5(group_ionSpecies, name, &ivec_values);
+					name.clear();
+                                                  
+				}else if(params->outputs_variables.at(ov) == "eCount"){
+
+					//Saving ions species density
+					name = "eCount";
+					#ifdef HDF5_DOUBLE
+					vec_values = (CS->velocity*CS->velocity*CS->mass)*IONS->at(ii).eCount;
+					saveToHDF5(group_ionSpecies, name, &vec_values);
+					#elif defined HDF5_FLOAT
+					fvec_values = conv_to<fvec>::from((CS->velocity*CS->velocity*CS->mass)*IONS->at(ii).eCount);
+					saveToHDF5(group_ionSpecies, name, &fvec_values);
+					#endif
+					name.clear();
+                                        
+                                        
+                                        }else if(params->outputs_variables.at(ov) == "V"){
 
 					name = "V";
 					#ifdef HDF5_DOUBLE

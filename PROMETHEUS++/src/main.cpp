@@ -43,9 +43,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	MPI_MAIN mpi_main;
 
 	simulationParameters params; 				// Input parameters for the simulation.
-	vector<IT> IONS; 							// Vector of ionsSpecies structures each of them storing the properties of each ion species.
-	characteristicScales CS;					// Derived type for keeping info about characteristic scales.
-	FT EB; 										// Derived type with variables of electromagnetic fields.
+	vector<IT> IONS; 					// Vector of ionsSpecies structures each of them storing the properties of each ion species.
+	characteristicScales CS;				// Derived type for keeping info about characteristic scales.
+	FT EB; 						// Derived type with variables of electromagnetic fields.
 
 	INITIALIZE<IT, FT> init(&params, argc, argv);
 
@@ -105,7 +105,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
     for(int tt=0; tt<params.timeIterations; tt++){ // Time iterations.
         if(tt == 0){
-			ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
+		ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
         }else{
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT); // Advance ions' velocity V^(N+1/2).
         }

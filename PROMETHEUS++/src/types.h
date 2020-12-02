@@ -161,6 +161,7 @@ class oneDimensional::ionSpecies : public vfield_vec{
 public:
 	int SPECIES;
 	int IC; 					// Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
+          
 	double NSP; 				// Initial number of superparticles for the given ion species.
 	double NCP; 				// Number of charged particles per superparticle.
 	double NPC; 				// Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
@@ -189,6 +190,8 @@ public:
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 				// Ions' relativistic gamma factor.
+          arma::ivec pCount;
+          arma::vec eCount;
 	arma::ivec mn; 				// Ions' position in terms of the index of mesh node
 	arma::mat E;				// Electric field seen by particles when advancing particles velocity
 	arma::mat B;				// Magnetic field seen by particles when advancing particles velocity
@@ -251,6 +254,8 @@ public:
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 				// Ions' relativistic gamma factor.
+          arma::ivec pCount;
+          arma::vec eCount;
 	arma::imat mn; 				// Ions' position in terms of the index of mesh node
 	arma::mat E;				// Electric field seen by particles when advancing particles velocity
 	arma::mat B;				// Magnetic field seen by particles when advancing particles velocity

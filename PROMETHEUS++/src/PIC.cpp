@@ -965,7 +965,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				//#pragma omp for
 				for(int ip=0;ip<NSP;ip++){
                                         
-                                                  dBx = Bp(ip,1)/(-0.5*params->BGP.Rphi0); //for Phi_f = 0
+                                                  dBx = Bp(ip,1)/(-0.5*(params->BGP.Rphi0)); //for Phi_f = 0
                                                   Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
                                                   Vper = sqrt(Vpersq);
                                                   omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
@@ -1142,11 +1142,12 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
 			int NSP(IONS->at(ii).NSP);
-                             // int pCount=0;
+                             
 
 			#pragma omp parallel default(none) shared(params, IONS, x, y, z,std::cout) firstprivate(DT, NSP, ii, b1, b2, b3)
 			{
-                                        int pc=0;
+                                        int pc = 0;
+                                        double ec = 0;
 				#pragma omp for
 				for(int ip=0; ip<NSP; ip++)
                                                         {
@@ -1154,7 +1155,12 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 
                                                        if((IONS->at(ii).X(ip,0) < 0)||(IONS->at(ii).X(ip,0) > params->mesh.LX))
                                                        {
-                                                        //pc += 1;
+                                                       //Record events
+                                                        pc += 1; //Increase the leaking particles by one
+                                                        ec += 0.5*IONS->at(ii).M*dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip));//Increase the leaking particles KE
+                                                        
+                                                        
+                                                        //Variables for random number generator
                                                         arma::vec R = randu(1);
                                                         arma_rng::set_seed_random();
                                                         arma::vec phi = 2.0*M_PI*randu<vec>(1);
@@ -1222,9 +1228,10 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
                                       
                               
 				}
-                              //#pragma omp critical 
+                              #pragma omp critical 
                               
-                              //pCount += pc;
+                              IONS->at(ii).pCount += pc;
+                              IONS->at(ii).eCount += ec;
                               
 			}//End of the parallel region
 

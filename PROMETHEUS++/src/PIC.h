@@ -140,9 +140,9 @@ protected:
 
 	PIC();
 
-	void assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void assignCell(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
-	void assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+	void assignCell(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
 
 
 	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT);
@@ -150,9 +150,9 @@ protected:
 	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT);
 
 	
-	void advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT);
+	void advanceIonsPosition(const simulationParameters * params,  oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT);
 
-	void advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT);
+	void advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT);
 };
 
 #endif

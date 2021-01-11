@@ -70,7 +70,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	init.initializeFields(&params, &EB);
           
 
-	init.setupIonsInitialCondition(&params, &CS, &IONS); // Calculation of IONS[ii].NCP for each species
+	init.setupIonsInitialCondition(&params, &CS, &EB, &IONS); // Calculation of IONS[ii].NCP for each species
 
 	HDF<IT, FT> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
 
@@ -93,7 +93,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
     // Repeat 3 times
     for(int tt=0; tt<3; tt++){
-        ionsDynamics.advanceIonsPosition(&params, &IONS, 0);
+        ionsDynamics.advanceIonsPosition(&params, &EB, &IONS, 0);
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
     }
@@ -112,7 +112,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         //if(tt==14){
                 //cout<<"There is going to an error error"<<endl;
                // }
-        ionsDynamics.advanceIonsPosition(&params, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
+        ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
 
 
         //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).

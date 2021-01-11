@@ -331,10 +331,10 @@ void PIC::smooth(arma::mat * m, double as){
 	fillGhosts(&b);
 
 	b.submat(1,1,NX-2,NY-2) = wc*b.submat(1,1,NX-2,NY-2) + \
-								ws*b.submat(2,1,NX-1,NY-2) + ws*b.submat(0,1,NX-3,NY-2) + \
-								ws*b.submat(1,2,NX-2,NY-1) + ws*b.submat(1,0,NX-2,NY-3) + \
-								wcr*b.submat(2,2,NX-1,NY-1) + wcr*b.submat(0,2,NX-3,NY-1) + \
-								wcr*b.submat(0,0,NX-3,NY-3) + wcr*b.submat(2,0,NX-1,NY-3);
+                        ws*b.submat(2,1,NX-1,NY-2) + ws*b.submat(0,1,NX-3,NY-2) + \
+                        ws*b.submat(1,2,NX-2,NY-1) + ws*b.submat(1,0,NX-2,NY-3) + \
+                        wcr*b.submat(2,2,NX-1,NY-1) + wcr*b.submat(0,2,NX-3,NY-1) + \
+                        wcr*b.submat(0,0,NX-3,NY-3) + wcr*b.submat(2,0,NX-1,NY-3);
 
 	// Step 2: Averaged weighted variable estimation
 	m->submat(1,1,NX-2,NY-2) = (1.0 - as)*m->submat(1,1,NX-2,NY-2) + as*b.submat(1,1,NX-2,NY-2);
@@ -357,7 +357,7 @@ void PIC::smooth(vfield_mat * vf, double as){
 // * * * Smoothing * * *
 
 
-void PIC::assignCell(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::assignCell(const simulationParameters * params,  oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
@@ -410,7 +410,7 @@ void PIC::assignCell(const simulationParameters * params, oneDimensional::ionSpe
 }
 
 
-void PIC::assignCell(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+void PIC::assignCell(const simulationParameters * params,  twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS){
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
@@ -1129,7 +1129,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 
 
-void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
     arma::vec x = {1.0, 0.0, 0.0};
     arma::vec y = {0.0, 1.0, 0.0};
     arma::vec z = {0.0, 0.0, 1.0};
@@ -1235,7 +1235,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
                               
 			}//End of the parallel region
 
-			PIC::assignCell(params, &IONS->at(ii));
+			PIC::assignCell(params, EB, &IONS->at(ii));
 
 			//Once the ions have been pushed,  we extrapolate the density at the node grids.
 			extrapolateIonDensity(params, &IONS->at(ii));
@@ -1255,7 +1255,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<oneDim
 }
 
 
-void PIC::advanceIonsPosition(const simulationParameters * params, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
@@ -1279,7 +1279,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, vector<twoDim
 				}
 			}//End of the parallel region
 
-			PIC::assignCell(params, &IONS->at(ii));
+			PIC::assignCell(params, EB, &IONS->at(ii));
 
 			extrapolateIonDensity(params, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
 		}

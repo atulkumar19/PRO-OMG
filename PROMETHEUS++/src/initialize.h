@@ -51,9 +51,9 @@ template <class IT, class FT> class INITIALIZE{
 
 	map<string, string> loadParametersString(string *  inputFile);
 
-	void initializeParticlesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void initializeParticlesArrays(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
-	void initializeParticlesArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+	void initializeParticlesArrays(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
 
 	void initializeBulkVariablesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
@@ -71,7 +71,7 @@ public:
           
           void loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS);
 
-	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<IT> * IONS);
+	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS);
 
 
 	void initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB);

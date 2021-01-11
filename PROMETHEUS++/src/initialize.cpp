@@ -375,7 +375,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS){
     // Setting size and value to zero of arrays for ions' variables
     IONS->mn.zeros(IONS->NSP);
 
@@ -405,11 +405,11 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     //Checking integrity of the initial condition
 
     PIC ionsDynamics;
-    ionsDynamics.assignCell(params, IONS);
+    ionsDynamics.assignCell(params, EB, IONS);
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS){
     // Setting size and value to zero of arrays for ions' variables
     IONS->mn.zeros(IONS->NSP, 2);
 
@@ -439,7 +439,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     //Checking integrity of the initial condition
 
     PIC ionsDynamics;
-    ionsDynamics.assignCell(params, IONS);
+    ionsDynamics.assignCell(params, EB, IONS);
 }
 
 
@@ -467,7 +467,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArr
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, vector<IT> * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS){
 
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
@@ -523,7 +523,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
     			} // switch
     		} // if(params->restart)
 
-            initializeParticlesArrays(params, &IONS->at(ii));
+            initializeParticlesArrays(params, EB, &IONS->at(ii));
 
             initializeBulkVariablesArrays(params, &IONS->at(ii));
 

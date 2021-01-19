@@ -149,7 +149,7 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
 
               double g=0.0;
               arma::vec gg(1,1);
-              interp1(S,params->PP.ne,xx,gg);
+              interp1(S,(params->BGP.Bo/params->PP.Bx) % params->PP.ne,xx,gg); //Ne is multiplied
               g = gg(0,0); //density profile
 
 

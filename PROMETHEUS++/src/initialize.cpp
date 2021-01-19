@@ -536,7 +536,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 
         if (params->dimensionality == 1){
 	    double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
- 	    double SNeDx=sum((params->BGP.ne)*(params->PP.ne))*Ds;
+              //double compFactor = params->PP.Bx_i/params->BGP.Bo;
+ 	    double SNeDx=sum((params->BGP.ne)*(params->PP.ne)/(params->PP.Bx/params->BGP.Bo))*Ds;
 	    //cout<<"The value of SNeDx is "<<SNeDx<<endl;
 	   IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
              //cout<<"NCP is "<<IONS->at(ii).NCP<<endl;

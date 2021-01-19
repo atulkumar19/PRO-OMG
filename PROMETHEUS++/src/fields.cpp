@@ -672,9 +672,9 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) );
 
                     //Hall terms
-		EB->E.X.subvec(iIndex,fIndex) += (- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+		EB->E.X.subvec(iIndex,fIndex) += 0.0*(- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
 
-		EB->E.X.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+		EB->E.X.subvec(iIndex,fIndex) += 0.0*sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
                     
                     //Pressure gradient terms
 
@@ -695,9 +695,9 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		EB->E.Y.subvec(iIndex,fIndex) =( ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) ));
 
                     //Hall terms
-		EB->E.Y.subvec(iIndex,fIndex) += ( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+		EB->E.Y.subvec(iIndex,fIndex) += 0.0*( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
 
-		EB->E.Y.subvec(iIndex,fIndex) += (- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+		EB->E.Y.subvec(iIndex,fIndex) += 0.0*(- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 
 		// Including electron inertia term
 		if (params->includeElectronInertia){
@@ -711,15 +711,14 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		EB->E.Z.subvec(iIndex,fIndex) = ( - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2)));
 
                     // Hall terms: Equal to zero because of the radial transport contraint
-		EB->E.Z.subvec(iIndex,fIndex) += /*0.0*/sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+		EB->E.Z.subvec(iIndex,fIndex) += 0.0*sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
 
-		EB->E.Z.subvec(iIndex,fIndex) += /*0.0*/(V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+		EB->E.Z.subvec(iIndex,fIndex) += 0.0*(V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 
 		// Including electron inertia term
 		if (params->includeElectronInertia){
 			// CFDs with DX
 		}
-
 
 		#ifdef CHECKS_ON
 			if(!EB->E.X.is_finite()){

@@ -691,8 +691,14 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
 		}
 
 	}//End of the parallel region
-
+          
+        
+           //Adds compression effect
+         IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+          //Scaling the ion density with proper dimension
 	IONS->n *= IONS->NCP/params->mesh.DX;
+          
+          
 }
 
 

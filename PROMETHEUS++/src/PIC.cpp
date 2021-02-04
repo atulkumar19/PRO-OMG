@@ -679,7 +679,7 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
 			int ix = IONS->mn(ii) + 2;
 
 			n(ix-1) += IONS->wxl(ii);
-			n(ix) 	+= IONS->wxc(ii);
+			n(ix)   += IONS->wxc(ii);
 			n(ix+1) += IONS->wxr(ii);
 		}
 

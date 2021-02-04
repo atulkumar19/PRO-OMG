@@ -40,4 +40,6 @@ else
 fi
 cd   inputFiles/
 cp input_file.input ions_properties.ion  *.txt ../outputFiles/ 
+cd ../outputFiles
+git log --oneline -1 > commitHash.txt
 cd ..

@@ -149,7 +149,7 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
 
               double g=0.0;
               arma::vec gg(1,1);
-              interp1(S,(params->BGP.Bo/params->PP.Bx) % params->PP.ne,xx,gg); //Ne is multiplied
+              interp1(S,(params->BGP.Bo/params->PP.Bx) % params->PP.ne,xx,gg); //Ne is multiplied with the compression factor
               g = gg(0,0); //density profile
 
 
@@ -161,7 +161,7 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
 //*** @non-uniform
 template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomogeneous(const simulationParameters * params, IT * ions){
 // Initialize to zero all ion variables
-              ions->X = zeros(ions->NSP,3);
+          ions->X = zeros(ions->NSP,3);
 	ions->V = zeros(ions->NSP,3);
 	ions->Ppar = zeros(ions->NSP);
 	ions->g = zeros(ions->NSP);

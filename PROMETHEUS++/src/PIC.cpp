@@ -1173,7 +1173,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
 
                                                         // Gaussian distribution in space for particle position:
                                                         double Xcenter = params->mesh.LX/2;
-                                                        double sigmaX  = params->mesh.LX/10;
+                                                        double sigmaX  = params->mesh.LX/5;
                                                         double Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
                                                         double dLX = abs(Xnew - Xcenter);
                                                         

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-REPO_DIR=/home/78k/myRepos/ldrdPrometheus-Upgrade
-HDF5_INSTALL=/home/78k/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
-ARMADILLO_INSTALL=/home/78k/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib
+REPO_DIR=/home/nfc/myRepos/ldrdPrometheus-Upgrade
+HDF5_INSTALL=/home/nfc/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
+ARMADILLO_INSTALL=/home/nfc/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib
 
 # Simulation ID
 ID=""
@@ -11,10 +11,10 @@ ID=""
 DIMENSIONALITY="1-D"
 
 # Available number of cores in system
-NUM_CORES=80
+NUM_CORES=4
 
 # Number of MPI processes
-NUM_MPI_PROCESSES=40
+NUM_MPI_PROCESSES=4
 
 # Number of OMP threads per MPI
 NUM_OMP_PER_MPI=$((NUM_CORES/NUM_MPI_PROCESSES))
@@ -36,10 +36,5 @@ if [$ID == ""]; then
     mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER}
 else
     echo "USING MODIFIED INPUT FILES"
-    mpirun  -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
+    mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
 fi
-cd   inputFiles/
-cp input_file.input ions_properties.ion  *.txt ../outputFiles/ 
-cd ../outputFiles
-git log --oneline -1 > commitHash.txt
-cd ..

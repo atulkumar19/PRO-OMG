@@ -1,8 +1,8 @@
 #!/bin/bash
 
 REPO_DIR=
-HDF5_INSTALL=
-ARMADILLO_INSTALL=
+HDF5_INSTALL=/lib
+ARMADILLO_INSTALL=/lib
 FORGE_PATH=
 
 # Simulation ID
@@ -38,5 +38,5 @@ if [$ID == ""]; then
     map --profile mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER}
 else
     echo "USING MODIFIED INPUT FILES"
-    mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
+    map --profile mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
 fi

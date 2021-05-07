@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "structures.h"
+#include "collisionOperator.h"
 #include "initialize.h"
 #include "PIC.h"
 #include "fields.h"
@@ -46,6 +47,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	vector<IT> IONS; 					// Vector of ionsSpecies structures each of them storing the properties of each ion species.
 	characteristicScales CS;				// Derived type for keeping info about characteristic scales.
 	FT EB; 						// Derived type with variables of electromagnetic fields.
+
+        // Create collision operator object:
+        collisionOperator FPCOLL;
 
 	INITIALIZE<IT, FT> init(&params, argc, argv);
 
@@ -159,6 +163,7 @@ int main(int argc, char* argv[]){
 
 	twoDimensional::ionSpecies dummy_ions_2D;
 	twoDimensional::fields dummy_fields_2D;
+        
 
 	if (strcmp(argv[1],"1-D") == 0){
 		main_run_simulation<decltype(dummy_ions_1D), decltype(dummy_fields_1D)>(argc, argv);

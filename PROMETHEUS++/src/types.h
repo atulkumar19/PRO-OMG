@@ -209,6 +209,7 @@ public:
 	arma::vec wxc_;				// Particles' weights w.r.t. the vertices of the grid cells
 	arma::vec wxr_;				// Particles' weights w.r.t. the vertices of the grid cells
 
+        // Mesh-defined ion moments:
 	arma::vec n; 				// Ion density at time level "l + 1"
 	arma::vec n_; 				// Ion density at time level "l"
 	arma::vec n__; 				// Ion density at time level "l - 1"
@@ -216,6 +217,19 @@ public:
 	vfield_vec nv; 				// Ion bulk velocity at time level "l + 1/2"
 	vfield_vec nv_; 			// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 			// Ion bulk velocity at time level "l - 3/2"
+
+        arma::vec P11;
+        arma::vec P22;
+        
+        vfield_vec U_m;
+        arma::vec Tpar_m;
+        arma::vec Tper_m;
+        
+        // Particle-defined ion moments:
+        arma::vec n_p;
+        vfield_vec U_p;
+        arma::vec Tpar_p;
+        arma::vec Tper_p;
 
 	ionSpecies(){};
 	~ionSpecies(){};
@@ -273,6 +287,7 @@ public:
 	arma::vec wyc;				// Particles' weights w.r.t. the vertices of the grid cells
 	arma::vec wyr;				// Particles' weights w.r.t. the vertices of the grid cells
 
+        // Mesh-defined ion moments:
 	arma::mat n; 		// Ion density at time level "l + 1"
 	arma::mat n_; 		// Ion density at time level "l"
 	arma::mat n__; 		// Ion density at time level "l - 1"
@@ -280,6 +295,19 @@ public:
 	vfield_mat nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"
+
+        arma::mat P11;
+        arma::mat P22;
+        
+        vfield_mat U_m;
+        arma::mat Tpar_m;
+        arma::mat Tper_m;
+
+        // Particle-defined ion moments:
+        arma::mat n_p;
+        vfield_mat U_p;
+        arma::mat Tpar_p;
+        arma::mat Tper_p;
 
 	ionSpecies(){};
 	~ionSpecies(){};

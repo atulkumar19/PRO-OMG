@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# Repository directory:
 REPO_DIR=
+
+# Directory for  libraries:
 HDF5_INSTALL=/lib
-ARMADILLO_INSTALL=/lib
+ARMADILLO_INSTALL=/lib # /lib or /lib64
 
 # Simulation ID
 ID=""

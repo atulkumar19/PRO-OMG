@@ -99,6 +99,7 @@ cp PRO++FILES/compile.sh PROMETHEUS++/compile.sh
 cp PRO++FILES/Makefile PROMETHEUS++/Makefile
 cp PRO++FILES/run_pro++.sh PROMETHEUS++/run_pro++.sh
 cp PRO++FILES/debug-run_pro++.sh PROMETHEUS++/debug-run_pro++.sh
+cp PRO++FILES/debug-run_pro++.sh PROMETHEUS++/profile-run_pro++.sh
 cp PRO++FILES/input_file.input PROMETHEUS++/inputFiles/input_file.input
 cp PRO++FILES/ions_properties.ion PROMETHEUS++/inputFiles/ions_properties.ion
 
@@ -134,7 +135,7 @@ sed -i 's/_SEP_/\//g' PROMETHEUS++/compile.sh
 # Compile for the first times
 cd PROMETHEUS++
 
-#./compile.sh
+./compile.sh
 
 if [ $? -eq 0 ] ; then
 echo ''

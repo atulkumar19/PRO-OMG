@@ -1,9 +1,9 @@
 #!/bin/bash
 
-REPO_DIR=~/myRepos/ldrdPrometheus-Upgrade
-HDF5_INSTALL=~/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
-ARMADILLO_INSTALL=~/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib
-FORGE_PATH=/home/nfc/arm/forge/bin
+REPO_DIR=
+HDF5_INSTALL=
+ARMADILLO_INSTALL=
+FORGE_PATH=
 
 # Simulation ID
 ID=""

@@ -25,7 +25,7 @@
 #include <utility>
 
 #include "structures.h"
-//#include "collisionOperator.h"
+#include "collisionOperator.h"
 #include "initialize.h"
 #include "PIC.h"
 #include "fields.h"
@@ -49,8 +49,8 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	FT EB; 						// Derived type with variables of electromagnetic fields.
 
         // Create collision operator object:
-  //≈y
-//      collisionOperator FPCOLL;
+
+        collisionOperator FPCOLL;
 
 	INITIALIZE<IT, FT> init(&params, argc, argv);
 

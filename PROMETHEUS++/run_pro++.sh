@@ -1,8 +1,11 @@
 #!/bin/bash
 
-REPO_DIR=/home/nfc/myRepos/ldrdPrometheus-Upgrade
-HDF5_INSTALL=/home/nfc/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
-ARMADILLO_INSTALL=/home/nfc/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib
+# Repository directory:
+REPO_DIR=/home/78k/myRepos/ldrdPrometheus-Upgrade
+
+# Directory for  libraries:
+HDF5_INSTALL=/home/78k/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
+ARMADILLO_INSTALL=/home/78k/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib # /lib or /lib64
 
 # Simulation ID
 ID=""

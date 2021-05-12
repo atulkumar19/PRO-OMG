@@ -1,9 +1,9 @@
 #!/bin/bash
 
-REPO_DIR=/home/78k/myRepos/ldrdPrometheus-Upgrade
-HDF5_INSTALL=/home/78k/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
-ARMADILLO_INSTALL=/home/78k/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib # /lib or /lib64
-FORGE_PATH=
+REPO_DIR=~/myRepos/ldrdPrometheus-Upgrade
+HDF5_INSTALL=~/myRepos/ldrdPrometheus-Upgrade/HDF5/lib
+ARMADILLO_INSTALL=~/myRepos/ldrdPrometheus-Upgrade/arma_libs/lib
+FORGE_PATH=/home/nfc/arm/forge/bin
 
 # Simulation ID
 ID=""
@@ -38,5 +38,5 @@ if [$ID == ""]; then
     ddt --connect mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER}
 else
     echo "USING MODIFIED INPUT FILES"
-    ddt --connect mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
+    mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
 fi

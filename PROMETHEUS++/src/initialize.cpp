@@ -63,13 +63,12 @@ template <class IT, class FT> map<string,float> INITIALIZE<IT,FT>::loadParameter
 
 
 template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParametersString(string * inputFile){
-	string key;
-	string value;
-	fstream reader;
-	std::map<string,string> readMap;
+    string key;
+    string value;
+    fstream reader;
+    std::map<string,string> readMap;
 
-
-	reader.open(inputFile->data(),ifstream::in);
+    reader.open(inputFile->data(),ifstream::in);
 
     if (!reader){
         MPI_Barrier(MPI_COMM_WORLD);
@@ -572,102 +571,126 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-		cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
-		cout << "+ Number of ion species: " << params->numberOfParticleSpecies << endl;
-		cout << "+ Number of tracer species: " << params->numberOfTracerSpecies << endl;
-	}
+    // Print to terminal:
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
+        cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
+    	cout << "+ Number of ion species: " << params->numberOfParticleSpecies << endl;
+    	cout << "+ Number of tracer species: " << params->numberOfTracerSpecies << endl;
+    }
 
+    // Assemble path to "ion_properties.ion": 
+    string name;
+    if(params->argc > 3)
+    {
+    	string argv(params->argv[3]);
+    	name = "inputFiles/ions_properties_" + argv + ".ion";
+    }
+    else
+    {
+    	name = "inputFiles/ions_properties.ion";
+    }
+    
+    // Read data from "ion_properties.ion" into "parametersMap":
+    std::map<string,float> parametersMap;
+    parametersMap = loadParameters(&name);
 
-	string name;
-	if(params->argc > 3){
-		string argv(params->argv[3]);
-		name = "inputFiles/ions_properties_" + argv + ".ion";
-	}else{
-		name = "inputFiles/ions_properties.ion";
-	}
+    // Determine the total number of ION species:
+    int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
-	std::map<string,float> parametersMap;
-	parametersMap = loadParameters(&name);
-
-	int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
-
-	for(int ii=0;ii<totalNumSpecies;ii++){
-		string name;
-		IT ions;
+    // Loop over all ION species and extract data from "parametersMap":
+    for(int ii=0;ii<totalNumSpecies;ii++)
+    {
+        string name;
+        IT ions;
         int SPECIES;
-		stringstream ss;
-
-		ss << ii + 1;
-
+        stringstream ss;
+    
+        ss << ii + 1;
+    
         name = "SPECIES" + ss.str();
         SPECIES = (int)parametersMap[name];
         name.clear();
 
-        if (SPECIES == 0 || SPECIES == 1){
+        if (SPECIES == 0 || SPECIES == 1)
+        {
+            // Species type, -1: Guiding center, 0: Tracer, 1: Full orbit
             ions.SPECIES = SPECIES;
-
+    
+            // Number
             name = "NPC" + ss.str();
-    		ions.NPC = parametersMap[name];
-    		name.clear();
-
-    		name = "IC" + ss.str();
-    		ions.IC = (int)parametersMap[name];
-    		name.clear();
-
-    		name = "Tper" + ss.str();
-    		ions.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
-    		name.clear();
-
-    		name = "Tpar" + ss.str();
-    		ions.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
-    		name.clear();
-
-    		name = "densityFraction" + ss.str();
-    		ions.densityFraction = parametersMap[name];
-    		name.clear();
-
-    		name = "pctSupPartOutput" + ss.str();
-    		ions.pctSupPartOutput = parametersMap[name];
-    		name.clear();
-
+            ions.NPC = parametersMap[name];
+            name.clear();
+    
+            // 
+            name = "IC" + ss.str();
+            ions.IC = (int)parametersMap[name];
+            name.clear();
+    
+            // Perpendicular temperature:
+            name = "Tper" + ss.str();
+            ions.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+            name.clear();
+    
+            // Parallel temperature:
+            name = "Tpar" + ss.str();
+            ions.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+            name.clear();
+    
+            // Density fraction relative to 1:
+            name = "densityFraction" + ss.str();
+            ions.densityFraction = parametersMap[name];
+            name.clear();
+    
+            // 
+            name = "pctSupPartOutput" + ss.str();
+            ions.pctSupPartOutput = parametersMap[name];
+            name.clear();
+    
+            // Charge state:
             name = "Z" + ss.str();
-			ions.Z = parametersMap[name]; //parametersMap[name] = Atomic number.
+            ions.Z = parametersMap[name];
             name.clear();
-
-            ions.Q = F_E*ions.Z;
-
-			name = "M" + ss.str();
-			ions.M = F_U*parametersMap[name]; //parametersMap[name] times the atomic mass unit.
+       
+            // AMU mass number:
+            name = "M" + ss.str();
+            ions.M = F_U*parametersMap[name];
             name.clear();
-
+    
+            // Derived quantities:
+            ions.Q = F_E*ions.Z;           
             ions.Wc = ions.Q*params->BGP.Bo/ions.M;
-
-            ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
-
-            ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
-        	  
-            ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
-
+            ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!    
+            ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);                
+            ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);    
             ions.LarmorRadius = ions.VTper/ions.Wc;
             
-            //Initializing the events counter
+            //Initializing the events counter:
             ions.pCount.zeros(1);
             ions.eCount.zeros(1);
-
+    
             //Definition of the initial total number of superparticles for each species
             ions.NSP = ceil( ions.NPC*(double)params->mesh.NUM_CELLS_IN_SIM/(double)params->mpi.MPIS_PARTICLES );
-
-    		ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
-
-    		IONS->push_back(ions);
-
-            if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-                if (ions.SPECIES == 0){
+            
+            //
+            ions.nSupPartOutput = floor( (ions.pctSupPartOutput/100.0)*ions.NSP );
+             
+            // Create new element on IONS vector:
+            IONS->push_back(ions);
+    
+            // Print ion parameters to terminal:
+            if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+            {
+                if (ions.SPECIES == 0)
+                {
                     cout << endl << "Species No "  << ii + 1 << " are tracers with the following parameters:" << endl;
-                }else{
+                }
+                else
+                {
                     cout << endl << "Species No "  << ii + 1 << " are full-orbit particles with the following parameters:" << endl;
                 }
+                
+                // Stream to terminal:
                 cout << "+ User-defined number of particles per MPI: " << ions.NSP << endl;
                 cout << "+ Atomic number: " << ions.Z << endl;
                 cout << "+ Mass: " << ions.M << " kg" << endl;
@@ -679,21 +702,27 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
                 cout << "+ Perpendicular thermal velocity: " << ions.VTper << " m/s" << endl;
                 cout << "+ Larmor radius: " << ions.LarmorRadius << " m" << endl;
             }
-        }else{
+        }
+        else
+        {
             MPI_Barrier(MPI_COMM_WORLD);
-
-            if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-    			cerr << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = full orbit, -1 = guiding center" << endl;
-    		}
-    		MPI_Abort(MPI_COMM_WORLD,-106);
+    
+            if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+            {
+                cerr << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = full orbit, -1 = guiding center" << endl;
+            }
+            MPI_Abort(MPI_COMM_WORLD,-106);
         }
 
-	}//Iteration over ion species
+    }//Iteration over ion species
 
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-		cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
-
-	MPI_Barrier(MPI_COMM_WORLD);
+    // Print to terminal:
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+            cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
+        }
+        
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS){

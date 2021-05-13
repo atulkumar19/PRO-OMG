@@ -72,13 +72,13 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         // =============================       
         // Create MPI topology:
 	mpi_main.createMPITopology(&params);
-        // Read ion input files and populate IONS vector
+        // Read "ions_properties.ion" and populate "IONS" vector
 	init.loadIonParameters(&params, &IONS);
-
+        // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
-
+        // Create object and allocate memory according to "params":
 	fundamentalScales FS(&params);
-
+        // Define fundamental scales and broadcast them to all processes in COMM_WORLD:
 	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
 
 	init.loadMeshGeometry(&params, &FS);

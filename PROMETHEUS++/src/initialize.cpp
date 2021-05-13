@@ -88,8 +88,10 @@ template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParameter
 }
 
 template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
+    
+    // Get RANK and SIZE of nodes within COMM_WORLD:
     MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
-	MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
+    MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
 
     // Error codes
     params->errorCodes[-100] = "Odd number of MPI processes";

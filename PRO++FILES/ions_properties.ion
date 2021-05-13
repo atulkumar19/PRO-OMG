@@ -1,8 +1,8 @@
 SPECIES1                    1
-NPC1                        250
+NPC1                        1000
 IC1                         1
 Tper1                       1.0E3
-Tpar1                       1.0E3
+Tpar1                       0.5E3
 densityFraction1            1.0
 Z1                          1
 M1                          1.007

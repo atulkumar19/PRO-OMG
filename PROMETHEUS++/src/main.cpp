@@ -16,6 +16,8 @@
     along with PROMETHEUS++.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// Include intrinsic header files:
+// ===============================
 #include <iostream>
 #include <vector>
 #include <armadillo>
@@ -24,6 +26,8 @@
 #include <typeinfo>
 #include <utility>
 
+// Include user-defined header files:
+// ==================================
 #include "structures.h"
 #include "collisionOperator.h"
 #include "initialize.h"
@@ -32,33 +36,44 @@
 #include "units.h"
 #include "outputHDF5.h"
 
+// Include headers for parallelization:
+// ====================================
 #include <omp.h>
 #include "mpi_main.h"
 
 using namespace std;
 using namespace arma;
 
-
+// Impletement templates:
+// ======================
 template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	MPI_Init(&argc, &argv);
+        
+        // Create simulation objects:
+        // ==========================
+        // MPI object to hold topology information:
 	MPI_MAIN mpi_main;
-
-	simulationParameters params; 				// Input parameters for the simulation.
-	vector<IT> IONS; 					// Vector of ionsSpecies structures each of them storing the properties of each ion species.
-	characteristicScales CS;				// Derived type for keeping info about characteristic scales.
-	FT EB; 						// Derived type with variables of electromagnetic fields.
-
-        // Create collision operator object:
-
+        // Input parameters for simulation:
+	simulationParameters params; 	
+        // Ion species vector of type "IT":
+	vector<IT> IONS; 
+	// Characteristic scales:
+        characteristicScales CS;
+        // Electromagnetic fields of type "FT":
+	FT EB; 						 
+        // Collision operator object:
         collisionOperator FPCOLL;
-
-	INITIALIZE<IT, FT> init(&params, argc, argv);
-
-	mpi_main.createMPITopology(&params);
-
-	init.loadIonParameters(&params, &IONS);
-
+        // Initialization object of type "FT" and "FT":
+        INITIALIZE<IT, FT> init(&params, argc, argv);
+        // UNITS object of type "FT" and "FT":
 	UNITS<IT, FT> units;
+        
+        // Initialize simulation objects:
+        // =============================       
+        // Create MPI topology:
+	mpi_main.createMPITopology(&params);
+        // Read ion input files and populate IONS vector
+	init.loadIonParameters(&params, &IONS);
 
 	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
@@ -68,7 +83,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
 	init.loadMeshGeometry(&params, &FS);
           
-          init.loadPlasmaProfiles(&params, &IONS); //Reads & loads plasma profiles from external files
+        init.loadPlasmaProfiles(&params, &IONS); //Reads & loads plasma profiles from external files
 
 	units.spatialScalesSanityCheck(&params, &FS);
 
@@ -158,18 +173,29 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	mpi_main.finalizeCommunications(&params);
 }
 
+
+// MAIN function:
+// ==============
 int main(int argc, char* argv[]){
+
+        // Create dummy variables as inputs to variables:
+        // ==============================================
+        // One-dimensional:
 	oneDimensional::ionSpecies dummy_ions_1D;
 	oneDimensional::fields dummy_fields_1D;
-
+        // Two-dimensional:
 	twoDimensional::ionSpecies dummy_ions_2D;
 	twoDimensional::fields dummy_fields_2D;
         
-
-	if (strcmp(argv[1],"1-D") == 0){
-		main_run_simulation<decltype(dummy_ions_1D), decltype(dummy_fields_1D)>(argc, argv);
-	}else{
-		main_run_simulation<decltype(dummy_ions_2D), decltype(dummy_fields_2D)>(argc, argv);
+        // Select dimensionality:
+        // ======================
+	if (strcmp(argv[1],"1-D") == 0)
+        {
+            main_run_simulation<decltype(dummy_ions_1D), decltype(dummy_fields_1D)>(argc, argv);
+	}
+        else
+        {
+            main_run_simulation<decltype(dummy_ions_2D), decltype(dummy_fields_2D)>(argc, argv);
 	}
 
 	return(0);

@@ -11,6 +11,7 @@ PROMETHEUS++/outputFiles/
 PROMETHEUS++/nohup*
 *.fig
 PROMETHEUS++/*.csv
+PROMETHEUS++/*.sh
 <<<<<<< Updated upstream
 PROMETHEUS++/*.map
 ======

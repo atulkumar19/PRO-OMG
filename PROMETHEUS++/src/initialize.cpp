@@ -314,67 +314,93 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
 	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
           
-        // loading and rescaling plasma profiles obtained from external files
-
-        
-             
+        // loading and rescaling plasma profiles obtained from external files      
 }
 
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulationParameters * params, fundamentalScales * FS){
 
     MPI_Barrier(MPI_COMM_WORLD);
+    
+    // Print to terminal:
+    // ==================    
+    if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
+        cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
+    }
+    
+    // Select grid size: based on Larmour radius or ion skin depth: 
+    // ============================================================    
+    if( (params->DrL > 0.0) && (params->dp < 0.0) )
+    {
+	params->mesh.DX = params->DrL*params->ionLarmorRadius;
+	params->mesh.DY = params->mesh.DX;
+	params->mesh.DZ = params->mesh.DX;
+        
+	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+            cout << "Using LARMOR RADIUS to set up simulation grid." << endl;
+        }
+    }
+    else if( (params->DrL < 0.0) && (params->dp > 0.0) )
+    {
+        params->mesh.DX = params->dp*params->ionSkinDepth;
+        params->mesh.DY = params->mesh.DX;
+        params->mesh.DZ = params->mesh.DX;
+            
+        if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+            cout << "Using ION SKIN DEPTH to set up simulation grid." << endl;
+        }
+    }
 
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
+    // Set size of mesh and allocate memory:
+    // =====================================    
+    params->mesh.nodes.X.set_size(params->mesh.NX_IN_SIM);
+    params->mesh.nodes.Y.set_size(params->mesh.NY_IN_SIM);
+    params->mesh.nodes.Z.set_size(params->mesh.NZ_IN_SIM);
 
-	if( (params->DrL > 0.0) && (params->dp < 0.0) ){
-		params->mesh.DX = params->DrL*params->ionLarmorRadius;
-		params->mesh.DY = params->mesh.DX;
-		params->mesh.DZ = params->mesh.DX;
-		if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-			cout << "Using LARMOR RADIUS to set up simulation grid." << endl;
+    // Create mesh nodes: X domain
+    // ============================    
+    for(int ii=0; ii<params->mesh.NX_IN_SIM; ii++)
+    {
+        params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX;
+    }
 
-	}else if( (params->DrL < 0.0) && (params->dp > 0.0) ){
-		params->mesh.DX = params->dp*params->ionSkinDepth;
-		params->mesh.DY = params->mesh.DX;
-		params->mesh.DZ = params->mesh.DX;
-		if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-			cout << "Using ION SKIN DEPTH to set up simulation grid." << endl;
-	}
+    // Create mesh nodes: Y domain
+    // ===========================    
+    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++)
+    {
+        params->mesh.nodes.Y(ii) = (double)ii*params->mesh.DY;
+    }
 
-	params->mesh.nodes.X.set_size(params->mesh.NX_IN_SIM);
-	params->mesh.nodes.Y.set_size(params->mesh.NY_IN_SIM);
-	params->mesh.nodes.Z.set_size(params->mesh.NZ_IN_SIM);
+    // Create mesh nodes: Z domain  
+    // ===========================
+    for(int ii=0; ii<params->mesh.NZ_IN_SIM; ii++)
+    {
+        params->mesh.nodes.Z(ii) = (double)ii*params->mesh.DZ;
+    }
 
-	for(int ii=0; ii<params->mesh.NX_IN_SIM; ii++){
-		params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX; //entire simulation domain's mesh grid
-	}
-
-    for(int ii=0; ii<params->mesh.NY_IN_SIM; ii++){
-		params->mesh.nodes.Y(ii) = (double)ii*params->mesh.DY; //
-	}
-
-	for(int ii=0; ii<params->mesh.NZ_IN_SIM; ii++){
-		params->mesh.nodes.Z(ii) = (double)ii*params->mesh.DZ; //
-	}
-
+    // Define total length of each mesh:
+    // =================================    
     params->mesh.LX = params->mesh.DX*params->mesh.NX_IN_SIM;
     params->mesh.LY = params->mesh.DY*params->mesh.NY_IN_SIM;
     params->mesh.LZ = params->mesh.DZ*params->mesh.NZ_IN_SIM;
 
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+    // Print to terminal:
+    // ==================    
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
         cout << "+ Number of mesh nodes along x-axis: " << params->mesh.NX_IN_SIM << endl;
         cout << "+ Number of mesh nodes along y-axis: " << params->mesh.NY_IN_SIM << endl;
         cout << "+ Number of mesh nodes along z-axis: " << params->mesh.NZ_IN_SIM << endl;
 
-		cout << "+ Size of simulation domain along the x-axis: " << params->mesh.LX << " m" << endl;
-		cout << "+ Size of simulation domain along the y-axis: " << params->mesh.LY << " m" << endl;
-		cout << "+ Size of simulation domain along the z-axis: " << params->mesh.LZ << " m" << endl;
-		cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *" << endl;
-	}
+    	cout << "+ Size of simulation domain along the x-axis: " << params->mesh.LX << " m" << endl;
+    	cout << "+ Size of simulation domain along the y-axis: " << params->mesh.LY << " m" << endl;
+    	cout << "+ Size of simulation domain along the z-axis: " << params->mesh.LZ << " m" << endl;
+    	cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *" << endl;
+    }
 }
-
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS){
     // Setting size and value to zero of arrays for ions' variables
@@ -567,11 +593,12 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS){
-
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS)
+{
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Print to terminal:
+    // ==================    
     if(params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
         cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
@@ -579,7 +606,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
     	cout << "+ Number of tracer species: " << params->numberOfTracerSpecies << endl;
     }
 
-    // Assemble path to "ion_properties.ion": 
+    // Assemble path to "ion_properties.ion":
+    // ======================================    
     string name;
     if(params->argc > 3)
     {
@@ -592,13 +620,16 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
     }
     
     // Read data from "ion_properties.ion" into "parametersMap":
+    // =========================================================    
     std::map<string,float> parametersMap;
     parametersMap = loadParameters(&name);
 
     // Determine the total number of ION species:
+    // =========================================    
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
     // Loop over all ION species and extract data from "parametersMap":
+    // ================================================================    
     for(int ii=0;ii<totalNumSpecies;ii++)
     {
         string name;
@@ -679,6 +710,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             IONS->push_back(ions);
     
             // Print ion parameters to terminal:
+            // =================================            
             if(params->mpi.MPI_DOMAIN_NUMBER == 0)
             {
                 if (ions.SPECIES == 0)
@@ -691,6 +723,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
                 }
                 
                 // Stream to terminal:
+                // ===================                
                 cout << "+ User-defined number of particles per MPI: " << ions.NSP << endl;
                 cout << "+ Atomic number: " << ions.Z << endl;
                 cout << "+ Mass: " << ions.M << " kg" << endl;
@@ -717,6 +750,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
     }//Iteration over ion species
 
     // Print to terminal:
+    // ==================    
     if(params->mpi.MPI_DOMAIN_NUMBER == 0)
         {
             cout << "* * * * * * * * * * * * ION PARAMETERS LOADED * * * * * * * * * * * * * * * * * *\n";
@@ -725,51 +759,107 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS){
-            //This loads non-homegeneous plasma profiles via an external file
-            int nn = params->PATH.length();
-            std::string inputFilePath = params->PATH.substr(0,nn-12);
-            std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
-            std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
-            std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
-            std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
-           
-            //Reading normalized plasma profiles from external files
-            params->PP.ne.load(fileName1);    //Ion density profile 
-            params->PP.Tpar.load(fileName2);  //Parallel ion profile 
-            params->PP.Tper.load(fileName3);  //Perpendicular ion profile 
-            params->PP.Bx.load(fileName4);    //B-field profile 
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS)
+{
+    // Define number of mesh points with Ghost cells included:
+    // ======================================================    
+    int NX(params->mesh.NX_IN_SIM + 2);
+    
+    // Define number of elements in external profiles:
+    // ===============================================    
+    int nTable = params->PP.nTable;
+    
+    // Initialize variables:
+    // =====================    
+    params->PP.ne.zeros(nTable);
+    params->PP.Tpar.zeros(nTable);
+    params->PP.Tper.zeros(nTable);
+    params->PP.Bx.zeros(nTable);
+    params->PP.Bx_i.zeros(NX);
+    params->PP.Br_i.zeros(NX);
+    params->PP.dBrdx_i.zeros(NX);
+    
+if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
+        // Get file name containing initial condition plasma profiles:
+        // ===========================================================        
+        int nn = params->PATH.length();
+        std::string inputFilePath = params->PATH.substr(0,nn-12);
+        std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
+        std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
+        std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
+        std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
+        
+        // REad normalized plasma profiles from external files:
+        // =====================================================        
+        params->PP.ne.load(fileName1); 
+        params->PP.Tpar.load(fileName2); 
+        params->PP.Tper.load(fileName3);
+        params->PP.Bx.load(fileName4);
+        
+        //Rescale profiles:
+        // ================        
+        //params->PP.ne   *= params->BGP.ne; 
+        params->PP.Tpar *= IONS->at(0).Tpar;
+        params->PP.Tper *= IONS->at(0).Tper;
+        params->PP.Bx   *= params->BGP.Bo;
+        
+        //Interpolate at mesh points:
+        // ==========================    
+        // Query points:
+        arma::vec xq = linspace(0,params->mesh.LX,NX);
+        arma::vec yq(xq.size());
+        // Sample points:
+        arma::vec xt = linspace(0,params->mesh.LX,nTable); // x-vector from the table
+        arma:: vec yt(xt.size());
+        
+        // Bx profile:
+        // ===========
+        yt = params->PP.Bx;
+        interp1(xt,yt,xq,yq);
+        params->PP.Bx_i = yq;
             
-            //Rescaling profiles
-            //params->PP.ne   *= params->BGP.ne; 
-            params->PP.Tpar *= IONS->at(0).Tpar;
-            params->PP.Tper *= IONS->at(0).Tper;
-            params->PP.Bx   *= params->BGP.Bo;
-            
-            //Interpolates Plasma profiles to mesh points
-            int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
-            int nTable = params->PP.nTable; //Number of elements from the table profile
-            arma::vec ss = linspace(0,params->mesh.LX,NX); //Queiry points
-            arma::vec xTable = linspace(0,params->mesh.LX,nTable); // x-vector from the table
-            
-            interp1(xTable,params->PP.Bx,ss,params->PP.Bx_i); //interpolates Bz profile on mesh points
-          
-            
-            arma::vec Br(nTable,1); 
-            Br.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
-            Br(nTable-1) = Br(nTable-2);
-           
-            interp1(xTable,Br,ss,params->PP.Br_i); //  Populates Br profiles on mesh points
-            
-            arma::vec dBr(nTable,1); 
-            dBr.subvec(0,nTable-2) = diff(Br)/(params->mesh.LX/nTable);
-            dBr(nTable-1) = dBr(nTable-2);
-           
-            interp1(xTable,dBr,ss,params->PP.dBrdx_i); // Populates dBr profiles on mesh points
-            
+        // Br profile:
+        // ===========
+        arma::vec Br(nTable,1); 
+        Br.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
+        Br(nTable-1) = Br(nTable-2);
+                
+        yt = Br;
+        interp1(xt,yt,xq,yq);
+        params->PP.Br_i = yq;
 
-
-
+        // dBr profile:
+        // ===========
+        arma::vec dBr(nTable,1); 
+        dBr.subvec(0,nTable-2) = diff(Br)/(params->mesh.LX/nTable);
+        dBr(nTable-1) = dBr(nTable-2);
+        
+        yt = dBr;
+        interp1(xt,yt,xq,yq);
+        params->PP.dBrdx_i = yq;
+        
+        //interp1(xt,dBr,xq,params->PP.dBrdx_i);
+    }
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    // Plasma density:
+    MPI_Bcast(params->PP.ne.memptr()  ,params->PP.ne.size() , MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    
+    // Parallel temperature:
+    MPI_Bcast(params->PP.Tpar.memptr(),params->PP.Tpar.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    
+    // Perpendicular temperature:
+    MPI_Bcast(params->PP.Tper.memptr(),params->PP.Tper.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+     
+    // Magnetic field profile, X component:
+    MPI_Bcast(params->PP.Bx.memptr()  ,params->PP.Bx.size()  , MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        
+    // Quantities interpolated at the mesh points:   
+    MPI_Bcast(params->PP.Bx_i.memptr()   ,params->PP.Bx_i.size()   , MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(params->PP.Br_i.memptr()   ,params->PP.Br_i.size()   , MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(params->PP.dBrdx_i.memptr(),params->PP.dBrdx_i.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){

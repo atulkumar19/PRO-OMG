@@ -19,6 +19,8 @@
 #ifndef H_INITIALIZE
 #define H_INITIALIZE
 
+// Intrinsic header files:
+// =======================
 #include <iostream>
 #include <map>
 #include <vector>
@@ -28,14 +30,16 @@
 #include <ctime>
 #include <typeinfo>
 
+// Armadillo header:
+// =================
 #include <armadillo>
 
+// User-defined headers:
+// =====================
 #include "structures.h"
-
 #include "randomStart.h"
 #include "quietStart.h"
 #include "PIC.h"
-
 #include "mpi_main.h"
 
 using namespace std;
@@ -43,8 +47,8 @@ using namespace arma;
 
 // using namespace oneDimensional;
 
-template <class IT, class FT> class INITIALIZE{
-
+template <class IT, class FT> class INITIALIZE
+{
 	vector<string> split(const string& str, const string& delim);
 
 	map<string, float> loadParameters(string *  inputFile);
@@ -72,7 +76,6 @@ public:
         void loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS);
 
 	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS);
-
 
 	void initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB);
 

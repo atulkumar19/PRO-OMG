@@ -494,101 +494,139 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArr
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS){
-
+template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS)
+{
+    // Define total number of ions species:
+    // ====================================
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
+    // Print to terminal:
+    // ==================
     if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		cout << endl << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *" << endl;
-
-	for (int ii=0; ii<totalNumSpecies; ii++){
-        if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
-    		if(params->restart){
-    			if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-    				cout << "Restart not implemented yet" << endl;
-
-    			MPI_Abort(MPI_COMM_WORLD,-105);
-    		}else{
-    			switch (IONS->at(ii).IC) {
-    				case(1):{
-    						if (params->quietStart){
-                                QUIETSTART<IT> qs(params, &IONS->at(ii));
-    							qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
-    						}else{
-                                RANDOMSTART<IT> rs(params);
-    							//rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
-                                                                                                  //***@non-uniform
-                                                                                                  rs.maxwellianVelocityDistribution_nonhomogeneous(params, &IONS->at(ii));
-    						}
-                                                                                    
-                                                                                    
-
-
-    						break;
-    						}
-    				case(2):{
-    						if (params->quietStart){
-                                QUIETSTART<IT> qs(params, &IONS->at(ii));
-    							qs.ringLikeVelocityDistribution(params, &IONS->at(ii));
-    						}else{
-                                RANDOMSTART<IT> rs(params);
-    							rs.ringLikeVelocityDistribution(params, &IONS->at(ii));
-    						}
-
-    						break;
-    						}
-    				default:{
-                            if (params->quietStart){
-                                QUIETSTART<IT> qs(params, &IONS->at(ii));
-                                qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
-
-                            }else{
-                                RANDOMSTART<IT> rs(params);
-                                rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
-                            }
-    						}
-    			} // switch
-    		} // if(params->restart)
+    {
+        cout << endl << "* * * * * * * * * * * * SETTING UP IONS INITIAL CONDITION * * * * * * * * * * * * * * * * * *" << endl;
+    }
+    
+    // Loop over all species:
+    // ======================
+    for (int ii=0; ii<totalNumSpecies; ii++)
+    {
+        if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+        {
+            if(params->restart)
+            {
+                if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+                {
+                    cout << "Restart not implemented yet" << endl;
+                }
+                
+                MPI_Abort(MPI_COMM_WORLD,-105);
+            }
+            else
+            {
+                switch (IONS->at(ii).IC)
+                {
+                    case(1):
+                    {
+                        if (params->quietStart)
+                        {
+                            // Create quiet start object:
+                            QUIETSTART<IT> qs(params, &IONS->at(ii));
+                            // Use queit start object:
+                            qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
+                        }
+                        else
+                        {   
+                            // Create random start object:
+                            RANDOMSTART<IT> rs(params);   
+                            // Apply random start object: USES MH algorithm
+                            rs.maxwellianVelocityDistribution_nonhomogeneous(params, &IONS->at(ii));
+                        }                                                                                                                             
+                        break;
+                    }
+                    case(2):
+                    {
+                        if (params->quietStart)
+                        {
+                            QUIETSTART<IT> qs(params, &IONS->at(ii));
+                            qs.ringLikeVelocityDistribution(params, &IONS->at(ii));
+                        }
+                        else
+                        {
+                            RANDOMSTART<IT> rs(params);
+                            rs.ringLikeVelocityDistribution(params, &IONS->at(ii));
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        if (params->quietStart)
+                        {
+                            QUIETSTART<IT> qs(params, &IONS->at(ii));
+                            qs.maxwellianVelocityDistribution(params, &IONS->at(ii));        
+                        }
+                        else
+                        {
+                            RANDOMSTART<IT> rs(params);
+                            rs.maxwellianVelocityDistribution(params, &IONS->at(ii));
+                        }
+                    }
+                } // switch
+            } // if(params->restart)
 
             initializeParticlesArrays(params, EB, &IONS->at(ii));
 
             initializeBulkVariablesArrays(params, &IONS->at(ii));
 
-        }else if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR){
+        }
+        else if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR)
+        {
             initializeBulkVariablesArrays(params, &IONS->at(ii));
         }
-
+                     
+        // Broadcast NSP (Number of super particles per process) and nSupPartPutput from ROOTS to COMM_WORLD:
         MPI_Bcast(&IONS->at(ii).NSP, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
         MPI_Bcast(&IONS->at(ii).nSupPartOutput, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
 
-        if (params->dimensionality == 1){
-	    double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
-              //double compFactor = params->PP.Bx_i/params->BGP.Bo;
- 	    double SNeDx=sum((params->BGP.ne)*(params->PP.ne)/(params->PP.Bx/params->BGP.Bo))*Ds;
-	    //cout<<"The value of SNeDx is "<<SNeDx<<endl;
-	   IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
-             //cout<<"NCP is "<<IONS->at(ii).NCP<<endl;
-             }
-           // IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
-        else{
+        // Calculate NCP: conversion factor from number of TOTAL super particles NSP*NPROC to real number of particles
+        // NCP = NR/(NSP*NPROC):
+        if (params->dimensionality == 1)
+        {
+            double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
+            double SNeDx=sum((params->BGP.ne)*(params->PP.ne)/(params->PP.Bx/params->BGP.Bo))*Ds;
+            IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
+        }
+        else
+        {
             IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
-	}
-
-        if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+        }
+    
+        // Print to the terminal:
+        if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
             cout << "iON SPECIES: " << (ii + 1) << endl;
+            
             if (params->quietStart)
+            {
                 cout << "+ Using quiet start: YES" << endl;
+            }
             else
+            {
                 cout << "+ Using quiet start: NO" << endl;
-
+            }
+    
             cout << "+ Super-particles used in simulation: " << IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES << endl;
         }
 
     }//Iteration over ion species
 
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-		cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *" << endl;
-
+    // Print to terminal:
+    // ==================
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
+        cout << "* * * * * * * * * * * * * IONS INITIAL CONDITION SET UP * * * * * * * * * * * * * * * * * * *" << endl;
+    }
+    
     MPI_Barrier(MPI_COMM_WORLD);
 }
 

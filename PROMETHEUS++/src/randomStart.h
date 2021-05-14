@@ -35,30 +35,29 @@
 using namespace std;
 using namespace arma;
 
-template <class IT> class RANDOMSTART{
+template <class IT> class RANDOMSTART
+{
     // Cartesian  unitary vectors
-	arma::vec x = {1.0, 0.0, 0.0};
-	arma::vec y = {0.0, 1.0, 0.0};
-	arma::vec z = {0.0, 0.0, 1.0};
+    arma::vec x = {1.0, 0.0, 0.0};
+    arma::vec y = {0.0, 1.0, 0.0};
+    arma::vec z = {0.0, 0.0, 1.0};
 
 
-	arma::vec b1; // Unitary vector along B field
-	arma::vec b2; // Unitary vector perpendicular to b1
-	arma::vec b3; // Unitary vector perpendicular to b1 and b2
+    arma::vec b1; // Unitary vector along B field
+    arma::vec b2; // Unitary vector perpendicular to b1
+    arma::vec b3; // Unitary vector perpendicular to b1 and b2
               
-   //*** @non-uniform
-              double target(const simulationParameters * params, IT * ions, double X, double V3, double V2, double V1);
+    double target(const simulationParameters * params, IT * ions, double X, double V3, double V2, double V1);
+      
+    public:
+      
+    RANDOMSTART(const simulationParameters * params);
+  
+    void ringLikeVelocityDistribution(const simulationParameters * params, IT * ions);
+      
+    void maxwellianVelocityDistribution(const simulationParameters * params, IT * ions);
+      
+    void maxwellianVelocityDistribution_nonhomogeneous(const simulationParameters * params, IT * ions);
+};
               
-              public:
-              
-                  RANDOMSTART(const simulationParameters * params);
-              
-                            void ringLikeVelocityDistribution(const simulationParameters * params, IT * ions);
-              
-                            void maxwellianVelocityDistribution(const simulationParameters * params, IT * ions);
-              
-                            //*** @non-uniform
-                            void maxwellianVelocityDistribution_nonhomogeneous(const simulationParameters * params, IT * ions);
-              };
-              
-              #endif
+#endif

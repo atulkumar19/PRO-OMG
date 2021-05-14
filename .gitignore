@@ -11,8 +11,6 @@ PROMETHEUS++/outputFiles/
 PROMETHEUS++/nohup*
 *.fig
 PROMETHEUS++/*.csv
-PROMETHEUS++/*.sh
-<<<<<<< Updated upstream
-PROMETHEUS++/*.map
-======
->>>>>>> Stashed changes
+PROMETHEUS++/debug-run_pro++.sh
+PROMETHEUS++/profile-run_pro++.sh
+PROMETHEUS++/run_pro++1.sh

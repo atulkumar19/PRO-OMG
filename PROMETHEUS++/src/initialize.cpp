@@ -862,20 +862,30 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
     MPI_Bcast(params->PP.dBrdx_i.memptr(),params->PP.dBrdx_i.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB){
-                int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
-                EB->zeros(NX);
-               
-                if (params->quietStart){
-                EB->B.Z.fill(params->BGP.Bz); // Z
-                EB->B.Y.fill(params->BGP.By); // y
-                EB->B.X.fill(params->BGP.Bx); // x
-                                }else{
-                                EB->B.X = params->PP.Bx_i;  //Creates a magnetic field profile varying with X
-                                EB->B.Y = params->PP.Br_i;
-                                EB->B.Z.fill(params->BGP.Bz);
-                               }                
-
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB)
+{
+    
+    // Number of mesh points with ghost cells included:
+    // ================================================
+    int NX(params->mesh.NX_IN_SIM + 2);
+    
+    // Select how to initialize electromagnetic fields:
+    // ================================================
+    EB->zeros(NX);               
+    if (params->quietStart)
+    {
+        // From "params" and assumes uniform fields:
+        EB->B.Z.fill(params->BGP.Bz);
+        EB->B.Y.fill(params->BGP.By);
+        EB->B.X.fill(params->BGP.Bx);
+    }
+    else
+    {
+        // From externally supplied files:
+        EB->B.X = params->PP.Bx_i;
+        EB->B.Y = params->PP.Br_i;
+        EB->B.Z.fill(params->BGP.Bz);
+    }                
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB){
@@ -898,27 +908,43 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(const sim
 
     MPI_Barrier(MPI_COMM_WORLD);
 
+        // Print to terminal:
+        // ==================        
 	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		cout << endl << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *" << endl;
+        {
+            cout << endl << "* * * * * * * * * * * * INITIALIZING ELECTROMAGNETIC FIELDS * * * * * * * * * * * * * * * * * *" << endl;
+        }
+               
+        // Select how to initialize fields:
+        // ================================
+	if (params->loadFields == 1)
+        {
+            // From external files.
+            if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+                    cout << "Loading external electromagnetic fields..." << endl;
+                    MPI_Abort(params->mpi.MPI_TOPO,-104);
+	}
+        else
+        {
+            //The electromagnetic fields are being initialized in the runtime.
+            initializeFieldsSizeAndValue(params, EB);
 
-	if (params->loadFields == 1){//The electromagnetic fields are loaded from external files.
-        if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-			cout << "Loading external electromagnetic fields..." << endl;
-
-		MPI_Abort(params->mpi.MPI_TOPO,-104);
-	}else{//The electromagnetic fields are being initialized in the runtime.
-        initializeFieldsSizeAndValue(params, EB);
-
-		if (params->mpi.MPI_DOMAIN_NUMBER == 0){
-			cout << "Initializing electromagnetic fields within simulation" << endl;
-			cout << "+ Magnetic field along x-axis: " << scientific << params->BGP.Bx << fixed << " T" << endl;
-			cout << "+ Magnetic field along y-axis: " << scientific << params->BGP.By << fixed << " T" << endl;
-			cout << "+ Magnetic field along z-axis: " << scientific << params->BGP.Bz << fixed << " T" << endl;
-		}
+            // Print to terminal:
+            if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+            {
+                cout << "Initializing electromagnetic fields within simulation" << endl;
+                cout << "+ Magnetic field along x-axis: " << scientific << params->BGP.Bx << fixed << " T" << endl;
+                cout << "+ Magnetic field along y-axis: " << scientific << params->BGP.By << fixed << " T" << endl;
+                cout << "+ Magnetic field along z-axis: " << scientific << params->BGP.Bz << fixed << " T" << endl;
+            }
 	}
 
+        // Print to terminal:
+        // ==================
 	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-		cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *" << endl;
+        {
+            cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *" << endl;
+        }
 }
 
 

@@ -222,26 +222,30 @@ template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScales(simu
 }
 
 
-template <class IT, class FT> void UNITS<IT,FT>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS){
-
+template <class IT, class FT> void UNITS<IT,FT>::spatialScalesSanityCheck(simulationParameters * params, fundamentalScales * FS)
+{
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
-		cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
-		cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/params->mesh.DX << fixed << endl;
-		cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
+        // Print to terminal:
+        // =================
+	if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+            cout << endl << "* * * * * * * * * * * * CHECKING VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA * * * * * * * * * * * * * * * * * *" << endl;
+            cout << "Electron skin depth to grid size ratio: " << scientific << FS->electronSkinDepth/params->mesh.DX << fixed << endl;
+            cout << "* * * * * * * * * * * * VALIDITY OF HYBRID MODEL FOR THE SIMULATED PLASMA CHECKED  * * * * * * * * * * * * * * * * * *" << endl;
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Check that DX is larger than the electron skin depth, otherwise, abort simulation.
-	if (params->mesh.DX <= FS->electronSkinDepth){
-		cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
-		cout << "ABORTING SIMULATION..." << endl;
+	// Check that DX is larger than the electron skin depth, otherwise, abort simulation:
+        // ==================================================================================
+	if (params->mesh.DX <= FS->electronSkinDepth)
+        {
+            cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
+            cout << "ABORTING SIMULATION..." << endl;
 
-		MPI_Abort(MPI_COMM_WORLD,-103);
-	}
-
+            MPI_Abort(MPI_COMM_WORLD,-103);
+	}      
 }
 
 

@@ -80,15 +80,14 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 	fundamentalScales FS(&params);
         // Define fundamental scales and broadcast them to all processes in COMM_WORLD:
 	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
-
+        // Define mesh geometry and populate "params" (FS is not used):
 	init.loadMeshGeometry(&params, &FS);
-          
-        init.loadPlasmaProfiles(&params, &IONS); //Reads & loads plasma profiles from external files
-
+        // Read external profile files and load them to "params":
+        init.loadPlasmaProfiles(&params, &IONS);
+        // Check that mesh size is consistent with hybrid approximation:
 	units.spatialScalesSanityCheck(&params, &FS);
-
-	init.initializeFields(&params, &EB);
-          
+        // Initialize electromagnetic field variable:
+	init.initializeFields(&params, &EB);         
 
 	init.setupIonsInitialCondition(&params, &CS, &EB, &IONS); // Calculation of IONS[ii].NCP for each species
 

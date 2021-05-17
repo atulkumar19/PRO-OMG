@@ -18,7 +18,8 @@
 
 #include "outputHDF5.h"
 
-template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervec(const simulationParameters * params, arma::vec * field)
+{
 	unsigned int iIndex = params->mpi.iIndex;
 	unsigned int fIndex = params->mpi.fIndex;
 
@@ -32,14 +33,16 @@ template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervec(const simulation
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield){
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_vec(const simulationParameters * params, vfield_vec * vfield)
+{
 	MPI_Allgathervec(params, &vfield->X);
 	MPI_Allgathervec(params, &vfield->Y);
 	MPI_Allgathervec(params, &vfield->Z);
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathermat(const simulationParameters * params, arma::mat * field){
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathermat(const simulationParameters * params, arma::mat * field)
+{
 	unsigned int irow = params->mpi.irow;
 	unsigned int frow = params->mpi.frow;
 
@@ -69,7 +72,8 @@ template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathermat(const simulation
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield){
+template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_mat(const simulationParameters * params, vfield_mat * vfield)
+{
 	MPI_Allgathermat(params, &vfield->X);
 	MPI_Allgathermat(params, &vfield->Y);
 	MPI_Allgathermat(params, &vfield->Z);
@@ -77,7 +81,8 @@ template <class IT, class FT> void HDF<IT,FT>::MPI_Allgathervfield_mat(const sim
 
 
 // Function to save a single integer value
-template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, int * value){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, int * value)
+{
 	H5std_string nameSpace( name );
 	int data[1] = {*value};
 	hsize_t dims[1] = {1};
@@ -92,7 +97,8 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string 
 
 
 // Function to save a single CPP_TYPE value
-template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, CPP_TYPE * value){
+template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string name, CPP_TYPE * value)
+{
 	H5std_string nameSpace( name );
 	CPP_TYPE data[1] = {*value};
 	hsize_t dims[1] = {1};
@@ -143,7 +149,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(H5File * file, string 
 
 	int * data;
    	data = new int[size];
-    std::copy(values->begin(), values->end(), data);
+        std::copy(values->begin(), values->end(), data);
 
 	hsize_t dims[1] = {size};
 	DataSpace * dataspace = new DataSpace(1, dims);
@@ -315,337 +321,346 @@ template <class IT, class FT> void HDF<IT,FT>::saveToHDF5(Group * group, string 
 //
 // CLASS CONSTRUCTOR //
 //
-template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fundamentalScales * FS, vector<IT> *IONS){
-
-	if (params->mpi.MPI_DOMAIN_NUMBER == 0){
-		try{
-			string name;
-			string path;
-
-			int int_value;
-			CPP_TYPE cpp_type_value;
-			std::vector<CPP_TYPE> vector_values;
-
-			arma::vec vec_values;
-			arma::fvec fvec_values;
-
-			path = params->PATH + "/HDF5/";
-			name = path + "main.h5";
-			const H5std_string	FILE_NAME( name );
-			name.clear();
-
-			Exception::dontPrint();
-
-			// Create a new file using the default property lists.
-			H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
-
-			name = "dimensionality";
-			saveToHDF5(outputFile, name, &params->dimensionality);
-			name.clear();
-
-			name = "smoothingParameter";
-			cpp_type_value = params->smoothingParameter;
-			saveToHDF5(outputFile, name, &cpp_type_value);
-			name.clear();
-
-			name = "numberOfRKIterations";
-			saveToHDF5(outputFile, name, &params->numberOfRKIterations);
-			name.clear();
-
-			name = "filtersPerIterationFields";
-			saveToHDF5(outputFile, name, &params->filtersPerIterationFields);
-			name.clear();
-
-			name = "numOfMPIs";
-			saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
-			name.clear();
-
-			name = "numMPIsParticles";
-			saveToHDF5(outputFile, name, &params->mpi.MPIS_PARTICLES);
-			name.clear();
-
-
-			name = "numMPIsFields";
-			saveToHDF5(outputFile, name, &params->mpi.MPIS_FIELDS);
-			name.clear();
-
-			// Fundamental scales group
-			Group * group_scales = new Group( outputFile->createGroup( "/scales" ) );
-
-			name = "electronSkinDepth";
-			cpp_type_value = FS->electronSkinDepth;
-			saveToHDF5(group_scales, name, &cpp_type_value);
-			name.clear();
-
-			name = "electronGyroPeriod";
-			cpp_type_value = FS->electronGyroPeriod;
-			saveToHDF5(group_scales, name, &cpp_type_value);
-			name.clear();
-
-			name = "electronGyroRadius";
-			cpp_type_value = FS->electronGyroRadius;
-			saveToHDF5(group_scales, name, &cpp_type_value);
-			name.clear();
-
-			name = "ionGyroRadius";
-			#ifdef HDF5_DOUBLE
-			vec_values = zeros(params->numberOfParticleSpecies);
-			for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-				vec_values(ss) = FS->ionGyroRadius[ss];
-			saveToHDF5(group_scales, name, &vec_values);
-			#elif defined HDF5_FLOAT
-			fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
-			for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-				fvec_values(ss) = (float)FS->ionGyroRadius[ss];
-			saveToHDF5(group_scales, name, &fvec_values);
-			#endif
-			name.clear();
-
-			name = "ionGyroPeriod";
-			#ifdef HDF5_DOUBLE
-			vec_values = zeros(params->numberOfParticleSpecies);
-			for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-				vec_values(ss) = FS->ionGyroPeriod[ss];
-			saveToHDF5(group_scales, name, &vec_values);
-			#elif defined HDF5_FLOAT
-			fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
-			for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-				fvec_values(ss) = (float)FS->ionGyroPeriod[ss];
-			saveToHDF5(group_scales, name, &fvec_values);
-			#endif
-			name.clear();
-
-			name = "ionSkinDepth";
-			#ifdef HDF5_DOUBLE
-			vec_values = zeros(params->numberOfParticleSpecies);
-			for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-				vec_values(ss) = FS->ionSkinDepth[ss];
-			saveToHDF5(group_scales, name, &vec_values);
-			#elif defined HDF5_FLOAT
-			fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
-			for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-				fvec_values(ss) = (float)FS->ionSkinDepth[ss];
-			saveToHDF5(group_scales, name, &fvec_values);
-			#endif
-			name.clear();
-
-			delete group_scales;
-
-			//Geometry of the mesh
-			Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
-
-			name = "SPLIT_DIRECTION";
-			int_value = params->mesh.SPLIT_DIRECTION;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			name = "DX";
-			cpp_type_value = params->mesh.DX;
-			saveToHDF5(group_geo, name, &cpp_type_value);
-			name.clear();
-
-			name = "DY";
-			cpp_type_value = params->mesh.DY;
-			saveToHDF5(group_geo, name, &cpp_type_value);
-			name.clear();
-
-			name = "DZ";
-			cpp_type_value = params->mesh.DZ;
-			saveToHDF5(group_geo, name, &cpp_type_value);
-			name.clear();
-
-			name = "LX";
-			cpp_type_value = params->mesh.LX;
-			saveToHDF5(group_geo, name, &cpp_type_value);
-			name.clear();
-
-			name = "LY";
-			cpp_type_value = params->mesh.LY;
-			saveToHDF5(group_geo, name, &cpp_type_value);
-			name.clear();
-
-			name = "LZ";
-			cpp_type_value = params->mesh.LZ;
-			saveToHDF5(group_geo, name, &cpp_type_value);
-			name.clear();
-
-			name = "NX";
-			int_value = params->mesh.NX_PER_MPI;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			name = "NY";
-			int_value = params->mesh.NY_PER_MPI;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			name = "NZ";
-			int_value = params->mesh.NZ_PER_MPI;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			name = "NX_IN_SIM";
-			int_value = params->mesh.NX_IN_SIM;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			name = "NY_IN_SIM";
-			int_value = params->mesh.NY_IN_SIM;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			name = "NZ_IN_SIM";
-			int_value = params->mesh.NZ_IN_SIM;
-			saveToHDF5(group_geo, name, &int_value);
-			name.clear();
-
-			if (params->dimensionality == 1){
-				name = "X_MPI_CART_COORD";
-				int_value = params->mpi.MPI_CART_COORDS_1D[0];
-				saveToHDF5(group_geo, name, &int_value);
-				name.clear();
-			}else{
-				name = "X_MPI_CART_COORD";
-				int_value = params->mpi.MPI_CART_COORDS_2D[0];
-				saveToHDF5(group_geo, name, &int_value);
-				name.clear();
-
-				name = "Y_MPI_CART_COORD";
-				int_value = params->mpi.MPI_CART_COORDS_2D[1];
-				saveToHDF5(group_geo, name, &int_value);
-				name.clear();
-			}
-
-			//Saving the x-axis coordinates
-			name = "xAxis";
-
-			#ifdef HDF5_DOUBLE
-			vec_values = params->mesh.nodes.X;
-			saveToHDF5(group_geo, name, &vec_values);
-			#elif defined HDF5_FLOAT
-			fvec_values = conv_to<fvec>::from(params->mesh.nodes.X);
-			saveToHDF5(group_geo, name, &fvec_values);
-			#endif
-
-			name.clear();
-
-			if (params->dimensionality == 2){
-				name = "yAxis";
-
-				#ifdef HDF5_DOUBLE
-				vec_values = params->mesh.nodes.Y;
-				saveToHDF5(group_geo, name, &vec_values);
-				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from(params->mesh.nodes.Y);
-				saveToHDF5(group_geo, name, &fvec_values);
-				#endif
-
-				name.clear();
-			}
-
-			delete group_geo;
-			//Geometry of the mesh
-
-			//Electron temperature
-			name = "Te";
-			cpp_type_value = params->BGP.Te;
-			saveToHDF5(outputFile, name, &cpp_type_value);
-			name.clear();
-
-			//Ions
-			Group * group_ions = new Group( outputFile->createGroup( "/ions" ) );
-
-			name = "numberOfParticleSpecies";
-			int_value = params->numberOfParticleSpecies;
-			saveToHDF5(group_ions, name, &int_value);
-			name.clear();
-
-			name = "ne";
-			cpp_type_value = (CPP_TYPE)params->BGP.ne;
-			saveToHDF5(group_ions, name, &cpp_type_value);
-			name.clear();
-
-			for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
-				stringstream ionSpec;
-				ionSpec << (ii+1);
-				name = "/ions/spp_" + ionSpec.str();
-				Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
-				name.clear();
-
-				name = "densityFraction";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).densityFraction;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "NCP";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).NCP;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "NSP";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).NSP;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "NSP_OUT";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).nSupPartOutput;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "Tpar";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).Tpar;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "Tper";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).Tper;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "M";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).M;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "Q";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).Q;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				name = "Z";
-				cpp_type_value = (CPP_TYPE)IONS->at(ii).Z;
-				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-				name.clear();
-
-				delete group_ionSpecies;
-			}
-
-			delete group_ions;
-			//Ions
-
-			//Electromagnetic fields
-			name = "Bo";
-			vector_values = {(CPP_TYPE)params->BGP.Bx, (CPP_TYPE)params->BGP.By, (CPP_TYPE)params->BGP.Bz};
-			saveToHDF5(outputFile, name, &vector_values);
-			name.clear();
-
-			delete outputFile;
-
-		}//End of try block
-
-	    // catch failure caused by the H5File operations
-	    catch( FileIException error ){
-			error.printErrorStack();
+template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fundamentalScales * FS, vector<IT> *IONS)
+{
+
+    if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+            try
+            {
+                string name;
+                string path;
+    
+                int int_value;
+                CPP_TYPE cpp_type_value;
+                std::vector<CPP_TYPE> vector_values;
+    
+                arma::vec vec_values;
+                arma::fvec fvec_values;
+    
+                path = params->PATH + "/HDF5/";
+                name = path + "main.h5";
+                const H5std_string	FILE_NAME( name );
+                name.clear();
+    
+                Exception::dontPrint();
+    
+                // Create a new file using the default property lists.
+                H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
+    
+                name = "dimensionality";
+                saveToHDF5(outputFile, name, &params->dimensionality);
+                name.clear();
+    
+                name = "smoothingParameter";
+                cpp_type_value = params->smoothingParameter;
+                saveToHDF5(outputFile, name, &cpp_type_value);
+                name.clear();
+    
+                name = "numberOfRKIterations";
+                saveToHDF5(outputFile, name, &params->numberOfRKIterations);
+                name.clear();
+    
+                name = "filtersPerIterationFields";
+                saveToHDF5(outputFile, name, &params->filtersPerIterationFields);
+                name.clear();
+    
+                name = "numOfMPIs";
+                saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
+                name.clear();
+    
+                name = "numMPIsParticles";
+                saveToHDF5(outputFile, name, &params->mpi.MPIS_PARTICLES);
+                name.clear();
+    
+    
+                name = "numMPIsFields";
+                saveToHDF5(outputFile, name, &params->mpi.MPIS_FIELDS);
+                name.clear();
+    
+                // Fundamental scales group
+                Group * group_scales = new Group( outputFile->createGroup( "/scales" ) );
+    
+                name = "electronSkinDepth";
+                cpp_type_value = FS->electronSkinDepth;
+                saveToHDF5(group_scales, name, &cpp_type_value);
+                name.clear();
+    
+                name = "electronGyroPeriod";
+                cpp_type_value = FS->electronGyroPeriod;
+                saveToHDF5(group_scales, name, &cpp_type_value);
+                name.clear();
+    
+                name = "electronGyroRadius";
+                cpp_type_value = FS->electronGyroRadius;
+                saveToHDF5(group_scales, name, &cpp_type_value);
+                name.clear();
+    
+                name = "ionGyroRadius";
+                #ifdef HDF5_DOUBLE
+                vec_values = zeros(params->numberOfParticleSpecies);
+                for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+                        vec_values(ss) = FS->ionGyroRadius[ss];
+                saveToHDF5(group_scales, name, &vec_values);
+                #elif defined HDF5_FLOAT
+                fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
+                for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+                        fvec_values(ss) = (float)FS->ionGyroRadius[ss];
+                saveToHDF5(group_scales, name, &fvec_values);
+                #endif
+                name.clear();
+    
+                name = "ionGyroPeriod";
+                #ifdef HDF5_DOUBLE
+                vec_values = zeros(params->numberOfParticleSpecies);
+                for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+                        vec_values(ss) = FS->ionGyroPeriod[ss];
+                saveToHDF5(group_scales, name, &vec_values);
+                #elif defined HDF5_FLOAT
+                fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
+                for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+                        fvec_values(ss) = (float)FS->ionGyroPeriod[ss];
+                saveToHDF5(group_scales, name, &fvec_values);
+                #endif
+                name.clear();
+    
+                name = "ionSkinDepth";
+                #ifdef HDF5_DOUBLE
+                vec_values = zeros(params->numberOfParticleSpecies);
+                for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+                        vec_values(ss) = FS->ionSkinDepth[ss];
+                saveToHDF5(group_scales, name, &vec_values);
+                #elif defined HDF5_FLOAT
+                fvec_values = zeros<fvec>(params->numberOfParticleSpecies);
+                for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+                        fvec_values(ss) = (float)FS->ionSkinDepth[ss];
+                saveToHDF5(group_scales, name, &fvec_values);
+                #endif
+                name.clear();
+    
+                delete group_scales;
+    
+                //Geometry of the mesh
+                Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
+    
+                name = "SPLIT_DIRECTION";
+                int_value = params->mesh.SPLIT_DIRECTION;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                name = "DX";
+                cpp_type_value = params->mesh.DX;
+                saveToHDF5(group_geo, name, &cpp_type_value);
+                name.clear();
+    
+                name = "DY";
+                cpp_type_value = params->mesh.DY;
+                saveToHDF5(group_geo, name, &cpp_type_value);
+                name.clear();
+    
+                name = "DZ";
+                cpp_type_value = params->mesh.DZ;
+                saveToHDF5(group_geo, name, &cpp_type_value);
+                name.clear();
+    
+                name = "LX";
+                cpp_type_value = params->mesh.LX;
+                saveToHDF5(group_geo, name, &cpp_type_value);
+                name.clear();
+    
+                name = "LY";
+                cpp_type_value = params->mesh.LY;
+                saveToHDF5(group_geo, name, &cpp_type_value);
+                name.clear();
+    
+                name = "LZ";
+                cpp_type_value = params->mesh.LZ;
+                saveToHDF5(group_geo, name, &cpp_type_value);
+                name.clear();
+    
+                name = "NX";
+                int_value = params->mesh.NX_PER_MPI;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                name = "NY";
+                int_value = params->mesh.NY_PER_MPI;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                name = "NZ";
+                int_value = params->mesh.NZ_PER_MPI;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                name = "NX_IN_SIM";
+                int_value = params->mesh.NX_IN_SIM;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                name = "NY_IN_SIM";
+                int_value = params->mesh.NY_IN_SIM;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                name = "NZ_IN_SIM";
+                int_value = params->mesh.NZ_IN_SIM;
+                saveToHDF5(group_geo, name, &int_value);
+                name.clear();
+    
+                if (params->dimensionality == 1){
+                        name = "X_MPI_CART_COORD";
+                        int_value = params->mpi.MPI_CART_COORDS_1D[0];
+                        saveToHDF5(group_geo, name, &int_value);
+                        name.clear();
+                }else{
+                        name = "X_MPI_CART_COORD";
+                        int_value = params->mpi.MPI_CART_COORDS_2D[0];
+                        saveToHDF5(group_geo, name, &int_value);
+                        name.clear();
+    
+                        name = "Y_MPI_CART_COORD";
+                        int_value = params->mpi.MPI_CART_COORDS_2D[1];
+                        saveToHDF5(group_geo, name, &int_value);
+                        name.clear();
+                }
+    
+                //Saving the x-axis coordinates
+                name = "xAxis";
+    
+                #ifdef HDF5_DOUBLE
+                vec_values = params->mesh.nodes.X;
+                saveToHDF5(group_geo, name, &vec_values);
+                #elif defined HDF5_FLOAT
+                fvec_values = conv_to<fvec>::from(params->mesh.nodes.X);
+                saveToHDF5(group_geo, name, &fvec_values);
+                #endif
+    
+                name.clear();
+    
+                if (params->dimensionality == 2){
+                        name = "yAxis";
+    
+                        #ifdef HDF5_DOUBLE
+                        vec_values = params->mesh.nodes.Y;
+                        saveToHDF5(group_geo, name, &vec_values);
+                        #elif defined HDF5_FLOAT
+                        fvec_values = conv_to<fvec>::from(params->mesh.nodes.Y);
+                        saveToHDF5(group_geo, name, &fvec_values);
+                        #endif
+    
+                        name.clear();
+                }
+    
+                delete group_geo;
+                //Geometry of the mesh
+    
+                //Electron temperature
+                name = "Te";
+                cpp_type_value = params->BGP.Te;
+                saveToHDF5(outputFile, name, &cpp_type_value);
+                name.clear();
+    
+                //Ions
+                Group * group_ions = new Group( outputFile->createGroup( "/ions" ) );
+    
+                name = "numberOfParticleSpecies";
+                int_value = params->numberOfParticleSpecies;
+                saveToHDF5(group_ions, name, &int_value);
+                name.clear();
+    
+                name = "ne";
+                cpp_type_value = (CPP_TYPE)params->BGP.ne;
+                saveToHDF5(group_ions, name, &cpp_type_value);
+                name.clear();
+    
+                for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
+                        stringstream ionSpec;
+                        ionSpec << (ii+1);
+                        name = "/ions/spp_" + ionSpec.str();
+                        Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
+                        name.clear();
+    
+                        name = "densityFraction";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).densityFraction;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "NCP";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).NCP;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "NSP";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).NSP;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "NSP_OUT";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).nSupPartOutput;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "Tpar";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).Tpar;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "Tper";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).Tper;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "M";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).M;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "Q";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).Q;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        name = "Z";
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).Z;
+                        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+                        name.clear();
+    
+                        delete group_ionSpecies;
+                }
+    
+                delete group_ions;
+                //Ions
+    
+                //Electromagnetic fields
+                name = "Bo";
+                vector_values = {(CPP_TYPE)params->BGP.Bx, (CPP_TYPE)params->BGP.By, (CPP_TYPE)params->BGP.Bz};
+                saveToHDF5(outputFile, name, &vector_values);
+                name.clear();
+
+                delete outputFile;
+
+            }//End of try block
+
+	    // catch failure caused by the H5File operations:
+            // =============================================
+	    catch( FileIException error )
+            {
+            	error.printErrorStack();
 	    }
 
-	    // catch failure caused by the DataSet operations
-	    catch( DataSetIException error ){
-			error.printErrorStack();
+	    // catch failure caused by the DataSet operations:
+            // ===============================================            
+	    catch( DataSetIException error )
+            {
+            	error.printErrorStack();
 	    }
 
-	    // catch failure caused by the DataSpace operations
-	    catch( DataSpaceIException error ){
-			error.printErrorStack();
+	    // catch failure caused by the DataSpace operations:
+            // ================================================            
+	    catch( DataSpaceIException error )
+            {
+            	error.printErrorStack();
 	    }
 	}
 

@@ -44,132 +44,173 @@
 using namespace std;
 using namespace arma;
 
-// Impletement templates:
+// Implement templates:
 // ======================
 template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
-	MPI_Init(&argc, &argv);
-        
-        // Create simulation objects:
-        // ==========================
-        // MPI object to hold topology information:
-	MPI_MAIN mpi_main;
-        // Input parameters for simulation:
-	simulationParameters params; 	
-        // Ion species vector of type "IT":
-	vector<IT> IONS; 
-	// Characteristic scales:
-        characteristicScales CS;
-        // Electromagnetic fields of type "FT":
-	FT EB; 						 
-        // Collision operator object:
-        collisionOperator FPCOLL;
-        // Initialization object of type "FT" and "FT":
-        INITIALIZE<IT, FT> init(&params, argc, argv);
-        // UNITS object of type "FT" and "FT":
-	UNITS<IT, FT> units;
-        
-        // Initialize simulation objects:
-        // =============================       
-        // Create MPI topology:
-	mpi_main.createMPITopology(&params);
-        // Read "ions_properties.ion" and populate "IONS" vector
-	init.loadIonParameters(&params, &IONS);
-        // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
-	units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
-        // Create object and allocate memory according to "params":
-	fundamentalScales FS(&params);
-        // Define fundamental scales and broadcast them to all processes in COMM_WORLD:
-	units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
-        // Define mesh geometry and populate "params" (FS is not used):
-	init.loadMeshGeometry(&params, &FS);
-        // Read external profile files and load them to "params":
-        init.loadPlasmaProfiles(&params, &IONS);
-        // Check that mesh size is consistent with hybrid approximation:
-	units.spatialScalesSanityCheck(&params, &FS);
-        // Initialize electromagnetic field variable:
-	init.initializeFields(&params, &EB);         
+    MPI_Init(&argc, &argv);
+    
+    // Create simulation objects:
+    // ==========================
+    // MPI object to hold topology information:
+    MPI_MAIN mpi_main;
+    // Input parameters for simulation:
+    simulationParameters params; 	
+    // Ion species vector of type "IT":
+    vector<IT> IONS; 
+    // Characteristic scales:
+    characteristicScales CS;
+    // Electromagnetic fields of type "FT":
+    FT EB; 						 
+    // Collision operator object:
+    collisionOperator FPCOLL;
+    // Initialization object of type "FT" and "FT":
+    INITIALIZE<IT, FT> init(&params, argc, argv);
+    // UNITS object of type "FT" and "FT":
+    UNITS<IT, FT> units;
+    
+    // Initialize simulation objects:
+    // =============================       
+    // Create MPI topology:
+    mpi_main.createMPITopology(&params);
+    // Read "ions_properties.ion" and populate "IONS" vector
+    init.loadIonParameters(&params, &IONS);
+    // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
+    units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
+    // Create object and allocate memory according to "params":
+    fundamentalScales FS(&params);
+    // Define fundamental scales and broadcast them to all processes in COMM_WORLD:
+    units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
+    // Define mesh geometry and populate "params" (FS is not used):
+    init.loadMeshGeometry(&params, &FS);
+    // Read external profile files and load them to "params":
+    init.loadPlasmaProfiles(&params, &IONS);
+    // Check that mesh size is consistent with hybrid approximation:
+    units.spatialScalesSanityCheck(&params, &FS);
+    // Initialize electromagnetic field variable:
+    init.initializeFields(&params, &EB);         
+    // Initialize IONS: scalar, bulk and particle arrays
+    init.setupIonsInitialCondition(&params, &CS, &EB, &IONS);
+    // HDF object constructor:
+    HDF<IT, FT> hdfObj(&params, &FS, &IONS);
+    // Define time step based on CFL condition: Whistler and ion velocity
+    units.defineTimeStep(&params, &IONS);
+    // Normalize "params", "IONS", "EB" using "CS"
+    units.normalizeVariables(&params, &IONS, &EB, &CS);
+    
+    /**************** All the quantities below are dimensionless ****************/
+    
+    // Definition of variables for advancing in time particles and fields:
+    // ===================================================================
+    double t1 = 0.0;
+    double t2 = 0.0;
+    double currentTime = 0.0;
+    int outputIterator = 0;
+    int numberOfIterationsForEstimator = 1000;
+    
+    // Create objects:
+    // ===============
+    EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
+    PIC ionsDynamics; // Initializing the PIC class object.
 
-	init.setupIonsInitialCondition(&params, &CS, &EB, &IONS); // Calculation of IONS[ii].NCP for each species
-
-	HDF<IT, FT> hdfObj(&params, &FS, &IONS); // Outputs in HDF5 format
-
-	units.defineTimeStep(&params, &IONS);
-
-	/*By calling this function we set up some of the simulation parameters and normalize the variables*/
-	units.normalizeVariables(&params, &IONS, &EB, &CS);
-
-	/**************** All the quantities below are dimensionless ****************/
-
-	// Definition of variables for advancing in time particles and fields.
-	double t1 = 0.0;
-          double t2 = 0.0;
-          double currentTime = 0.0;
-          int outputIterator = 0;
-	int numberOfIterationsForEstimator = 1000;
-
-	EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
-	PIC ionsDynamics; // Initializing the PIC class object.
-
-    // Repeat 3 times
-    for(int tt=0; tt<3; tt++){
+    // Run 3 dummy cycles to load "n" and "nv" at previous time steps:
+    // ===============================================================
+    for(int tt=0; tt<3; tt++)
+    {
         ionsDynamics.advanceIonsPosition(&params, &EB, &IONS, 0);
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
     }
-    // Repeat 3 times
 
+    // Save 1st output: 
+    // ================
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
 
+
+    // Start timing simulations:
+    // ========================
     t1 = MPI::Wtime();
 
-    for(int tt=0; tt<params.timeIterations; tt++){ // Time iterations.
-        if(tt == 0){
-		ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
-        }else{
+    // Start time iterations:
+    // =====================
+    for(int tt=0; tt<params.timeIterations; tt++)
+    {
+        // Advance velocity:
+        // ================
+        if(tt == 0)
+        {
+            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
+        }
+        else
+        {
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT); // Advance ions' velocity V^(N+1/2).
         }
-        //if(tt==14){
-                //cout<<"There is going to an error error"<<endl;
-               // }
+
+        // Advance position:
+        // =================
         ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
+        
+        // Calculate ion moments:
+        // ======================
+        
+        // Apply collision operator:
+        // =========================
 
-
+        // Field solve:
+        // ============
+        
+        // Magnetic field:
         //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
-        if(tt > 2){ // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
-         	// Using the Bashford-Adams extrapolation.
-			fields_solver.advanceEField(&params, &EB, &IONS, true, true);
-        }else{
-			// Using basic velocity extrapolation.
-			fields_solver.advanceEField(&params, &EB, &IONS, true, false);
-	    }
+        // Electric field:
+        if(tt > 2)
+        {   
+            // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
+            // Using the Bashford-Adams extrapolation.
+            fields_solver.advanceEField(&params, &EB, &IONS, true, true);
+        }
+        else
+        {
+            // Using basic velocity extrapolation.
+            fields_solver.advanceEField(&params, &EB, &IONS, true, false);
+	}
+        
+        // Advance time:
+        // =============
+	currentTime += params.DT*CS.time;
 
-		currentTime += params.DT*CS.time;
-
-        if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0){
-			vector<IT> IONS_OUT = IONS;
+        // Save data:
+        // ==========
+        if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0)
+        {
+            vector<IT> IONS_OUT = IONS;
 
             // The ions' velocity is advanced in time in order to obtain V^(N+1)
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS_OUT, 0.5*params.DT);
 
-			hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
+            hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
 
-			outputIterator++;
-		}
+            outputIterator++;
+        }
 
-		// Estimate simulation time
-        if(tt == numberOfIterationsForEstimator){
+        // Estimate simulation time:
+        // =========================
+        if(tt == numberOfIterationsForEstimator)
+        {
             t2 = MPI::Wtime();
 
-			double estimatedSimulationTime = ( (double)params.timeIterations*(t2 - t1)/(double)numberOfIterationsForEstimator )/60.0;
+            double estimatedSimulationTime = ( (double)params.timeIterations*(t2 - t1)/(double)numberOfIterationsForEstimator )/60.0;
 
-			if(params.mpi.MPI_DOMAIN_NUMBER == 0){
+            if(params.mpi.MPI_DOMAIN_NUMBER == 0)
+            {
                 cout << "ESTIMATED TIME OF COMPLETION: " << estimatedSimulationTime <<" MINUTES" << endl;
             }
         }
+        
     } // Time iterations.
 
-	mpi_main.finalizeCommunications(&params);
+    // Finalizing MPI communications:
+    // ==============================
+    mpi_main.finalizeCommunications(&params);
 }
 
 

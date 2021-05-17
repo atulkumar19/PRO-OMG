@@ -18,7 +18,8 @@
 
 #include "fields.h"
 
-EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS){
+EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales * CS)
+{
 	NX_S = params->mesh.NX_PER_MPI + 2;
 	NX_T = params->mesh.NX_IN_SIM + 2;
 	NX_R = params->mesh.NX_IN_SIM;
@@ -27,48 +28,51 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 	NY_T = params->mesh.NY_IN_SIM + 2;
 	NY_R = params->mesh.NY_IN_SIM;
 
-	if (params->dimensionality == 1){
-		n_cs = CS->length*CS->density;
-
-		V1D.ne.zeros(NX_S);
-		V1D._n.zeros(NX_S);
-		V1D.n.zeros(NX_S);
-		V1D.n_.zeros(NX_S);
-		V1D.n__.zeros(NX_S);
-
-		V1D.V.zeros(NX_S);
-		V1D.U.zeros(NX_S);
-		V1D.U_.zeros(NX_S);
-		V1D.U__.zeros(NX_S);
-	}else if (params->dimensionality == 2){
-		n_cs = CS->length*CS->length*CS->density;
-
-		V2D.ne.zeros(NX_S,NY_S);
-		V2D._n.zeros(NX_S,NY_S);
-		V2D.n.zeros(NX_S,NY_S);
-		V2D.n_.zeros(NX_S,NY_S);
-		V2D.n__.zeros(NX_S,NY_S);
-
-		V2D.V.zeros(NX_S,NY_S);
-		V2D.U.zeros(NX_S,NY_S);
-		V2D.U_.zeros(NX_S,NY_S);
-		V2D.U__.zeros(NX_S,NY_S);
+	if (params->dimensionality == 1)
+        {
+            n_cs = CS->length*CS->density;
+    
+            V1D.ne.zeros(NX_S);
+            V1D._n.zeros(NX_S);
+            V1D.n.zeros(NX_S);
+            V1D.n_.zeros(NX_S);
+            V1D.n__.zeros(NX_S);
+    
+            V1D.V.zeros(NX_S);
+            V1D.U.zeros(NX_S);
+            V1D.U_.zeros(NX_S);
+            V1D.U__.zeros(NX_S);
 	}
-
+        else if (params->dimensionality == 2)
+        {
+            n_cs = CS->length*CS->length*CS->density;
+    
+            V2D.ne.zeros(NX_S,NY_S);
+            V2D._n.zeros(NX_S,NY_S);
+            V2D.n.zeros(NX_S,NY_S);
+            V2D.n_.zeros(NX_S,NY_S);
+            V2D.n__.zeros(NX_S,NY_S);
+    
+            V2D.V.zeros(NX_S,NY_S);
+            V2D.U.zeros(NX_S,NY_S);
+            V2D.U_.zeros(NX_S,NY_S);
+            V2D.U__.zeros(NX_S,NY_S);
+	}
 }
 
 
-void EMF_SOLVER::MPI_Allgathervec(const simulationParameters * params, arma::vec * field){
-	unsigned int iIndex = params->mpi.iIndex;
-	unsigned int fIndex = params->mpi.fIndex;
-
-	arma::vec recvbuf(params->mesh.NX_IN_SIM);
-	arma::vec sendbuf(params->mesh.NX_PER_MPI);
-
-	//Allgather for x-component
-	sendbuf = field->subvec(iIndex, fIndex);
-	MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
-	field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
+void EMF_SOLVER::MPI_Allgathervec(const simulationParameters * params, arma::vec * field)
+{
+    unsigned int iIndex = params->mpi.iIndex;
+    unsigned int fIndex = params->mpi.fIndex;
+    
+    arma::vec recvbuf(params->mesh.NX_IN_SIM);
+    arma::vec sendbuf(params->mesh.NX_PER_MPI);
+    
+    //Allgather for x-component
+    sendbuf = field->subvec(iIndex, fIndex);
+    MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
+    field->subvec(1, params->mesh.NX_IN_SIM) = recvbuf;
 }
 
 

@@ -402,8 +402,10 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
     }
 }
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS){
-    // Setting size and value to zero of arrays for ions' variables
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+{
+    // Set size and value to zero of arrays for ions' variables:
+    // ========================================================
     IONS->mn.zeros(IONS->NSP);
 
     IONS->E.zeros(IONS->NSP,3);
@@ -417,26 +419,32 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     IONS->wxl_.zeros(IONS->NSP);
     IONS->wxr_.zeros(IONS->NSP);
 
-    //Checking the integrity of the initial condition
-    if((int)IONS->V.n_elem != (int)(3*IONS->NSP)){
+    // Check integrity of the initial condition:
+    // ========================================
+    if((int)IONS->V.n_elem != (int)(3*IONS->NSP))
+    {
         MPI_Barrier(params->mpi.MPI_TOPO);
         MPI_Abort(params->mpi.MPI_TOPO,-106);
         // The velocity array contains a number of elements that it should not have
     }
 
-    if((int)IONS->X.n_elem != (int)(3*IONS->NSP)){
+    if((int)IONS->X.n_elem != (int)(3*IONS->NSP))
+    {
         MPI_Barrier(params->mpi.MPI_TOPO);
         MPI_Abort(params->mpi.MPI_TOPO,-107);
         // The position array contains a number of elements that it should not have
     }
-    //Checking integrity of the initial condition
-
+    
+    // Assign cell:
+    // ===========
+    // Populates wxc,wxl and wxr only
     PIC ionsDynamics;
     ionsDynamics.assignCell(params, EB, IONS);
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+{
     // Setting size and value to zero of arrays for ions' variables
     IONS->mn.zeros(IONS->NSP, 2);
 
@@ -469,28 +477,37 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     ionsDynamics.assignCell(params, EB, IONS);
 }
 
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+{   
+    // Initialize plasma density:
+    // Include Ghost cells (+2)
+    IONS->n.zeros(params->mesh.NX_IN_SIM + 2);      
+    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);     
+    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);     
+    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2);
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
-    IONS->n.zeros(params->mesh.NX_IN_SIM + 2);       // Ghost cells are included (+2)
-    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2);    // Ghost cells are included (+2)
-
-    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);    // Ghost cells are included (+2)
+    // Initialize plasma flux:
+    // Include Ghost cells (+2)
+    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2);
+    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2);
+    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-    IONS->n.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);       // Ghost cells are included (+2)
-    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);    // Ghost cells are included (+2)
-
-    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);      // Ghost cells are included (+2)
-    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);     // Ghost cells are included (+2)
-    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);    // Ghost cells are included (+2)
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{   
+    // Initialize plasma density:
+    // Include Ghost cells (+2)
+    IONS->n.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+    
+    // Initialize plasma flux:
+    // Include Ghost cells (+2)
+    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
+    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
 }
 
 
@@ -532,7 +549,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
                         {
                             // Create quiet start object:
                             QUIETSTART<IT> qs(params, &IONS->at(ii));
-                            // Use queit start object:
+                            // Use quiet start object:
                             qs.maxwellianVelocityDistribution(params, &IONS->at(ii));
                         }
                         else
@@ -588,7 +605,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
         MPI_Bcast(&IONS->at(ii).NSP, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
         MPI_Bcast(&IONS->at(ii).nSupPartOutput, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
 
-        // Calculate NCP: conversion factor from number of TOTAL super particles NSP*NPROC to real number of particles
+        // Calculate NCP: conversion factor from number of TOTAL super-particles NSP*NPROC to total number of real-particles
         // NCP = NR/(NSP*NPROC):
         if (params->dimensionality == 1)
         {

@@ -357,50 +357,51 @@ void PIC::smooth(vfield_mat * vf, double as){
 // * * * Smoothing * * *
 
 
-void PIC::assignCell(const simulationParameters * params,  oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS){
-	//This function assigns the particles to the closest mesh node depending in their position and
-	//calculate the weights for the charge extrapolation and force interpolation
-	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
-	//		wxl		   wxc		wxr
-	// --------*------------*--------X---*--------
-	//				    0       x
-	//wxc = 0.75 - (x/H)^2
-	//wxr = 0.5*(1.5 - abs(x)/H)^2
-	//wxl = 0.5*(1.5 - abs(x)/H)^2
+void PIC::assignCell(const simulationParameters * params,  oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+{
+    //This function assigns the particles to the closest mesh node depending in their position and
+    //calculate the weights for the charge extrapolation and force interpolation
+    // Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+    //		wxl		   wxc		wxr
+    // --------*------------*--------X---*--------
+    //				    0       x
+    //wxc = 0.75 - (x/H)^2
+    //wxr = 0.5*(1.5 - abs(x)/H)^2
+    //wxl = 0.5*(1.5 - abs(x)/H)^2
 
-	int NSP(IONS->NSP);//number of superparticles
+    int NSP(IONS->NSP);//number of superparticles
 
-	double X = 0.0;
-	bool LOGIC;
+    double X = 0.0;
+    bool LOGIC;
 
-	IONS->wxc.zeros();
-	IONS->wxl.zeros();
-	IONS->wxr.zeros();
+    IONS->wxc.zeros();
+    IONS->wxl.zeros();
+    IONS->wxr.zeros();
 
-	#pragma omp parallel for default(none) shared(IONS, params) private(X, LOGIC) firstprivate(NSP)
-	for(int ii=0; ii<NSP; ii++){
-		IONS->mn(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
+    #pragma omp parallel for default(none) shared(IONS, params) private(X, LOGIC) firstprivate(NSP)
+    for(int ii=0; ii<NSP; ii++){
+            IONS->mn(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
 
-		if(IONS->mn(ii) != params->mesh.NX_IN_SIM){
-			X = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii));
-		}else{
-			X = IONS->X(ii,0) - params->mesh.LX;
-		}
+            if(IONS->mn(ii) != params->mesh.NX_IN_SIM){
+                    X = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii));
+            }else{
+                    X = IONS->X(ii,0) - params->mesh.LX;
+            }
 
-		// If , X > 0, then the particle is on the right of the meshnode
-		LOGIC = X > 0.0;
-		X = abs(X);
+            // If , X > 0, then the particle is on the right of the meshnode
+            LOGIC = X > 0.0;
+            X = abs(X);
 
-		IONS->wxc(ii) = 0.75 - (X/params->mesh.DX)*(X/params->mesh.DX);
+            IONS->wxc(ii) = 0.75 - (X/params->mesh.DX)*(X/params->mesh.DX);
 
-		if(LOGIC){
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
-		}else{
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
-		}
-	}
+            if(LOGIC){
+                    IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+                    IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+            }else{
+                    IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+                    IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+            }
+    }
 
     #ifdef CHECKS_ON
 	if(!IONS->mn.is_finite()){
@@ -410,7 +411,8 @@ void PIC::assignCell(const simulationParameters * params,  oneDimensional::field
 }
 
 
-void PIC::assignCell(const simulationParameters * params,  twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS){
+void PIC::assignCell(const simulationParameters * params,  twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+{
 	//This function assigns the particles to the closest mesh node depending in their position and
 	//calculate the weights for the charge extrapolation and force interpolation
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.

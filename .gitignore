@@ -5,12 +5,12 @@ HDF5/
 arma_libs/
 PROMETHEUS++/Makefile
 PROMETHEUS++/compile.sh
+PROMETHEUS++/debug_run_pro.sh
+PROMETHEUS++/profile_run_pro.sh
+PROMETHEUS++/run_pro.sh
 PROMETHEUS++/bin/
 PROMETHEUS++/inputFiles/
 PROMETHEUS++/outputFiles/
 PROMETHEUS++/nohup*
 *.fig
 PROMETHEUS++/*.csv
-PROMETHEUS++/debug-run_pro++.sh
-PROMETHEUS++/profile-run_pro++.sh
-PROMETHEUS++/run_pro++1.sh

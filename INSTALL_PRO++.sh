@@ -86,7 +86,7 @@ fi
 
 rm PROMETHEUS++/compile.sh
 rm PROMETHEUS++/Makefile
-rm PROMETHEUS++/run_pro++.sh
+rm PROMETHEUS++/run_pro.sh
 rm PROMETHEUS++/inputFiles/input_file.input
 rm PROMETHEUS++/inputFiles/ions_properties.ion
 
@@ -97,9 +97,9 @@ mkdir PROMETHEUS++/obj
 
 cp PRO++FILES/compile.sh PROMETHEUS++/compile.sh
 cp PRO++FILES/Makefile PROMETHEUS++/Makefile
-cp PRO++FILES/run_pro++.sh PROMETHEUS++/run_pro++.sh
-cp PRO++FILES/debug-run_pro++.sh PROMETHEUS++/debug-run_pro++.sh
-cp PRO++FILES/debug-run_pro++.sh PROMETHEUS++/profile-run_pro++.sh
+cp PRO++FILES/run_pro.sh PROMETHEUS++/run_pro.sh
+cp PRO++FILES/debug_run_pro.sh PROMETHEUS++/debug_run_pro.sh
+cp PRO++FILES/profile_run_pro.sh PROMETHEUS++/profile_run_pro.sh
 cp PRO++FILES/input_file.input PROMETHEUS++/inputFiles/input_file.input
 cp PRO++FILES/ions_properties.ion PROMETHEUS++/inputFiles/ions_properties.ion
 
@@ -109,25 +109,25 @@ sed -i 's/MPICXX=/'"MPICXX=${MPICXX_}/g" PROMETHEUS++/Makefile
 
 HDF5_INSTALLATION_FOLDER_=$(echo ${HDF5_INSTALLATION_FOLDER} | sed -e 's/\//_SEP_/g')
 sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
-sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/run_pro++.sh
-sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/debug-run_pro++.sh
-sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/profile-run_pro++.sh
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/run_pro.sh
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/debug_run_pro.sh
+sed -i 's/HDF5_INSTALL=/'"HDF5_INSTALL=${HDF5_INSTALLATION_FOLDER_}/g" PROMETHEUS++/profile_run_pro.sh
 
 ARMADILLO_INSTALLATION_FOLDER_=$(echo ${ARMADILLO_INSTALLATION_FOLDER} | sed -e 's/\//_SEP_/g')
 sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/Makefile
-sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/run_pro++.sh
-sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/debug-run_pro++.sh
-sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/profile-run_pro++.sh
+sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/run_pro.sh
+sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/debug_run_pro.sh
+sed -i 's/ARMADILLO_INSTALL=/'"ARMADILLO_INSTALL=${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/profile_run_pro.sh
 
 REPO_DIR_=$(echo ${REPO_DIR} | sed -e 's/\//_SEP_/g')
-sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/run_pro++.sh
-sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/debug-run_pro++.sh
-sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/profile-run_pro++.sh
+sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/run_pro.sh
+sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/debug_run_pro.sh
+sed -i 's/REPO_DIR=/'"REPO_DIR=${REPO_DIR_}/g" PROMETHEUS++/profile_run_pro.sh
 
 sed -i 's/_SEP_/\//g' PROMETHEUS++/Makefile
-sed -i 's/_SEP_/\//g' PROMETHEUS++/run_pro++.sh
-sed -i 's/_SEP_/\//g' PROMETHEUS++/debug-run_pro++.sh
-sed -i 's/_SEP_/\//g' PROMETHEUS++/profile-run_pro++.sh
+sed -i 's/_SEP_/\//g' PROMETHEUS++/run_pro.sh
+sed -i 's/_SEP_/\//g' PROMETHEUS++/debug_run_pro.sh
+sed -i 's/_SEP_/\//g' PROMETHEUS++/profile_run_pro.sh
 
 sed -i 's/ARMA_LIBS/'"${ARMADILLO_INSTALLATION_FOLDER_}/g" PROMETHEUS++/compile.sh
 sed -i 's/_SEP_/\//g' PROMETHEUS++/compile.sh

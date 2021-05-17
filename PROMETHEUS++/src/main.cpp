@@ -119,6 +119,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         ionsDynamics.advanceIonsPosition(&params, &EB, &IONS, 0);
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
+        
+        // Calculate ion moments:
+        // Assign cell + extrapolateIonMoments + send data to field process:
     }
 
     // Save 1st output: 

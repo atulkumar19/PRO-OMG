@@ -386,7 +386,8 @@ void PIC::assignCell(const simulationParameters * params,  oneDimensional::field
     IONS->wxr.zeros();
 
     #pragma omp parallel for default(none) shared(IONS, params) private(X, LOGIC) firstprivate(NSP)
-    for(int ii=0; ii<NSP; ii++){
+    for(int ii=0; ii<NSP; ii++)
+    {
             IONS->mn(ii) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
 
             if(IONS->mn(ii) != params->mesh.NX_IN_SIM){
@@ -401,12 +402,15 @@ void PIC::assignCell(const simulationParameters * params,  oneDimensional::field
 
             IONS->wxc(ii) = 0.75 - (X/params->mesh.DX)*(X/params->mesh.DX);
 
-            if(LOGIC){
-                    IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
-                    IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
-            }else{
-                    IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
-                    IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+            if(LOGIC)
+            {
+                IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
+                IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+            }
+            else
+            {
+                IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
+                IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
             }
     }
 
@@ -1166,6 +1170,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
         //X^(N+1) = X^(N) + DT*V^(N+1/2)
         if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
         {
+            // Number of computational particles per process:
             int NSP(IONS->at(ii).NSP);
                  
             #pragma omp parallel default(none) shared(params, IONS, x, y, z,std::cout) firstprivate(DT, NSP, ii, b1, b2, b3)
@@ -1230,7 +1235,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
                             // Creating magnetic field unit vectors: 
                             //Unit vectors have to take care of non-unifoprm B-field - To be done later
     
-                            //b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
+                            // b1 = (params->BGP.Bx, params->BGP.By, params->BGP.Bz);
                             b1(0) = params->BGP.Bx;
                             b1(1) = params->BGP.By;
                             b1(2) = params->BGP.Bz;
@@ -1257,7 +1262,9 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
                             IONS->at(ii).mu(ip) = 0.5*IONS->at(ii).g(ip)*IONS->at(ii).g(ip)*IONS->at(ii).M*( V2(0)*V2(0) + V3(0)*V3(0) )/params->BGP.Bo;
                             IONS->at(ii).Ppar(ip) = IONS->at(ii).g(ip)*IONS->at(ii).M*V1(0);
                             IONS->at(ii).avg_mu = mean(IONS->at(ii).mu);
+                            
                         } // Check boundary
+                        
                     } // pragma omp for
                 
                 #pragma omp critical     

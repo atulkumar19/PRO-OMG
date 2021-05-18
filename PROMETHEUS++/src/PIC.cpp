@@ -1456,7 +1456,7 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	IONS->Tpar_m.zeros();
 	IONS->Tper_m.zeros();
 
-	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
+	#pragma omp parallel default(none) shared(params, IONS,a, Ma) firstprivate(NSP)
 	{
 		// Create private moments:
 		// ======================

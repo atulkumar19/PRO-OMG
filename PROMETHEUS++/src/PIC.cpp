@@ -1362,8 +1362,9 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
             PIC::assignCell(params, EB, &IONS->at(ii));
 
             //Calculate partial moments:
-            extrapolateIonDensity(params, &IONS->at(ii));
-			extrapolateIonVelocity(params, &IONS->at(ii));
+            //extrapolateIonDensity(params, &IONS->at(ii));
+			//extrapolateIonVelocity(params, &IONS->at(ii));
+			calculateIonMoments(params, &IONS->at(ii));
         }
 
         // Reduce IONS moments to PARTICLE ROOT:
@@ -1404,59 +1405,117 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 
 void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
 {
-	/*
-	// Iterate over all ion species:
-    // =============================
-    for(int ii=0;ii<IONS->size();ii++)
-    {
-        // Assign cell and calculate partial ion moments:
-        if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-        {
-            // Assign cell:
-            PIC::assignCell(params, EB, &IONS->at(ii));
-
-            //Calculate partial moments:
-            extrapolateIonDensity(params, &IONS->at(ii));
-			extrapolateIonVelocity(params, &IONS->at(ii));
-        }
-
-        // Reduce IONS moments to PARTICLE ROOT:
-        // ==============================
-        PIC::MPI_ReduceMat(params, &IONS->at(ii).n);
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.X);
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Z);
-
-        // Apply smoothing:
-        // ===============
-        for (int jj=0; jj<params->filtersPerIterationIons; jj++)
-        {
-            smooth(&IONS->at(ii).n, params->smoothingParameter);
-			smooth(&IONS->at(ii).nv, params->smoothingParameter);
-        }
-
-        // 0th and 1st moments at various time levels are sent to fields processes:
-        // =============================================================
-        PIC::MPI_SendMat(params, &IONS->at(ii).n);
-        PIC::MPI_SendMat(params, &IONS->at(ii).n_);
-        PIC::MPI_SendMat(params, &IONS->at(ii).n__);
-        PIC::MPI_SendMat(params, &IONS->at(ii).n___);
-
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv.X);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Z);
-
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.X);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Y);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Z);
-
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.X);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Y);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Z);
-	}
-	*/
 }
 
 
 // template class PIC<oneDimensional::ionSpecies, oneDimensional::fields>;
 // template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;
+
+
+
+
+// calculateIonMoments:
+
+void PIC::calculateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+{
+	// Ion density:
+	IONS->n___ = IONS->n__;
+	IONS->n__ = IONS->n_;
+	IONS->n_ = IONS->n;
+
+	// Ion flux:
+	IONS->nv__ = IONS->nv_;
+	IONS->nv_ = IONS->nv;
+
+	// Calculate ion moments:
+	eim(params, IONS);
+}
+
+void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+{
+	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
+
+	int NSP(IONS->NSP);
+
+	// Clearing content of ion moments:
+	IONS->n.zeros();
+	IONS->nv.zeros();
+
+	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
+	{
+		// Create private moments:
+		// ======================
+		arma::vec n = zeros(params->mesh.NX_IN_SIM + 4);
+		vfield_vec nv(params->mesh.NX_IN_SIM + 4);
+
+		// Assemble moments:
+		// =================
+		#pragma omp for
+		for(int ii=0; ii<NSP; ii++)
+		{
+			// Nearest grid point:
+			int ix = IONS->mn(ii) + 2;
+
+			// Density:
+			n(ix-1) += IONS->wxl(ii);
+			n(ix)   += IONS->wxc(ii);
+			n(ix+1) += IONS->wxr(ii);
+
+			// Particle flux:
+			nv.X(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,0);
+			nv.X(ix) 	+= IONS->wxc(ii)*IONS->V(ii,0);
+			nv.X(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,0);
+
+			nv.Y(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,1);
+			nv.Y(ix) 	+= IONS->wxc(ii)*IONS->V(ii,1);
+			nv.Y(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,1);
+
+			nv.Z(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,2);
+			nv.Z(ix) 	+= IONS->wxc(ii)*IONS->V(ii,2);
+			nv.Z(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,2);
+		}
+
+		// Ghost contributions:
+		// ====================
+		include4GhostsContributions(&n);
+		include4GhostsContributions(&nv.X);
+		include4GhostsContributions(&nv.Y);
+		include4GhostsContributions(&nv.Z);
+
+		// Reduce partial moments from each thread:
+		// ========================================
+		#pragma omp critical (update_ion_moments)
+		{
+			IONS->n.subvec(1,params->mesh.NX_IN_SIM) += n.subvec(2,params->mesh.NX_IN_SIM + 1);
+			IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) += nv.X.subvec(2,params->mesh.NX_IN_SIM + 1);
+			IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) += nv.Y.subvec(2,params->mesh.NX_IN_SIM + 1);
+			IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) += nv.Z.subvec(2,params->mesh.NX_IN_SIM + 1);
+		}
+
+	}//End of the parallel region
+
+	// Add magnetic compression:
+	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	//IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	//IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	//IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+
+	// Scale:
+	IONS->n *= IONS->NCP/params->mesh.DX;
+	IONS->nv *= IONS->NCP/params->mesh.DX;
+}
+
+void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{
+}
+
+void PIC::eim(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{
+}

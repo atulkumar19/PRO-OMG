@@ -135,6 +135,16 @@ protected:
 
 	void interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B);
 
+
+	// PRO++ OMG:
+	void eim(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+
+	void eim(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+	
+	void calculateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+
+	void calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+
   public:
 
 	PIC();

@@ -1503,7 +1503,7 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 
 	// Add magnetic compression:
 	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
-	//IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
 	//IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
 	//IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
 

@@ -1239,7 +1239,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
                             // Creating magnetic field unit vectors:
                             //Unit vectors have to take care of non-unifoprm B-field - To be done later
 
-                            b1 = (params->BGP.Bx, params->BGP.By, params->BGP.Bz);
+                            b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
                             b1 = arma::normalise(b1);
 
                             if (arma::dot(b1,y) < PRO_ZERO)

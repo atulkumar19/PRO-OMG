@@ -64,13 +64,13 @@ void PIC::MPI_ReduceVec(const simulationParameters * params, arma::vec * v)
     // Create receive buffer:
     // ======================
     arma::vec recvbuf = zeros(v->n_elem);
-    
+
     // Reduce the vector at the root process of particles:
     // ======================================================
     if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
     {
         MPI_Reduce(v->memptr(), recvbuf.memptr(), v->n_elem, MPI_DOUBLE, MPI_SUM, 0, params->mpi.COMM);
-    
+
         if (params->mpi.IS_PARTICLES_ROOT)
         {
              *v = recvbuf;
@@ -704,14 +704,14 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
 		}
 
 	}//End of the parallel region
-          
-        
+
+
            //Adds compression effect
          IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
           //Scaling the ion density with proper dimension
 	IONS->n *= IONS->NCP/params->mesh.DX;
-          
-          
+
+
 }
 
 
@@ -930,14 +930,18 @@ void PIC::interpolateElectromagneticFields(const simulationParameters * params, 
 }
 
 
-void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT)
+{
 	MPI_Recvvfield_vec(params, &EB->E);
 	MPI_Recvvfield_vec(params, &EB->B);
 
 	fillGhosts(EB);
 
-	for(int ii=0; ii<IONS->size(); ii++){//structure to iterate over all the ion species.
-		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
+	// Iterate over all the ion species:
+	for(int ii=0; ii<IONS->size(); ii++)
+	{
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+		{
 			arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
 			arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
 
@@ -956,24 +960,22 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				double sigma;
 				double us;
 				double s;
-                                        double omega_ci;
-                                        double rL_i;
-                                        double dBx;
-                                        double magMom;
-                                        double Vpersq;
-                                        double Vper;
-                                        double sinPhi;
-                                        double cosPhi;
-                                        double UUx;
-                                        double UUy;
-                                        double UUz;
-                                        double d1;
-                                        double d2;
-                                        double d3;
-                                        double Term;
-                                        
-                                     
-                                        
+                double omega_ci;
+                double rL_i;
+                double dBx;
+                double magMom;
+                double Vpersq;
+                double Vper;
+                double sinPhi;
+                double cosPhi;
+                double UUx;
+                double UUy;
+                double UUz;
+                double d1;
+                double d2;
+                double d3;
+                double Term;
+
 				arma::rowvec U = arma::zeros<rowvec>(3);
 				arma::rowvec VxB = arma::zeros<rowvec>(3);
 				arma::rowvec tau = arma::zeros<rowvec>(3);
@@ -982,37 +984,37 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				arma::rowvec upxt = arma::zeros<rowvec>(3);
 
 				//#pragma omp for
-				for(int ip=0;ip<NSP;ip++){
-                                        
-                                                  dBx = Bp(ip,1)/(-0.5*(params->BGP.Rphi0)); //for Phi_f = 0
-                                                  Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
-                                                  Vper = sqrt(Vpersq);
-                                                  omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
-                                                  rL_i = fabs(Vper/omega_ci);
-                                                  UUx = arma::as_scalar(IONS->at(ii).V(ip,0));
-                                                  UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
-                                                  UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
-                                                  
-                                                  cosPhi = -(UUz/Vper);
-                                                  sinPhi = +(UUy/Vper);
-                                                 
-                                                  Bp(ip,1) = -0.5*(params->BGP.Rphi0*sqrt(params->BGP.Bo/Bp(ip,0))+rL_i*cosPhi)*dBx;
-                                                  Bp(ip,2) = -0.5*(rL_i*sinPhi)*dBx;
-                                                  
-                                                  VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
-                                                  
-                                                  //Overwriting the x-component of VxB to simulate mirror force
-                                                  //magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
-                                                  //VxB(0) = -(magMom/(fabs(IONS->at(ii).Q)))*dBx;
-                                                  //VxB(1) = -UUx*(-0.5*rL_i*sinPhi*dBx) + UUz*Bp(ip,0);
-                                                  //VxB(2) = +UUx*(-0.5*rL_i*cosPhi*dBx) - UUy*Bp(ip,0);
-                                                  
-                                                  
-                                                  //To check KE conservation
-                                                  //Term = dot(VxB,IONS->at(ii).V.row(ip));
-                                                  //Term *= CS->velocity*CS->velocity*CS->bField;
-                                                  //cout<<"The change in KE is " <<Term<<endl;
-                                                  
+				for(int ip=0;ip<NSP;ip++)
+				{
+					dBx = Bp(ip,1)/(-0.5*(params->BGP.Rphi0)); //for Phi_f = 0
+					Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
+					Vper = sqrt(Vpersq);
+					omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
+					rL_i = fabs(Vper/omega_ci);
+					UUx = arma::as_scalar(IONS->at(ii).V(ip,0));
+					UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
+					UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
+
+					cosPhi = -(UUz/Vper);
+					sinPhi = +(UUy/Vper);
+
+					Bp(ip,1) = -0.5*(params->BGP.Rphi0*sqrt(params->BGP.Bo/Bp(ip,0))+rL_i*cosPhi)*dBx;
+					Bp(ip,2) = -0.5*(rL_i*sinPhi)*dBx;
+
+					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
+
+					//Overwriting the x-component of VxB to simulate mirror force
+					//magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
+					//VxB(0) = -(magMom/(fabs(IONS->at(ii).Q)))*dBx;
+					//VxB(1) = -UUx*(-0.5*rL_i*sinPhi*dBx) + UUz*Bp(ip,0);
+					//VxB(2) = +UUx*(-0.5*rL_i*cosPhi*dBx) - UUy*Bp(ip,0);
+
+
+					//To check KE conservation
+					//Term = dot(VxB,IONS->at(ii).V.row(ip));
+					//Term *= CS->velocity*CS->velocity*CS->bField;
+					//cout<<"The change in KE is " <<Term<<endl;
+
 					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
 					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
@@ -1030,7 +1032,6 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 					U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
 					IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
-
 				}
 			} // End of parallel region
 
@@ -1057,9 +1058,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Y);
 		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Z);
 	}//structure to iterate over all the ion species.
-
 	// Ghosts cells might be set to zero if needed, but before saving to HDF5 ghost cells need to be filled again.
-
 }
 
 
@@ -1161,7 +1160,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
     arma::vec b1; // Unitary vector along B field
     arma::vec b2; // Unitary vector perpendicular to b1
     arma::vec b3; // Unitary vector perpendicular to b1 and b2
-    
+
     // Iterate over all ion species:
     // =============================
     for(int ii=0;ii<IONS->size();ii++)
@@ -1172,76 +1171,72 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
         {
             // Number of computational particles per process:
             int NSP(IONS->at(ii).NSP);
-                 
+
             #pragma omp parallel default(none) shared(params, IONS, x, y, z,std::cout) firstprivate(DT, NSP, ii, b1, b2, b3)
             {
-                // Leak diagnostics:                
+                // Leak diagnostics:
                 int pc = 0;
                 double ec = 0;
-                
+
                 #pragma omp for
                 for(int ip=0; ip<NSP; ip++)
                     {
                         // Advance position:
                         IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
-                        
+
                         // Check boundaries and re-injection:
                         if((IONS->at(ii).X(ip,0) < 0)||(IONS->at(ii).X(ip,0) > params->mesh.LX))
                         {
                             //Record events:
                             pc += 1; //Increase the leaking particles by one
                             ec += 0.5*IONS->at(ii).M*dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip));//Increase the leaking particles KE
-                            
-                            
+
+
                             // Variables for random number generator:
                             arma::vec R = randu(1);
                             arma_rng::set_seed_random();
                             arma::vec phi = 2.0*M_PI*randu<vec>(1);
-    
+
                             // Gaussian distribution in space for particle position:
                             double Xcenter = params->mesh.LX/2;
                             double sigmaX  = params->mesh.LX/10;
                             double Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
                             double dLX = abs(Xnew - Xcenter);
-                                            
-                                            
+
+
                             while(dLX > params->mesh.LX/2)
                             {
                                  std::cout<<"Out of bound X= "<< Xnew;
                                  arma_rng::set_seed_random();
                                  R = randu(1);
                                  phi = 2.0*M_PI*randu<vec>(1);
-                                 
+
                                  Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
                                  dLX  = abs(Xnew - Xcenter);
                                  std::cout<< "Out of bound corrected X= " << Xnew;
                             }
-                                            
+
                             IONS->at(ii).X(ip,0) = Xnew;
-                            
+
                             //Box Muller in velocity space
                             arma_rng::set_seed_random();
                             R = randu(1);
                             phi = 2.0*M_PI*randu<vec>(1);
-                            
+
                             arma::vec V2 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % cos(phi);
                             arma::vec V3 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % sin(phi);
-                            
+
                             arma_rng::set_seed_random();
                             phi = 2.0*M_PI*randu<vec>(1);
-                            
+
                             arma::vec V1 = IONS->at(ii).VTper*sqrt( -log(1.0 - R) ) % sin(phi);
-    
-                            // Creating magnetic field unit vectors: 
+
+                            // Creating magnetic field unit vectors:
                             //Unit vectors have to take care of non-unifoprm B-field - To be done later
-    
-                            // b1 = (params->BGP.Bx, params->BGP.By, params->BGP.Bz);
-                            b1(0) = params->BGP.Bx;
-                            b1(1) = params->BGP.By;
-                            b1(2) = params->BGP.Bz;
-                            
+
+                            b1 = (params->BGP.Bx, params->BGP.By, params->BGP.Bz);
                             b1 = arma::normalise(b1);
-    
+
                             if (arma::dot(b1,y) < PRO_ZERO)
                             {
                                 b2 = arma::cross(b1,y);
@@ -1250,56 +1245,56 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
                             {
                                 b2 = arma::cross(b1,z);
                             }
-    
+
                             // Unitary vector perpendicular to b1 and b2
                             b3 = arma::cross(b1,b2);
-    
+
                             IONS->at(ii).V(ip,0) = V1(0)*dot(b1,x) + V2(0)*dot(b2,x) + V3(0)*dot(b3,x);
                             IONS->at(ii).V(ip,1) = V1(0)*dot(b1,y) + V2(0)*dot(b2,y) + V3(0)*dot(b3,y);
                             IONS->at(ii).V(ip,2) = V1(0)*dot(b1,z) + V2(0)*dot(b2,z) + V3(0)*dot(b3,z);
-    
+
                             IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 - dot(IONS->at(ii).V.row(ip),IONS->at(ii).V.row(ip))/(F_C*F_C) );
                             IONS->at(ii).mu(ip) = 0.5*IONS->at(ii).g(ip)*IONS->at(ii).g(ip)*IONS->at(ii).M*( V2(0)*V2(0) + V3(0)*V3(0) )/params->BGP.Bo;
                             IONS->at(ii).Ppar(ip) = IONS->at(ii).g(ip)*IONS->at(ii).M*V1(0);
                             IONS->at(ii).avg_mu = mean(IONS->at(ii).mu);
-                            
+
                         } // Check boundary
-                        
+
                     } // pragma omp for
-                
-                #pragma omp critical     
-                // Accumulate leak diagnotics:  
+
+                #pragma omp critical
+                // Accumulate leak diagnotics:
                 IONS->at(ii).pCount += pc;
                 IONS->at(ii).eCount += ec;
-                  
+
             }//End of the parallel region
-    
-            // Assign cell:           
+
+            // Assign cell:
             PIC::assignCell(params, EB, &IONS->at(ii));
-    
+
             //Once the ions have been pushed,  we extrapolate the density at the node grids.
             extrapolateIonDensity(params, &IONS->at(ii));
-            
+
         } // IF particle sentinel
-        
+
         // Reduce IONS.n to PARTICLE ROOT:
         // ==============================
         PIC::MPI_ReduceVec(params, &IONS->at(ii).n);
-        
-        // Apply smoothing:      
+
+        // Apply smoothing:
         // ===============
         for (int jj=0; jj<params->filtersPerIterationIons; jj++)
         {
             smooth(&IONS->at(ii).n, params->smoothingParameter);
         }
-        
+
         // Densities at various time levels are sent to fields processes:
         // =============================================================
         PIC::MPI_SendVec(params, &IONS->at(ii).n);
         PIC::MPI_SendVec(params, &IONS->at(ii).n_);
         PIC::MPI_SendVec(params, &IONS->at(ii).n__);
         PIC::MPI_SendVec(params, &IONS->at(ii).n___);
-            
+
     } // Iterate over all ion species
 }
 

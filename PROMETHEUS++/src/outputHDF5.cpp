@@ -330,72 +330,72 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
             {
                 string name;
                 string path;
-    
+
                 int int_value;
                 CPP_TYPE cpp_type_value;
                 std::vector<CPP_TYPE> vector_values;
-    
+
                 arma::vec vec_values;
                 arma::fvec fvec_values;
-    
+
                 path = params->PATH + "/HDF5/";
                 name = path + "main.h5";
                 const H5std_string	FILE_NAME( name );
                 name.clear();
-    
+
                 Exception::dontPrint();
-    
+
                 // Create a new file using the default property lists.
                 H5File * outputFile = new H5File( FILE_NAME, H5F_ACC_TRUNC );
-    
+
                 name = "dimensionality";
                 saveToHDF5(outputFile, name, &params->dimensionality);
                 name.clear();
-    
+
                 name = "smoothingParameter";
                 cpp_type_value = params->smoothingParameter;
                 saveToHDF5(outputFile, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "numberOfRKIterations";
                 saveToHDF5(outputFile, name, &params->numberOfRKIterations);
                 name.clear();
-    
+
                 name = "filtersPerIterationFields";
                 saveToHDF5(outputFile, name, &params->filtersPerIterationFields);
                 name.clear();
-    
+
                 name = "numOfMPIs";
                 saveToHDF5(outputFile, name, &params->mpi.NUMBER_MPI_DOMAINS);
                 name.clear();
-    
+
                 name = "numMPIsParticles";
                 saveToHDF5(outputFile, name, &params->mpi.MPIS_PARTICLES);
                 name.clear();
-    
-    
+
+
                 name = "numMPIsFields";
                 saveToHDF5(outputFile, name, &params->mpi.MPIS_FIELDS);
                 name.clear();
-    
+
                 // Fundamental scales group
                 Group * group_scales = new Group( outputFile->createGroup( "/scales" ) );
-    
+
                 name = "electronSkinDepth";
                 cpp_type_value = FS->electronSkinDepth;
                 saveToHDF5(group_scales, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "electronGyroPeriod";
                 cpp_type_value = FS->electronGyroPeriod;
                 saveToHDF5(group_scales, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "electronGyroRadius";
                 cpp_type_value = FS->electronGyroRadius;
                 saveToHDF5(group_scales, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "ionGyroRadius";
                 #ifdef HDF5_DOUBLE
                 vec_values = zeros(params->numberOfParticleSpecies);
@@ -409,7 +409,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                 saveToHDF5(group_scales, name, &fvec_values);
                 #endif
                 name.clear();
-    
+
                 name = "ionGyroPeriod";
                 #ifdef HDF5_DOUBLE
                 vec_values = zeros(params->numberOfParticleSpecies);
@@ -423,7 +423,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                 saveToHDF5(group_scales, name, &fvec_values);
                 #endif
                 name.clear();
-    
+
                 name = "ionSkinDepth";
                 #ifdef HDF5_DOUBLE
                 vec_values = zeros(params->numberOfParticleSpecies);
@@ -437,77 +437,77 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                 saveToHDF5(group_scales, name, &fvec_values);
                 #endif
                 name.clear();
-    
+
                 delete group_scales;
-    
+
                 //Geometry of the mesh
                 Group * group_geo = new Group( outputFile->createGroup( "/geometry" ) );
-    
+
                 name = "SPLIT_DIRECTION";
                 int_value = params->mesh.SPLIT_DIRECTION;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 name = "DX";
                 cpp_type_value = params->mesh.DX;
                 saveToHDF5(group_geo, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "DY";
                 cpp_type_value = params->mesh.DY;
                 saveToHDF5(group_geo, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "DZ";
                 cpp_type_value = params->mesh.DZ;
                 saveToHDF5(group_geo, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "LX";
                 cpp_type_value = params->mesh.LX;
                 saveToHDF5(group_geo, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "LY";
                 cpp_type_value = params->mesh.LY;
                 saveToHDF5(group_geo, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "LZ";
                 cpp_type_value = params->mesh.LZ;
                 saveToHDF5(group_geo, name, &cpp_type_value);
                 name.clear();
-    
+
                 name = "NX";
                 int_value = params->mesh.NX_PER_MPI;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 name = "NY";
                 int_value = params->mesh.NY_PER_MPI;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 name = "NZ";
                 int_value = params->mesh.NZ_PER_MPI;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 name = "NX_IN_SIM";
                 int_value = params->mesh.NX_IN_SIM;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 name = "NY_IN_SIM";
                 int_value = params->mesh.NY_IN_SIM;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 name = "NZ_IN_SIM";
                 int_value = params->mesh.NZ_IN_SIM;
                 saveToHDF5(group_geo, name, &int_value);
                 name.clear();
-    
+
                 if (params->dimensionality == 1){
                         name = "X_MPI_CART_COORD";
                         int_value = params->mpi.MPI_CART_COORDS_1D[0];
@@ -518,16 +518,16 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                         int_value = params->mpi.MPI_CART_COORDS_2D[0];
                         saveToHDF5(group_geo, name, &int_value);
                         name.clear();
-    
+
                         name = "Y_MPI_CART_COORD";
                         int_value = params->mpi.MPI_CART_COORDS_2D[1];
                         saveToHDF5(group_geo, name, &int_value);
                         name.clear();
                 }
-    
+
                 //Saving the x-axis coordinates
                 name = "xAxis";
-    
+
                 #ifdef HDF5_DOUBLE
                 vec_values = params->mesh.nodes.X;
                 saveToHDF5(group_geo, name, &vec_values);
@@ -535,12 +535,12 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                 fvec_values = conv_to<fvec>::from(params->mesh.nodes.X);
                 saveToHDF5(group_geo, name, &fvec_values);
                 #endif
-    
+
                 name.clear();
-    
+
                 if (params->dimensionality == 2){
                         name = "yAxis";
-    
+
                         #ifdef HDF5_DOUBLE
                         vec_values = params->mesh.nodes.Y;
                         saveToHDF5(group_geo, name, &vec_values);
@@ -548,90 +548,90 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                         fvec_values = conv_to<fvec>::from(params->mesh.nodes.Y);
                         saveToHDF5(group_geo, name, &fvec_values);
                         #endif
-    
+
                         name.clear();
                 }
-    
+
                 delete group_geo;
                 //Geometry of the mesh
-    
+
                 //Electron temperature
                 name = "Te";
                 cpp_type_value = params->BGP.Te;
                 saveToHDF5(outputFile, name, &cpp_type_value);
                 name.clear();
-    
+
                 //Ions
                 Group * group_ions = new Group( outputFile->createGroup( "/ions" ) );
-    
+
                 name = "numberOfParticleSpecies";
                 int_value = params->numberOfParticleSpecies;
                 saveToHDF5(group_ions, name, &int_value);
                 name.clear();
-    
+
                 name = "ne";
                 cpp_type_value = (CPP_TYPE)params->BGP.ne;
                 saveToHDF5(group_ions, name, &cpp_type_value);
                 name.clear();
-    
+
                 for(int ii=0;ii<params->numberOfParticleSpecies;ii++){
                         stringstream ionSpec;
                         ionSpec << (ii+1);
                         name = "/ions/spp_" + ionSpec.str();
                         Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
                         name.clear();
-    
+
                         name = "densityFraction";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).densityFraction;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "NCP";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).NCP;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "NSP";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).NSP;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "NSP_OUT";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).nSupPartOutput;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "Tpar";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).Tpar;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "Tper";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).Tper;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "M";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).M;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "Q";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).Q;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         name = "Z";
                         cpp_type_value = (CPP_TYPE)IONS->at(ii).Z;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
-    
+
                         delete group_ionSpecies;
                 }
-    
+
                 delete group_ions;
                 //Ions
-    
+
                 //Electromagnetic fields
                 name = "Bo";
                 vector_values = {(CPP_TYPE)params->BGP.Bx, (CPP_TYPE)params->BGP.By, (CPP_TYPE)params->BGP.Bz};
@@ -650,14 +650,14 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 	    }
 
 	    // catch failure caused by the DataSet operations:
-            // ===============================================            
+            // ===============================================
 	    catch( DataSetIException error )
             {
             	error.printErrorStack();
 	    }
 
 	    // catch failure caused by the DataSpace operations:
-            // ================================================            
+            // ================================================
 	    catch( DataSpaceIException error )
             {
             	error.printErrorStack();
@@ -691,16 +691,19 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 		Group * group_ions = new Group( group_iteration->createGroup( "ions" ) );
 		name.clear();
 
-		for(int ii=0; ii<IONS->size(); ii++){//Iterations over the ion species.
+		//Iterations over the ion species.
+		for(int ii=0; ii<IONS->size(); ii++)
+		{
 			stringstream ionSpec;
 			ionSpec << (ii+1);
 			name = "spp_" + ionSpec.str();
 			Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
 			name.clear();
 
-			for(int ov=0; ov<params->outputs_variables.size(); ov++){
-				if(params->outputs_variables.at(ov) == "X"){
-
+			for(int ov=0; ov<params->outputs_variables.size(); ov++)
+			{
+				if(params->outputs_variables.at(ov) == "X")
+				{
 					//Saving the x-axis coordinates
 					name = "X";
 					#ifdef HDF5_DOUBLE
@@ -712,15 +715,18 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				 }else if(params->outputs_variables.at(ov) == "pCount"){
-                                                  
+				 }
+				 else if(params->outputs_variables.at(ov) == "pCount")
+				 {
+
 					name = "pCount";
 					ivec_values = IONS->at(ii).pCount;
 					saveToHDF5(group_ionSpecies, name, &ivec_values);
 					name.clear();
-                                                  
-				}else if(params->outputs_variables.at(ov) == "eCount"){
 
+				}
+				else if(params->outputs_variables.at(ov) == "eCount")
+				{
 					//Saving ions species density
 					name = "eCount";
 					#ifdef HDF5_DOUBLE
@@ -731,10 +737,11 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
-                                        
-                                        
-                                        }else if(params->outputs_variables.at(ov) == "V"){
 
+
+                }
+				else if(params->outputs_variables.at(ov) == "V")
+				{
 					name = "V";
 					#ifdef HDF5_DOUBLE
 					mat_values = CS->velocity*IONS->at(ii).V;
@@ -745,8 +752,9 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "Ep"){
-
+				}
+				else if(params->outputs_variables.at(ov) == "Ep")
+				{
 					name = "E";
 					#ifdef HDF5_DOUBLE
 					mat_values = CS->eField*IONS->at(ii).E;
@@ -757,8 +765,9 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "Bp"){
-
+				}
+				else if(params->outputs_variables.at(ov) == "Bp")
+				{
 					name = "B";
 					#ifdef HDF5_DOUBLE
 					mat_values = CS->bField*IONS->at(ii).B;
@@ -769,9 +778,11 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "n"){
-
-					if (params->mpi.IS_PARTICLES_ROOT){
+				}
+				else if(params->outputs_variables.at(ov) == "n")
+				{
+					if (params->mpi.IS_PARTICLES_ROOT)
+					{
 						//Saving ions species density
 						name = "n";
 						#ifdef HDF5_DOUBLE
@@ -784,8 +795,60 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 						name.clear();
 					}
 
-				}else if(params->outputs_variables.at(ov) == "g"){
+				}
+				else if(params->outputs_variables.at(ov) == "Tpar")
+				{
+					if (params->mpi.IS_PARTICLES_ROOT)
+					{
+						//Saving ions species density
+						name = "Tpar";
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature);
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
 
+				}
+				else if(params->outputs_variables.at(ov) == "Tper")
+				{
+					if (params->mpi.IS_PARTICLES_ROOT)
+					{
+						//Saving ions species density
+						name = "Tper";
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature);
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+
+				}
+				else if(params->outputs_variables.at(ov) == "Ux")
+				{
+					if (params->mpi.IS_PARTICLES_ROOT)
+					{
+						//Saving ions species density
+						name = "Ux";
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)/CS->velocity;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)/CS->velocity);
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+
+				}
+				else if(params->outputs_variables.at(ov) == "g")
+				{
 					//Saving ions species density
 					name = "g";
 					#ifdef HDF5_DOUBLE
@@ -796,9 +859,9 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
-
-				}else if(params->outputs_variables.at(ov) == "mu"){
-
+				}
+				else if(params->outputs_variables.at(ov) == "mu")
+				{
 					//Saving ions species density
 					name = "mu";
 					#ifdef HDF5_DOUBLE
@@ -810,8 +873,9 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "Ppar"){
-
+				}
+				else if(params->outputs_variables.at(ov) == "Ppar")
+				{
 					//Saving ions species density
 					name = "Ppar";
 					#ifdef HDF5_DOUBLE
@@ -823,17 +887,20 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "mn"){
-
+				}
+				else if(params->outputs_variables.at(ov) == "mn")
+				{
 					//Saving ions species density
 					name = "mn";
 					ivec_values = IONS->at(ii).mn;
 					saveToHDF5(group_ionSpecies, name, &ivec_values);
 					name.clear();
 
-				}else if(params->outputs_variables.at(ov) == "U"){
-
-					if (params->mpi.IS_PARTICLES_ROOT){
+				}
+				else if(params->outputs_variables.at(ov) == "U")
+				{
+					if (params->mpi.IS_PARTICLES_ROOT)
+					{
 						Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "U" ) );
 
 						//x-component species bulk velocity

@@ -1443,10 +1443,18 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NSP(IONS->NSP);
+	double Ma(IONS->M);
+	double a(1.0);
 
 	// Clearing content of ion moments:
+	// ===============================
 	IONS->n.zeros();
 	IONS->nv.zeros();
+	IONS->P11.zeros();
+	IONS->P22.zeros();
+	IONS->U_m.zeros();
+	IONS->Tpar_m.zeros();
+	IONS->Tper_m.zeros();
 
 	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
@@ -1454,6 +1462,8 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 		// ======================
 		arma::vec n = zeros(params->mesh.NX_IN_SIM + 4);
 		vfield_vec nv(params->mesh.NX_IN_SIM + 4);
+		arma::vec P11 = zeros(params->mesh.NX_IN_SIM + 4);
+		arma::vec P22 = zeros(params->mesh.NX_IN_SIM + 4);
 
 		// Assemble moments:
 		// =================
@@ -1463,23 +1473,36 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 			// Nearest grid point:
 			int ix = IONS->mn(ii) + 2;
 
+			// Perpendicular velocity:
+			double V_perp = sqrt( pow(IONS->V(ii,1),2) + pow(IONS->V(ii,2),2));
+
 			// Density:
-			n(ix-1) += IONS->wxl(ii);
-			n(ix)   += IONS->wxc(ii);
-			n(ix+1) += IONS->wxr(ii);
+			n(ix-1) += IONS->wxl(ii)*a;
+			n(ix)   += IONS->wxc(ii)*a;
+			n(ix+1) += IONS->wxr(ii)*a;
 
-			// Particle flux:
-			nv.X(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,0);
-			nv.X(ix) 	+= IONS->wxc(ii)*IONS->V(ii,0);
-			nv.X(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,0);
+			// Particle flux density:
+			nv.X(ix-1) 	+= IONS->wxl(ii)*a*IONS->V(ii,0);
+			nv.X(ix) 	+= IONS->wxc(ii)*a*IONS->V(ii,0);
+			nv.X(ix+1) 	+= IONS->wxr(ii)*a*IONS->V(ii,0);
 
-			nv.Y(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,1);
-			nv.Y(ix) 	+= IONS->wxc(ii)*IONS->V(ii,1);
-			nv.Y(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,1);
+			nv.Y(ix-1) 	+= IONS->wxl(ii)*a*IONS->V(ii,1);
+			nv.Y(ix) 	+= IONS->wxc(ii)*a*IONS->V(ii,1);
+			nv.Y(ix+1) 	+= IONS->wxr(ii)*a*IONS->V(ii,1);
 
-			nv.Z(ix-1) 	+= IONS->wxl(ii)*IONS->V(ii,2);
-			nv.Z(ix) 	+= IONS->wxc(ii)*IONS->V(ii,2);
-			nv.Z(ix+1) 	+= IONS->wxr(ii)*IONS->V(ii,2);
+			nv.Z(ix-1) 	+= IONS->wxl(ii)*a*IONS->V(ii,2);
+			nv.Z(ix) 	+= IONS->wxc(ii)*a*IONS->V(ii,2);
+			nv.Z(ix+1) 	+= IONS->wxr(ii)*a*IONS->V(ii,2);
+
+			// Stress tensor P11:
+			P11(ix-1) += IONS->wxl(ii)*a*Ma*pow(IONS->V(ii,0),2);
+			P11(ix)   += IONS->wxc(ii)*a*Ma*pow(IONS->V(ii,0),2);
+			P11(ix+1) += IONS->wxr(ii)*a*Ma*pow(IONS->V(ii,0),2);
+
+			// Stress tensor P22:
+			P22(ix-1) += IONS->wxl(ii)*a*Ma*pow(V_perp,2);
+			P22(ix)   += IONS->wxc(ii)*a*Ma*pow(V_perp,2);
+			P22(ix+1) += IONS->wxr(ii)*a*Ma*pow(V_perp,2);
 		}
 
 		// Ghost contributions:
@@ -1488,6 +1511,8 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 		include4GhostsContributions(&nv.X);
 		include4GhostsContributions(&nv.Y);
 		include4GhostsContributions(&nv.Z);
+		include4GhostsContributions(&P11);
+		include4GhostsContributions(&P22);
 
 		// Reduce partial moments from each thread:
 		// ========================================
@@ -1497,6 +1522,8 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 			IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) += nv.X.subvec(2,params->mesh.NX_IN_SIM + 1);
 			IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) += nv.Y.subvec(2,params->mesh.NX_IN_SIM + 1);
 			IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) += nv.Z.subvec(2,params->mesh.NX_IN_SIM + 1);
+			IONS->P11.subvec(1,params->mesh.NX_IN_SIM) += P11.subvec(2,params->mesh.NX_IN_SIM + 1);
+			IONS->P22.subvec(1,params->mesh.NX_IN_SIM) += P22.subvec(2,params->mesh.NX_IN_SIM + 1);
 		}
 
 	}//End of the parallel region
@@ -1506,10 +1533,27 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
 	//IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
 	//IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	IONS->P11.subvec(1,params->mesh.NX_IN_SIM) = IONS->P11.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	IONS->P22.subvec(1,params->mesh.NX_IN_SIM) = IONS->P22.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
 
 	// Scale:
 	IONS->n *= IONS->NCP/params->mesh.DX;
 	IONS->nv *= IONS->NCP/params->mesh.DX;
+	IONS->P11 *= IONS->NCP/params->mesh.DX;
+	IONS->P22 *= IONS->NCP/params->mesh.DX;
+
+	// Drift velocity:
+	IONS->U_m.X = IONS->nv.X/IONS->n;
+	IONS->U_m.Y = IONS->nv.Y/IONS->n;
+	IONS->U_m.Z = IONS->nv.Z/IONS->n;
+
+	// Pressures:
+	arma::vec Ppar = IONS->P11 - (Ma*IONS->nv.X % IONS->U_m.X);
+	arma::vec Pper = IONS->P22; // We have neglected perp drift kinetic energy
+
+	// Temperatures:
+	IONS->Tpar_m = Ppar/(F_E_DS*IONS->n);
+	IONS->Tper_m = Pper/(F_E_DS*IONS->n);
 }
 
 void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)

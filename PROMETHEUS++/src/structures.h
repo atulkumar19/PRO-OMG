@@ -49,11 +49,10 @@
 #define F_C 299792458.0 	// Light speed in m/s
 #define F_MU (4*M_PI)*1E-7 	// Vacuum permeability in N/A^2
 extern double F_EPSILON_DS; // Dimensionless vacuum permittivity
-extern double F_E_DS; 		// Dimensionless vacuum permittivity
-extern double F_ME_DS; 		// Dimensionless vacuum permittivity
-extern double F_MU_DS; 		// Dimensionless vacuum permittivity
-extern double F_C_DS; 		// Dimensionless vacuum permittivity
-
+extern double F_E_DS; 		// Dimensionless electron charge
+extern double F_ME_DS; 		// Dimensionless electron mass
+extern double F_MU_DS; 		// Dimensionless vacuum permeability
+extern double F_C_DS; 		// Dimensionless speed of light
 
 struct mpiParams{
 	int NUMBER_MPI_DOMAINS;
@@ -147,7 +146,7 @@ struct plasmaProfiles{
               arma::vec Rphi;
               arma::vec Br;
               arma::vec dBrdx;
-              
+
               //Interpolated Plasma profiles at mesh points
 	    arma::vec ne_i;
               arma::vec Tpar_i;
@@ -155,7 +154,7 @@ struct plasmaProfiles{
               arma::vec Bx_i;
               arma::vec Br_i;
               arma::vec dBrdx_i;
-              
+
               int nTable; //Number of elements in external files
 };
 

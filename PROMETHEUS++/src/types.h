@@ -161,7 +161,7 @@ class oneDimensional::ionSpecies : public vfield_vec{
 public:
 	int SPECIES;
 	int IC; 					// Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
-          
+
 	double NSP; 				// Initial number of superparticles for the given ion species.
 	double NCP; 				// Number of charged particles per superparticle.
 	double NPC; 				// Number of superparticles per cell. When its value is zero, the particles are loaded from external files.
@@ -184,7 +184,7 @@ public:
 	double Wc;					// Average cyclotron frequency.
 	double Wp;					// Plasma frequency.
 	double avg_mu; 				// Average magnetic moment
-             
+
 
 	arma::mat X; 				// Ions position, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
@@ -218,18 +218,18 @@ public:
 	vfield_vec nv_; 			// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 			// Ion bulk velocity at time level "l - 3/2"
 
-        arma::vec P11;
-        arma::vec P22;
-        
-        vfield_vec U_m;
-        arma::vec Tpar_m;
-        arma::vec Tper_m;
-        
-        // Particle-defined ion moments:
-        arma::vec n_p;
-        vfield_vec U_p;
-        arma::vec Tpar_p;
-        arma::vec Tper_p;
+    arma::vec P11;
+    arma::vec P22;
+
+    vfield_vec U_m;
+    arma::vec Tpar_m;
+    arma::vec Tper_m;
+
+	// Particle-defined ion moments:
+	arma::vec n_p;
+	vfield_vec U_p;
+	arma::vec Tpar_p;
+	arma::vec Tper_p;
 
 	ionSpecies(){};
 	~ionSpecies(){};
@@ -298,7 +298,7 @@ public:
 
         arma::mat P11;
         arma::mat P22;
-        
+
         vfield_mat U_m;
         arma::mat Tpar_m;
         arma::mat Tper_m;

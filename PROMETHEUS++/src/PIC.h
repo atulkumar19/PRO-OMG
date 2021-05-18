@@ -135,7 +135,6 @@ protected:
 
 	void interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B);
 
-
   public:
 
 	PIC();
@@ -149,10 +148,18 @@ protected:
 
 	void advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT);
 
-	
+
 	void advanceIonsPosition(const simulationParameters * params,  oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT);
 
 	void advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT);
+
+
+	// PRO++ OMG additions:
+
+	void extrapolateIonsMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
+
+	void extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
+
 };
 
 #endif

@@ -48,28 +48,28 @@ using namespace arma;
 // ======================
 template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     MPI_Init(&argc, &argv);
-    
+
     // Create simulation objects:
     // ==========================
     // MPI object to hold topology information:
     MPI_MAIN mpi_main;
     // Input parameters for simulation:
-    simulationParameters params; 	
+    simulationParameters params;
     // Ion species vector of type "IT":
-    vector<IT> IONS; 
+    vector<IT> IONS;
     // Characteristic scales:
     characteristicScales CS;
     // Electromagnetic fields of type "FT":
-    FT EB; 						 
+    FT EB;
     // Collision operator object:
     collisionOperator FPCOLL;
     // Initialization object of type "FT" and "FT":
     INITIALIZE<IT, FT> init(&params, argc, argv);
     // UNITS object of type "FT" and "FT":
     UNITS<IT, FT> units;
-    
+
     // Initialize simulation objects:
-    // =============================       
+    // =============================
     // Create MPI topology:
     mpi_main.createMPITopology(&params);
     // Read "ions_properties.ion" and populate "IONS" vector
@@ -87,7 +87,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     // Check that mesh size is consistent with hybrid approximation:
     units.spatialScalesSanityCheck(&params, &FS);
     // Initialize electromagnetic field variable:
-    init.initializeFields(&params, &EB);         
+    init.initializeFields(&params, &EB);
     // Initialize IONS: scalar, bulk and particle arrays
     init.setupIonsInitialCondition(&params, &CS, &EB, &IONS);
     // HDF object constructor:
@@ -96,9 +96,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     units.defineTimeStep(&params, &IONS);
     // Normalize "params", "IONS", "EB" using "CS"
     units.normalizeVariables(&params, &IONS, &EB, &CS);
-    
+
     /**************** All the quantities below are dimensionless ****************/
-    
+
     // Definition of variables for advancing in time particles and fields:
     // ===================================================================
     double t1 = 0.0;
@@ -106,7 +106,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     double currentTime = 0.0;
     int outputIterator = 0;
     int numberOfIterationsForEstimator = 1000;
-    
+
     // Create objects:
     // ===============
     EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
@@ -119,12 +119,11 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         ionsDynamics.advanceIonsPosition(&params, &EB, &IONS, 0);
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
-        
-        // Calculate ion moments:
-        // Assign cell + extrapolateIonMoments + send data to field process:
+
+        ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
     }
 
-    // Save 1st output: 
+    // Save 1st output:
     // ================
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
 
@@ -151,22 +150,23 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         // Advance position:
         // =================
         ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
-        
+
         // Calculate ion moments:
         // ======================
-        
+        ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
+
         // Apply collision operator:
         // =========================
 
         // Field solve:
         // ============
-        
+
         // Magnetic field:
         //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
 
         // Electric field:
         if(tt > 2)
-        {   
+        {
             // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
             // Using the Bashford-Adams extrapolation.
             fields_solver.advanceEField(&params, &EB, &IONS, true, true);
@@ -176,7 +176,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
             // Using basic velocity extrapolation.
             fields_solver.advanceEField(&params, &EB, &IONS, true, false);
 	}
-        
+
         // Advance time:
         // =============
 	currentTime += params.DT*CS.time;
@@ -208,7 +208,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
                 cout << "ESTIMATED TIME OF COMPLETION: " << estimatedSimulationTime <<" MINUTES" << endl;
             }
         }
-        
+
     } // Time iterations.
 
     // Finalizing MPI communications:
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]){
         // Two-dimensional:
 	twoDimensional::ionSpecies dummy_ions_2D;
 	twoDimensional::fields dummy_fields_2D;
-        
+
         // Select dimensionality:
         // ======================
 	if (strcmp(argv[1],"1-D") == 0)

@@ -20,8 +20,8 @@
 
 
 
-PIC::PIC(){
-
+PIC::PIC()
+{
 }
 
 
@@ -297,7 +297,8 @@ void PIC::include4GhostsContributions(arma::mat * m){
 
 
 // * * * Smoothing * * *
-void PIC::smooth(arma::vec * v, double as){
+void PIC::smooth(arma::vec * v, double as)
+{
 	int NX(v->n_elem);
 
 	arma::vec b = zeros(NX);
@@ -317,7 +318,8 @@ void PIC::smooth(arma::vec * v, double as){
 }
 
 
-void PIC::smooth(arma::mat * m, double as){
+void PIC::smooth(arma::mat * m, double as)
+{
 	int NX(m->n_rows);
 	int NY(m->n_cols);
 
@@ -349,14 +351,16 @@ void PIC::smooth(arma::mat * m, double as){
 }
 
 
-void PIC::smooth(vfield_vec * vf, double as){
+void PIC::smooth(vfield_vec * vf, double as)
+{
 	smooth(&vf->X,as); // x component
 	smooth(&vf->Y,as); // y component
 	smooth(&vf->Z,as); // z component
 }
 
 
-void PIC::smooth(vfield_mat * vf, double as){
+void PIC::smooth(vfield_mat * vf, double as)
+{
 	smooth(&vf->X,as); // x component
 	smooth(&vf->Y,as); // y component
 	smooth(&vf->Z,as); // z component
@@ -1035,10 +1039,10 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				}
 			} // End of parallel region
 
-			extrapolateIonVelocity(params, &IONS->at(ii));
+			//extrapolateIonVelocity(params, &IONS->at(ii));
 		}
 
-		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
+		/* PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Y);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Z);
 
@@ -1056,7 +1060,8 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.X);
 		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Y);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Z);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Z); */
+
 	}//structure to iterate over all the ion species.
 	// Ghosts cells might be set to zero if needed, but before saving to HDF5 ghost cells need to be filled again.
 }
@@ -1270,13 +1275,14 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
             }//End of the parallel region
 
             // Assign cell:
-            PIC::assignCell(params, EB, &IONS->at(ii));
+            //PIC::assignCell(params, EB, &IONS->at(ii));
 
             //Once the ions have been pushed,  we extrapolate the density at the node grids.
-            extrapolateIonDensity(params, &IONS->at(ii));
+            //extrapolateIonDensity(params, &IONS->at(ii));
 
         } // IF particle sentinel
 
+		/*
         // Reduce IONS.n to PARTICLE ROOT:
         // ==============================
         PIC::MPI_ReduceVec(params, &IONS->at(ii).n);
@@ -1294,12 +1300,14 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
         PIC::MPI_SendVec(params, &IONS->at(ii).n_);
         PIC::MPI_SendVec(params, &IONS->at(ii).n__);
         PIC::MPI_SendVec(params, &IONS->at(ii).n___);
+		*/
 
     } // Iterate over all ion species
 }
 
 
-void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
+void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT)
+{
 	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
 		//X^(N+1) = X^(N) + DT*V^(N+1/2)
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
@@ -1339,6 +1347,114 @@ void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimension
 		PIC::MPI_SendMat(params, &IONS->at(ii).n__);
 		PIC::MPI_SendMat(params, &IONS->at(ii).n___);
 	}//structure to iterate over all the ion species.
+}
+
+void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
+{
+	// Iterate over all ion species:
+    // =============================
+    for(int ii=0;ii<IONS->size();ii++)
+    {
+        // Assign cell and calculate partial ion moments:
+        if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+        {
+            // Assign cell:
+            PIC::assignCell(params, EB, &IONS->at(ii));
+
+            //Calculate partial moments:
+            extrapolateIonDensity(params, &IONS->at(ii));
+			extrapolateIonVelocity(params, &IONS->at(ii));
+        }
+
+        // Reduce IONS moments to PARTICLE ROOT:
+        // ==============================
+        PIC::MPI_ReduceVec(params, &IONS->at(ii).n);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Z);
+
+        // Apply smoothing:
+        // ===============
+        for (int jj=0; jj<params->filtersPerIterationIons; jj++)
+        {
+            smooth(&IONS->at(ii).n, params->smoothingParameter);
+			smooth(&IONS->at(ii).nv, params->smoothingParameter);
+        }
+
+        // 0th and 1st moments at various time levels are sent to fields processes:
+        // =============================================================
+        PIC::MPI_SendVec(params, &IONS->at(ii).n);
+        PIC::MPI_SendVec(params, &IONS->at(ii).n_);
+        PIC::MPI_SendVec(params, &IONS->at(ii).n__);
+        PIC::MPI_SendVec(params, &IONS->at(ii).n___);
+
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv.X);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv.Z);
+
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.X);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.Y);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.Z);
+
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.X);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Y);
+		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Z);
+	}
+}
+
+void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
+{
+	/*
+	// Iterate over all ion species:
+    // =============================
+    for(int ii=0;ii<IONS->size();ii++)
+    {
+        // Assign cell and calculate partial ion moments:
+        if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+        {
+            // Assign cell:
+            PIC::assignCell(params, EB, &IONS->at(ii));
+
+            //Calculate partial moments:
+            extrapolateIonDensity(params, &IONS->at(ii));
+			extrapolateIonVelocity(params, &IONS->at(ii));
+        }
+
+        // Reduce IONS moments to PARTICLE ROOT:
+        // ==============================
+        PIC::MPI_ReduceMat(params, &IONS->at(ii).n);
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.X);
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Z);
+
+        // Apply smoothing:
+        // ===============
+        for (int jj=0; jj<params->filtersPerIterationIons; jj++)
+        {
+            smooth(&IONS->at(ii).n, params->smoothingParameter);
+			smooth(&IONS->at(ii).nv, params->smoothingParameter);
+        }
+
+        // 0th and 1st moments at various time levels are sent to fields processes:
+        // =============================================================
+        PIC::MPI_SendMat(params, &IONS->at(ii).n);
+        PIC::MPI_SendMat(params, &IONS->at(ii).n_);
+        PIC::MPI_SendMat(params, &IONS->at(ii).n__);
+        PIC::MPI_SendMat(params, &IONS->at(ii).n___);
+
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv.X);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Y);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Z);
+
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.X);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Y);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Z);
+
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.X);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Y);
+		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Z);
+	}
+	*/
 }
 
 

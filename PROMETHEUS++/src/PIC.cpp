@@ -1378,8 +1378,8 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
         // ===============
         for (int jj=0; jj<params->filtersPerIterationIons; jj++)
         {
-            smooth(&IONS->at(ii).n, params->smoothingParameter);
-			smooth(&IONS->at(ii).nv, params->smoothingParameter);
+          smooth(&IONS->at(ii).n, params->smoothingParameter);
+			    smooth(&IONS->at(ii).nv, params->smoothingParameter);
         }
 
         // 0th and 1st moments at various time levels are sent to fields processes:

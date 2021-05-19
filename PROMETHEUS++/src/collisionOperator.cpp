@@ -1,11 +1,20 @@
 #include "collisionOperator.h"
 
-void collisionOperator::ApplyCollisionOperator(const characteristicScales * CS, const simulationParameters * params, const oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+collisionOperator::collisionOperator()
+{}
+
+void collisionOperator::interpolateIonMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {
     // code
 }
 
-void collisionOperator::ApplyCollisionOperator(const characteristicScales * CS, const simulationParameters * params, const twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+void collisionOperator::interpolateIonMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
+{}
+
+void collisionOperator::ApplyCollisionOperator(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {
     // code
 }
+
+void collisionOperator::ApplyCollisionOperator(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
+{}

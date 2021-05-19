@@ -52,8 +52,8 @@ outputHDF5.o			\
 mpi_main.o				\
 randomStart.o			\
 quietStart.o			\
-energyDiagnostic.o)
-
+energyDiagnostic.o              \
+collisionOperator.o)
 
 all: $(BIN)/PROMETHEUS++
 
@@ -62,23 +62,6 @@ $(OBJ)/%.o : $(SRC)/%.cpp
 
 $(BIN)/PROMETHEUS++: $(BINARIES)
 	$(MPICXX)	$(BINARIES)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
-
-
-
-BINARIES_DEV = $(addprefix $(OBJ)/,structures.o\
-main_dev_test.o	\
-dev_test_2D.o \
-types.o	\
-mpi_main.o)
-
-test: $(BIN)/PRO++TEST
-
-$(OBJ)/%.o : $(SRC)/%.cpp
-	$(MPICXX)	-c	$(CCFLAGS)	$(CCDEFINEFLAGS)	$<	$(INCLUDES)	$(INCLUDE_HDF5)	$(LIB_FLAGS) -o $@
-
-$(BIN)/PRO++TEST: $(BINARIES_DEV)
-	$(MPICXX)	$(BINARIES_DEV)	-o	$@	$(LIB_FLAGS)	$(LIBSHDF)	$(LIB)	$(OMP_LIB_FLAGS)
-
 
 info:
 	@echo	"COMPILING IN: "$(UNAME)

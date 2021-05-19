@@ -127,7 +127,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     // ================
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
 
-
     // Start timing simulations:
     // ========================
     t1 = MPI::Wtime();
@@ -157,6 +156,8 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
         // Apply collision operator:
         // =========================
+        // FPCOLL.interpolateIonMoments(&params, &EB, &IONS);
+        // FPCOLL.ApplyCollisionOperator(&params, &EB, &IONS);
 
         // Field solve:
         // ============

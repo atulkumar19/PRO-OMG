@@ -803,10 +803,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 						//Saving ions species density
 						name = "Tpar";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature;
+						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
@@ -820,10 +820,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 						//Saving ions species density
 						name = "Tper";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature;
+						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)/CS->temperature);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
@@ -837,10 +837,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 						//Saving ions species density
 						name = "Ux";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)/CS->velocity;
+						vec_values = IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)*CS->velocity;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)/CS->velocity);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)*CS->velocity);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();

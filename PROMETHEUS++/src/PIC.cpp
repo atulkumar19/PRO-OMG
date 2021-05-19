@@ -1446,8 +1446,6 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	//wxl = 0.5*(1.5 - abs(x)/H)^2
 
 	int NSP(IONS->NSP);
-	double Ma(IONS->M);
-	double a(1.0);
 
 	// Clearing content of ion moments:
 	// ===============================
@@ -1463,6 +1461,8 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	{
 		// Create private moments:
 		// ======================
+		double Ma(IONS->M);
+		double a(1.0);
 		arma::vec n = zeros(params->mesh.NX_IN_SIM + 4);
 		vfield_vec nv(params->mesh.NX_IN_SIM + 4);
 		arma::vec P11 = zeros(params->mesh.NX_IN_SIM + 4);
@@ -1555,6 +1555,8 @@ void PIC::eim(const simulationParameters * params, twoDimensional::ionSpecies * 
 
 void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
 {
+	double Ma(IONS->M);
+
 	// Drift velocity:
 	IONS->U_m.X = IONS->nv.X/IONS->n;
 	IONS->U_m.Y = IONS->nv.Y/IONS->n;

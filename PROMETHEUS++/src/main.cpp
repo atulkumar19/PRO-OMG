@@ -63,7 +63,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     FT EB;
     // Collision operator object:
     collisionOperator FPCOLL;
-    // Initialization object of type "FT" and "FT":
+    // Initialize "params" based on input file:
     INITIALIZE<IT, FT> init(&params, argc, argv);
     // UNITS object of type "FT" and "FT":
     UNITS<IT, FT> units;

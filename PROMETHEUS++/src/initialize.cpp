@@ -86,8 +86,8 @@ template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParameter
     return readMap;
 }
 
-template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[]){
-
+template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[])
+{
     // Get RANK and SIZE of nodes within COMM_WORLD:
     MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
     MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
@@ -141,17 +141,20 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	params->argv = argv;
 
 
-	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 ){
+	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 )
+    {
         MPI_Barrier(MPI_COMM_WORLD);
 
-		if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+		if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
 			cerr << "PRO++ ERROR: The number of MPI processes must be an even number." << endl;
 		}
 
 		MPI_Abort(MPI_COMM_WORLD,-100);
 	}
 
-    if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
         time_t current_time = std::time(NULL);
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
         cout << "STARTING " << params->argv[1] << " SIMULATION ON: " << std::ctime(&current_time) << endl;
@@ -159,11 +162,14 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     }
 
 	string name;
-	if(params->argc > 3){
+	if(params->argc > 3)
+    {
 		string argv(params->argv[3]);
 		name = "inputFiles/input_file_" + argv + ".input";
 		params->PATH += "/" + argv;
-	}else{
+	}
+    else
+    {
 		name = "inputFiles/input_file.input";
 		params->PATH += "/";
 	}
@@ -172,7 +178,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	parametersStringMap = loadParametersString(&name);
 
 	// Create HDF5 folders if they don't exist
-	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
+	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
 		string mkdir_outputs_dir = "mkdir " + params->PATH;
 		const char * sys = mkdir_outputs_dir.c_str();
 		int rsys = system(sys);
@@ -187,25 +194,32 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->mpi.MPIS_FIELDS = std::stoi( parametersStringMap["mpisForFields"] );
     params->mpi.MPIS_PARTICLES = params->mpi.NUMBER_MPI_DOMAINS - params->mpi.MPIS_FIELDS;
 
-    if(std::stoi( parametersStringMap["includeElectronInertia"] ) == 1){
+    if(std::stoi( parametersStringMap["includeElectronInertia"] ) == 1)
+    {
         params->includeElectronInertia = true;
-    }else{
+    }
+    else
+    {
         params->includeElectronInertia = false;
     }
 
-    if(std::stoi( parametersStringMap["quietStart"] ) == 1){
+    if(std::stoi( parametersStringMap["quietStart"] ) == 1)
+    {
         params->quietStart = true;
-    }else{
+    }
+    else
+    {
         params->quietStart = false;
     }
 
-
 	params->DTc = std::stod( parametersStringMap["DTc"] );
 
-
-    if(std::stoi( parametersStringMap["restart"] ) == 1){
+    if(std::stoi( parametersStringMap["restart"] ) == 1)
+    {
         params->restart = true;
-    }else{
+    }
+    else
+    {
         params->restart = false;
     }
 
@@ -227,9 +241,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->BGP.ne    = std::stod( parametersStringMap["ne"] );
 
-          params->PP.nTable = std::stod( parametersStringMap["nTable"] );
+    params->PP.nTable = std::stod( parametersStringMap["nTable"] );
 
-          params->BGP.Rphi0 = std::stod( parametersStringMap["Rphi0"] );
+    params->BGP.Rphi0 = std::stod( parametersStringMap["Rphi0"] );
 
 	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
 
@@ -241,8 +255,10 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     unsigned int NZ = (unsigned int)std::stoi( parametersStringMap["NZ"] );
 
     // Sanity check: if NX and/or NY is not a multiple of 2, the simulation aborts
-    if (params->dimensionality == 1){
-        if (fmod(NX, 2.0) > 0.0){
+    if (params->dimensionality == 1)
+    {
+        if (fmod(NX, 2.0) > 0.0)
+        {
             MPI_Barrier(params->mpi.MPI_TOPO);
             MPI_Abort(params->mpi.MPI_TOPO,-109);
         }
@@ -259,13 +275,17 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
         params->mesh.NUM_CELLS_PER_MPI = params->mesh.NX_PER_MPI;
         params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM;
-    }else{
-        if ((fmod(NX, 2.0) > 0.0) || (fmod(NY, 2.0) > 0.0)){
+    }
+    else
+    {
+        if ((fmod(NX, 2.0) > 0.0) || (fmod(NY, 2.0) > 0.0))
+        {
             MPI_Barrier(params->mpi.MPI_TOPO);
             MPI_Abort(params->mpi.MPI_TOPO,-109);
         }
 
-        if (NX >= NY){
+        if (NX >= NY)
+        {
             params->mesh.NX_IN_SIM = NX;
             params->mesh.NX_PER_MPI = (int)( (double)NX/(double)params->mpi.MPIS_FIELDS );
 
@@ -273,7 +293,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
             params->mesh.NY_PER_MPI = NY;
 
             params->mesh.SPLIT_DIRECTION = 0;
-        }else{
+        }
+        else
+        {
             params->mesh.NX_IN_SIM = NX;
             params->mesh.NX_PER_MPI = NX;
 
@@ -290,7 +312,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
     }
 
-
 	params->DrL = std::stod( parametersStringMap["DrL"] );
 
 	params->dp = std::stod( parametersStringMap["dp"] );
@@ -306,15 +327,15 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
 	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
 
-          params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
-          params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
-          params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
+    params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
+    params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
+    params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
 
 	// Parsing list of variables in outputs
 	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
 	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
 
-        // loading and rescaling plasma profiles obtained from external files
+    // loading and rescaling plasma profiles obtained from external files
 }
 
 
@@ -480,24 +501,24 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
 {
     // Initialize plasma density:
-    // Include Ghost cells (+2)
     IONS->n.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n___.zeros(params->mesh.NX_IN_SIM + 2);
 
     // Initialize plasma flux:
-    // Include Ghost cells (+2)
     IONS->nv.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);
 
+    // Initialize pressure tensors:
     IONS->P11.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->P22.zeros(params->mesh.NX_IN_SIM + 2);
-    IONS->Tper_m.zeros(params->mesh.NX_IN_SIM + 2);
-    IONS->Tpar_m.zeros(params->mesh.NX_IN_SIM + 2);
-    IONS->U_m.zeros(params->mesh.NX_IN_SIM + 2);
 
+    // Initialize derived quantities:
+    IONS->U_m.zeros(params->mesh.NX_IN_SIM + 2);
+    IONS->Tpar_m.zeros(params->mesh.NX_IN_SIM + 2);
+    IONS->Tper_m.zeros(params->mesh.NX_IN_SIM + 2);
 }
 
 

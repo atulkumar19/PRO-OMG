@@ -1362,8 +1362,6 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
             PIC::assignCell(params, EB, &IONS->at(ii));
 
             //Calculate partial moments:
-            //extrapolateIonDensity(params, &IONS->at(ii));
-			//extrapolateIonVelocity(params, &IONS->at(ii));
 			calculateIonMoments(params, &IONS->at(ii));
         }
 
@@ -1373,14 +1371,22 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Y);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Z);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).P11);
+		PIC::MPI_ReduceVec(params, &IONS->at(ii).P22);
 
         // Apply smoothing:
         // ===============
         for (int jj=0; jj<params->filtersPerIterationIons; jj++)
         {
           smooth(&IONS->at(ii).n, params->smoothingParameter);
-			    smooth(&IONS->at(ii).nv, params->smoothingParameter);
+		  smooth(&IONS->at(ii).nv, params->smoothingParameter);
+		  smooth(&IONS->at(ii).P11, params->smoothingParameter);
+		  smooth(&IONS->at(ii).P22, params->smoothingParameter);
         }
+
+		// Calculate derived ion moments: Tpar_m, Tper_m, Ux_m:
+		// ====================================================
+		calculateDerivedIonMoments(params, &IONS->at(ii));
 
         // 0th and 1st moments at various time levels are sent to fields processes:
         // =============================================================
@@ -1404,14 +1410,11 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 }
 
 void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
-{
-}
+{}
 
 
 // template class PIC<oneDimensional::ionSpecies, oneDimensional::fields>;
 // template class PIC<twoDimensional::ionSpecies, twoDimensional::fields>;
-
-
 
 
 // calculateIonMoments:
@@ -1456,7 +1459,7 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	IONS->Tpar_m.zeros();
 	IONS->Tper_m.zeros();
 
-	#pragma omp parallel default(none) shared(params, IONS,a, Ma) firstprivate(NSP)
+	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
 		// Create private moments:
 		// ======================
@@ -1542,6 +1545,16 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	IONS->P11 *= IONS->NCP/params->mesh.DX;
 	IONS->P22 *= IONS->NCP/params->mesh.DX;
 
+}
+
+void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{}
+
+void PIC::eim(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{}
+
+void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+{
 	// Drift velocity:
 	IONS->U_m.X = IONS->nv.X/IONS->n;
 	IONS->U_m.Y = IONS->nv.Y/IONS->n;
@@ -1556,10 +1569,5 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	IONS->Tper_m = Pper/(F_E_DS*IONS->n);
 }
 
-void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
-{
-}
-
-void PIC::eim(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
-{
-}
+void PIC::calculateDerivedIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{}

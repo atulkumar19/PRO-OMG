@@ -8,15 +8,19 @@ collisionOperator::collisionOperator()
 void collisionOperator::interpolateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
 {
         // Plasma density:
+        &IONS->n_p.zeros();
         interpolateScalarField(params, IONS, &IONS->n, &IONS->n_p);
 
         // Parallel temperature:
+        &IONS->Tpar_p.zeros();
         interpolateScalarField(params, IONS, &IONS->Tpar_m, &IONS->Tpar_p);
 
         // Perpendicular temperature:
+        &IONS->Tper_p.zeros();
         interpolateScalarField(params, IONS, &IONS->Tper_m, &IONS->Tper_p);
 
         // Parallel drift velocity:
+        &IONS->U_p.X.zeros();
         interpolateScalarField(params, IONS, &IONS->U_m.X, &IONS->U_p.X);
 }
 
@@ -33,13 +37,13 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
         {
             interpolateIonMoments(params,&IONS->at(ii));
             double y;
-            y = IONS->at(ii).n_p(1);
+            y = IONS->at(ii).n_p(1)/CS->length;
             cout << "ne(1) :" << y << endl;
 
-            y = IONS->at(ii).Tpar_p(1);
+            y = IONS->at(ii).Tpar_p(1)*CS->temperature;
             cout << "Tpar_p(1) :" << y << endl;
 
-            y = IONS->at(ii).U_p.X(1);
+            y = IONS->at(ii).U_p.X(1)*CS->velocity;
             cout << "U_p.X(1) :" << y << endl;
         }
 

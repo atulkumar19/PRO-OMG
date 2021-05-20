@@ -156,8 +156,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
         // Apply collision operator:
         // =========================
-        // FPCOLL.interpolateIonMoments(&params, &EB, &IONS);
-        FPCOLL.ApplyCollisionOperator(&params,&CS, &EB, &IONS);
+        FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
 
         // Field solve:
         // ============

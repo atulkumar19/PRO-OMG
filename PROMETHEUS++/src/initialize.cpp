@@ -440,6 +440,13 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     IONS->wxl_.zeros(IONS->NSP);
     IONS->wxr_.zeros(IONS->NSP);
 
+    // Initialize particle-defined quantities:
+    // ==================================
+    IONS->n_p.zeros(IONS->NSP);
+    IONS->U_p.zeros(IONS->NSP);
+    IONS->Tpar_p.zeros(IONS->NSP);
+    IONS->Tper_p.zeros(IONS->NSP);
+
     // Check integrity of the initial condition:
     // ========================================
     if((int)IONS->V.n_elem != (int)(3*IONS->NSP))
@@ -500,22 +507,24 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
 {
-    // Initialize plasma density:
+    // Initialize mesh-defined quantities:
+    // ==================================
+    // plasma density:
     IONS->n.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n___.zeros(params->mesh.NX_IN_SIM + 2);
 
-    // Initialize plasma flux:
+    // Plasma flux density:
     IONS->nv.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);
 
-    // Initialize pressure tensors:
+    // Pressure tensors:
     IONS->P11.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->P22.zeros(params->mesh.NX_IN_SIM + 2);
 
-    // Initialize derived quantities:
+    // Derived quantities:
     IONS->U_m.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->Tpar_m.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->Tper_m.zeros(params->mesh.NX_IN_SIM + 2);

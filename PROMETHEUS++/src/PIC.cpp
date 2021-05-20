@@ -1573,3 +1573,40 @@ void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDim
 
 void PIC::calculateDerivedIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
 {}
+
+void PIC::interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec field, arma::vec * F)
+{
+	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
+	//		wxl		   wxc		wxr
+	// --------*------------*--------X---*--------
+	//				    0       x
+
+	//wxc = 0.75 - (x/H)^2
+	//wxr = 0.5*(1.5 - abs(x)/H)^2
+	//wxl = 0.5*(1.5 - abs(x)/H)^2
+
+	int NX =  params->mesh.NX_IN_SIM + 4;//Mesh size along the X axis (considering the gosht cell)
+	int NSP(IONS->NSP);
+
+	arma::vec field_X = zeros(NX);
+
+	field_X.subvec(1,NX-2) = field;
+
+	fill4Ghosts(&field_X);
+
+	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
+	//that each position is accessed (read/written) by one thread at the time.
+	#pragma omp parallel for default(none) shared(params, IONS, F, field_X) firstprivate(NSP)
+	for(int ii=0; ii<NSP; ii++)
+	{
+		int ix = IONS->mn(ii) + 2;
+
+		(*F)(ii) += IONS->wxl(ii)*field_X(ix-1);
+		(*F)(ii) += IONS->wxc(ii)*field_X(ix);
+		(*F)(ii) += IONS->wxr(ii)*field_X(ix+1);
+
+	}//End of the parallel region
+}
+
+void PIC::interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat field, arma::mat * F)
+{}

@@ -149,6 +149,10 @@ protected:
 
 	void calculateDerivedIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
+	void interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec field, arma::vec * F);
+	
+	void interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat field, arma::mat * F);
+
   public:
 
 	PIC();

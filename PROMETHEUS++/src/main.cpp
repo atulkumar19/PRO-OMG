@@ -160,26 +160,34 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
         // Field solve:
         // ============
-
-        // Magnetic field:
-        //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
-
-        // Electric field:
-        if(tt > 2)
+        bool fieldFlag = false;
+        if (fieldFlag == true)
         {
-            // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
-            // Using the Bashford-Adams extrapolation.
-            fields_solver.advanceEField(&params, &EB, &IONS, true, true);
+            cout << "field solve enabled" << endl;
+            // Magnetic field:
+            //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+
+            // Electric field:
+            if(tt > 2)
+            {
+                // We use the generalized Ohm's law to advance in time the Electric field to level E^(N+1).
+                // Using the Bashford-Adams extrapolation.
+                fields_solver.advanceEField(&params, &EB, &IONS, true, true);
+            }
+            else
+            {
+                // Using basic velocity extrapolation.
+                fields_solver.advanceEField(&params, &EB, &IONS, true, false);
+            }
         }
         else
         {
-            // Using basic velocity extrapolation.
-            fields_solver.advanceEField(&params, &EB, &IONS, true, false);
-	}
+            cout << "field solve disabled" << endl;
+        }
 
         // Advance time:
         // =============
-	currentTime += params.DT*CS.time;
+        currentTime += params.DT*CS.time;
 
         // Save data:
         // ==========

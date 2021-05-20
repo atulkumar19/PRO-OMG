@@ -18,8 +18,8 @@ class collisionOperator
 {
     void interpolateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
     void interpolateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-    void interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec field, arma::vec * F);
-    void interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat field, arma::mat * F);
+    void interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * field, arma::vec * F);
+    void interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat * field, arma::mat * F);
     void fill4Ghosts(arma::vec * v);
 
     public:

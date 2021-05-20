@@ -1,12 +1,12 @@
 #include "collisionOperator.h"
 
+using namespace std;
+
 collisionOperator::collisionOperator()
 {}
 
 void collisionOperator::interpolateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
 {
-    if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-    {
         // Plasma density:
         interpolateScalarField(params, IONS, &IONS->n, &IONS->n_p);
 
@@ -18,7 +18,6 @@ void collisionOperator::interpolateIonMoments(const simulationParameters * param
 
         // Parallel drift velocity:
         interpolateScalarField(params, IONS, &IONS->U_m.X, &IONS->U_p.X);
-    }
 }
 
 void collisionOperator::interpolateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
@@ -26,25 +25,37 @@ void collisionOperator::interpolateIonMoments(const simulationParameters * param
 
 void collisionOperator::ApplyCollisionOperator(const simulationParameters * params, const characteristicScales * CS, vector<oneDimensional::ionSpecies> * IONS)
 {
-    // Interpolate ion moments:
-    // ========================
-    for(int ii=0;ii<IONS->size();ii++)
+    if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
     {
-        interpolateIonMoments(&params,&IONS->at(ii))
-    }
+        // Interpolate ion moments:
+        // ========================
+        for(int ii=0;ii<IONS->size();ii++)
+        {
+            interpolateIonMoments(params,&IONS->at(ii));
+            double y;
+            y = IONS->at(ii).n_p(1);
+            cout << "ne(1) :" << y << endl;
 
-    // Apply operator:
-    // ===============
-    int nspecies = IONS->size() + 1;
-    for(int ii=0;ii<nspecies;ii++)
-    {
+            y = IONS->at(ii).Tpar_p(1);
+            cout << "Tpar_p(1) :" << y << endl;
+
+            y = IONS->at(ii).U_p.X(1);
+            cout << "U_p.X(1) :" << y << endl;
+        }
+
+        // Apply operator:
+        // ===============
+        int nspecies = IONS->size() + 1;
+        for(int ii=0;ii<nspecies;ii++)
+        {
+        }
     }
 }
 
 void collisionOperator::ApplyCollisionOperator(const simulationParameters * params, const characteristicScales * CS, vector<twoDimensional::ionSpecies> * IONS)
 {}
 
-void collisionOperator::interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec field, arma::vec * F)
+void collisionOperator::interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * field, arma::vec * F)
 {
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
@@ -60,7 +71,7 @@ void collisionOperator::interpolateScalarField(const simulationParameters * para
 
 	arma::vec field_X = zeros(NX);
 
-	field_X.subvec(1,NX-2) = field;
+	field_X.subvec(1,NX-2) = *field;
 
 	fill4Ghosts(&field_X);
 
@@ -78,7 +89,7 @@ void collisionOperator::interpolateScalarField(const simulationParameters * para
 	}//End of the parallel region
 }
 
-void collisionOperator::interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat field, arma::mat * F)
+void collisionOperator::interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat * field, arma::mat * F)
 {}
 
 void collisionOperator::fill4Ghosts(arma::vec * v)

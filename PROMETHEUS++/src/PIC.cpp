@@ -1366,13 +1366,25 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
         }
 
         // Reduce IONS moments to PARTICLE ROOT:
-        // ==============================
+        // =====================================
         PIC::MPI_ReduceVec(params, &IONS->at(ii).n);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Y);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Z);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).P11);
 		PIC::MPI_ReduceVec(params, &IONS->at(ii).P22);
+
+		// Broadcast ion moments to all PARTICLE processes:
+		// ================================================
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+		{
+			MPI_Bcast(IONS->at(ii).n.memptr(), IONS->at(ii).n.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+			MPI_Bcast(IONS->at(ii).nv.X.memptr(), IONS->at(ii).nv.X.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+			MPI_Bcast(IONS->at(ii).nv.Y.memptr(), IONS->at(ii).nv.Y.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+			MPI_Bcast(IONS->at(ii).nv.Z.memptr(), IONS->at(ii).nv.Z.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+			MPI_Bcast(IONS->at(ii).P11.memptr(), IONS->at(ii).P11.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+			MPI_Bcast(IONS->at(ii).P22.memptr(), IONS->at(ii).P22.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+		}
 
         // Apply smoothing:
         // ===============
@@ -1386,7 +1398,11 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 
 		// Calculate derived ion moments: Tpar_m, Tper_m, Ux_m:
 		// ====================================================
-		calculateDerivedIonMoments(params, &IONS->at(ii));
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+		{
+			MPI_Barrier(params->mpi.COMM);
+			calculateDerivedIonMoments(params, &IONS->at(ii));
+		}
 
         // 0th and 1st moments at various time levels are sent to fields processes:
         // =============================================================

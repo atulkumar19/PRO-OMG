@@ -876,7 +876,7 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
         // Get file name containing initial condition plasma profiles:
         // ===========================================================
         int nn = params->PATH.length();
-        std::string inputFilePath = params->PATH.substr(0,nn-12);
+        std::string inputFilePath = params->PATH.substr(0,nn-13);
         std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
         std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
         std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file

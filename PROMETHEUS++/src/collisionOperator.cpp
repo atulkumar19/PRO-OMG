@@ -36,23 +36,15 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
         for(int ii=0;ii<IONS->size();ii++)
         {
             interpolateIonMoments(params,&IONS->at(ii));
-          /*  double y;
-            y = IONS->at(ii).n_p(1)/CS->length;
-            cout << "ne(1) :" << y << endl;
-
-            y = IONS->at(ii).Tpar_p(1)*CS->temperature;
-            cout << "Tpar_p(1) :" << y << endl;
-
-            y = IONS->at(ii).U_p.X(1)*CS->velocity;
-            cout << "U_p.X(1) :" << y << endl; */
         }
 
         // Apply operator:
         // ===============
-        int nspecies = IONS->size() + 1;
-        for(int ii=0;ii<nspecies;ii++)
+        for(int ii=0;ii<IONS->size();ii++)
         {
+            mcOperator(params,CS,&IONS->at(ii))
         }
+
     }
 }
 
@@ -102,4 +94,61 @@ void collisionOperator::fill4Ghosts(arma::vec * v)
 
 	v->subvec(N-2,N-1) = v->subvec(2,3);
 	v->subvec(0,1) = v->subvec(N-4,N-3);
+}
+
+void cartesian2Spherical(const double * wx, const double * wy, const double * wz, double * w, double * xi, double * phi)
+{
+    // code
+}
+
+void collisionOperator::mcOperator(const simulationParameters * params, const characteristicScales * CS, oneDimensional::ionSpecies * IONS)
+{
+    int NSP(IONS->NSP);
+
+    #pragma omp parallel for default(none) shared(params, IONS) firstprivate(NSP)
+	for(int pp=0; pp<NSP; pp++)
+	{
+        // The code below needs to be generalized to allow multiple ion species
+        // and thus the concept of center of mass needs to be incorporated:
+
+        // Particle "a" conditions:
+        // =======================
+        // Velocity:
+        double vxa = IONS->V(pp,1)*CS->velocity;
+        double vya = IONS->V(pp,2)*CS->velocity;
+        double vza = IONS->V(pp,3)*CS->velocity;
+
+        // Parameters:
+        double Ma = IONS->M*CS->mass;
+        double Za = IONS->Z;
+
+        // Drift velocity:
+        Uxa = IONS->U_p.X(pp);
+
+        // Convert to center of mass frame:
+        double wxa = vxa - Uxa;
+        double wya = vya;
+        double wza = vza;
+
+        // Convert velocity from cartesian to spherical coordinate system:
+        // ==============================================================
+        double w(0.0);
+        double xi(0.0);
+        double phi(0.0);
+
+        cartesian2Spherical(&wxa, &wya, &wza, &w, &xi, &phi);
+
+
+        // Loop over background species "b":
+        // ===============================
+        int num_species = IONS->size() + 1;
+        for (int ss=0,ss<num_species,ss++)
+        {
+            // Select "b" conditions:
+
+            // Ar
+
+        }
+
+	}
 }

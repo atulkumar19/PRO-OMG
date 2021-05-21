@@ -160,13 +160,17 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
         // Field solve:
         // ============
-        bool fieldFlag = true;
-        if (fieldFlag == true)
-        {
-            cout << "field solve enabled" << endl;
-            // Magnetic field:
-            //fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        bool EfieldFlag = true;
+        bool BfieldFlag = false;
 
+        // Magnetic field:
+        if (BfieldFlag)
+        {
+            fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+        }
+
+        if (EfieldFlag)
+        {
             // Electric field:
             if(tt > 2)
             {
@@ -182,7 +186,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         }
         else
         {
-            cout << "field solve disabled" << endl;
+            cout << " E field solve disabled" << endl;
         }
 
         // Advance time:

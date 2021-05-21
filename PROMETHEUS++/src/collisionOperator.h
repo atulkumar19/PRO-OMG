@@ -21,6 +21,8 @@ class collisionOperator
     void interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * field, arma::vec * F);
     void interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat * field, arma::mat * F);
     void fill4Ghosts(arma::vec * v);
+    void mcOperator(const simulationParameters * params, const characteristicScales * CS, oneDimensional::ionSpecies * IONS);
+    void cartesian2Spherical(const double * wx, const double * wy, const double * wz, double * w, double * xi, double * phi);
 
     public:
     collisionOperator();

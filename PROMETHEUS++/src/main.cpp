@@ -160,7 +160,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
 
         // Field solve:
         // ============
-        bool fieldFlag = false;
+        bool fieldFlag = true;
         if (fieldFlag == true)
         {
             cout << "field solve enabled" << endl;

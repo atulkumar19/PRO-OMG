@@ -36,7 +36,7 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
         for(int ii=0;ii<IONS->size();ii++)
         {
             interpolateIonMoments(params,&IONS->at(ii));
-            double y;
+          /*  double y;
             y = IONS->at(ii).n_p(1)/CS->length;
             cout << "ne(1) :" << y << endl;
 
@@ -44,7 +44,7 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
             cout << "Tpar_p(1) :" << y << endl;
 
             y = IONS->at(ii).U_p.X(1)*CS->velocity;
-            cout << "U_p.X(1) :" << y << endl;
+            cout << "U_p.X(1) :" << y << endl; */
         }
 
         // Apply operator:

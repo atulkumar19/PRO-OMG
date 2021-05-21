@@ -42,7 +42,7 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
         // ===============
         for(int ii=0;ii<IONS->size();ii++)
         {
-            mcOperator(params,CS,&IONS->at(ii))
+            mcOperator(params,CS,&IONS->at(ii));
         }
 
     }
@@ -105,7 +105,7 @@ void collisionOperator::mcOperator(const simulationParameters * params, const ch
 {
     int NSP(IONS->NSP);
 
-    #pragma omp parallel for default(none) shared(params, IONS) firstprivate(NSP)
+    #pragma omp parallel for default(none) shared(params, CS, IONS) firstprivate(NSP)
 	for(int pp=0; pp<NSP; pp++)
 	{
         // The code below needs to be generalized to allow multiple ion species
@@ -123,7 +123,7 @@ void collisionOperator::mcOperator(const simulationParameters * params, const ch
         double Za = IONS->Z;
 
         // Drift velocity:
-        Uxa = IONS->U_p.X(pp);
+        double Uxa = IONS->U_p.X(pp);
 
         // Convert to center of mass frame:
         double wxa = vxa - Uxa;
@@ -141,8 +141,8 @@ void collisionOperator::mcOperator(const simulationParameters * params, const ch
 
         // Loop over background species "b":
         // ===============================
-        int num_species = IONS->size() + 1;
-        for (int ss=0,ss<num_species,ss++)
+        int num_species = params->numberOfParticleSpecies; /*IONS->size() + 1;*/
+        for (int ss=0;ss < num_species;ss++)
         {
             // Select "b" conditions:
 

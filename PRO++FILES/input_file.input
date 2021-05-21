@@ -26,4 +26,4 @@ NY                          1
 NZ                          1
 DrL                         -1
 dp                          0.2
-outputs_variables           {B,E,X,V,n,pCount,eCount,mn,U}
+outputs_variables           {B,E,X,V,n,pCount,eCount,mn,U,np,Uparp,Tparp,Tperp,Tper,Tpar,Ux}

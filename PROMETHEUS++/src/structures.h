@@ -131,7 +131,7 @@ struct backgroundPlasmaParameters{
 	double Bx;
 	double By;
 	double Bz;
-          double Rphi0;
+  double Rphi0;
 
 	double theta; // Spherical polar angle (as measured from z-axis)
 	double phi; // Spherical azimuthal angle (as measured from x-axis)

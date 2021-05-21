@@ -296,18 +296,18 @@ public:
 	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"
 
-        arma::mat P11;
-        arma::mat P22;
+	arma::mat P11;
+	arma::mat P22;
 
-        vfield_mat U_m;
-        arma::mat Tpar_m;
-        arma::mat Tper_m;
+	vfield_mat U_m;
+	arma::mat Tpar_m;
+	arma::mat Tper_m;
 
-        // Particle-defined ion moments:
-        arma::mat n_p;
-        vfield_mat U_p;
-        arma::mat Tpar_p;
-        arma::mat Tper_p;
+	// Particle-defined ion moments:
+	arma::mat n_p;
+	vfield_mat U_p;
+	arma::mat Tpar_p;
+	arma::mat Tper_p;
 
 	ionSpecies(){};
 	~ionSpecies(){};

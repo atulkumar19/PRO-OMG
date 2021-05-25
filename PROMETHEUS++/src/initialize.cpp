@@ -443,7 +443,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     // Initialize particle-defined quantities:
     // ==================================
     IONS->n_p.zeros(IONS->NSP);
-    IONS->U_p.zeros(IONS->NSP);
+    IONS->nv_p.zeros(IONS->NSP);
     IONS->Tpar_p.zeros(IONS->NSP);
     IONS->Tper_p.zeros(IONS->NSP);
 
@@ -509,13 +509,13 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArr
 {
     // Initialize mesh-defined quantities:
     // ==================================
-    // plasma density:
+    // Ion density:
     IONS->n.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n_.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n__.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->n___.zeros(params->mesh.NX_IN_SIM + 2);
 
-    // Plasma flux density:
+    // Ion flux density:
     IONS->nv.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2);
@@ -525,7 +525,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArr
     IONS->P22.zeros(params->mesh.NX_IN_SIM + 2);
 
     // Derived quantities:
-    IONS->U_m.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->Tpar_m.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->Tper_m.zeros(params->mesh.NX_IN_SIM + 2);
 }

@@ -784,15 +784,15 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 				 }
-				 if(params->outputs_variables.at(ov) == "Uparp")
+				 if(params->outputs_variables.at(ov) == "nvp")
 				 {
-					 //Saving the "X" drift velocity at the particle positions:
-					 name = "Uparp";
+					 //Saving the "X" component of ion flux density at particle positions:
+					 name = "nvp";
 					 #ifdef HDF5_DOUBLE
-					 vec_values = IONS->at(ii).U_p.X*CS->velocity;
+					 vec_values = IONS->at(ii).nv_p*CS->velocity/CS->length;
 					 saveToHDF5(group_ionSpecies, name, &vec_values);
 					 #elif defined HDF5_FLOAT
-					 fvec_values = conv_to<fvec>::from(IONS->at(ii).U_p.X)*CS->velocity;
+					 fvec_values = conv_to<fvec>::from(IONS->at(ii).nv_p)*CS->velocity/CS->length;
 					 saveToHDF5(group_ionSpecies, name, &fvec_values);
 					 #endif
 					 name.clear();
@@ -868,23 +868,6 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
 						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature);
-						saveToHDF5(group_ionSpecies, name, &fvec_values);
-						#endif
-						name.clear();
-					}
-
-				}
-				else if(params->outputs_variables.at(ov) == "Ux")
-				{
-					if (params->mpi.IS_PARTICLES_ROOT)
-					{
-						//Saving ions species density
-						name = "Ux";
-						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)*CS->velocity;
-						saveToHDF5(group_ionSpecies, name, &vec_values);
-						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).U_m.X.subvec(1,params->mesh.NX_IN_SIM)*CS->velocity);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();

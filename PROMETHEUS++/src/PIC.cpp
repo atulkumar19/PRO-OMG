@@ -1396,7 +1396,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 		  smooth(&IONS->at(ii).P22, params->smoothingParameter);
         }
 
-		// Calculate derived ion moments: Tpar_m, Tper_m, Ux_m:
+		// Calculate derived ion moments: Tpar_m, Tper_m:
 		// ====================================================
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
 		{
@@ -1469,9 +1469,6 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	IONS->nv.zeros();
 	IONS->P11.zeros();
 	IONS->P22.zeros();
-	IONS->U_m.zeros();
-	IONS->Tpar_m.zeros();
-	IONS->Tper_m.zeros();
 
 	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
 	{
@@ -1547,13 +1544,16 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 
 	}//End of the parallel region
 
-	// Add magnetic compression:
-	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
-	IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
-	//IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
-	//IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
-	IONS->P11.subvec(1,params->mesh.NX_IN_SIM) = IONS->P11.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
-	IONS->P22.subvec(1,params->mesh.NX_IN_SIM) = IONS->P22.subvec(1,params->mesh.NX_IN_SIM) % (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	// Calculate compression factor:
+	arma::vec compressionFactor = (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+
+	// Apply magnetic compression:
+	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
+	IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) %compressionFactor;
+	//IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
+	//IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
+	IONS->P11.subvec(1,params->mesh.NX_IN_SIM) = IONS->P11.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
+	IONS->P22.subvec(1,params->mesh.NX_IN_SIM) = IONS->P22.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
 
 	// Scale:
 	IONS->n *= IONS->NCP/params->mesh.DX;
@@ -1573,16 +1573,11 @@ void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDim
 {
 	double Ma(IONS->M);
 
-	// Drift velocity:
-	IONS->U_m.X = IONS->nv.X/IONS->n;
-	IONS->U_m.Y = IONS->nv.Y/IONS->n;
-	IONS->U_m.Z = IONS->nv.Z/IONS->n;
-
-	// Pressures:
-	arma::vec Ppar = IONS->P11 - (Ma*IONS->nv.X % IONS->U_m.X);
+	// Ion pressures:
+	arma::vec Ppar = IONS->P11 - (Ma*IONS->nv.X % IONS->nv.X/IONS->n);
 	arma::vec Pper = IONS->P22; // We have neglected perp drift kinetic energy
 
-	// Temperatures:
+	// Ion temperatures:
 	IONS->Tpar_m = Ppar/(F_E_DS*IONS->n);
 	IONS->Tper_m = Pper/(F_E_DS*IONS->n);
 }

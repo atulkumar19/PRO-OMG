@@ -217,17 +217,14 @@ public:
 	vfield_vec nv; 				// Ion bulk velocity at time level "l + 1/2"
 	vfield_vec nv_; 			// Ion bulk velocity at time level "l - 1/2"
 	vfield_vec nv__; 			// Ion bulk velocity at time level "l - 3/2"
-
-    arma::vec P11;				// Pressure tensor, component 1,1
-    arma::vec P22;				// Pressure tensor, component 2,2
-
-    vfield_vec U_m;				// Ion drif velocity
+    arma::vec P11;				// Ion pressure tensor, component 1,1
+    arma::vec P22;				// Ion pressure tensor, component 2,2
     arma::vec Tpar_m;			// Ion parallel temperature
     arma::vec Tper_m;			// Ion perpendicular temperature
 
 	// Particle-defined ion moments:
 	arma::vec n_p;
-	vfield_vec U_p;
+	arma::vec nv_p;
 	arma::vec Tpar_p;
 	arma::vec Tper_p;
 

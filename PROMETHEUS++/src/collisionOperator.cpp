@@ -9,6 +9,68 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
 {
     if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
     {
+        // Number of ION species:
+    	// =====================
+    	int numIonSpecies = IONS->size();
+
+    	for (int aa=0; aa<numIonSpecies; aa++)
+    	{
+            // Number of particles is "aa" species:
+        	// ===================================
+        	int NSP_a = IONS->at(aa).NSP;
+
+        	// Species "aa" parameters:
+        	// =======================
+        	double Ma = IONS->at(aa).M*CS->mass;
+        	double Za = IONS->at(aa).Z;
+
+        	// Initialize total ion flux density:
+        	// ===========================================
+        	arma::vec nUx_i = zeros(NSP_a,1);
+        	arma::vec n_i   = zeros(NSP_a,1);
+
+        	for (int bb=0; bb<(numIonSpecies+1); bb++)
+            {
+                // Background species "bb" conditions:
+				// ==================================
+				if (bb < numIonSpecies) // Ions:
+				{
+					// Background parameters:
+					double Mb = IONS->at(bb).M*CS->mass;
+					double Zb = IONS->at(bb).Z;
+
+					// Interpolate moments:
+					interpolateIonMoments(params,IONS,aa,bb);
+					arma::vec n_p    = IONS->at(aa).n_p/CS->length;
+					arma::vec nv_p   = IONS->at(aa).nv_p*CS->velocity/CS->length;
+					arma::vec Tpar_p = IONS->at(aa).Tpar_p*CS->temperature*F_KB/F_E;
+					arma::vec Tper_p = IONS->at(aa).Tper_p*CS->temperature*F_KB/F_E;
+
+					// Background conditions:
+					arma::vec nb = n_p;
+					arma::vec Tb = 0.5*(Tpar_p + Tper_p);
+					arma::vec uxb = nv_p/n_p;
+
+					// Accumulate total ion density and ion flux density:
+					n_i   = n_i + n_p*Zb;
+					nUx_i = nUx_i + nv_p*Zb;
+				}
+				else // Electrons:
+				{
+					// Background parameters:
+					double Mb = F_ME;
+					double Zb = -1;
+
+					// Background conditions:
+					arma::vec nb  = n_i;
+					arma::vec Tb  = ones(NSP_a,1)*params->BGP.Te*CS->temperature;
+					arma::vec uxb = nUx_i/n_i;
+				}
+
+                // Apply collisions to all particles:
+				// ==================================
+            }
+        }
         // Interpolate ion moments:
         // ========================
         //for(int ii=0;ii<IONS->size();ii++)

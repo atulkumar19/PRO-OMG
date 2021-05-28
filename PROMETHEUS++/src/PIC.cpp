@@ -238,17 +238,22 @@ void PIC::MPI_Recvvfield_mat(const simulationParameters * params, vfield_mat * v
 
 // * * * Ghost contributions * * *
 void PIC::fill4Ghosts(arma::vec * v){
-	int N = v->n_elem;
+	//int N = v->n_elem;
 
-	v->subvec(N-2,N-1) = v->subvec(2,3);
-	v->subvec(0,1) = v->subvec(N-4,N-3);
+	//v->subvec(N-2,N-1) = v->subvec(2,3);
+	//v->subvec(0,1) = v->subvec(N-4,N-3);
 }
 
 void PIC::include4GhostsContributions(arma::vec * v){
+	//int N = v->n_elem;
+
+	//v->subvec(2,3) += v->subvec(N-2,N-1);
+	//v->subvec(N-4,N-3) += v->subvec(0,1);
+
 	int N = v->n_elem;
 
-	v->subvec(2,3) += v->subvec(N-2,N-1);
-	v->subvec(N-4,N-3) += v->subvec(0,1);
+	v->subvec(0,1)     = v->subvec(2,3);
+	v->subvec(N-2,N-1) = v->subvec(N-4,N-3);
 }
 
 

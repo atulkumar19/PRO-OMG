@@ -31,13 +31,13 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
 	if (params->dimensionality == 1)
         {
             n_cs = CS->length*CS->density;
-    
+
             V1D.ne.zeros(NX_S);
             V1D._n.zeros(NX_S);
             V1D.n.zeros(NX_S);
             V1D.n_.zeros(NX_S);
             V1D.n__.zeros(NX_S);
-    
+
             V1D.V.zeros(NX_S);
             V1D.U.zeros(NX_S);
             V1D.U_.zeros(NX_S);
@@ -46,13 +46,13 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
         else if (params->dimensionality == 2)
         {
             n_cs = CS->length*CS->length*CS->density;
-    
+
             V2D.ne.zeros(NX_S,NY_S);
             V2D._n.zeros(NX_S,NY_S);
             V2D.n.zeros(NX_S,NY_S);
             V2D.n_.zeros(NX_S,NY_S);
             V2D.n__.zeros(NX_S,NY_S);
-    
+
             V2D.V.zeros(NX_S,NY_S);
             V2D.U.zeros(NX_S,NY_S);
             V2D.U_.zeros(NX_S,NY_S);
@@ -65,10 +65,10 @@ void EMF_SOLVER::MPI_Allgathervec(const simulationParameters * params, arma::vec
 {
     unsigned int iIndex = params->mpi.iIndex;
     unsigned int fIndex = params->mpi.fIndex;
-    
+
     arma::vec recvbuf(params->mesh.NX_IN_SIM);
     arma::vec sendbuf(params->mesh.NX_PER_MPI);
-    
+
     //Allgather for x-component
     sendbuf = field->subvec(iIndex, fIndex);
     MPI_Allgather(sendbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, recvbuf.memptr(), params->mesh.NX_PER_MPI, MPI_DOUBLE, params->mpi.MPI_TOPO);
@@ -657,30 +657,30 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		}
 
                     //The E-field has three terms: (1) CurlB terms, (2) Hall terms and, (3) Pressure gradient terms
-                    
+
 		// We compute the curl(B).
 		vfield_vec curlB(NX_T);
 
 		curlB.Y.subvec(iIndex,fIndex) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 		curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
-                    
-                    //Removing the contribution of curlB_ext generated due to nonuniform B-field
-                    //The constructor for Vfield_vec sets curlB.X equals to zero
-                    curlB.Y.subvec(iIndex,fIndex) *= 0;
-                    curlB.Z.subvec(iIndex,fIndex) *= 0;
-                   
+
+        //Removing the contribution of curlB_ext generated due to nonuniform B-field
+        //The constructor for Vfield_vec sets curlB.X equals to zero
+        curlB.Y.subvec(iIndex,fIndex) *= 0;
+        curlB.Z.subvec(iIndex,fIndex) *= 0;
+
 		EB->E.zeros();
 
 		// x-component
-                    //curl B term
+        //curl B term
 		EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) );
 
-                    //Hall terms
-		EB->E.X.subvec(iIndex,fIndex) += (- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+        //Hall terms
+		//EB->E.X.subvec(iIndex,fIndex) += (- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
 
-		EB->E.X.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
-                    
-                    //Pressure gradient terms
+		//EB->E.X.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+
+        //Pressure gradient terms
 
 		// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
 		V1D.dndx = 0.5*( V1D.ne.subvec(2,NX_S-1) - V1D.ne.subvec(0,NX_S-3) )/params->mesh.DX;
@@ -694,14 +694,14 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 
 		// y-component
-                    //Curl B term
+        //Curl B term
 
 		EB->E.Y.subvec(iIndex,fIndex) =( ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) ));
 
-                    //Hall terms
-		EB->E.Y.subvec(iIndex,fIndex) += ( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+        //Hall terms
+		//EB->E.Y.subvec(iIndex,fIndex) += ( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
 
-		EB->E.Y.subvec(iIndex,fIndex) += (- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+		//EB->E.Y.subvec(iIndex,fIndex) += (- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 
 		// Including electron inertia term
 		if (params->includeElectronInertia){
@@ -714,10 +714,10 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
                     // Curl B terms
 		EB->E.Z.subvec(iIndex,fIndex) = ( - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2)));
 
-                    // Hall terms: Equal to zero because of the radial transport contraint
-		EB->E.Z.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+        // Hall terms: Equal to zero because of the radial transport contraint
+		//EB->E.Z.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
 
-		EB->E.Z.subvec(iIndex,fIndex) += (V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+		//EB->E.Z.subvec(iIndex,fIndex) += (V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 
 		// Including electron inertia term
 		if (params->includeElectronInertia){

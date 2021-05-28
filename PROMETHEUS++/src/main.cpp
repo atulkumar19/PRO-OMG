@@ -157,7 +157,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         // Apply collision operator:
         // =========================
         FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
-        
+
         // Field solve:
         // ============
         bool EfieldFlag = true;

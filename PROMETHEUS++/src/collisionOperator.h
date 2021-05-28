@@ -28,6 +28,7 @@ private:
 
     void u_CollisionOperator(double * w, double xab, double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double dt);
     void xi_CollisionOperator(double * xi, double xab, double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double dt);
+    void phi_CollisionOperator(double * phi, double xi, double xab, double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double dt);
 
     double nu_E(double xab, double nb, double Tb, double Mb, double Zb, double Za, double Ma, int energyOperatorModel);
     double nu_D(double xab, double nb, double Tb, double Mb, double Zb, double Za, double Ma);

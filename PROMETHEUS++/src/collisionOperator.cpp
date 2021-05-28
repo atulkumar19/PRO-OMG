@@ -121,7 +121,7 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
 					xi_CollisionOperator(&xi0,xab,wTb,nb(ii),Tb(ii),Mb,Zb,Za,Ma,dt);
 
 					// Gyro-phase operator:
-					//phi_CollisionOperator(phi0,xi0,xab,wTb,nb(ii),Tb(ii),Mb,Zb,Za,Ma,dt);
+					phi_CollisionOperator(&phi0,xi0,xab,wTb,nb(ii),Tb(ii),Mb,Zb,Za,Ma,dt);
 
 					// Final Velocity:
 					// =============================================================================
@@ -326,10 +326,16 @@ void collisionOperator:: xi_CollisionOperator(double * xi, double xab, double wT
     nu_D_dt = nu_D(xab,nb,Tb,Mb,Zb,Za,Ma)*dt;
 
     // Calculate substeps:
+    // ===========================
     int Nstep   = round(nu_D_dt/0.4) + 1;
     double dt_s = (double) dt/Nstep;
 
+    // Recalculate normalized rate:
+    // ============================
+    nu_D_dt  = nu_D_dt/Nstep;
+
     // Limit substepping:
+    // ===========================
     if (Nstep > 20)
     {
         cout << "Nstep for 'xi' operator = " << Nstep << endl;
@@ -337,8 +343,7 @@ void collisionOperator:: xi_CollisionOperator(double * xi, double xab, double wT
     }
 
     // Apply operator:
-    nu_D_dt  = nu_D_dt/Nstep;
-
+    // ===========================
     for (int kk = 0; kk<Nstep; kk++)
     {
         // Deterministic part:
@@ -367,6 +372,69 @@ void collisionOperator:: xi_CollisionOperator(double * xi, double xab, double wT
         // Monte-Carlo change:
         // ==================
        *(xi) = *(xi) + A + B + C;
+    }
+
+}
+
+void collisionOperator::phi_CollisionOperator(double * phi, double xi, double xab, double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double dt)
+{
+    // Normalized collisional rate:
+    // ===========================
+    double nu_D_dt(0.0);
+    nu_D_dt = nu_D(xab,nb,Tb,Mb,Zb,Za,Ma)*dt;
+
+    // Calculate substeps:
+    // ===========================
+    int Nstep   = round(nu_D_dt/0.4) + 1;
+    double dt_s = (double) dt/Nstep;
+
+    // Recalculate normalized rate:
+    // ============================
+    nu_D_dt  = nu_D_dt/Nstep;
+
+    // Limit substepping:
+    // ===========================
+    if (Nstep > 20)
+    {
+        cout << "Nstep for 'phi' operator = " << Nstep << endl;
+        Nstep = 20;
+    }
+
+    // Apply operator:
+    // ===========================
+    for (int kk = 0; kk<Nstep; kk++)
+    {
+        // Deterministic part:
+        // ==================
+        double A = 0.0;
+        double B = 0.0;
+
+        // Stochastic part:
+        // ===============
+        // Random number between 0 and 1:
+        double randomNumber = (double) rand()/RAND_MAX;
+        double Rm;
+
+        // -1 or +1 function:
+        if (randomNumber - 0.5 < 0)
+        {
+            Rm = -1.0;
+        }
+        else
+        {
+            Rm = +1.0;
+        }
+
+        if (xi==1)
+        {
+            xi = 0.999;
+        }
+
+        double C = Rm*sqrt( nu_D_dt/(1.0 - pow(xi,2.0)) );
+
+        // Monte-Carlo change:
+        // ==================
+       *(phi) = *(phi) + A + B + C;
     }
 
 }

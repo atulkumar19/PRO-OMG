@@ -549,8 +549,10 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimension
 	+ IONS_: Ions' variables at time level "l - 1/2"
 	+ IONS: Ions' variables at time level "l + 1/2"
 */
-void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, bool extrap, bool BAE){
-	if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR){
+void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, bool extrap, bool BAE)
+{
+	if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR)
+	{
 		MPI_passGhosts(params,&EB->E);
 		MPI_passGhosts(params,&EB->B);
 
@@ -561,24 +563,26 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		V1D.ne.zeros();
 		V1D.V.zeros();
 
-		// We calculate the number density and bulk velocities at time level "l + 1/2"
+		// Calculate the number density and bulk velocities at time level "l + 1/2":
+		// =========================================================================
 		V1D.n.zeros();
 		V1D.U.zeros();
-		for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
-				fillGhosts(&IONS->at(ii).n);
-				fillGhosts(&IONS->at(ii).nv.X);
-				fillGhosts(&IONS->at(ii).nv.Y);
-				fillGhosts(&IONS->at(ii).nv.Z);
+		for(int ii=0; ii<params->numberOfParticleSpecies; ii++)
+		{
+			fillGhosts(&IONS->at(ii).n);
+			fillGhosts(&IONS->at(ii).nv.X);
+			fillGhosts(&IONS->at(ii).nv.Y);
+			fillGhosts(&IONS->at(ii).nv.Z);
 
-				// Ions density at time level "l + 1/2"
-				// n(l+1/2) = ( n(l+1) + n(l) )/2
-				V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
+			// Ions density at time level "l + 1/2"
+			// n(l+1/2) = ( n(l+1) + n(l) )/2
+			V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
 
-				// Ions bulk velocity at time level "l + 1/2"
-				//sum_k[ Z_k*n_k*u_k ]
-				V1D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
-				V1D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
-				V1D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
+			// Ions bulk velocity at time level "l + 1/2"
+			//sum_k[ Z_k*n_k*u_k ]
+			V1D.U.X += IONS->at(ii).Z*IONS->at(ii).nv.X.subvec(iIndex - 1, fIndex + 1);
+			V1D.U.Y += IONS->at(ii).Z*IONS->at(ii).nv.Y.subvec(iIndex - 1, fIndex + 1);
+			V1D.U.Z += IONS->at(ii).Z*IONS->at(ii).nv.Z.subvec(iIndex - 1, fIndex + 1);
 		}//This density is not normalized (n =/= n/n_cs) but it is dimensionless.
 
 		V1D.U.X /= V1D.n;
@@ -587,12 +591,15 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 		V1D.n /= n_cs;//Dimensionless density
 
-		// We perform the following computations of the number density and bulk velocity at different past times
-		if (extrap){
+		// We perform the following computations of the number density and bulk velocity at different past times:
+		// ======================================================================================================
+		if (extrap)
+		{
 			V1D._n.zeros();
 			V1D.n_.zeros();
 			V1D.U_.zeros();
-			for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
+			for(int ii=0; ii<params->numberOfParticleSpecies; ii++)
+			{
 					fillGhosts(&IONS->at(ii).n);
 					fillGhosts(&IONS->at(ii).n_);
 					fillGhosts(&IONS->at(ii).n__);
@@ -620,10 +627,12 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 			V1D._n /= n_cs;
 
-			if(BAE){
+			if(BAE)
+			{
 				V1D.n__.zeros();
 				V1D.U__.zeros();
-				for(int ii=0; ii<params->numberOfParticleSpecies; ii++){
+				for(int ii=0; ii<params->numberOfParticleSpecies; ii++)
+				{
 					fillGhosts(&IONS->at(ii).n___);
 					fillGhosts(&IONS->at(ii).nv__.X);
 					fillGhosts(&IONS->at(ii).nv__.Y);
@@ -645,87 +654,102 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 				//Here we use the velocity extrapolation U^(N+1) = 2*U^(N+1/2) - 1.5*U^(N-1/2) + 0.5*U^(N-3/2)
 				V1D.V = 2.0*V1D.U - 1.5*V1D.U_ + 0.5*V1D.U__;
-			}else{
+			}
+			else
+			{
 				//Here we use the velocity extrapolation U^(N+1) = 1.5*U^(N+1/2) - 0.5*U^(N-1/2)
 				V1D.V = 1.5*V1D.U - 0.5*V1D.U_;
 			}
 
 			V1D.ne = V1D._n;
-		}else{
+		}
+		else
+		{
 			V1D.V = V1D.U;
 			V1D.ne = V1D.n;
 		}
 
-                    //The E-field has three terms: (1) CurlB terms, (2) Hall terms and, (3) Pressure gradient terms
+		// Electric field solve:
+		// =======================================================================================================
+    	//The E-field has three terms: (1) CurlB terms, (2) Hall terms and, (3) Pressure gradient terms
 
-		// We compute the curl(B).
-		vfield_vec curlB(NX_T);
+		bool curlBSolve = false;
+		bool hallTermSolve = false;
+		bool pressureTermSolve = true;
 
-		curlB.Y.subvec(iIndex,fIndex) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
-		curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
-
-        //Removing the contribution of curlB_ext generated due to nonuniform B-field
-        //The constructor for Vfield_vec sets curlB.X equals to zero
-        curlB.Y.subvec(iIndex,fIndex) *= 0;
-        curlB.Z.subvec(iIndex,fIndex) *= 0;
-
+		// Initialize electric field:
+		// =========================
 		EB->E.zeros();
 
-		// x-component
-        //curl B term
-		EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) );
+		// Curl B terms:
+		// =====================
+		if (curlBSolve)
+		{
+			// Calculate Curl B:
+			vfield_vec curlB(NX_T);
+			curlB.Y.subvec(iIndex,fIndex) = - 0.5*( EB->B.Z.subvec(iIndex+1,fIndex+1) - EB->B.Z.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
+			curlB.Z.subvec(iIndex,fIndex) =   0.5*( EB->B.Y.subvec(iIndex+1,fIndex+1) - EB->B.Y.subvec(iIndex-1,fIndex-1) )/params->mesh.DX;
 
-        //Hall terms
-		//EB->E.X.subvec(iIndex,fIndex) += (- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+			// "x" component:
+			EB->E.X.subvec(iIndex,fIndex) = ( curlB.Y.subvec(iIndex,fIndex) % EB->B.Z.subvec(iIndex,fIndex) - curlB.Z.subvec(iIndex,fIndex) % EB->B.Y.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) );
 
-		//EB->E.X.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+			// "y" component:
+			EB->E.Y.subvec(iIndex,fIndex) =( ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) ));
 
-        //Pressure gradient terms
-
-		// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
-		V1D.dndx = 0.5*( V1D.ne.subvec(2,NX_S-1) - V1D.ne.subvec(0,NX_S-3) )/params->mesh.DX;
-
-		EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*V1D.dndx/V1D.ne.subvec(1,NX_S-2);
-
-		// Including electron inertia term
-		if (params->includeElectronInertia){
-			// CFD with DX/2
+			// "z" component:
+			EB->E.Z.subvec(iIndex,fIndex) = ( - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2)));
 		}
 
+		// Hall terms:
+		// ===========
+		if (hallTermSolve)
+		{
+			// "x" component:
+			// ########################################################################
+			// Bz and By need to be written in term of Bx in the paraxial approximation
+			// #######################################################################
 
-		// y-component
-        //Curl B term
+			EB->E.X.subvec(iIndex,fIndex) += (- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+			EB->E.X.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
 
-		EB->E.Y.subvec(iIndex,fIndex) =( ( curlB.Z.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/( F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2) ));
+			// "y" component:
+			// ########################################################################
+			// Bz and By need to be written in term of Bx in the paraxial approximation
+			// ########################################################################
+			EB->E.Y.subvec(iIndex,fIndex) += ( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
+			EB->E.Y.subvec(iIndex,fIndex) += (- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 
-        //Hall terms
-		//EB->E.Y.subvec(iIndex,fIndex) += ( V1D.V.X.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
-
-		//EB->E.Y.subvec(iIndex,fIndex) += (- V1D.V.Z.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
-
-		// Including electron inertia term
-		if (params->includeElectronInertia){
-
+			// "z" component:
+			// ########################################################################
+			// Bz and By need to be written in term of Bx in the paraxial approximation
+			// ########################################################################
+			EB->E.Z.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+			EB->E.Z.subvec(iIndex,fIndex) += (V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 		}
 
-		// z-component
+		// Pressure term:
+		// ==============
+		if (pressureTermSolve)
+		{
+			// The partial derivative dn/dx is computed using centered finite differences with grid size DX/2
+			V1D.dndx = 0.5*( V1D.ne.subvec(2,NX_S-1) - V1D.ne.subvec(0,NX_S-3) )/params->mesh.DX;
 
-		// The y-component of Curl(B) has been calculated above at the right places. Note that Ey-nodes and Ez-nodes are the same.
-                    // Curl B terms
-		EB->E.Z.subvec(iIndex,fIndex) = ( - ( curlB.Y.subvec(iIndex,fIndex) % EB->B.X.subvec(iIndex,fIndex) )/(F_MU_DS*F_E_DS*V1D.ne.subvec(1,NX_S-2)));
+			// "x" component:
+			EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*V1D.dndx/V1D.ne.subvec(1,NX_S-2);
 
-        // Hall terms: Equal to zero because of the radial transport contraint
-		//EB->E.Z.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+			// With scalar Te in 1D3V, there are not "y" and "z" components.
+			// If Te becomes tensor, then mirror forces arise in "x" and then may also cause "y" and "z" components to be finite.
 
-		//EB->E.Z.subvec(iIndex,fIndex) += (V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
+			// "y" component:
 
-		// Including electron inertia term
-		if (params->includeElectronInertia){
-			// CFDs with DX
+			// "z" component:
 		}
 
+		// Error checks:
+		// ===============
 		#ifdef CHECKS_ON
-			if(!EB->E.X.is_finite()){
+			if(!EB->E.X.is_finite())
+			{
 				cout << "Non finite values in Ex" << endl;
 				MPI_Abort(params->mpi.MPI_TOPO, -110);
 			}else if(!EB->E.Y.is_finite()){
@@ -742,7 +766,10 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		smooth(&EB->E, params->smoothingParameter);
 	}
 
-	if (extrap){
+	// Extrapolation:
+	// ==============
+	if (extrap)
+	{
 		MPI_SendVec(params, &EB->E.X);
 		MPI_SendVec(params, &EB->E.Y);
 		MPI_SendVec(params, &EB->E.Z);

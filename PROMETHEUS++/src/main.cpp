@@ -30,6 +30,7 @@
 // ==================================
 #include "structures.h"
 #include "collisionOperator.h"
+#include "particleBoundaryConditions.h"
 #include "initialize.h"
 #include "PIC.h"
 #include "fields.h"
@@ -63,6 +64,8 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     FT EB;
     // Collision operator object:
     collisionOperator FPCOLL;
+    // Particle boundary condition operator:
+    PARTICLE_BC particleBC;
     // Initialize "params" based on input file:
     INITIALIZE<IT, FT> init(&params, argc, argv);
     // UNITS object of type "FT" and "FT":
@@ -149,6 +152,15 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         // Advance position:
         // =================
         ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
+
+        // Check boundaries:
+        // ================
+        particleBC.checkBoundaryAndFlag(&params,&CS,&EB,&IONS);
+        // - Create f1 and f2 in IONS for each species
+        // - Flag particles that Left
+        // - Count how many left the domain
+        // - Clear flags once operation applied
+        // - Apply the "a" on the extrapolation but not interpolation.
 
         // Calculate ion moments:
         // ======================

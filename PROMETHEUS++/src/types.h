@@ -228,6 +228,14 @@ public:
 	arma::vec Tpar_p;
 	arma::vec Tper_p;
 
+	// Particle defined flags:
+	arma::ivec f1;             	// Flag for left boundary
+	arma::ivec f2;              // Flag for Right boundary
+	arma::ivec f3;              // Flag for RF operator
+
+	// Particle weight:
+	arma::vec a;                // Computational particle weigth
+	
 	ionSpecies(){};
 	~ionSpecies(){};
 };

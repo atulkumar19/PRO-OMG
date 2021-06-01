@@ -447,6 +447,16 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     IONS->Tpar_p.zeros(IONS->NSP);
     IONS->Tper_p.zeros(IONS->NSP);
 
+    // Initialize particle defined flags:
+    // ==================================
+    IONS->f1.zeros(IONS->NSP);
+    IONS->f2.zeros(IONS->NSP);
+    IONS->f3.zeros(IONS->NSP);
+
+    // Initialize particle weight:
+    // ===========================
+    IONS->a.ones(IONS->NSP);
+
     // Check integrity of the initial condition:
     // ========================================
     if((int)IONS->V.n_elem != (int)(3*IONS->NSP))

@@ -17,7 +17,7 @@
 */
 
 // Include intrinsic header files:
-// ===============================
+// =============================================================================
 #include <iostream>
 #include <vector>
 #include <armadillo>
@@ -27,7 +27,7 @@
 #include <utility>
 
 // Include user-defined header files:
-// ==================================
+// =============================================================================
 #include "structures.h"
 #include "collisionOperator.h"
 #include "particleBoundaryConditions.h"
@@ -38,20 +38,23 @@
 #include "outputHDF5.h"
 
 // Include headers for parallelization:
-// ====================================
+// =============================================================================
 #include <omp.h>
 #include "mpi_main.h"
 
 using namespace std;
 using namespace arma;
 
-// Implement templates:
-// ======================
-template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
+// #############################################################################
+//  Template:
+// #############################################################################
+template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
+{
     MPI_Init(&argc, &argv);
 
+
     // Create simulation objects:
-    // ==========================
+    // =========================================================================
     // MPI object to hold topology information:
     MPI_MAIN mpi_main;
     // Input parameters for simulation:
@@ -71,8 +74,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     // UNITS object of type "FT" and "FT":
     UNITS<IT, FT> units;
 
+
     // Initialize simulation objects:
-    // =============================
+    // =========================================================================
     // Create MPI topology:
     mpi_main.createMPITopology(&params);
     // Read "ions_properties.ion" and populate "IONS" vector
@@ -100,23 +104,28 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
     // Normalize "params", "IONS", "EB" using "CS"
     units.normalizeVariables(&params, &IONS, &EB, &CS);
 
+    // #########################################################################
     /**************** All the quantities below are dimensionless ****************/
+    // #########################################################################
+
 
     // Definition of variables for advancing in time particles and fields:
-    // ===================================================================
+    // =========================================================================
     double t1 = 0.0;
     double t2 = 0.0;
     double currentTime = 0.0;
     int outputIterator = 0;
     int numberOfIterationsForEstimator = 1000;
 
+
     // Create objects:
-    // ===============
+    // =========================================================================
     EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
     PIC ionsDynamics; // Initializing the PIC class object.
 
+
     // Run 3 dummy cycles to load "n" and "nv" at previous time steps:
-    // ===============================================================
+    // =========================================================================
     for(int tt=0; tt<3; tt++)
     {
         ionsDynamics.advanceIonsPosition(&params, &EB, &IONS, 0);
@@ -126,35 +135,44 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
     }
 
+
     // Save 1st output:
-    // ================
+    // =========================================================================
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
 
+
     // Start timing simulations:
-    // ========================
+    // =========================================================================
     t1 = MPI::Wtime();
 
+
+    // #########################################################################
     // Start time iterations:
-    // =====================
+    // #########################################################################
     for(int tt=0; tt<params.timeIterations; tt++)
     {
         // Advance velocity:
-        // ================
+        // =====================================================================
         if(tt == 0)
         {
-            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT); // Initial condition time level V^(1/2)
+             // Initial condition time level V^(1/2):
+            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0.5*params.DT);
         }
         else
         {
-            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT); // Advance ions' velocity V^(N+1/2).
+             // Advance ions' velocity V^(N+1/2):
+            ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT);
         }
 
+
         // Advance position:
-        // =================
-        ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT); // Advance ions' position in time to level X^(N+1).
+        // =====================================================================
+        // Advance ions' position in time to level X^(N+1).
+        ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT);
+
 
         // Check boundaries:
-        // ================
+        // =====================================================================
         particleBC.checkBoundaryAndFlag(&params,&CS,&EB,&IONS);
         // - Create f1 and f2 in IONS for each species
         // - Flag particles that Left
@@ -162,23 +180,27 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         // - Clear flags once operation applied
         // - Apply the "a" on the extrapolation but not interpolation.
 
+
         // Calculate ion moments:
-        // ======================
+        // =====================================================================
         ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
 
+
         // Apply collision operator:
-        // =========================
+        // =====================================================================
         FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
 
+
         // Field solve:
-        // ============
+        // =====================================================================
         bool EfieldFlag = true;
         bool BfieldFlag = false;
 
         // Magnetic field:
         if (BfieldFlag)
         {
-            fields_solver.advanceBField(&params, &EB, &IONS); // Use Faraday's law to advance the magnetic field to level B^(N+1).
+            // Use Faraday's law to advance the magnetic field to level B^(N+1).
+            fields_solver.advanceBField(&params, &EB, &IONS);
         }
 
         if (EfieldFlag)
@@ -192,7 +214,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
             }
             else
             {
-                // Using basic velocity extrapolation.
+                // Using basic velocity extrapolation:
                 fields_solver.advanceEField(&params, &EB, &IONS, true, false);
             }
         }
@@ -201,17 +223,19 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
             cout << " E field solve disabled" << endl;
         }
 
+
         // Advance time:
-        // =============
+        // =====================================================================
         currentTime += params.DT*CS.time;
 
+
         // Save data:
-        // ==========
+        // =====================================================================
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0)
         {
             vector<IT> IONS_OUT = IONS;
 
-            // The ions' velocity is advanced in time in order to obtain V^(N+1)
+            // The ions' velocity is advanced in time in order to obtain V^(N+1):
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS_OUT, 0.5*params.DT);
 
             hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
@@ -220,7 +244,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
         }
 
         // Estimate simulation time:
-        // =========================
+        // =====================================================================
         if(tt == numberOfIterationsForEstimator)
         {
             t2 = MPI::Wtime();
@@ -233,36 +257,43 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[]){
             }
         }
 
-    } // Time iterations.
+    }
+    // #########################################################################
+    // End time iterations.
+    // #########################################################################
+
 
     // Finalizing MPI communications:
-    // ==============================
+    // =========================================================================
     mpi_main.finalizeCommunications(&params);
 }
 
 
+// #############################################################################
 // MAIN function:
-// ==============
-int main(int argc, char* argv[]){
+// #############################################################################
 
-        // Create dummy variables as inputs to variables:
-        // ==============================================
-        // One-dimensional:
+int main(int argc, char* argv[])
+{
+    // Create dummy variables as inputs to variables:
+    // ==============================================
+    // One-dimensional:
 	oneDimensional::ionSpecies dummy_ions_1D;
 	oneDimensional::fields dummy_fields_1D;
-        // Two-dimensional:
+
+    // Two-dimensional:
 	twoDimensional::ionSpecies dummy_ions_2D;
 	twoDimensional::fields dummy_fields_2D;
 
-        // Select dimensionality:
-        // ======================
+    // Select dimensionality:
+    // ======================
 	if (strcmp(argv[1],"1-D") == 0)
-        {
-            main_run_simulation<decltype(dummy_ions_1D), decltype(dummy_fields_1D)>(argc, argv);
-	}
-        else
-        {
-            main_run_simulation<decltype(dummy_ions_2D), decltype(dummy_fields_2D)>(argc, argv);
+    {
+        main_run_simulation<decltype(dummy_ions_1D), decltype(dummy_fields_1D)>(argc, argv);
+    }
+    else
+    {
+        main_run_simulation<decltype(dummy_ions_2D), decltype(dummy_fields_2D)>(argc, argv);
 	}
 
 	return(0);

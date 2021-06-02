@@ -54,7 +54,8 @@ extern double F_ME_DS; 		// Dimensionless electron mass
 extern double F_MU_DS; 		// Dimensionless vacuum permeability
 extern double F_C_DS; 		// Dimensionless speed of light
 
-struct mpiParams{
+struct mpiParams
+{
 	int NUMBER_MPI_DOMAINS;
 	int MPI_DOMAIN_NUMBER;
 	int FIELDS_ROOT_WORLD_RANK;
@@ -98,7 +99,8 @@ struct mpiParams{
 };
 
 
-struct meshParams{
+struct meshParams
+{
 	vfield_vec nodes;
 
 	int NX_PER_MPI; // Number of mesh nodes along x-axis in subdomain (no ghost nodes considered)
@@ -124,7 +126,8 @@ struct meshParams{
 };
 
 
-struct backgroundPlasmaParameters{
+struct backgroundPlasmaParameters
+{
 	double ne;
 	double Te;
 	double Bo;
@@ -137,29 +140,31 @@ struct backgroundPlasmaParameters{
 	double phi; // Spherical azimuthal angle (as measured from x-axis)
 };
 
-struct plasmaProfiles{
-              //Plasma profiles from external files
-	    arma::vec ne;
-              arma::vec Tpar;
-              arma::vec Tper;
-              arma::vec Bx;
-              arma::vec Rphi;
-              arma::vec Br;
-              arma::vec dBrdx;
+struct plasmaProfiles
+{
+	//Plasma profiles from external files
+	arma::vec ne;
+	arma::vec Tpar;
+	arma::vec Tper;
+	arma::vec Bx;
+	arma::vec Rphi;
+	arma::vec Br;
+	arma::vec dBrdx;
 
-              //Interpolated Plasma profiles at mesh points
-	    arma::vec ne_i;
-              arma::vec Tpar_i;
-              arma::vec Tper_i;
-              arma::vec Bx_i;
-              arma::vec Br_i;
-              arma::vec dBrdx_i;
+	//Interpolated Plasma profiles at mesh points
+	arma::vec ne_i;
+	arma::vec Tpar_i;
+	arma::vec Tper_i;
+	arma::vec Bx_i;
+	arma::vec Br_i;
+	arma::vec dBrdx_i;
 
-              int nTable; //Number of elements in external files
+	int nTable; //Number of elements in external files
 };
 
 
-struct simulationParameters{
+struct simulationParameters
+{
 	// List of variables in the outputs
 	std::vector<std::string> outputs_variables;
 
@@ -224,7 +229,8 @@ struct simulationParameters{
 };
 
 
-struct characteristicScales{
+struct characteristicScales
+{
 	double time;
 	double velocity;
 	double momentum;
@@ -241,7 +247,8 @@ struct characteristicScales{
 	double vacuumPermeability;
 	double vacuumPermittivity;
 
-	characteristicScales(){
+	characteristicScales()
+	{
 		time = 0.0;
 		velocity = 0.0;
 		length = 0.0;
@@ -257,7 +264,8 @@ struct characteristicScales{
 	}
 };
 
-struct fundamentalScales{
+struct fundamentalScales
+{
 	double electronSkinDepth;
 	double electronGyroPeriod;
 	double electronGyroRadius;
@@ -265,7 +273,8 @@ struct fundamentalScales{
 	double * ionGyroPeriod;
 	double * ionGyroRadius;
 
-	fundamentalScales(simulationParameters * params){
+	fundamentalScales(simulationParameters * params)
+	{
 		electronSkinDepth = 0.0;
 		electronGyroPeriod = 0.0;
 		electronGyroRadius = 0.0;

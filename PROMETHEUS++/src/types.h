@@ -233,9 +233,14 @@ public:
 	arma::ivec f2;              // Flag for Right boundary
 	arma::ivec f3;              // Flag for RF operator
 
+	// Particle kinetic energy at boundaries:
+	arma::ivec dE1;              // left boundary
+	arma::ivec dE2;              // Right boundary
+	arma::ivec dE3;              // RF operator
+
 	// Particle weight:
 	arma::vec a;                // Computational particle weigth
-	
+
 	ionSpecies(){};
 	~ionSpecies(){};
 };

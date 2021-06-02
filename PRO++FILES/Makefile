@@ -53,7 +53,8 @@ mpi_main.o				\
 randomStart.o			\
 quietStart.o			\
 energyDiagnostic.o              \
-collisionOperator.o)
+collisionOperator.o             \
+particleBoundaryConditions.o)
 
 all: $(BIN)/PROMETHEUS++
 

@@ -23,7 +23,8 @@
 #include <vector>
 #include <armadillo>
 
-// * * * * * * * * NAMESPACES  * * * * * * * * //
+// Declare namespaces:
+// =============================================================================
 namespace oneDimensional
 {
 	class fields;
@@ -38,14 +39,8 @@ namespace twoDimensional
 }
 
 
-namespace threeDimensional
-{
-	class fields;
-}
-// * * * * * * * * NAMESPACES  * * * * * * * * //
-
-
-// * * * * * * * * TYPES IDENTIFIERS  * * * * * * * * //
+// Declare type identifiers:
+// =============================================================================
 class types_info
 {
 
@@ -59,10 +54,9 @@ public:
 	const std::type_info * fields_1D_type;
 	const std::type_info * fields_2D_type;
 };
-// * * * * * * * * TYPES IDENTIFIERS  * * * * * * * * //
 
-
-// * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
+// Declare vector field types:
+// =============================================================================
 class vfield_vec
 {
 
@@ -127,7 +121,7 @@ public:
 	void zeros(unsigned int N, unsigned int M);
 };
 
-
+/*
 class vfield_cube
 {
 
@@ -158,8 +152,62 @@ public:
 	void zeros();
 	void zeros(unsigned int N, unsigned int M, unsigned int P);
 };
+*/
+
 // * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
 
+
+//  Structure to fluid species initial condition parameters:
+// =============================================================================
+struct fluid_IC
+{
+	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
+
+	double Tper;										// Reference perpendicular temperature:
+	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
+	int Tper_NX;										// Number of elements in Tper external file
+
+	double Tpar;										// Reference parallel temperature:
+	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
+	int Tpar_NX;										// Number of elements in Tpar external file
+
+	double n0             ;					// Reference density:
+};
+
+//  Structure to store each ion species initial condition parameters:
+// =============================================================================
+struct particle_IC
+{
+	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
+
+	double Tper;										// Reference perpendicular temperature:
+	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
+	int Tper_NX;										// Number of elements in Tper external file
+
+	double Tpar;										// Reference parallel temperature:
+	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
+	int Tpar_NX;										// Number of elements in Tpar external file
+
+	double densityFraction;					// Reference density fraction:
+	std::string density_fileName; 	// File containing normalized spatial profile
+	int densityFraction_NX;	  			// Number of elements in density external file
+};
+
+//  Structure to store each ion species particle boundary condition parameters:
+// =============================================================================
+struct particle_BC
+{
+	int BC_type;						// 1: Warm plasma source, 2: NBI
+
+	double T;								// Beam temperature
+	double E;								// Beam energy
+	double eta;		        	// Beam pitch angle in degrees
+	double sigma_x;					// Spatial spread of beam
+	double mean_x;					// Spatial location of beam injection
+	double G;								// Fueling rate of source in particles/second
+	std::string G_fileName; // File containing normalized temporal evolution of G
+	int G_NS;								// Number of elements in G external file
+};
 
 // * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
@@ -248,6 +296,12 @@ public:
 
 	// Particle weight:
 	arma::vec a;                // Computational particle weigth
+
+	// Initial condition parameters:
+	particle_IC p_IC;
+
+	// Boundary conditions:
+	particle_BC p_BC;
 
 	ionSpecies(){};
 	~ionSpecies(){};
@@ -367,21 +421,6 @@ public:
 	void zeros(unsigned int NX, unsigned int NY);
 };
 
-
-class threeDimensional::fields : public vfield_cube
-{
-
-public:
-	vfield_cube E;
-	vfield_cube B;
-
-	fields(){};
-	fields(unsigned int N, unsigned int M, unsigned int P) : E(N,M,P), B(N,M,P){};
-
-	~fields(){};
-
-	void zeros(unsigned int N, unsigned int M, unsigned int P);
-};
 // * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //
 
 

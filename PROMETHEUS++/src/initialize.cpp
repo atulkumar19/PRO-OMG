@@ -45,35 +45,7 @@ template <class IT, class FT> vector<string> INITIALIZE<IT,FT>::split(const stri
     return tokens;
 }
 
-/*
-template <class IT, class FT> map<string,float> INITIALIZE<IT,FT>::loadParameters(string * inputFile)
-{
-	string key;
-	float value;
-	fstream reader;
-	std::map<string,float> readMap;
-
-
-	reader.open(inputFile->data(),ifstream::in);
-
-    if (!reader){
-        MPI_Barrier(MPI_COMM_WORLD);
-
-    	cerr << "PRO++ ERROR: The input file couldn't be opened." << endl;
-    	MPI_Abort(MPI_COMM_WORLD,-101);
-    }
-
-    while ( reader >> key >> value ){
-      	readMap[ key ] = value;
-    }
-
-    reader.close();
-
-    return readMap;
-}
-*/
-
-template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParametersString(string * inputFile)
+template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::ReadAndloadInputFile(string * inputFile)
 {
     // Create stream object:
     // =====================
@@ -221,7 +193,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	}
 
 	std::map<string,string> parametersStringMap;
-	parametersStringMap = loadParametersString(&name);
+	parametersStringMap = ReadAndloadInputFile(&name);
 
 	// Create HDF5 folders if they don't exist
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
@@ -295,7 +267,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
 
-	params->BGP.ne    = std::stod( parametersStringMap["ne"] );
+	params->BGP.ne    = std::stod( parametersStringMap["IC_ne"] );
 
     params->PP.nTable = std::stod( parametersStringMap["nTable"] );
 
@@ -372,7 +344,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
 	params->dp = std::stod( parametersStringMap["dp"] );
 
-	params->BGP.Te = std::stod( parametersStringMap["Te"] )*F_E/F_KB; // Te in eV in input file
+	params->BGP.Te = std::stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
 
 	params->BGP.theta = std::stod( parametersStringMap["theta"] );
 	params->BGP.phi = std::stod( parametersStringMap["phi"] );
@@ -783,7 +755,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
     // Read data from "ion_properties.ion" into "parametersMap":
     // =========================================================
     std::map<string,string> parametersMap;
-    parametersMap = loadParametersString(&name);
+    parametersMap = ReadAndloadInputFile(&name);
 
     // Determine the total number of ION species:
     // =========================================

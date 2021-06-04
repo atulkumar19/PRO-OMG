@@ -125,41 +125,6 @@ struct meshParams
 	int SPLIT_DIRECTION;
 };
 
-//  Structure to store each ion species initial condition parameters:
-// =============================================================================
-struct particle_IC
-{
-	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
-
-	double Tper;										// Reference perpendicular temperature:
-	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
-	int Tper_NX;										// Number of elements in Tper external file
-
-	double Tpar;										// Reference parallel temperature:
-	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
-	int Tpar_NX;										// Number of elements in Tpar external file
-
-	double densityFraction;					// Reference density fraction:
-	std::string density_fileName; 	// File containing normalized spatial profile
-	int densityFraction_NX;	  			// Number of elements in density external file
-};
-
-//  Structure to store each ion species particle boundary condition parameters:
-// =============================================================================
-struct particle_BC
-{
-	int BC_type;						// 1: Warm plasma source, 2: NBI
-
-	double T;								// Beam temperature
-	double E;								// Beam energy
-	double eta;		        	// Beam pitch angle in degrees
-	double sigma_x;					// Spatial spread of beam
-	double mean_x;					// Spatial location of beam injection
-	double G;								// Fueling rate of source in particles/second
-	std::string G_fileName; // File containing normalized temporal evolution of G
-	int G_NS;								// Number of elements in G external file	
-};
-
 struct backgroundPlasmaParameters
 {
 	double ne;
@@ -235,7 +200,7 @@ struct simulationParameters
 	int numberOfTracerSpecies; // This species are not self-consistently evolved with the fields
 
 	backgroundPlasmaParameters BGP;
-                          plasmaProfiles PP;
+  plasmaProfiles PP;
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;

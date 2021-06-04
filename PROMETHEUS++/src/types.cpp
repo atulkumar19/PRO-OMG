@@ -240,7 +240,7 @@ void vfield_mat::zeros(unsigned int N, unsigned int M){
 	Z.zeros(N,M);
 }
 
-
+/*
 vfield_cube vfield_cube::operator + (vfield_cube R){
 	vfield_cube T;
 	T.X = X + R.X;
@@ -343,6 +343,7 @@ void vfield_cube::zeros(unsigned int N, unsigned int M, unsigned int P){
 	Y.zeros(N,M,P);
 	Z.zeros(N,M,P);
 }
+*/
 
 void oneDimensional::fields::zeros(unsigned int N){
 	E.zeros(N);
@@ -352,9 +353,4 @@ void oneDimensional::fields::zeros(unsigned int N){
 void twoDimensional::fields::zeros(unsigned int N, unsigned int M){
 	E.zeros(N,M);
 	B.zeros(N,M);
-}
-
-void threeDimensional::fields::zeros(unsigned int N, unsigned int M, unsigned int P){
-	E.zeros(N,M,P);
-	B.zeros(N,M,P);
 }

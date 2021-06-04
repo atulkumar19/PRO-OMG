@@ -51,9 +51,7 @@ template <class IT, class FT> class INITIALIZE
 {
 	vector<string> split(const string& str, const string& delim);
 
-	map<string, float> loadParameters(string *  inputFile);
-
-	map<string, string> loadParametersString(string *  inputFile);
+	map<string, string> ReadAndloadInputFile(string *  inputFile);
 
 	void initializeParticlesArrays(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
@@ -71,9 +69,9 @@ public:
 
 	void loadMeshGeometry(simulationParameters * params, fundamentalScales * FS);
 
-        void loadIonParameters(simulationParameters * params, vector<IT> * IONS);
-          
-        void loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS);
+  void loadIonParameters(simulationParameters * params, vector<IT> * IONS);
+
+  void loadPlasmaProfiles(simulationParameters * params, vector<IT> * IONS);
 
 	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS);
 

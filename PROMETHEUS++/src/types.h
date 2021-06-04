@@ -24,26 +24,30 @@
 #include <armadillo>
 
 // * * * * * * * * NAMESPACES  * * * * * * * * //
-namespace oneDimensional{
+namespace oneDimensional
+{
 	class fields;
 	class ionSpecies;
 }
 
 
-namespace twoDimensional{
+namespace twoDimensional
+{
 	class fields;
 	class ionSpecies;
 }
 
 
-namespace threeDimensional{
+namespace threeDimensional
+{
 	class fields;
 }
 // * * * * * * * * NAMESPACES  * * * * * * * * //
 
 
 // * * * * * * * * TYPES IDENTIFIERS  * * * * * * * * //
-class types_info{
+class types_info
+{
 
 public:
 	types_info(){};
@@ -59,7 +63,8 @@ public:
 
 
 // * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
-class vfield_vec{
+class vfield_vec
+{
 
 public:
 	arma::vec X;
@@ -91,7 +96,8 @@ public:
 };
 
 
-class vfield_mat{
+class vfield_mat
+{
 
 public:
 	arma::mat X;
@@ -122,7 +128,8 @@ public:
 };
 
 
-class vfield_cube{
+class vfield_cube
+{
 
 public:
 	arma::cube X;
@@ -156,7 +163,8 @@ public:
 
 // * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
-class oneDimensional::ionSpecies : public vfield_vec{
+class oneDimensional::ionSpecies : public vfield_vec
+{
 
 public:
 	int SPECIES;
@@ -173,7 +181,7 @@ public:
 	double pctSupPartOutput; 	//
 	unsigned int nSupPartOutput;//
 
-	double densityFraction;					//
+	double densityFraction;		//
 
 	double go;					// Initial relativistic gamma
 	double Tpar;				// Parallel temperature.
@@ -246,7 +254,8 @@ public:
 };
 
 
-class twoDimensional::ionSpecies : public vfield_mat{
+class twoDimensional::ionSpecies : public vfield_mat
+{
 
 public:
 	int SPECIES;
@@ -278,8 +287,8 @@ public:
 	arma::mat V; 				// Ions' velocity, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::mat P; 				// Ions' momentum, the dimension should be (NSP,3), where NP is the number of particles of the ion species.
 	arma::vec g; 				// Ions' relativistic gamma factor.
-          arma::ivec pCount;
-          arma::vec eCount;
+  	arma::ivec pCount;
+  	arma::vec eCount;
 	arma::imat mn; 				// Ions' position in terms of the index of mesh node
 	arma::mat E;				// Electric field seen by particles when advancing particles velocity
 	arma::mat B;				// Magnetic field seen by particles when advancing particles velocity
@@ -297,7 +306,7 @@ public:
 	arma::vec wyc;				// Particles' weights w.r.t. the vertices of the grid cells
 	arma::vec wyr;				// Particles' weights w.r.t. the vertices of the grid cells
 
-        // Mesh-defined ion moments:
+    // Mesh-defined ion moments:
 	arma::mat n; 		// Ion density at time level "l + 1"
 	arma::mat n_; 		// Ion density at time level "l"
 	arma::mat n__; 		// Ion density at time level "l - 1"
@@ -326,8 +335,8 @@ public:
 
 
 // * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //
-class oneDimensional::fields : public vfield_vec{
-
+class oneDimensional::fields : public vfield_vec
+{
 
 public:
 	vfield_vec E;
@@ -343,7 +352,8 @@ public:
 };
 
 
-class twoDimensional::fields : public vfield_mat{
+class twoDimensional::fields : public vfield_mat
+{
 
 public:
 	vfield_mat E;
@@ -358,7 +368,8 @@ public:
 };
 
 
-class threeDimensional::fields : public vfield_cube{
+class threeDimensional::fields : public vfield_cube
+{
 
 public:
 	vfield_cube E;

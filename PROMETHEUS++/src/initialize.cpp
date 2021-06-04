@@ -25,9 +25,19 @@ template <class IT, class FT> vector<string> INITIALIZE<IT,FT>::split(const stri
     do
     {
         pos = str.find(delim, prev);
-        if (pos == string::npos) pos = str.length();
+
+        if (pos == string::npos)
+        {
+            pos = str.length();
+        }
+
         string token = str.substr(prev, pos-prev);
-        if (!token.empty()) tokens.push_back(token);
+
+        if (!token.empty())
+        {
+            tokens.push_back(token);
+        }
+
         prev = pos + delim.length();
     }
     while (pos < str.length() && prev < str.length());
@@ -35,8 +45,9 @@ template <class IT, class FT> vector<string> INITIALIZE<IT,FT>::split(const stri
     return tokens;
 }
 
-
-template <class IT, class FT> map<string,float> INITIALIZE<IT,FT>::loadParameters(string * inputFile){
+/*
+template <class IT, class FT> map<string,float> INITIALIZE<IT,FT>::loadParameters(string * inputFile)
+{
 	string key;
 	float value;
 	fstream reader;
@@ -60,16 +71,24 @@ template <class IT, class FT> map<string,float> INITIALIZE<IT,FT>::loadParameter
 
     return readMap;
 }
+*/
 
-
-template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParametersString(string * inputFile){
-    string key;
-    string value;
+template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParametersString(string * inputFile)
+{
+    // Create stream object:
+    // =====================
     fstream reader;
+
+    // Create map object:
+    // ==================
     std::map<string,string> readMap;
 
+    // Open input file using reader object:
+    // ====================================
     reader.open(inputFile->data(),ifstream::in);
 
+    // Handle error:
+    // =============
     if (!reader){
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -77,12 +96,39 @@ template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::loadParameter
     	MPI_Abort(MPI_COMM_WORLD, -101);
     }
 
-    while ( reader >> key >> value ){
-      	readMap[ key ] = value;
+    // Parse through file:
+    // ===================
+    string lineContent;
+    vector<string> keyValuePair;
+    while ( reader.good() )
+    {
+        // Read entire line:
+        getline(reader,lineContent);
+
+        // Search for comment symbol:
+        size_t commentCharPos = lineContent.find("//",0);
+
+        // Check for comment symbol:
+        if (commentCharPos == 0 || lineContent.empty())
+        {
+            // Skip line
+        }
+        else
+        {
+            // Get value pair:
+            keyValuePair = INITIALIZE::split(lineContent," ");
+
+            // Update map:
+            readMap[ keyValuePair[0] ] = keyValuePair[1];
+        }
     }
 
+    // Close stream object:
+    // ===================
     reader.close();
 
+    // Return map:
+    // ==========
     return readMap;
 }
 
@@ -194,6 +240,13 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->mpi.MPIS_FIELDS = std::stoi( parametersStringMap["mpisForFields"] );
     params->mpi.MPIS_PARTICLES = params->mpi.NUMBER_MPI_DOMAINS - params->mpi.MPIS_FIELDS;
 
+
+
+
+    // #########################################################################
+    // Candidate to be removed:
+    // #########################################################################
+
     if(std::stoi( parametersStringMap["includeElectronInertia"] ) == 1)
     {
         params->includeElectronInertia = true;
@@ -202,6 +255,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     {
         params->includeElectronInertia = false;
     }
+    // #########################################################################
+    // #########################################################################
+
 
     if(std::stoi( parametersStringMap["quietStart"] ) == 1)
     {
@@ -334,8 +390,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 	// Parsing list of variables in outputs
 	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
 	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
-
-    // loading and rescaling plasma profiles obtained from external files
 }
 
 
@@ -728,8 +782,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
     // Read data from "ion_properties.ion" into "parametersMap":
     // =========================================================
-    std::map<string,float> parametersMap;
-    parametersMap = loadParameters(&name);
+    std::map<string,string> parametersMap;
+    parametersMap = loadParametersString(&name);
 
     // Determine the total number of ION species:
     // =========================================
@@ -747,7 +801,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
         ss << ii + 1;
 
         name = "SPECIES" + ss.str();
-        SPECIES = (int)parametersMap[name];
+        SPECIES = stoi(parametersMap[name]);
         name.clear();
 
         if (SPECIES == 0 || SPECIES == 1)
@@ -757,42 +811,42 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
             // Number
             name = "NPC" + ss.str();
-            ions.NPC = parametersMap[name];
+            ions.NPC = stoi(parametersMap[name]);
             name.clear();
 
-            //
-            name = "IC" + ss.str();
-            ions.IC = (int)parametersMap[name];
+            // Initial condition:
+            name = "IC_type_" + ss.str();
+            ions.IC = stoi(parametersMap[name]);
             name.clear();
 
             // Perpendicular temperature:
-            name = "Tper" + ss.str();
-            ions.Tper = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+            name = "IC_Tper_" + ss.str();
+            ions.Tper = stod(parametersMap[name])*F_E/F_KB;
             name.clear();
 
             // Parallel temperature:
-            name = "Tpar" + ss.str();
-            ions.Tpar = parametersMap[name]*F_E/F_KB; // Tpar in eV in input file
+            name = "IC_Tpar_" + ss.str();
+            ions.Tpar = stod(parametersMap[name])*F_E/F_KB; // Tpar in eV in input file
             name.clear();
 
             // Density fraction relative to 1:
-            name = "densityFraction" + ss.str();
-            ions.densityFraction = parametersMap[name];
+            name = "IC_densityFraction_" + ss.str();
+            ions.densityFraction = stod(parametersMap[name]);
             name.clear();
 
             //
             name = "pctSupPartOutput" + ss.str();
-            ions.pctSupPartOutput = parametersMap[name];
+            ions.pctSupPartOutput = stod(parametersMap[name]);
             name.clear();
 
             // Charge state:
             name = "Z" + ss.str();
-            ions.Z = parametersMap[name];
+            ions.Z = stod(parametersMap[name]);
             name.clear();
 
             // AMU mass number:
             name = "M" + ss.str();
-            ions.M = F_U*parametersMap[name];
+            ions.M = F_U*stod(parametersMap[name]);
             name.clear();
 
             // Derived quantities:

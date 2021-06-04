@@ -458,9 +458,11 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, oneDimension
 			EB->B += (dt/6.0)*( V1D.K1.B + 2.0*V1D.K2.B + 2.0*V1D.K3.B + V1D.K4.B );
 		} // Runge-Kutta iterations
 
+		/*
 		if (params->includeElectronInertia){
 
 		}
+		*/
 
 		#ifdef CHECKS_ON
 		if(!EB->B.X.is_finite()){
@@ -516,9 +518,11 @@ void EMF_SOLVER::advanceBField(const simulationParameters * params, twoDimension
 			EB->B += (dt/6.0)*( V2D.K1.B + 2.0*V2D.K2.B + 2.0*V2D.K3.B + V2D.K4.B );
 		} // Runge-Kutta iterations
 
+		/*
 		if (params->includeElectronInertia){
 			//*** @toimplement
 		}
+		*/
 
 		#ifdef CHECKS_ON
 		if(!EB->B.X.is_finite()){

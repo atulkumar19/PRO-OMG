@@ -107,10 +107,12 @@ template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::ReadAndloadIn
 template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[])
 {
     // Get RANK and SIZE of nodes within COMM_WORLD:
+    // =============================================
     MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
     MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
 
-    // Error codes
+    // Error codes:
+    // ============
     params->errorCodes[-100] = "Odd number of MPI processes";
     params->errorCodes[-101] = "Input file could not be opened";
     params->errorCodes[-102] = "MPI's Cartesian topology could not be created";
@@ -129,7 +131,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->errorCodes[-115] = "Non finite values in Bz";
 
 
-    // Copyright and Licence Info
+    // Copyright and Licence Info:
+    // ===========================
     if (params->mpi.MPI_DOMAIN_NUMBER == 0){
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
         cout << "* PROMETHEUS++ Copyright (C) 2015-2019  Leopoldo Carbajal               *" << endl;
@@ -152,13 +155,14 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // Arguments and paths to main function
+    // Arguments and paths to main function:
+    // =====================================
     params->PATH = argv[2];
-
 	params->argc = argc;
 	params->argv = argv;
 
-
+    // Check number of MPI domains:
+    // ============================
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 )
     {
         MPI_Barrier(MPI_COMM_WORLD);
@@ -171,6 +175,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 		MPI_Abort(MPI_COMM_WORLD,-100);
 	}
 
+    // Stream date when simulation is started:
+    // =======================================
     if(params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
         time_t current_time = std::time(NULL);
@@ -179,6 +185,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
     }
 
+    // Get name of path to input file:
+    // ===============================
 	string name;
 	if(params->argc > 3)
     {
@@ -192,10 +200,13 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 		params->PATH += "/";
 	}
 
+    // Read input file and assemble map:
+    // ================================
 	std::map<string,string> parametersStringMap;
 	parametersStringMap = ReadAndloadInputFile(&name);
 
-	// Create HDF5 folders if they don't exist
+	// Create HDF5 folders if they don't exist:
+    // ========================================
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
 		string mkdir_outputs_dir = "mkdir " + params->PATH;
@@ -207,31 +218,15 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 		rsys = system(sys);
 	}
 
-    params->dimensionality = std::stoi( parametersStringMap["dimensionality"] );
+    // Populate "params" with data from input file:
+    // ============================================
 
-    params->mpi.MPIS_FIELDS = std::stoi( parametersStringMap["mpisForFields"] );
-    params->mpi.MPIS_PARTICLES = params->mpi.NUMBER_MPI_DOMAINS - params->mpi.MPIS_FIELDS;
+    // Input data:
+    // -------------------------------------------------------------------------
+    params->dimensionality   = stoi( parametersStringMap["dimensionality"] );
+    params->mpi.MPIS_FIELDS  = stoi( parametersStringMap["mpisForFields"] );
 
-
-
-
-    // #########################################################################
-    // Candidate to be removed:
-    // #########################################################################
-
-    if(std::stoi( parametersStringMap["includeElectronInertia"] ) == 1)
-    {
-        params->includeElectronInertia = true;
-    }
-    else
-    {
-        params->includeElectronInertia = false;
-    }
-    // #########################################################################
-    // #########################################################################
-
-
-    if(std::stoi( parametersStringMap["quietStart"] ) == 1)
+    if(stoi( parametersStringMap["quietStart"] ) == 1)
     {
         params->quietStart = true;
     }
@@ -239,8 +234,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     {
         params->quietStart = false;
     }
-
-	params->DTc = std::stod( parametersStringMap["DTc"] );
 
     if(std::stoi( parametersStringMap["restart"] ) == 1)
     {
@@ -251,36 +244,61 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->restart = false;
     }
 
-	params->BC = std::stoi( parametersStringMap["BC"] );
+    params->loadFields              = stoi( parametersStringMap["loadFields"] );
+    params->numberOfRKIterations    = stoi( parametersStringMap["numberOfRKIterations"] );
+    params->numberOfParticleSpecies = stoi( parametersStringMap["numberOfParticleSpecies"] );
+	params->numberOfTracerSpecies   = stoi( parametersStringMap["numberOfTracerSpecies"] );
 
-	params->smoothingParameter = std::stod( parametersStringMap["smoothingParameter"] );
+    // Simulation time:
+    // -------------------------------------------------------------------------
+    params->DTc            = stod( parametersStringMap["DTc"] );
+    params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
 
-	params->numberOfRKIterations = std::stoi( parametersStringMap["numberOfRKIterations"] );
+    // Magnetic field initial conditions:
+    // -------------------------------------------------------------------------
+    params->BGP.Bo    = stod( parametersStringMap["IC_B0"] );
+    params->BGP.theta = stod( parametersStringMap["IC_theta"] );
+	params->BGP.phi   = stod( parametersStringMap["IC_phi"] );
+    params->PP.nTable = stod( parametersStringMap["IC_B0_NX"] );
+    params->em_IC.B0_fileName = parametersStringMap["IC_B0_fileName"];
 
-	params->filtersPerIterationFields = std::stoi( parametersStringMap["filtersPerIterationFields"] );
+    params->em_IC.BX          = stod( parametersStringMap["IC_BX"] );
+    params->em_IC.BY          = stod( parametersStringMap["IC_BY"] );
+    params->em_IC.BZ          = stod( parametersStringMap["IC_BZ"] );
+    params->em_IC.BX_NX       = stoi( parametersStringMap["IC_BX_NX"] );
+    params->em_IC.BX_fileName = parametersStringMap["IC_BX_fileName"];
 
-	params->filtersPerIterationIons = std::stoi( parametersStringMap["filtersPerIterationIons"] );
+    // Geometry:
+    // -------------------------------------------------------------------------
+    params->BGP.Rphi0 = stod( parametersStringMap["Rphi0"] );
+    unsigned int NX   = (unsigned int)stoi( parametersStringMap["NX"] );
+    unsigned int NY   = (unsigned int)stoi( parametersStringMap["NY"] );
+    unsigned int NZ   = (unsigned int)stoi( parametersStringMap["NZ"] );
+    params->DrL       = stod( parametersStringMap["DrL"] );
+	params->dp        = stod( parametersStringMap["dp"] );
 
-	params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
+    // Electron initial conditions:
+    // -------------------------------------------------------------------------
+    params->BGP.ne  = stod( parametersStringMap["IC_ne"] );
+    params->BGP.Te  = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
+    params->f_IC.ne = stod( parametersStringMap["IC_ne"] );
+    params->f_IC.Te = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
 
-	params->numberOfParticleSpecies = std::stoi( parametersStringMap["numberOfParticleSpecies"] );
+    // Output variables:
+    // -------------------------------------------------------------------------
+    params->outputCadence           = stod( parametersStringMap["outputCadence"] );
+    string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
+	params->outputs_variables       = split(nonparsed_variables_list,",");
 
-	params->numberOfTracerSpecies = std::stoi( parametersStringMap["numberOfTracerSpecies"] );
+    // Data smoothing:
+    // -------------------------------------------------------------------------
+    params->smoothingParameter        = stod( parametersStringMap["smoothingParameter"] );
+    params->filtersPerIterationFields = stoi( parametersStringMap["filtersPerIterationFields"] );
+    params->filtersPerIterationIons   = stoi( parametersStringMap["filtersPerIterationIons"] );
 
-	params->BGP.ne    = std::stod( parametersStringMap["IC_ne"] );
-
-    params->PP.nTable = std::stod( parametersStringMap["nTable"] );
-
-    params->BGP.Rphi0 = std::stod( parametersStringMap["Rphi0"] );
-
-	params->loadFields = std::stoi( parametersStringMap["loadFields"] );
-
-	params->outputCadence = std::stod( parametersStringMap["outputCadence"] );
-
-    // Number of nodes in entire simulation domain
-    unsigned int NX = (unsigned int)std::stoi( parametersStringMap["NX"] );
-    unsigned int NY = (unsigned int)std::stoi( parametersStringMap["NY"] );
-    unsigned int NZ = (unsigned int)std::stoi( parametersStringMap["NZ"] );
+    // Derived parameters:
+    // ===================
+    params->mpi.MPIS_PARTICLES = params->mpi.NUMBER_MPI_DOMAINS - params->mpi.MPIS_FIELDS;
 
     // Sanity check: if NX and/or NY is not a multiple of 2, the simulation aborts
     if (params->dimensionality == 1)
@@ -340,17 +358,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
     }
 
-	params->DrL = std::stod( parametersStringMap["DrL"] );
-
-	params->dp = std::stod( parametersStringMap["dp"] );
-
-	params->BGP.Te = std::stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
-
-	params->BGP.theta = std::stod( parametersStringMap["theta"] );
-	params->BGP.phi = std::stod( parametersStringMap["phi"] );
-
-	params->BGP.Bo = std::stod( parametersStringMap["Bo"] );
-
+    // Magnetic field data:
+    params->em_IC.B0 = sqrt( pow(params->em_IC.BX,2.0) + pow(params->em_IC.BY,2.0) + pow(params->em_IC.BZ,2.0) );
 	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
 	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
 	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
@@ -358,10 +367,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
     params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
     params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
-
-	// Parsing list of variables in outputs
-	std::string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
-	params->outputs_variables = INITIALIZE::split(nonparsed_variables_list,",");
 }
 
 

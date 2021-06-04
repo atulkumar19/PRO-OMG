@@ -36,7 +36,7 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
         {
             cout << endl << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *" << endl;
         }
-        
+
         // Define variables:
         // =================
 	double ionsMaxVel(0.0);	// Maximum speed of simulated ions
@@ -85,28 +85,28 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
                 {
                     DT_CFL_I = (DT_CFL_I > *(DT_CFL_I_MPI + ii)) ? *(DT_CFL_I_MPI + ii) : DT_CFL_I;
                 }
-                
+
                 if (DT > DT_CFL_I)
                 {
                         DT = DT_CFL_I;
-    
+
                         CFL_I = true;
                         CFL_W = false;
                 }
-    
+
                 if (DT > DT_CFL_W)
                 {
                         DT = DT_CFL_W;
-    
+
                         CFL_I = false;
                         CFL_W = true;
                 }
-    
+
                 //params->DT = (CFL_I || CFL_W) ? 0.25*DT : DT; // We use half the CFL time step to ensure numerical stability
                 params->DT = 0.5*DT_CFL_I; // We use half the CFL time step to ensure numerical stability
-    
+
                 params->timeIterations = (int)ceil( params->simulationTime*params->ionGyroPeriod/params->DT );
-    
+
                 params->outputCadenceIterations = (int)ceil( params->outputCadence*params->ionGyroPeriod/params->DT );
             }
 
@@ -133,7 +133,7 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
                     cout << "+ Simulation time step defined by CFL condition for WHISTLER WAVES" << endl;
             else
                     cout << "+ Simulation time step defined by USER" << endl;
-    
+
             cout << "+ Time step defined by CFL condition for ions: " << scientific << DT_CFL_I << fixed << endl;
             cout << "+ Time step defined by CFL condition for whistler waves: " << scientific << DT_CFL_W << fixed << endl;
             cout << "+ Time step used in simulation: " << scientific << params->DT << fixed << endl;
@@ -188,22 +188,22 @@ template <class IT, class FT> void UNITS<IT,FT>::broadcastCharacteristicScales(s
 template <class IT, class FT> void UNITS<IT,FT>::broadcastFundamentalScales(simulationParameters * params, fundamentalScales * FS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     // Electron skin depth
     MPI_Bcast(&FS->electronSkinDepth, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
+
     // Electron gyro-period
     MPI_Bcast(&FS->electronGyroPeriod, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
+
     // Electron gyro-radius
     MPI_Bcast(&FS->electronGyroRadius, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
+
     // Ion skin depth
     MPI_Bcast(FS->ionSkinDepth, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
+
     // Ion gyro-period
     MPI_Bcast(FS->ionGyroPeriod, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
+
     // Ion gyro-radius
     MPI_Bcast(FS->ionGyroRadius, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
@@ -211,13 +211,16 @@ template <class IT, class FT> void UNITS<IT,FT>::broadcastFundamentalScales(simu
 
 template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScales(simulationParameters * params, vector<IT> * IONS, fundamentalScales * FS)
 {
-    
+
 	cout << endl << "* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
+
+	/*
 	if (params->includeElectronInertia == true){
         cout << " + Including electron inertia: YES" << endl << endl;
     }else{
         cout << " + Including electron inertia: NO" << endl << endl;
     }
+	*/
 
 	FS->electronSkinDepth = F_C/sqrt( params->BGP.ne*F_E*F_E/(F_EPSILON*F_ME) );
 	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bo/F_ME);
@@ -267,7 +270,7 @@ template <class IT, class FT> void UNITS<IT,FT>::spatialScalesSanityCheck(simula
             cout << "ABORTING SIMULATION..." << endl;
 
             MPI_Abort(MPI_COMM_WORLD,-103);
-	}      
+	}
 }
 
 
@@ -347,18 +350,18 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
         params->BGP.Rphi0 /= CS->length;
-          
+
 	params->PP.ne_i /= CS->density;
 	params->PP.Tpar_i /= CS->temperature;
         params->PP.Tper_i /= CS->temperature;
 	params->PP.Bx_i /= CS->bField;
 	params->PP.Br_i /= CS->bField;
 	params->PP.dBrdx_i /= CS->bField/CS->length;
-          
+
 	params->ionLarmorRadius /= CS->length;
 	params->ionSkinDepth /= CS->length;
 	params->ionGyroPeriod /= CS->time;
-          
+
 	//Normalizing the mesh:
 	params->mesh.nodes.X = params->mesh.nodes.X/CS->length;
 	params->mesh.nodes.Y = params->mesh.nodes.Y/CS->length;
@@ -394,7 +397,7 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
                     IONS->at(ii).mu = IONS->at(ii).mu/CS->magneticMoment;
 		}
 	}
-        
+
         // Normalizing "EB":
         // =================
 	EB->E /= CS->eField;
@@ -405,12 +408,12 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScalesAndBcast(simulationParameters * params, vector<IT> * IONS, characteristicScales * CS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     if(params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
         defineCharacteristicScales(params, IONS, CS);
     }
-    
+
     broadcastCharacteristicScales(params, CS);
 }
 

@@ -121,75 +121,22 @@ public:
 	void zeros(unsigned int N, unsigned int M);
 };
 
-/*
-class vfield_cube
-{
-
-public:
-	arma::cube X;
-	arma::cube Y;
-	arma::cube Z;
-
-	vfield_cube(){};
-	vfield_cube(unsigned int N, unsigned int M, unsigned int P) : X(N,M,P), Y(N,M,P), Z(N,M,P) {}
-
-	~vfield_cube(){};
-
-	vfield_cube operator + (vfield_cube R);
-	vfield_cube operator += (vfield_cube R);
-	vfield_cube operator - (vfield_cube R);
-	vfield_cube operator -= (vfield_cube R);
-	vfield_cube operator * (double s);
-	vfield_cube operator *= (double s);
-    friend vfield_cube operator * (double s, vfield_cube R );
-	vfield_cube operator / (double s);
-	vfield_cube operator / (vfield_cube R);
-	vfield_cube operator /= (double s);
-	vfield_cube operator /= (vfield_cube R);
-
-	void fill(double value);
-	void ones(unsigned int N, unsigned int M, unsigned int P);
-	void zeros();
-	void zeros(unsigned int N, unsigned int M, unsigned int P);
-};
-*/
-
-// * * * * * * * * VECTOR FIELD TYPES  * * * * * * * * //
-
-
-//  Structure to fluid species initial condition parameters:
-// =============================================================================
-struct fluid_IC
-{
-	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
-
-	double Tper;										// Reference perpendicular temperature:
-	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
-	int Tper_NX;										// Number of elements in Tper external file
-
-	double Tpar;										// Reference parallel temperature:
-	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
-	int Tpar_NX;										// Number of elements in Tpar external file
-
-	double n0             ;					// Reference density:
-};
-
 //  Structure to store each ion species initial condition parameters:
 // =============================================================================
 struct particle_IC
 {
 	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
 
-	double Tper;										// Reference perpendicular temperature:
+	double Tper;						// Reference perpendicular temperature:
 	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
-	int Tper_NX;										// Number of elements in Tper external file
+	int Tper_NX;						// Number of elements in Tper external file
 
-	double Tpar;										// Reference parallel temperature:
+	double Tpar;						// Reference parallel temperature:
 	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
-	int Tpar_NX;										// Number of elements in Tpar external file
+	int Tpar_NX;						// Number of elements in Tpar external file
 
-	double densityFraction;					// Reference density fraction:
-	std::string density_fileName; 	// File containing normalized spatial profile
+	double densityFraction;				// Reference density fraction:
+	std::string density_fileName; 		// File containing normalized spatial profile
 	int densityFraction_NX;	  			// Number of elements in density external file
 };
 
@@ -197,20 +144,20 @@ struct particle_IC
 // =============================================================================
 struct particle_BC
 {
-	int BC_type;						// 1: Warm plasma source, 2: NBI
+	int BC_type;					// 1: Warm plasma source, 2: NBI, 3: periodic, 4: reflecting
 
-	double T;								// Beam temperature
-	double E;								// Beam energy
-	double eta;		        	// Beam pitch angle in degrees
+	double T;						// Beam temperature
+	double E;						// Beam energy
+	double eta;		        		// Beam pitch angle in degrees
 	double sigma_x;					// Spatial spread of beam
 	double mean_x;					// Spatial location of beam injection
-	double G;								// Fueling rate of source in particles/second
-	std::string G_fileName; // File containing normalized temporal evolution of G
-	int G_NS;								// Number of elements in G external file
+	double G;						// Fueling rate of source in particles/second
+	std::string G_fileName;			// File containing normalized temporal evolution of G
+	int G_NS;						// Number of elements in G external file
 };
 
-// * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
-
+//  Define ION VARIABLES AND PARAMETERS DERIVED TYPES:
+// =============================================================================
 class oneDimensional::ionSpecies : public vfield_vec
 {
 
@@ -310,7 +257,6 @@ public:
 
 class twoDimensional::ionSpecies : public vfield_mat
 {
-
 public:
 	int SPECIES;
 	int IC; 					// Initial condition IC=1 (Maxwellian), IC=2 (ring-like)
@@ -385,10 +331,10 @@ public:
 	ionSpecies(){};
 	~ionSpecies(){};
 };
-// * * * * * * * * ION VARIABLES AND PARAMETERS DERIVED TYPES  * * * * * * * * //
 
 
-// * * * * * * * * ELECTROMAGNETIC FIELDS DERIVED TYPES  * * * * * * * * //
+//  Define ELECTROMAGNETIC FIELDS DERIVED TYPES:
+// =============================================================================
 class oneDimensional::fields : public vfield_vec
 {
 

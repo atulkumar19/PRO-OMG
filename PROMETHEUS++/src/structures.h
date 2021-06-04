@@ -29,6 +29,10 @@
 #include<omp.h>
 #include "mpi.h"
 
+using namespace std;
+
+//  Define macros:
+// =============================================================================
 #define FIELDS_MPI_COLOR 0
 #define PARTICLES_MPI_COLOR 1
 #define FIELDS_TAG 100
@@ -37,8 +41,8 @@
 #define float_zero 1E-7
 #define double_zero 1E-15
 
-
 // Physical constants
+// =============================================================================
 #define PRO_ZERO 1.0E-15	// Definition of zero in PROMETHEUS
 #define F_E 1.602176E-19	// Electron charge in C (absolute value)
 #define F_ME 9.109382E-31	// Electron mass in kg
@@ -54,6 +58,8 @@ extern double F_ME_DS; 		// Dimensionless electron mass
 extern double F_MU_DS; 		// Dimensionless vacuum permeability
 extern double F_C_DS; 		// Dimensionless speed of light
 
+//  Define structure to hold MPI parameters:
+// =============================================================================
 struct mpiParams
 {
 	int NUMBER_MPI_DOMAINS;
@@ -98,7 +104,8 @@ struct mpiParams
 	int DOWN_MPI_DOMAIN_NUMBER_CART;
 };
 
-
+//  Define structure to hold mesh parameters:
+// =============================================================================
 struct meshParams
 {
 	vfield_vec nodes;
@@ -125,6 +132,14 @@ struct meshParams
 	int SPLIT_DIRECTION;
 };
 
+
+
+
+
+
+// =============================================================================
+//  Candidate for deletion:
+// =============================================================================
 struct backgroundPlasmaParameters
 {
 	double ne;
@@ -160,8 +175,62 @@ struct plasmaProfiles
 
 	int nTable; //Number of elements in external files
 };
+// =============================================================================
+//  Candidate for deletion:
+// =============================================================================
 
 
+
+
+//  Define structure to store fluid species initial condition parameters:
+// =============================================================================
+struct fluid_IC
+{
+	double ne; 							// Reference density:
+	double Te;
+	string Te_fileName;
+	int Te_NX;
+
+	// To be used later:
+	// ---------------------------------------------------------------------------
+	/*
+	double Tper;						// Reference perpendicular temperature:
+	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
+	int Tper_NX;						// Number of elements in Tper external file
+
+	double Tpar;						// Reference parallel temperature:
+	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
+	int Tpar_NX;						// Number of elements in Tpar external file
+	*/
+	// ---------------------------------------------------------------------------
+
+};
+
+//  Define structure to store EM field initial condition parameters:
+// =============================================================================
+struct EM_IC
+{
+	double B0;
+	double phi;
+	double theta;
+	string B0_fileName;
+	int B0_NX;
+
+	double BX;
+	double BY;
+	double BZ;
+	string BX_fileName;
+	int BX_NX;
+
+	double EX;
+	double EY;
+	double EZ;
+	string EX_fileName;
+	int EX_NX;
+};
+
+//  Define structure to store simulation parameters:
+// =============================================================================
 struct simulationParameters
 {
 	// List of variables in the outputs
@@ -174,17 +243,17 @@ struct simulationParameters
 	char **argv;
 
 	int dimensionality; // Dimensionality of the simulation domain 1-D = 1; 2-D = 2
-	bool includeElectronInertia;
+	//bool includeElectronInertia;
 	bool quietStart; // Flag for using a quiet start
 
 	bool restart;
-	int BC; // BC = 1 full periodic, BC = 2
+	//int BC; // BC = 1 full periodic, BC = 2
 	int numberOfRKIterations;
 	double smoothingParameter;
 	int timeIterations;
 	double simulationTime; // In units of the shorter ion gyro-period in the simulation
 	double DT;//Time step
-	double DTc;//Ciclotron period fraction.
+	double DTc;//Cyclotron period fraction.
 	int loadFields;
 	int loadGrid;
 	int usingHDF5;
@@ -192,15 +261,24 @@ struct simulationParameters
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
-	// Parameters of mesh used in simulation
+	// Mesh parameters:
 	meshParams mesh;
 
-	//ions properties
+	// Ions properties:
 	int numberOfParticleSpecies; // This species are evolved self-consistently with the fields
 	int numberOfTracerSpecies; // This species are not self-consistently evolved with the fields
 
+	// Electron initial conditions:
+	fluid_IC f_IC;
+
+	// EM initial conditions:
+	EM_IC em_IC;
+
+	// =============================================================================
 	backgroundPlasmaParameters BGP;
-  plasmaProfiles PP;
+	plasmaProfiles PP;
+	// =============================================================================
+
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
@@ -228,6 +306,8 @@ struct simulationParameters
 };
 
 
+// Define structure to hold characteristic scales:
+// =============================================================================
 struct characteristicScales
 {
 	double time;
@@ -263,6 +343,8 @@ struct characteristicScales
 	}
 };
 
+// Define structure to hold fundamental scales:
+// =============================================================================
 struct fundamentalScales
 {
 	double electronSkinDepth;

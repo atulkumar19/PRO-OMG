@@ -127,17 +127,29 @@ struct particle_IC
 {
 	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
 
-	double Tper;						// Reference perpendicular temperature:
+	// Reference values for profiles:
+	// ==============================
+	double Tper;
+	double Tpar;
+	double densityFraction;
+
+	// Name of external files:
+	// =======================
 	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
-	int Tper_NX;						// Number of elements in Tper external file
-
-	double Tpar;						// Reference parallel temperature:
 	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
-	int Tpar_NX;						// Number of elements in Tpar external file
-
-	double densityFraction;				// Reference density fraction:
 	std::string density_fileName; 		// File containing normalized spatial profile
-	int densityFraction_NX;	  			// Number of elements in density external file
+
+	// Number of elements of profiles:
+	// ===============================
+	int Tper_NX;
+	int Tpar_NX;
+	int densityFraction_NX;
+
+	// Variables to store profiles from external files:
+	// ================================================
+	arma::vec Tper_profile;
+	arma::vec Tpar_profile;
+	arma::vec densityFraction_profile;
 };
 
 //  Structure to store each ion species particle boundary condition parameters:
@@ -146,14 +158,35 @@ struct particle_BC
 {
 	int BC_type;					// 1: Warm plasma source, 2: NBI, 3: periodic, 4: reflecting
 
-	double T;						// Beam temperature
-	double E;						// Beam energy
-	double eta;		        		// Beam pitch angle in degrees
+	// Particle source temperature:
+	// ===========================
+	double T;
+
+	// Particle source beam energy:
+	// ============================
+	double E;
+
+	// Particle source beam pitch angle:
+	// ================================
+	double eta;
+
+	// Particle source rate:
+	// =====================
+	double G;						// Fueling rate of source in particles/second
 	double sigma_x;					// Spatial spread of beam
 	double mean_x;					// Spatial location of beam injection
-	double G;						// Fueling rate of source in particles/second
-	std::string G_fileName;			// File containing normalized temporal evolution of G
-	int G_NS;						// Number of elements in G external file
+
+	// Name of external file:
+	// ======================
+	std::string G_fileName;
+
+	// Number of elements in external file:
+	// ====================================
+	int G_NS;
+
+	// Variable to store profile from external file:
+	// =============================================
+	arma::vec G_profile;
 };
 
 //  Define ION VARIABLES AND PARAMETERS DERIVED TYPES:

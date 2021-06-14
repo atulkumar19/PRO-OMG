@@ -1159,18 +1159,6 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT)
 {
-    // Cartesian unit vectors:
-    // =======================
-    arma::vec x = {1.0, 0.0, 0.0};
-    arma::vec y = {0.0, 1.0, 0.0};
-    arma::vec z = {0.0, 0.0, 1.0};
-
-    // Field alinged unit vectors:
-    // ===========================
-    arma::vec b1; // Unitary vector along B field
-    arma::vec b2; // Unitary vector perpendicular to b1
-    arma::vec b3; // Unitary vector perpendicular to b1 and b2
-
     // Iterate over all ion species:
     // =============================
     for(int ii=0;ii<IONS->size();ii++)
@@ -1182,26 +1170,18 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
             // Number of computational particles per process:
             int NSP(IONS->at(ii).NSP);
 
-            #pragma omp parallel default(none) shared(params, IONS, x, y, z,std::cout) firstprivate(DT, NSP, ii, b1, b2, b3)
+            #pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
             {
-                // Leak diagnostics:
-                int pc = 0;
-                double ec = 0;
-
                 #pragma omp for
                 for(int ip=0; ip<NSP; ip++)
                     {
                         // Advance position:
                         IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0);
 
+						/*
                         // Check boundaries and re-injection:
                         if((IONS->at(ii).X(ip,0) < 0)||(IONS->at(ii).X(ip,0) > params->mesh.LX))
                         {
-                            //Record events:
-                            pc += 1; //Increase the leaking particles by one
-                            ec += 0.5*IONS->at(ii).M*dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip));//Increase the leaking particles KE
-
-
                             // Variables for random number generator:
                             arma::vec R = randu(1);
                             arma_rng::set_seed_random();
@@ -1269,44 +1249,10 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
                             IONS->at(ii).avg_mu = mean(IONS->at(ii).mu);
 
                         } // Check boundary
-
+						*/
                     } // pragma omp for
-
-                #pragma omp critical
-                // Accumulate leak diagnotics:
-                IONS->at(ii).pCount += pc;
-                IONS->at(ii).eCount += ec;
-
             }//End of the parallel region
-
-            // Assign cell:
-            //PIC::assignCell(params, EB, &IONS->at(ii));
-
-            //Once the ions have been pushed,  we extrapolate the density at the node grids.
-            //extrapolateIonDensity(params, &IONS->at(ii));
-
         } // IF particle sentinel
-
-		/*
-        // Reduce IONS.n to PARTICLE ROOT:
-        // ==============================
-        PIC::MPI_ReduceVec(params, &IONS->at(ii).n);
-
-        // Apply smoothing:
-        // ===============
-        for (int jj=0; jj<params->filtersPerIterationIons; jj++)
-        {
-            smooth(&IONS->at(ii).n, params->smoothingParameter);
-        }
-
-        // Densities at various time levels are sent to fields processes:
-        // =============================================================
-        PIC::MPI_SendVec(params, &IONS->at(ii).n);
-        PIC::MPI_SendVec(params, &IONS->at(ii).n_);
-        PIC::MPI_SendVec(params, &IONS->at(ii).n__);
-        PIC::MPI_SendVec(params, &IONS->at(ii).n___);
-		*/
-
     } // Iterate over all ion species
 }
 

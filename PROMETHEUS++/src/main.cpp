@@ -180,6 +180,13 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         // - Clear flags once operation applied
         // - Apply the "a" on the extrapolation but not interpolation.
 
+        particleBC.applyParticleReinjection(&params,&CS,&EB,&IONS);
+        // - Loop over ion SPECIES
+        // - use only particle MPI
+        // - loop over Particles
+        // - apply fopenm
+        // - flag f1 and f2 sentinel
+        // - Inject particle based on IONS->at(ii).p_BC
 
         // Calculate ion moments:
         // =====================================================================

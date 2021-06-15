@@ -6,6 +6,15 @@ using namespace std;
 PARTICLE_BC::PARTICLE_BC()
 {}
 
+void PARTICLE_BC::MPI_AllreduceDouble(const simulationParameters * params, double * v)
+{
+    double recvbuf = 0;
+
+    MPI_Allreduce(v, &recvbuf, 1, MPI_DOUBLE, MPI_SUM, params->mpi.COMM);
+
+    *v = recvbuf;
+}
+
 void PARTICLE_BC::checkBoundaryAndFlag(const simulationParameters * params,const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {
     if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
@@ -60,6 +69,62 @@ void PARTICLE_BC::checkBoundaryAndFlag(const simulationParameters * params,const
 }
 
 void PARTICLE_BC::checkBoundaryAndFlag(const simulationParameters * params,const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
+{}
+
+void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
+{
+    // Get time step:
+    // ==============
+    double DT = params->DT*CS->time;
+
+    // Iterate over all ion species:
+    // =============================
+    for(int ss=0;ss<IONS->size();ss++)
+    {
+        if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+        {
+            // Number of computational particles per process:
+            int NSP(IONS->at(ss).NSP);
+
+            // Super particle conversion factor:
+            double alpha(IONS->at(ss).NCP);
+
+            // Computational particle leak rate:
+            double uN1 = 0;
+            double uN2 = 0;
+
+            #pragma omp parallel default(none) shared(uN1, uN2, params, CS, EB, IONS, ss, alpha, DT, std::cout) firstprivate(NSP)
+            {
+                // Computational particle leak rate:
+                double p_uN1 = 0;
+                double p_uN2 = 0;
+
+                #pragma omp for
+                for(int ii=0; ii<NSP; ii++)
+                {
+                    p_uN1 += (alpha/DT)*IONS->at(ss).f1(ii);
+                    p_uN2 += (alpha/DT)*IONS->at(ss).f2(ii);
+                }
+
+                #pragma omp critical
+                uN1 += p_uN1;
+                uN2 += p_uN2;
+
+            } // pragma omp parallel
+
+            // AllReduce uN1 and uN2 over all particle MPIs:
+            MPI_AllreduceDouble(params,&uN1);
+            MPI_AllreduceDouble(params,&uN2);
+
+            // Calculate particle weight:
+            double G = 2E20;
+            //IONS->at(ss).a_new = G/(uN1 + uN2);
+
+        } // Particle MPIs
+    } //  Species
+}
+
+void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
 {}
 
 void PARTICLE_BC::applyParticleReinjection(const simulationParameters * params,const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)

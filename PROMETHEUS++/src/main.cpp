@@ -178,15 +178,14 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Calculate new particle weight:
         // =====================================================================
+        particleBC.calculateParticleWeight(&params,&CS,&EB,&IONS);
         // - Count how many left the domain
         // - Apply the "a" on the extrapolation but not interpolation.
         // - Reset injection flag
 
-
         // Re-inject particles:
         // =====================================================================
         particleBC.applyParticleReinjection(&params,&CS,&EB,&IONS);
-
 
         // Calculate ion moments:
         // =====================================================================
@@ -200,7 +199,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Field solve:
         // =====================================================================
-        bool EfieldFlag = true;
+        bool EfieldFlag = false;
         bool BfieldFlag = false;
 
         // Magnetic field:

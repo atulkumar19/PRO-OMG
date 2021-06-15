@@ -20,40 +20,42 @@ void PARTICLE_BC::checkBoundaryAndFlag(const simulationParameters * params,const
             // ===================================
             int NSP = IONS->at(aa).NSP;
 
+            // Ion mass:
+            // =========
+            double Ma = IONS->at(aa).M;
+
             // Particle loop:
             // ==================================
-            #pragma omp parallel for default(none) shared(params, IONS, aa, CS) firstprivate(NSP)
+            #pragma omp parallel for default(none) shared(params, IONS, aa, CS, std::cout) firstprivate(NSP,Ma)
             for(int ii=0; ii<NSP; ii++)
             {
                 // left boundary:
                 if (IONS->at(aa).X(ii,0) < 0)
                 {
                     // Particle flag:
-                    IONS->at(aa).f1 = 1;
+                    IONS->at(aa).f1(ii) = 1;
 
                     // Particle kinetic energy:
-                    double Ma = IONS->at(aa).M;
                     double KE = 0.5*Ma*dot(IONS->at(aa).V.row(ii), IONS->at(aa).V.row(ii));
-                    IONS->at(aa).dE1 = KE;
+                    IONS->at(aa).dE1(ii) = KE;
                 }
 
                 // Right boundary:
                 if (IONS->at(aa).X(ii,0) > params->mesh.LX)
                 {
                     // Particle flag:
-                    IONS->at(aa).f2 = 1;
+                    IONS->at(aa).f2(ii) = 1;
 
                     // Particle kinetic energy:
-                    double Ma = IONS->at(aa).M;
                     double KE = 0.5*Ma*dot(IONS->at(aa).V.row(ii), IONS->at(aa).V.row(ii));
-                    IONS->at(aa).dE2 = KE;
+                    IONS->at(aa).dE2(ii) = KE;
                 }
 
             } // Particle loop
 
-        }
+        } // species loop
 
-    } // close MPI
+    } // Particle MPI guard
 
 }
 

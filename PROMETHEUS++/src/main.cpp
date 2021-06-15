@@ -174,19 +174,19 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         // Check boundaries:
         // =====================================================================
         particleBC.checkBoundaryAndFlag(&params,&CS,&EB,&IONS);
-        // - Create f1 and f2 in IONS for each species
-        // - Flag particles that Left
-        // - Count how many left the domain
-        // - Clear flags once operation applied
-        // - Apply the "a" on the extrapolation but not interpolation.
 
+
+        // Calculate new particle weight:
+        // =====================================================================
+        // - Count how many left the domain
+        // - Apply the "a" on the extrapolation but not interpolation.
+        // - Reset injection flag
+
+
+        // Re-inject particles:
+        // =====================================================================
         particleBC.applyParticleReinjection(&params,&CS,&EB,&IONS);
-        // - Loop over ion SPECIES
-        // - use only particle MPI
-        // - loop over Particles
-        // - apply fopenm
-        // - flag f1 and f2 sentinel
-        // - Inject particle based on IONS->at(ii).p_BC
+
 
         // Calculate ion moments:
         // =====================================================================

@@ -358,6 +358,11 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
     }
 
+    // Catertian unit vectors:
+    params->mesh.e_x = {1.0, 0.0, 0.0};
+    params->mesh.e_y = {0.0, 1.0, 0.0};
+    params->mesh.e_z = {0.0, 0.0, 1.0};
+
     // Magnetic field data:
     params->em_IC.B0 = sqrt( pow(params->em_IC.BX,2.0) + pow(params->em_IC.BY,2.0) + pow(params->em_IC.BZ,2.0) );
 	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);

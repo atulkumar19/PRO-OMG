@@ -129,6 +129,11 @@ struct meshParams
 	double LY;		// Size of simulation domain along x-axis
 	double LZ;		// Size of simulation domain along x-axis
 
+	// Cartesian unit vectors:
+	arma::vec e_x;
+	arma::vec e_y;
+	arma::vec e_z;
+
 	int SPLIT_DIRECTION;
 };
 

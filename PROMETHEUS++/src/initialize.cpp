@@ -843,6 +843,11 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.pCount.zeros(1);
             ions.eCount.zeros(1);
 
+            // Initialize Computational particle accumulators:
+            ions.p_BC.S1   = 0;
+            ions.p_BC.S2   = 0;
+            ions.p_BC.GSUM = 0;
+
             //Definition of the initial total number of superparticles for each species
             ions.NSP = ceil( ions.NPC*(double)params->mesh.NUM_CELLS_IN_SIM/(double)params->mpi.MPIS_PARTICLES );
 

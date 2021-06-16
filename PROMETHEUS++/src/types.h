@@ -187,6 +187,17 @@ struct particle_BC
 	// Variable to store profile from external file:
 	// =============================================
 	arma::vec G_profile;
+
+	// Computational particle accumulators:
+	// =============================================
+	double S1;
+	double S2;
+	double GSUM;
+
+	// Variable to store new particle weight based on fueling:
+	// ======================================================
+	double a_new;
+
 };
 
 //  Define ION VARIABLES AND PARAMETERS DERIVED TYPES:
@@ -347,19 +358,35 @@ public:
 	vfield_mat nv; 		// Ion bulk velocity at time level "l + 1/2"
 	vfield_mat nv_; 	// Ion bulk velocity at time level "l - 1/2"
 	vfield_mat nv__; 	// Ion bulk velocity at time level "l - 3/2"
-
-	arma::mat P11;
-	arma::mat P22;
-
-	vfield_mat U_m;
-	arma::mat Tpar_m;
-	arma::mat Tper_m;
+	arma::vec P11;				// Ion pressure tensor, component 1,1
+	arma::vec P22;				// Ion pressure tensor, component 2,2
+	arma::vec Tpar_m;			// Ion parallel temperature
+	arma::vec Tper_m;			// Ion perpendicular temperature
 
 	// Particle-defined ion moments:
-	arma::mat n_p;
-	vfield_mat U_p;
-	arma::mat Tpar_p;
-	arma::mat Tper_p;
+	arma::vec n_p;
+	arma::vec nv_p;
+	arma::vec Tpar_p;
+	arma::vec Tper_p;
+
+	// Particle defined flags:
+	arma::ivec f1;             	// Flag for left boundary
+	arma::ivec f2;              // Flag for Right boundary
+	arma::ivec f3;              // Flag for RF operator
+
+	// Particle kinetic energy at boundaries:
+	arma::ivec dE1;              // left boundary
+	arma::ivec dE2;              // Right boundary
+	arma::ivec dE3;              // RF operator
+
+	// Particle weight:
+	arma::vec a;                // Computational particle weigth
+
+	// Initial condition parameters:
+	particle_IC p_IC;
+
+	// Boundary conditions:
+	particle_BC p_BC;
 
 	ionSpecies(){};
 	~ionSpecies(){};

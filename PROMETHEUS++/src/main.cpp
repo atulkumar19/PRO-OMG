@@ -180,12 +180,17 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         // =====================================================================
         particleBC.calculateParticleWeight(&params,&CS,&EB,&IONS);
         // - Count how many left the domain
+        // - Calculate a_new
         // - Apply the "a" on the extrapolation but not interpolation.
         // - Reset injection flag
 
         // Re-inject particles:
         // =====================================================================
         particleBC.applyParticleReinjection(&params,&CS,&EB,&IONS);
+        // Loop over all Particles
+        // Use f1 and f2 flags and assigne a = a_new
+        // RE-inject particle states based on plasma source type
+        // reset f1 and f2
 
         // Calculate ion moments:
         // =====================================================================

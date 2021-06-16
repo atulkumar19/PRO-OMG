@@ -73,9 +73,9 @@ void PARTICLE_BC::checkBoundaryAndFlag(const simulationParameters * params,const
 
 void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {
-    // Get time step:
-    // ==============
-    double DT = params->DT*CS->time;
+    // Simulation time step:
+    // =====================
+    double DT = params->DT;
 
     // Iterate over all ion species:
     // =============================
@@ -90,35 +90,58 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             double alpha(IONS->at(ss).NCP);
 
             // Computational particle leak rate:
-            double uN1 = 0;
-            double uN2 = 0;
+            double S1 = 0;
+            double S2 = 0;
 
-            #pragma omp parallel default(none) shared(uN1, uN2, params, CS, EB, IONS, ss, alpha, DT, std::cout) firstprivate(NSP)
+            #pragma omp parallel default(none) shared(S1, S2, params, IONS, ss, std::cout) firstprivate(NSP)
             {
-                // Computational particle leak rate:
-                double p_uN1 = 0;
-                double p_uN2 = 0;
+                // Computational particle accumulators:
+                double S1_private = 0;
+                double S2_private = 0;
 
                 #pragma omp for
                 for(int ii=0; ii<NSP; ii++)
                 {
-                    p_uN1 += (alpha/DT)*IONS->at(ss).f1(ii);
-                    p_uN2 += (alpha/DT)*IONS->at(ss).f2(ii);
+                    S1_private += IONS->at(ss).f1(ii);
+                    S2_private += IONS->at(ss).f2(ii);
                 }
 
                 #pragma omp critical
-                uN1 += p_uN1;
-                uN2 += p_uN2;
+                S1 += S1_private;
+                S2 += S2_private;
 
             } // pragma omp parallel
 
-            // AllReduce uN1 and uN2 over all particle MPIs:
-            MPI_AllreduceDouble(params,&uN1);
-            MPI_AllreduceDouble(params,&uN2);
+            // AllReduce S1 and S2 over all particle MPIs:
+            MPI_AllreduceDouble(params,&S1);
+            MPI_AllreduceDouble(params,&S2);
 
-            // Calculate particle weight:
+            // Accumulate computational particles:
+            IONS->at(ss).p_BC.S1 += S1;
+            IONS->at(ss).p_BC.S2 += S2;
+
+            // Accumulate fueling rate:
             double G = 2E20;
-            //IONS->at(ss).a_new = G/(uN1 + uN2);
+            IONS->at(ss).p_BC.GSUM += G;
+
+            // Define critical number of computatIONSal particles:
+            double S_critical = 3;
+
+            if ( (IONS->at(ss).p_BC.S1 + IONS->at(ss).p_BC.S2) >= S_critical )
+            {
+                // Calculate new weight with integrated time:
+                double S_total  = IONS->at(ss).p_BC.S1 + IONS->at(ss).p_BC.S2;
+                double uN_total = (alpha/DT)*S_total;
+
+                // Calculate particle weight:
+                double GSUM = IONS->at(ss).p_BC.GSUM;
+                IONS->at(ss).p_BC.a_new = GSUM/uN_total;
+
+                // Reset accumulators:
+                IONS->at(ss).p_BC.S1   = 0;
+                IONS->at(ss).p_BC.S2   = 0;
+                IONS->at(ss).p_BC.GSUM = 0;
+            }
 
         } // Particle MPIs
     } //  Species

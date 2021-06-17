@@ -181,8 +181,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         particleBC.calculateParticleWeight(&params,&CS,&EB,&IONS);
         // - Count how many left the domain
         // - Calculate a_new
-        // - Apply the "a" on the extrapolation but not interpolation.
-        // - Reset injection flag
 
         // Re-inject particles:
         // =====================================================================
@@ -195,6 +193,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         // Calculate ion moments:
         // =====================================================================
         ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
+        // - Apply the "a" on the extrapolation but not interpolation.
 
 
         // Apply collision operator:

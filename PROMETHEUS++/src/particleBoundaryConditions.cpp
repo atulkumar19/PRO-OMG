@@ -124,18 +124,25 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             double G = 2E20;
             IONS->at(ss).p_BC.GSUM += G;
 
-            // Define critical number of computatIONSal particles:
-            double S_critical = 3;
+            // Minimum number of computational particles to trigger fueling:
+            double S_min = 3;
 
-            if ( (IONS->at(ss).p_BC.S1 + IONS->at(ss).p_BC.S2) >= S_critical )
+            if ( (IONS->at(ss).p_BC.S1 + IONS->at(ss).p_BC.S2) >= S_min )
             {
-                // Calculate new weight with integrated time:
+                // Total number of computational particles leaked:
                 double S_total  = IONS->at(ss).p_BC.S1 + IONS->at(ss).p_BC.S2;
+
+                // Calculate computational particle leak rate:
                 double uN_total = (alpha/DT)*S_total;
 
                 // Calculate particle weight:
-                double GSUM = IONS->at(ss).p_BC.GSUM;
-                IONS->at(ss).p_BC.a_new = GSUM/uN_total;
+                double GSUM  = IONS->at(ss).p_BC.GSUM;
+                double a_new = GSUM/uN_total;
+                if (a_new > 100)
+                {
+                    a_new = 1;
+                }
+                IONS->at(ss).p_BC.a_new = a_new;
 
                 // Reset accumulators:
                 IONS->at(ss).p_BC.S1   = 0;
@@ -205,17 +212,22 @@ void PARTICLE_BC::applyParticleReinjection(const simulationParameters * params, 
 
 void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
+    // Particle weight:
+    // =========================================================================
+    IONS->a(ii) = IONS->p_BC.a_new;
+
+    // Particle position:
+    // =========================================================================
     // Variables for random number generator:
     arma::vec R = randu(1);
     arma_rng::set_seed_random();
     arma::vec phi = 2.0*M_PI*randu<vec>(1);
 
-    // Gaussian distribution in space for particle position:
+    // Gaussian distribution in space:
     double Xcenter = params->mesh.LX/2;
     double sigmaX  = params->mesh.LX/10;
     double Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
     double dLX = abs(Xnew - Xcenter);
-
 
     while(dLX > params->mesh.LX/2)
     {
@@ -231,8 +243,8 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 
     IONS->X(ii,0) = Xnew;
 
-    // Box Muller in velocity space:
-    // =============================
+    // Particle velocity:
+    // =========================================================================
     arma_rng::set_seed_random();
     R = randu(1);
     phi = 2.0*M_PI*randu<vec>(1);

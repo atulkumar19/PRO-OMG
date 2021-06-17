@@ -1354,7 +1354,6 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 		// Create private moments:
 		// ======================
 		double Ma(IONS->M);
-		double a(1.0);
 		arma::vec n = zeros(params->mesh.NX_IN_SIM + 4);
 		vfield_vec nv(params->mesh.NX_IN_SIM + 4);
 		arma::vec P11 = zeros(params->mesh.NX_IN_SIM + 4);
@@ -1370,6 +1369,9 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 
 			// Perpendicular velocity:
 			double V_perp = sqrt( pow(IONS->V(ii,1),2) + pow(IONS->V(ii,2),2));
+
+			// Particle weight:
+			double a = IONS->a(ii);
 
 			// Density:
 			n(ix-1) += IONS->wxl(ii)*a;

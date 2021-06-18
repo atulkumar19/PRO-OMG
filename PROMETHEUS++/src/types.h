@@ -198,6 +198,24 @@ struct particle_BC
 	// ======================================================
 	double a_new;
 
+	// Constructor:
+	// ===========
+	particle_BC()
+	{
+		BC_type   = 0;
+		E 	  	  = 0;
+		T     	  = 0;
+		eta   	  = 0;
+		G         = 0;
+		sigma_x   = 0;
+		mean_x    = 0;
+		G_NS      = 0;
+		GSUM      = 0;
+		S1        = 0;
+		S2        = 0;
+		a_new 	  = 0;
+	};
+
 };
 
 //  Define ION VARIABLES AND PARAMETERS DERIVED TYPES:
@@ -294,7 +312,10 @@ public:
 	// Boundary conditions:
 	particle_BC p_BC;
 
+	// Constructor:
 	ionSpecies(){};
+
+	// Destructor:
 	~ionSpecies(){};
 };
 
@@ -388,7 +409,7 @@ public:
 	// Boundary conditions:
 	particle_BC p_BC;
 
-	ionSpecies(){};
+    ionSpecies(){};
 	~ionSpecies(){};
 };
 

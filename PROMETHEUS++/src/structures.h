@@ -135,6 +135,14 @@ struct meshParams
 	arma::vec e_z;
 
 	int SPLIT_DIRECTION;
+
+	meshParams()
+	{
+		e_x = {1.0, 0.0, 0.0};
+		e_y = {0.0, 1.0, 0.0};
+		e_z = {0.0, 0.0, 1.0};
+	}
+
 };
 
 
@@ -331,6 +339,7 @@ struct characteristicScales
 	double vacuumPermeability;
 	double vacuumPermittivity;
 
+	// Constructor:
 	characteristicScales()
 	{
 		time = 0.0;

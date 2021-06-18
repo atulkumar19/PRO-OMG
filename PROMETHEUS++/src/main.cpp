@@ -203,7 +203,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Field solve:
         // =====================================================================
-        bool EfieldFlag = false;
+        bool EfieldFlag = true;
         bool BfieldFlag = false;
 
         // Magnetic field:

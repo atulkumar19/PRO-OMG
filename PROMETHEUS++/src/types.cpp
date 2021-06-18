@@ -18,6 +18,19 @@
 
 #include "types.h"
 
+// Constructors:
+/*
+oneDimensional::ionSpecies::ionSpecies()
+{
+	p_BC.a_new = 0;
+}
+
+twoDimensional::ionSpecies::ionSpecies()
+{
+
+}
+*/
+
 vfield_vec::vfield_vec(unsigned int N){
 	X = arma::zeros(N);
 	Y = arma::zeros(N);

@@ -75,7 +75,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
 {
     // Simulation time step:
     // =====================
-    double DT = params->DT;
+    double DT = params->DT*CS->time;
 
     // Iterate over all ion species:
     // =============================
@@ -87,7 +87,8 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             int NSP(IONS->at(ss).NSP);
 
             // Super particle conversion factor:
-            double alpha(IONS->at(ss).NCP);
+            double A_0 = M_PI*pow(params->BGP.Rphi0*CS->length,2);
+            double alpha = IONS->at(ss).NCP;
 
             // Computational particle leak rate:
             double S1 = 0;
@@ -121,7 +122,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             IONS->at(ss).p_BC.S2 += S2;
 
             // Accumulate fueling rate:
-            double G = 2E20;
+            double G = 0.;
             IONS->at(ss).p_BC.GSUM += G;
 
             // Minimum number of computational particles to trigger fueling:
@@ -138,8 +139,26 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                 // Calculate particle weight:
                 double GSUM  = IONS->at(ss).p_BC.GSUM;
                 double a_new = GSUM/uN_total;
-                if (a_new > 100)
+
+                /*
+                if (params->mpi.IS_PARTICLES_ROOT)
                 {
+                    cout << "S_total:" << S_total << endl;
+                    cout << "uN_total:" << uN_total << endl;
+                    cout << "a_new:" << a_new << endl;
+                    cout << "GSUM:" << GSUM << endl;
+                }
+                */
+
+                if (a_new > 10)
+                {
+                    if (params->mpi.IS_PARTICLES_ROOT)
+                    {
+                        cout << "S_total:" << S_total << endl;
+                        cout << "uN_total:" << uN_total << endl;
+                        cout << "a_new:" << a_new << endl;
+                        cout << "GSUM:" << GSUM << endl;
+                    }
                     a_new = 1;
                 }
                 IONS->at(ss).p_BC.a_new = a_new;

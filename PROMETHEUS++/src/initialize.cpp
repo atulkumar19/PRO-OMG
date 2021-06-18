@@ -359,9 +359,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     }
 
     // Catertian unit vectors:
-    params->mesh.e_x = {1.0, 0.0, 0.0};
-    params->mesh.e_y = {0.0, 1.0, 0.0};
-    params->mesh.e_z = {0.0, 0.0, 1.0};
+    //params->mesh.e_x = {1.0, 0.0, 0.0};
+    //params->mesh.e_y = {0.0, 1.0, 0.0};
+    //params->mesh.e_z = {0.0, 0.0, 1.0};
 
     // Magnetic field data:
     params->em_IC.B0 = sqrt( pow(params->em_IC.BX,2.0) + pow(params->em_IC.BY,2.0) + pow(params->em_IC.BZ,2.0) );
@@ -695,15 +695,17 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 
         // Calculate NCP: conversion factor from number of TOTAL super-particles NSP*NPROC to total number of real-particles
         // NCP = NR/(NSP*NPROC):
+        double A_0 = M_PI*pow(params->BGP.Rphi0*CS->length,2);
+
         if (params->dimensionality == 1)
         {
             double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
             double SNeDx=sum((params->BGP.ne)*(params->PP.ne)/(params->PP.Bx/params->BGP.Bo))*Ds;
-            IONS->at(ii).NCP=((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
+            IONS->at(ii).NCP = A_0*((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
         }
         else
         {
-            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
+            IONS->at(ii).NCP = A_0*(IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
         }
 
         // Print to the terminal:
@@ -831,6 +833,43 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.M = F_U*stod(parametersMap[name]);
             name.clear();
 
+            // Boundary conditions:
+            name = "BC_type_" + ss.str();
+            ions.p_BC.BC_type = stoi(parametersMap[name]);
+            name.clear();
+
+            name = "BC_T_" + ss.str();
+            ions.p_BC.T = stod(parametersMap[name]);
+            name.clear();
+
+            name = "BC_E_" + ss.str();
+            ions.p_BC.E = stod(parametersMap[name]);
+            name.clear();
+
+            name = "BC_eta_" + ss.str();
+            ions.p_BC.eta = stod(parametersMap[name]);
+            name.clear();
+
+            name = "BC_G_" + ss.str();
+            ions.p_BC.G = stod(parametersMap[name]);
+            name.clear();
+
+            name = "BC_mean_x_" + ss.str();
+            ions.p_BC.mean_x = stod(parametersMap[name]);
+            name.clear();
+
+            name = "BC_sigma_x_" + ss.str();
+            ions.p_BC.sigma_x = stod(parametersMap[name]);
+            name.clear();
+
+            name = "BC_G_fileName_" + ss.str();
+            ions.p_BC.G_fileName = parametersMap[name];
+            name.clear();
+
+            name = "BC_G_NS_" + ss.str();
+            ions.p_BC.G_NS = stoi(parametersMap[name]);
+            name.clear();
+
             // Derived quantities:
             ions.Q = F_E*ions.Z;
             ions.Wc = ions.Q*params->BGP.Bo/ions.M;
@@ -842,12 +881,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             //Initializing the events counter:
             ions.pCount.zeros(1);
             ions.eCount.zeros(1);
-
-            // Initialize Computational particle accumulators:
-            ions.p_BC.S1    = 0;
-            ions.p_BC.S2    = 0;
-            ions.p_BC.GSUM  = 0;
-            ions.p_BC.a_new = 1; 
 
             //Definition of the initial total number of superparticles for each species
             ions.NSP = ceil( ions.NPC*(double)params->mesh.NUM_CELLS_IN_SIM/(double)params->mpi.MPIS_PARTICLES );

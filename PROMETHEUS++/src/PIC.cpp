@@ -1368,7 +1368,9 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 			int ix = IONS->mn(ii) + 2;
 
 			// Perpendicular velocity:
-			double V_perp = sqrt( pow(IONS->V(ii,1),2) + pow(IONS->V(ii,2),2));
+			//double V_perp = sqrt( pow(IONS->V(ii,1),2) + pow(IONS->V(ii,2),2));
+			double Vy = IONS->V(ii,1);
+			//double Vz = IONS->V(ii,2);
 
 			// Particle weight:
 			double a = IONS->a(ii);
@@ -1397,9 +1399,14 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 			P11(ix+1) += IONS->wxr(ii)*a*Ma*pow(IONS->V(ii,0),2);
 
 			// Stress tensor P22:
-			P22(ix-1) += IONS->wxl(ii)*a*Ma*pow(V_perp,2);
-			P22(ix)   += IONS->wxc(ii)*a*Ma*pow(V_perp,2);
-			P22(ix+1) += IONS->wxr(ii)*a*Ma*pow(V_perp,2);
+			P22(ix-1) += IONS->wxl(ii)*a*Ma*pow(Vy,2);
+			P22(ix)   += IONS->wxc(ii)*a*Ma*pow(Vy,2);
+			P22(ix+1) += IONS->wxr(ii)*a*Ma*pow(Vy,2);
+
+			// Stress tensor P33:
+			//P33(ix-1) += IONS->wxl(ii)*a*Ma*pow(Vz,2);
+			//P33(ix)   += IONS->wxc(ii)*a*Ma*pow(Vz,2);
+			//P33(ix+1) += IONS->wxr(ii)*a*Ma*pow(Vz,2);
 		}
 
 		// Ghost contributions:

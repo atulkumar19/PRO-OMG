@@ -121,7 +121,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             IONS->at(ss).p_BC.S2 += S2;
 
             // Accumulate fueling rate:
-            double G = 1.0E20;
+            double G = IONS->at(ss).p_BC.G;
             IONS->at(ss).p_BC.GSUM += G;
 
             // Minimum number of computational particles to trigger fueling:

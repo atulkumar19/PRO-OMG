@@ -1426,7 +1426,7 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	}//End of the parallel region
 
 	// Calculate compression factor:
-	arma::vec compressionFactor = (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo);
+	arma::vec compressionFactor = (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo)/params->A_0;
 
 	// Apply magnetic compression:
 	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;

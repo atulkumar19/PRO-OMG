@@ -275,7 +275,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     unsigned int NY   = (unsigned int)stoi( parametersStringMap["NY"] );
     unsigned int NZ   = (unsigned int)stoi( parametersStringMap["NZ"] );
     params->DrL       = stod( parametersStringMap["DrL"] );
-	params->dp        = stod( parametersStringMap["dp"] );
+	  params->dp        = stod( parametersStringMap["dp"] );
+  	params->r1        = stod( parametersStringMap["r1"] );
+    params->r2        = stod( parametersStringMap["r2"] );
 
     // Electron initial conditions:
     // -------------------------------------------------------------------------
@@ -299,6 +301,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Derived parameters:
     // ===================
     params->mpi.MPIS_PARTICLES = params->mpi.NUMBER_MPI_DOMAINS - params->mpi.MPIS_FIELDS;
+    params->A_0 = M_PI*(pow(params->r2,2) -pow(params->r1,2));
 
     // Sanity check: if NX and/or NY is not a multiple of 2, the simulation aborts
     if (params->dimensionality == 1)
@@ -695,17 +698,17 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 
         // Calculate NCP: conversion factor from number of TOTAL super-particles NSP*NPROC to total number of real-particles
         // NCP = NR/(NSP*NPROC):
-        double A_0 = M_PI*pow(params->BGP.Rphi0*CS->length,2);
+        //double A_0 = M_PI*pow(params->BGP.Rphi0,2);
 
         if (params->dimensionality == 1)
         {
             double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
-            double SNeDx=sum((params->BGP.ne)*(params->PP.ne)/(params->PP.Bx/params->BGP.Bo))*Ds;
-            IONS->at(ii).NCP = A_0*((IONS->at(ii).densityFraction)*(SNeDx)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
+            double NR=(IONS->at(ii).densityFraction)*sum(((params->BGP.Bo*params->A_0)/(params->PP.Bx))*(params->BGP.ne))*Ds;
+            IONS->at(ii).NCP = (NR/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
         }
         else
         {
-            IONS->at(ii).NCP = A_0*(IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
+            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
         }
 
         // Print to the terminal:

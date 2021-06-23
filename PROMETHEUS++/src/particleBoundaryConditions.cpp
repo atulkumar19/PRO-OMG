@@ -87,7 +87,6 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             int NSP(IONS->at(ss).NSP);
 
             // Super particle conversion factor:
-            double A_0 = M_PI*pow(params->BGP.Rphi0*CS->length,2);
             double alpha = IONS->at(ss).NCP;
 
             // Computational particle leak rate:
@@ -122,7 +121,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
             IONS->at(ss).p_BC.S2 += S2;
 
             // Accumulate fueling rate:
-            double G = 0.;
+            double G = 1.0E20;
             IONS->at(ss).p_BC.GSUM += G;
 
             // Minimum number of computational particles to trigger fueling:
@@ -150,7 +149,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                 }
                 */
 
-                if (a_new > 10)
+                if (a_new > 100)
                 {
                     if (params->mpi.IS_PARTICLES_ROOT)
                     {

@@ -161,6 +161,8 @@ template <class IT, class FT> void UNITS<IT,FT>::broadcastCharacteristicScales(s
 
     MPI_Bcast(&CS->length, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+		MPI_Bcast(&CS->volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
     MPI_Bcast(&CS->mass, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(&CS->charge, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -299,6 +301,7 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 	CS->velocity = F_C;
 	CS->momentum = CS->mass*CS->velocity;
 	CS->length = CS->velocity*CS->time;
+	CS->volume = CS->length*CS->length*CS->length;
 	CS->eField = ( CS->mass*CS->velocity )/( CS->charge*CS->time );
 	CS->bField = CS->eField/CS->velocity; // CS->mass/( CS->charge*CS->time );
 	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB;
@@ -349,7 +352,7 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->BGP.Bx /= CS->bField;
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
-        params->BGP.Rphi0 /= CS->length;
+  params->BGP.Rphi0 /= CS->length;
 
 	params->PP.ne_i /= CS->density;
 	params->PP.Tpar_i /= CS->temperature;

@@ -163,6 +163,7 @@ struct backgroundPlasmaParameters
 	double Bz;
   double Rphi0;
 
+
 	double theta; // Spherical polar angle (as measured from z-axis)
 	double phi; // Spherical azimuthal angle (as measured from x-axis)
 };
@@ -271,6 +272,10 @@ struct simulationParameters
 	int loadGrid;
 	int usingHDF5;
 	double outputCadence;//Save variables each "outputCadence" times the background ion cycloperiod.
+	double r1;  // Inner radius of the annulus
+	double r2;  // Outer radius of the annulus
+	double A_0;  // Area of the annulus
+
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
 
@@ -327,6 +332,7 @@ struct characteristicScales
 	double velocity;
 	double momentum;
 	double length;
+	double volume;
 	double mass;
 	double charge;
 	double density;
@@ -345,6 +351,7 @@ struct characteristicScales
 		time = 0.0;
 		velocity = 0.0;
 		length = 0.0;
+		volume = 0.0;
 		mass = 0.0;
 		charge = 0.0;
 		density = 0.0;

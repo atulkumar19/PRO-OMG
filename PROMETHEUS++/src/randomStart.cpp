@@ -153,9 +153,9 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
 
     double g=0.0;
     arma::vec gg(1,1);
-    interp1(S,(params->BGP.Bo/params->PP.Bx) % params->PP.ne,xx,gg); //Ne is multiplied with the compression factor
+    interp1(S, (params->BGP.Bo/params->PP.Bx)%params->PP.ne,xx,gg); //Ne is multiplied with the compression factor
     g = gg(0,0); //density profile
-    
+
     return(g*h); //target 4-D Pdf
 }
 
@@ -189,7 +189,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
     std::default_random_engine generator(params->mpi.MPI_DOMAIN_NUMBER+1);
 
     // Create uniform random number generator in [0,1]:
-    // ================================================    
+    // ================================================
     std::uniform_real_distribution<double> uniform_distribution(0.0, 1.0);
 
     // Test number number generator:
@@ -200,16 +200,16 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
         std::cout << "From Rank: " << params->mpi.MPI_DOMAIN_NUMBER << std::endl;
         std::cout << uniform_distribution(generator) << " " << std::endl;
     }
-    
+
     // Apply MH algorithm:
     // ====================
     unsigned int iterator = 1;
     double ratio = 0.0;
     X(0)  = 0.5*params->mesh.LX;
     V3(0) = 0.25*ions->VTpar;
-    V2(0) = 0.1*ions->VTpar;    
+    V2(0) = 0.1*ions->VTpar;
     V1(0) = 0.5*ions->VTpar;
-    
+
     // Iterate over all particles in process:
     while(iterator < ions->NSP)
     {
@@ -218,7 +218,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
         V3_test = 10*(ions->VTper)*((uniform_distribution(generator))-0.5);
         V2_test = 10*(ions->VTper)*((uniform_distribution(generator))-0.5);
         V1_test = 10*(ions->VTpar)*((uniform_distribution(generator))-0.5);
-        
+
         // Calculate the probability ratio:
         ratio = target(params, ions, X_test,V3_test, V2_test, V1_test)/target(params, ions,  X(iterator - 1),V3(iterator - 1),V2(iterator - 1),V1(iterator - 1));
 
@@ -243,7 +243,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
           }
         }
     }
-    
+
     // Assign value to "V":
     // ====================
     // Change coordinate system:
@@ -257,7 +257,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
         ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
         ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
     }
-        
+
     // Assign value to "x":
     // ====================
     ions->X.col(0) = X;

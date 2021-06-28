@@ -242,8 +242,10 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
     arma::vec phi = 2.0*M_PI*randu<vec>(1);
 
     // Gaussian distribution in space:
-    double Xcenter = params->mesh.LX/2;
-    double sigmaX  = params->mesh.LX/10;
+    //double Xcenter = params->mesh.LX/2;
+    double Xcenter = IONS->p_BC.mean_x;
+    //double sigmaX  = params->mesh.LX/10;
+    double sigmaX  =  IONS->p_BC.sigma_x;
     double Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
     double dLX = abs(Xnew - Xcenter);
 

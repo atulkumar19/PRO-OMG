@@ -94,16 +94,20 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
                         CFL_W = false;
                 }
 
-                if (DT > DT_CFL_W)
+								//Assign final DT for the simulation
+								//==================================
+								params->DT = DT;
+
+                // Whistler time step has been disable for electrostatic case and for faster simulation run
+                /*if (DT > DT_CFL_W)
                 {
                         DT = DT_CFL_W;
 
                         CFL_I = false;
                         CFL_W = true;
-                }
+                }*/
 
-                //params->DT = (CFL_I || CFL_W) ? 0.25*DT : DT; // We use half the CFL time step to ensure numerical stability
-                params->DT = 0.5*DT_CFL_I; // We use half the CFL time step to ensure numerical stability
+
 
                 params->timeIterations = (int)ceil( params->simulationTime*params->ionGyroPeriod/params->DT );
 
@@ -225,8 +229,8 @@ template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScales(simu
 	*/
 
 	FS->electronSkinDepth = F_C/sqrt( params->BGP.ne*F_E*F_E/(F_EPSILON*F_ME) );
-	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bo/F_ME);
-	FS->electronGyroRadius = sqrt(2.0*F_KB*params->BGP.Te/F_ME)/(F_E*params->BGP.Bo/F_ME);
+	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bm/F_ME);
+	FS->electronGyroRadius = sqrt(2.0*F_KB*params->BGP.Te/F_ME)/(F_E*params->BGP.Bm/F_ME);
 
 	cout << " + Electron gyro-period: " << scientific << FS->electronGyroPeriod << fixed << " s" << endl;
 	cout << " + Electron skin depth: " << scientific << FS->electronSkinDepth << fixed << " m" << endl;
@@ -349,6 +353,7 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->BGP.ne /= CS->density;
 	params->BGP.Te /= CS->temperature;
 	params->BGP.Bo /= CS->bField;
+	params->BGP.Bm /= CS->bField;
 	params->BGP.Bx /= CS->bField;
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
@@ -390,6 +395,8 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 		IONS->at(ii).Wc *= CS->time;
 		IONS->at(ii).Wp *= CS->time;
 		IONS->at(ii).avg_mu /= CS->magneticMoment;
+		IONS->at(ii).p_BC.mean_x  /= CS->length;
+		IONS->at(ii).p_BC.sigma_x /= CS->length;
 
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
                 {

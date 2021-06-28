@@ -247,7 +247,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->loadFields              = stoi( parametersStringMap["loadFields"] );
     params->numberOfRKIterations    = stoi( parametersStringMap["numberOfRKIterations"] );
     params->numberOfParticleSpecies = stoi( parametersStringMap["numberOfParticleSpecies"] );
-	params->numberOfTracerSpecies   = stoi( parametersStringMap["numberOfTracerSpecies"] );
+  	params->numberOfTracerSpecies   = stoi( parametersStringMap["numberOfTracerSpecies"] );
 
     // Simulation time:
     // -------------------------------------------------------------------------
@@ -257,8 +257,9 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Magnetic field initial conditions:
     // -------------------------------------------------------------------------
     params->BGP.Bo    = stod( parametersStringMap["IC_B0"] );
+    params->BGP.Bm    = stod( parametersStringMap["IC_Bm"] );
     params->BGP.theta = stod( parametersStringMap["IC_theta"] );
-	params->BGP.phi   = stod( parametersStringMap["IC_phi"] );
+  	params->BGP.phi   = stod( parametersStringMap["IC_phi"] );
     params->PP.nTable = stod( parametersStringMap["IC_B0_NX"] );
     params->em_IC.B0_fileName = parametersStringMap["IC_B0_fileName"];
 
@@ -875,7 +876,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
             // Derived quantities:
             ions.Q = F_E*ions.Z;
-            ions.Wc = ions.Q*params->BGP.Bo/ions.M;
+            ions.Wc = ions.Q*params->BGP.Bm/ions.M;
             ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
             ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
             ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);

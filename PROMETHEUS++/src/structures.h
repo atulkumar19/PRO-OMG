@@ -158,6 +158,7 @@ struct backgroundPlasmaParameters
 	double ne;
 	double Te;
 	double Bo;
+	double Bm;
 	double Bx;
 	double By;
 	double Bz;
@@ -225,6 +226,7 @@ struct fluid_IC
 struct EM_IC
 {
 	double B0;
+	double Bm;
 	double phi;
 	double theta;
 	string B0_fileName;

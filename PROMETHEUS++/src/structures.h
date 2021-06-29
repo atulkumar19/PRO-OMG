@@ -233,16 +233,19 @@ struct EM_IC
 	int B0_NX;
 
 	double BX;
+	double BX_max;
 	double BY;
 	double BZ;
 	string BX_fileName;
 	int BX_NX;
+	arma::vec Bx_profile;
 
 	double EX;
 	double EY;
 	double EZ;
 	string EX_fileName;
 	int EX_NX;
+	arma::vec Ex_profile;
 };
 
 //  Define structure to store simulation parameters:

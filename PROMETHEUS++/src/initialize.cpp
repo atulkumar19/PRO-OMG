@@ -264,10 +264,19 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->em_IC.B0_fileName = parametersStringMap["IC_B0_fileName"];
 
     params->em_IC.BX          = stod( parametersStringMap["IC_BX"] );
+    params->em_IC.BX_max      = stod( parametersStringMap["IC_Bm"] );
     params->em_IC.BY          = stod( parametersStringMap["IC_BY"] );
     params->em_IC.BZ          = stod( parametersStringMap["IC_BZ"] );
     params->em_IC.BX_NX       = stoi( parametersStringMap["IC_BX_NX"] );
     params->em_IC.BX_fileName = parametersStringMap["IC_BX_fileName"];
+
+    int nn = params->PATH.length();
+    std::string fileName = params->PATH.substr(0,nn-13);
+    fileName = fileName + "/inputFiles/" + params->em_IC.BX_fileName;
+    params->em_IC.Bx_profile.load(fileName);
+    params->em_IC.Bx_profile *= params->em_IC.BX;
+
+    cout << "fileName:" << fileName << endl;
 
     // Geometry:
     // -------------------------------------------------------------------------
@@ -276,7 +285,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     unsigned int NY   = (unsigned int)stoi( parametersStringMap["NY"] );
     unsigned int NZ   = (unsigned int)stoi( parametersStringMap["NZ"] );
     params->DrL       = stod( parametersStringMap["DrL"] );
-	  params->dp        = stod( parametersStringMap["dp"] );
+	params->dp        = stod( parametersStringMap["dp"] );
   	params->r1        = stod( parametersStringMap["r1"] );
     params->r2        = stod( parametersStringMap["r2"] );
 
@@ -362,11 +371,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
         params->mesh.NUM_CELLS_IN_SIM = params->mesh.NX_IN_SIM*params->mesh.NY_IN_SIM;
     }
 
-    // Catertian unit vectors:
-    //params->mesh.e_x = {1.0, 0.0, 0.0};
-    //params->mesh.e_y = {0.0, 1.0, 0.0};
-    //params->mesh.e_z = {0.0, 0.0, 1.0};
-
     // Magnetic field data:
     params->em_IC.B0 = sqrt( pow(params->em_IC.BX,2.0) + pow(params->em_IC.BY,2.0) + pow(params->em_IC.BZ,2.0) );
 	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
@@ -376,6 +380,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
     params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
     params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
+
 }
 
 
@@ -792,37 +797,20 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
         SPECIES = stoi(parametersMap[name]);
         name.clear();
 
+                    cout<<"checkpoint 0"<<endl;
+
         if (SPECIES == 0 || SPECIES == 1)
         {
+            // General:
+            // =================================================================
             // Species type, -1: Guiding center, 0: Tracer, 1: Full orbit
             ions.SPECIES = SPECIES;
 
-            // Number
+            // Number of particles per cell:
             name = "NPC" + ss.str();
             ions.NPC = stoi(parametersMap[name]);
             name.clear();
 
-            // Initial condition:
-            name = "IC_type_" + ss.str();
-            ions.IC = stoi(parametersMap[name]);
-            name.clear();
-
-            // Perpendicular temperature:
-            name = "IC_Tper_" + ss.str();
-            ions.Tper = stod(parametersMap[name])*F_E/F_KB;
-            name.clear();
-
-            // Parallel temperature:
-            name = "IC_Tpar_" + ss.str();
-            ions.Tpar = stod(parametersMap[name])*F_E/F_KB; // Tpar in eV in input file
-            name.clear();
-
-            // Density fraction relative to 1:
-            name = "IC_densityFraction_" + ss.str();
-            ions.densityFraction = stod(parametersMap[name]);
-            name.clear();
-
-            //
             name = "pctSupPartOutput" + ss.str();
             ions.pctSupPartOutput = stod(parametersMap[name]);
             name.clear();
@@ -837,7 +825,55 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.M = F_U*stod(parametersMap[name]);
             name.clear();
 
+            // Initial condition:
+            // =================================================================
+            name = "IC_type_" + ss.str();
+            ions.IC = stoi(parametersMap[name]);
+            ions.p_IC.IC_type = stoi(parametersMap[name]);
+            name.clear();
+
+            // Perpendicular temperature:
+            name = "IC_Tper_" + ss.str();
+            ions.p_IC.Tper = stod(parametersMap[name])*F_E/F_KB;
+            name.clear();
+
+            name = "IC_Tper_fileName_" + ss.str();
+            ions.p_IC.Tper_fileName = parametersMap[name];
+            name.clear();
+
+            name = "IC_Tper_NX_" + ss.str();
+            ions.p_IC.Tper_NX = stoi(parametersMap[name]);
+            name.clear();
+
+            // Parallel temperature:
+            name = "IC_Tpar_" + ss.str();
+            ions.p_IC.Tpar = stod(parametersMap[name])*F_E/F_KB; // Tpar in eV in input file
+            name.clear();
+
+            name = "IC_Tpar_fileName_" + ss.str();
+            ions.p_IC.Tpar_fileName = parametersMap[name];
+            name.clear();
+
+            name = "IC_Tpar_NX_" + ss.str();
+            ions.p_IC.Tpar_NX = stoi(parametersMap[name]);
+            name.clear();
+
+            // Density fraction relative to 1:
+            name = "IC_densityFraction_" + ss.str();
+            ions.densityFraction = stod(parametersMap[name]);
+            ions.p_IC.densityFraction = stod(parametersMap[name]);
+            name.clear();
+
+            name = "IC_densityFraction_fileName_" + ss.str();
+            ions.p_IC.densityFraction_fileName = parametersMap[name];
+            name.clear();
+
+            name = "IC_densityFraction_NX_" + ss.str();
+            ions.p_IC.densityFraction_NX = stoi(parametersMap[name]);
+            name.clear();
+
             // Boundary conditions:
+            // =================================================================
             name = "BC_type_" + ss.str();
             ions.p_BC.BC_type = stoi(parametersMap[name]);
             name.clear();
@@ -875,6 +911,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             name.clear();
 
             // Derived quantities:
+            // =================================================================
             ions.Q = F_E*ions.Z;
             ions.Wc = ions.Q*params->BGP.Bm/ions.M;
             ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
@@ -882,7 +919,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
             ions.LarmorRadius = ions.VTper/ions.Wc;
 
-            //Initializing the events counter:
+            // Initializing the events counter:
             ions.pCount.zeros(1);
             ions.eCount.zeros(1);
 

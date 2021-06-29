@@ -135,9 +135,9 @@ struct particle_IC
 
 	// Name of external files:
 	// =======================
-	std::string Tper_fileName; 			// File containing normalized spatial profile of Tper
-	std::string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
-	std::string density_fileName; 		// File containing normalized spatial profile
+	std::string Tper_fileName; 				// File containing normalized spatial profile of Tper
+	std::string Tpar_fileName; 				// File containing normalized spatial profile of Tpar
+	std::string densityFraction_fileName;	// File containing normalized spatial profile
 
 	// Number of elements of profiles:
 	// ===============================

@@ -75,11 +75,11 @@ public:
 
 	void setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS);
 
-	void initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB);
+	void initializeFieldsSizeAndValue(simulationParameters * params, oneDimensional::fields * EB);
 
-	void initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB);
+	void initializeFieldsSizeAndValue(simulationParameters * params, twoDimensional::fields * EB);
 
-	void initializeFields(const simulationParameters * params, FT * EB);
+	void initializeFields(simulationParameters * params, FT * EB);
 
 };
 

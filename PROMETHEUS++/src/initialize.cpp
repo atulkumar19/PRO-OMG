@@ -282,14 +282,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->em_IC.BX_NX       = stoi( parametersStringMap["IC_BX_NX"] );
     params->em_IC.BX_fileName = parametersStringMap["IC_BX_fileName"];
 
-    int nn = params->PATH.length();
-    std::string fileName = params->PATH.substr(0,nn-13);
-    fileName = fileName + "/inputFiles/" + params->em_IC.BX_fileName;
-    params->em_IC.Bx_profile.load(fileName);
-    params->em_IC.Bx_profile *= params->em_IC.BX;
-
-    cout << "fileName:" << fileName << endl;
-
     // Geometry:
     // -------------------------------------------------------------------------
     params->BGP.Rphi0 = stod( parametersStringMap["Rphi0"] );
@@ -1037,6 +1029,7 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
         params->PP.Tper *= IONS->at(0).p_IC.Tper;
         params->PP.Bx   *= params->em_IC.BX;
 
+        /*
         //Interpolate at mesh points:
         // ==========================
         // Query points:
@@ -1072,6 +1065,8 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
         interp1(xt,yt,xq,yq);
         params->PP.dBrdx_i = yq;
 
+        */
+
         //interp1(xt,dBr,xq,params->PP.dBrdx_i);
     }
 
@@ -1095,7 +1090,7 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
     MPI_Bcast(params->PP.dBrdx_i.memptr(),params->PP.dBrdx_i.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, oneDimensional::fields * EB)
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(simulationParameters * params, oneDimensional::fields * EB)
 {
 
     // Number of mesh points with ghost cells included:
@@ -1114,14 +1109,51 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     }
     else
     {
-        // From externally supplied files:
-        EB->B.X = params->PP.Bx_i;
-        EB->B.Y = params->PP.Br_i;
-        EB->B.Z.fill(params->BGP.Bz);
+        // Read filename from input file:
+        // =============================
+        int nn = params->PATH.length();
+        std::string fileName = params->PATH.substr(0,nn-13);
+        fileName = fileName + "/inputFiles/" + params->em_IC.BX_fileName;
+
+        // Load data from external file:
+        // ============================
+        params->em_IC.Bx_profile.load(fileName);
+        params->em_IC.Bx_profile *= params->em_IC.BX;
+
+        //Interpolate at mesh points:
+        // ==========================
+        // Query points:
+        arma::vec xq = linspace(0,params->mesh.LX,NX);
+        arma::vec yq(xq.size());
+        // Sample points:
+        int BX_NX  = params->em_IC.BX_NX;
+        int dBX_NX = params->mesh.LX/BX_NX;
+        arma::vec xt = linspace(0,params->mesh.LX,BX_NX); // x-vector from the table
+        arma:: vec yt(xt.size());
+
+        // Bx profile:
+        // ===========
+        yt = params->em_IC.Bx_profile;
+        interp1(xt,yt,xq,yq);
+        EB->B.X = yq;
+
+        // By profile:
+        // ===========
+        arma::vec Br(BX_NX,1);
+        Br.subvec(0,BX_NX-2) = -0.5*(params->BGP.Rphi0)*diff(params->em_IC.Bx_profile)/dBX_NX;
+        Br(BX_NX-1) = Br(BX_NX-2);
+
+        yt = Br;
+        interp1(xt,yt,xq,yq);
+        EB->B.Y = yq;
+
+        // Bz profile:
+        // ===========
+        EB->B.Z.fill(params->em_IC.BZ);
     }
 }
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB)
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(simulationParameters * params, twoDimensional::fields * EB)
 {
 /*    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
     int NY(params->mesh.NY_IN_SIM + 2); // Ghost mesh points (+2) included
@@ -1139,7 +1171,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(const simulationParameters * params, FT * EB){
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(simulationParameters * params, FT * EB){
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -1153,26 +1185,26 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(const sim
         // Select how to initialize fields:
         // ================================
 	if (params->loadFields == 1)
-        {
-            // From external files.
-            if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-                    cout << "Loading external electromagnetic fields..." << endl;
-                    MPI_Abort(params->mpi.MPI_TOPO,-104);
-	}
-        else
-        {
-            //The electromagnetic fields are being initialized in the runtime.
-            initializeFieldsSizeAndValue(params, EB);
+    {
+        // From external files.
+        if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        cout << "Loading external electromagnetic fields..." << endl;
+        MPI_Abort(params->mpi.MPI_TOPO,-104);
+    }
+    else
+    {
+        //The electromagnetic fields are being initialized in the runtime.
+        initializeFieldsSizeAndValue(params, EB);
 
-            // Print to terminal:
-            if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-            {
-                cout << "Initializing electromagnetic fields within simulation" << endl;
-                cout << "+ Magnetic field along x-axis: " << scientific << params->em_IC.BX << fixed << " T" << endl;
-                cout << "+ Magnetic field along y-axis: " << scientific << params->em_IC.BY << fixed << " T" << endl;
-                cout << "+ Magnetic field along z-axis: " << scientific << params->em_IC.BZ << fixed << " T" << endl;
-            }
-	}
+        // Print to terminal:
+        if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+            cout << "Initializing electromagnetic fields within simulation" << endl;
+            cout << "+ Magnetic field along x-axis: " << scientific << params->em_IC.BX << fixed << " T" << endl;
+            cout << "+ Magnetic field along y-axis: " << scientific << params->em_IC.BY << fixed << " T" << endl;
+            cout << "+ Magnetic field along z-axis: " << scientific << params->em_IC.BZ << fixed << " T" << endl;
+        }
+    }
 
         // Print to terminal:
         // ==================

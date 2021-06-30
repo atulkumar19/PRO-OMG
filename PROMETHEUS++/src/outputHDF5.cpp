@@ -557,7 +557,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 
                 //Electron temperature
                 name = "Te";
-                cpp_type_value = params->BGP.Te;
+                cpp_type_value = params->f_IC.Te;
                 saveToHDF5(outputFile, name, &cpp_type_value);
                 name.clear();
 
@@ -570,7 +570,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                 name.clear();
 
                 name = "ne";
-                cpp_type_value = (CPP_TYPE)params->BGP.ne;
+                cpp_type_value = (CPP_TYPE)params->f_IC.ne;
                 saveToHDF5(group_ions, name, &cpp_type_value);
                 name.clear();
 
@@ -582,7 +582,7 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                         name.clear();
 
                         name = "densityFraction";
-                        cpp_type_value = (CPP_TYPE)IONS->at(ii).densityFraction;
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).p_IC.densityFraction;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
 
@@ -602,12 +602,12 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                         name.clear();
 
                         name = "Tpar";
-                        cpp_type_value = (CPP_TYPE)IONS->at(ii).Tpar;
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).p_IC.Tpar;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
 
                         name = "Tper";
-                        cpp_type_value = (CPP_TYPE)IONS->at(ii).Tper;
+                        cpp_type_value = (CPP_TYPE)IONS->at(ii).p_IC.Tper;
                         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
                         name.clear();
 
@@ -633,8 +633,8 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
                 //Ions
 
                 //Electromagnetic fields
-                name = "Bo";
-                vector_values = {(CPP_TYPE)params->BGP.Bx, (CPP_TYPE)params->BGP.By, (CPP_TYPE)params->BGP.Bz};
+                name = "BX_0";
+                vector_values = {(CPP_TYPE)params->em_IC.BX, (CPP_TYPE)params->em_IC.BX, (CPP_TYPE)params->em_IC.BX};
                 saveToHDF5(outputFile, name, &vector_values);
                 name.clear();
 

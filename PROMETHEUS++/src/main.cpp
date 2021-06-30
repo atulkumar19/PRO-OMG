@@ -74,8 +74,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     // UNITS object of type "FT" and "FT":
     UNITS<IT, FT> units;
 
-    cout << "checkpoint 1" << endl;
-
     // Initialize simulation objects:
     // =========================================================================
     // Create MPI topology:

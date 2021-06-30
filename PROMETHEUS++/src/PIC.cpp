@@ -1007,7 +1007,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 					cosPhi = -(UUz/Vper);
 					sinPhi = +(UUy/Vper);
 
-					Bp(ip,1) = -0.5*(params->BGP.Rphi0*sqrt(params->BGP.Bo/Bp(ip,0))+rL_i*cosPhi)*dBx;
+					Bp(ip,1) = -0.5*(params->BGP.Rphi0*sqrt(params->em_IC.BX/Bp(ip,0))+rL_i*cosPhi)*dBx;
 					Bp(ip,2) = -0.5*(rL_i*sinPhi)*dBx;
 
 					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));

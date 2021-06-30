@@ -201,7 +201,8 @@ struct plasmaProfiles
 // =============================================================================
 struct fluid_IC
 {
-	double ne; 							// Reference density:
+	double ne; 							// Intial reference density
+	double ne_star;         // Characteristic density
 	double Te;
 	string Te_fileName;
 	int Te_NX;
@@ -219,6 +220,13 @@ struct fluid_IC
 	*/
 	// ---------------------------------------------------------------------------
 
+	fluid_IC()
+	{
+		ne 			= 0;
+		ne_star = 0;
+		Te      = 0;
+		Te_NX   = 0;
+	}
 };
 
 //  Define structure to store EM field initial condition parameters:
@@ -246,6 +254,52 @@ struct EM_IC
 	string EX_fileName;
 	int EX_NX;
 	arma::vec Ex_profile;
+
+	EM_IC()
+	{
+			BX     = 0;
+			BX_max = 0;
+			BY     = 0;
+			BZ     = 0;
+			BX_NX  = 0;
+
+			EX     = 0;
+			EY     = 0;
+			EZ     = 0;
+			EX_NX  = 0;
+	}
+};
+
+struct GEOMETRY
+{
+	double r1;
+	double r2;
+	double A_0;
+
+	GEOMETRY()
+	{
+		r1  = 0;
+		r2  = 0;
+		A_0 = 0;
+	}
+};
+
+struct CharactersticValues
+{
+	double ne;
+	double Te;
+	double B;
+	double Tpar;
+	double Tper;
+
+	CharactersticValues()
+	{
+		ne   = 0;
+		Te   = 0;
+		B    = 0;
+		Tpar = 0;
+		Tper = 0;
+	}
 };
 
 //  Define structure to store simulation parameters:
@@ -262,7 +316,6 @@ struct simulationParameters
 	char **argv;
 
 	int dimensionality; // Dimensionality of the simulation domain 1-D = 1; 2-D = 2
-	//bool includeElectronInertia;
 	bool quietStart; // Flag for using a quiet start
 
 	bool restart;
@@ -277,9 +330,12 @@ struct simulationParameters
 	int loadGrid;
 	int usingHDF5;
 	double outputCadence;//Save variables each "outputCadence" times the background ion cycloperiod.
+
+	// Geometric information:
 	double r1;  // Inner radius of the annulus
 	double r2;  // Outer radius of the annulus
 	double A_0;  // Area of the annulus
+	GEOMETRY geometry;
 
 	int outputCadenceIterations;
 	arma::file_type outputFormat;//Outputs format (raw_ascii,raw_binary).
@@ -297,11 +353,13 @@ struct simulationParameters
 	// EM initial conditions:
 	EM_IC em_IC;
 
+	// Simulation Characterstic values:
+	CharactersticValues CV;
+
 	// =============================================================================
 	backgroundPlasmaParameters BGP;
 	plasmaProfiles PP;
 	// =============================================================================
-
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;

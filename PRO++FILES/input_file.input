@@ -9,15 +9,22 @@ numberOfRKIterations        5
 numberOfParticleSpecies     1
 numberOfTracerSpecies       0
 
+// Characteristic values:
+// =============================================================================
+CV_ne                       5.0E19
+CV_Te                       250
+CV_B                        17
+CV_Tpar                     250
+CV_Tper                     250
+
 // Simulation time:
 // =============================================================================
 DTc                         1.0E-2
-simulationTime              56.0
+simulationTime              120.0
 
 // Magnetic field initial conditions:
 // =============================================================================
-IC_B0                       0.2
-IC_Bm                       1.35
+IC_B0                       0.5
 IC_theta                    90.0
 IC_phi                      0.0
 IC_B0_NX                    200
@@ -43,7 +50,7 @@ r2                          0.10
 // Electron initial conditions:
 // =============================================================================
 IC_ne                       5.0E19
-IC_Te                       0.025E3
+IC_Te                       250
 
 // Output variables:
 // =============================================================================

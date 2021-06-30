@@ -714,7 +714,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 			// #######################################################################
 
 			EB->E.X.subvec(iIndex,fIndex) += (- V1D.V.Y.subvec(1,NX_S-2) % EB->B.Z.subvec(iIndex,fIndex));
-			EB->E.X.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+			EB->E.X.subvec(iIndex,fIndex) += sqrt(params->em_IC.BX/(EB->B.X.subvec(iIndex,fIndex))) % ( V1D.V.Z.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
 
 			// "y" component:
 			// ########################################################################
@@ -727,7 +727,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 			// ########################################################################
 			// Bz and By need to be written in term of Bx in the paraxial approximation
 			// ########################################################################
-			EB->E.Z.subvec(iIndex,fIndex) += sqrt(params->BGP.Bo/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
+			EB->E.Z.subvec(iIndex,fIndex) += sqrt(params->em_IC.BX/(EB->B.X.subvec(iIndex,fIndex))) % ( - V1D.V.X.subvec(1,NX_S-2) % EB->B.Y.subvec(iIndex,fIndex));
 			EB->E.Z.subvec(iIndex,fIndex) += (V1D.V.Y.subvec(1,NX_S-2) % EB->B.X.subvec(iIndex,fIndex));
 		}
 
@@ -739,7 +739,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 			V1D.dndx = 0.5*( V1D.ne.subvec(2,NX_S-1) - V1D.ne.subvec(0,NX_S-3) )/params->mesh.DX;
 
 			// "x" component:
-			EB->E.X.subvec(iIndex,fIndex) += - (params->BGP.Te/F_E_DS)*V1D.dndx/V1D.ne.subvec(1,NX_S-2);
+			EB->E.X.subvec(iIndex,fIndex) += - (params->f_IC.Te/F_E_DS)*V1D.dndx/V1D.ne.subvec(1,NX_S-2);
 
 			// With scalar Te in 1D3V, there are not "y" and "z" components.
 			// If Te becomes tensor, then mirror forces arise in "x" and then may also cause "y" and "z" components to be finite.
@@ -913,7 +913,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 		V2D.dndx = 0.5*( V2D.ne.submat(2,1,NX_S-1,NY_S-2) - V2D.ne.submat(0,1,NX_S-3,NY_S-2) )/params->mesh.DX;
 
-		EB->E.X.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndx/V2D.ne.submat(1,1,NX_S-2,NY_S-2);
+		EB->E.X.submat(irow,icol,frow,fcol) += - ( params->f_IC.Te/F_E_DS )*V2D.dndx/V2D.ne.submat(1,1,NX_S-2,NY_S-2);
 
 		// y-component
 
@@ -925,7 +925,7 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, twoDimension
 
 		V2D.dndy = 0.5*( V2D.ne.submat(1,2,NX_S-2,NY_S-1) - V2D.ne.submat(1,0,NX_S-2,NY_S-3) )/params->mesh.DY;
 
-		EB->E.Y.submat(irow,icol,frow,fcol) += - ( params->BGP.Te/F_E_DS )*V2D.dndy/V2D.ne.submat(1,1,NX_S-2,NY_S-2);
+		EB->E.Y.submat(irow,icol,frow,fcol) += - ( params->f_IC.Te/F_E_DS )*V2D.dndy/V2D.ne.submat(1,1,NX_S-2,NY_S-2);
 
 		// z-component
 

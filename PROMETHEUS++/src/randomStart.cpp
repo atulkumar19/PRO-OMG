@@ -153,7 +153,7 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
 
     double g=0.0;
     arma::vec gg(1,1);
-    interp1(S, (params->BGP.Bo/params->PP.Bx)%params->PP.ne,xx,gg); //Ne is multiplied with the compression factor
+    interp1(S, (params->em_IC.BX/params->PP.Bx)%params->PP.ne,xx,gg); //Ne is multiplied with the compression factor
     g = gg(0,0); //density profile
 
     return(g*h); //target 4-D Pdf
@@ -254,7 +254,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
         ions->V(pp,2) = V1(pp)*dot(b1,z) + V2(pp)*dot(b2,z) + V3(pp)*dot(b3,z);
 
         ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
-        ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
+        ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->em_IC.BX;
         ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
     }
 

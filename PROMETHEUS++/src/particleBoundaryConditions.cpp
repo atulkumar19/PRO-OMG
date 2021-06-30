@@ -291,7 +291,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
     arma::vec b2; // Unitary vector perpendicular to b1
     arma::vec b3; // Unitary vector perpendicular to b1 and b2
 
-    b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
+    b1 = {params->em_IC.BX, params->em_IC.BY, params->em_IC.BZ};
     b1 = arma::normalise(b1);
 
     if (arma::dot(b1,y) < PRO_ZERO)
@@ -311,7 +311,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
     IONS->V(ii,2) = V1(0)*dot(b1,z) + V2(0)*dot(b2,z) + V3(0)*dot(b3,z);
 
     IONS->g(ii) = 1.0/sqrt( 1.0 - dot(IONS->V.row(ii),IONS->V.row(ii))/(F_C*F_C) );
-    IONS->mu(ii) = 0.5*IONS->g(ii)*IONS->g(ii)*IONS->M*( V2(0)*V2(0) + V3(0)*V3(0) )/params->BGP.Bo;
+    IONS->mu(ii) = 0.5*IONS->g(ii)*IONS->g(ii)*IONS->M*( V2(0)*V2(0) + V3(0)*V3(0) )/params->em_IC.BX;
     IONS->Ppar(ii) = IONS->g(ii)*IONS->M*V1(0);
     IONS->avg_mu = mean(IONS->mu);
 }

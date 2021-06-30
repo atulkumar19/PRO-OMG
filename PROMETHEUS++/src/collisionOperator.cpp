@@ -76,7 +76,7 @@ void collisionOperator::ApplyCollisionOperator(const simulationParameters * para
 
 					// Background conditions:
 					nb  = n_i;
-					Tb  = ones(NSP_a,1)*params->BGP.Te*CS->temperature*F_KB/F_E;
+					Tb  = ones(NSP_a,1)*params->f_IC.Te*CS->temperature*F_KB/F_E;
 					uxb = nUx_i/n_i;
 				}
 

@@ -18,6 +18,9 @@
 
 #include "initialize.h"
 
+
+// Private supporting functions:
+// =============================================================================
 template <class IT, class FT> vector<string> INITIALIZE<IT,FT>::split(const string& str, const string& delim)
 {
     vector<string> tokens;
@@ -104,6 +107,8 @@ template <class IT, class FT> map<string,string>INITIALIZE<IT,FT>::ReadAndloadIn
     return readMap;
 }
 
+// Constructor:
+// =============================================================================
 template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters * params, int argc, char* argv[])
 {
     // Get RANK and SIZE of nodes within COMM_WORLD:
@@ -133,7 +138,8 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     // Copyright and Licence Info:
     // ===========================
-    if (params->mpi.MPI_DOMAIN_NUMBER == 0){
+    if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+    {
         cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
         cout << "* PROMETHEUS++ Copyright (C) 2015-2019  Leopoldo Carbajal               *" << endl;
         cout << "*                                                                       *" << endl;
@@ -221,7 +227,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Populate "params" with data from input file:
     // ============================================
 
-    // Input data:
+    // Assign input data from map to "params":
     // -------------------------------------------------------------------------
     params->dimensionality   = stoi( parametersStringMap["dimensionality"] );
     params->mpi.MPIS_FIELDS  = stoi( parametersStringMap["mpisForFields"] );
@@ -249,6 +255,14 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->numberOfParticleSpecies = stoi( parametersStringMap["numberOfParticleSpecies"] );
   	params->numberOfTracerSpecies   = stoi( parametersStringMap["numberOfTracerSpecies"] );
 
+    // Characteristic values:
+    // -------------------------------------------------------------------------
+    params->CV.ne   = stod( parametersStringMap["CV_ne"] );
+    params->CV.Te   = stod( parametersStringMap["CV_Te"] )*F_E/F_KB;
+    params->CV.B    = stod( parametersStringMap["CV_B"] );
+    params->CV.Tpar = stod( parametersStringMap["CV_Tpar"] )*F_E/F_KB;
+    params->CV.Tper = stod( parametersStringMap["CV_Tper"] )*F_E/F_KB;
+
     // Simulation time:
     // -------------------------------------------------------------------------
     params->DTc            = stod( parametersStringMap["DTc"] );
@@ -257,14 +271,12 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Magnetic field initial conditions:
     // -------------------------------------------------------------------------
     params->BGP.Bo    = stod( parametersStringMap["IC_B0"] );
-    params->BGP.Bm    = stod( parametersStringMap["IC_Bm"] );
     params->BGP.theta = stod( parametersStringMap["IC_theta"] );
   	params->BGP.phi   = stod( parametersStringMap["IC_phi"] );
     params->PP.nTable = stod( parametersStringMap["IC_B0_NX"] );
     params->em_IC.B0_fileName = parametersStringMap["IC_B0_fileName"];
 
     params->em_IC.BX          = stod( parametersStringMap["IC_BX"] );
-    params->em_IC.BX_max      = stod( parametersStringMap["IC_Bm"] );
     params->em_IC.BY          = stod( parametersStringMap["IC_BY"] );
     params->em_IC.BZ          = stod( parametersStringMap["IC_BZ"] );
     params->em_IC.BX_NX       = stoi( parametersStringMap["IC_BX_NX"] );
@@ -291,10 +303,10 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     // Electron initial conditions:
     // -------------------------------------------------------------------------
-    params->BGP.ne  = stod( parametersStringMap["IC_ne"] );
-    params->BGP.Te  = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
-    params->f_IC.ne = stod( parametersStringMap["IC_ne"] );
-    params->f_IC.Te = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
+    params->BGP.ne       = stod( parametersStringMap["IC_ne"] );
+    params->BGP.Te       = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
+    params->f_IC.ne      = stod( parametersStringMap["IC_ne"] );
+    params->f_IC.Te      = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
 
     // Output variables:
     // -------------------------------------------------------------------------
@@ -708,13 +720,13 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 
         if (params->dimensionality == 1)
         {
-            double Ds=(params->mesh.LX)/(params->PP.ne.n_elem);
-            double NR=(IONS->at(ii).densityFraction)*sum(((params->BGP.Bo*params->A_0)/(params->PP.Bx))*(params->BGP.ne))*Ds;
+            double Ds = (params->mesh.LX)/(params->PP.ne.n_elem);
+            double NR = (IONS->at(ii).p_IC.densityFraction)*sum(((params->em_IC.BX*params->A_0)/(params->PP.Bx))*(params->f_IC.ne))*Ds;
             IONS->at(ii).NCP = (NR/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
         }
         else
         {
-            IONS->at(ii).NCP = (IONS->at(ii).densityFraction*params->BGP.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
+            IONS->at(ii).NCP = (IONS->at(ii).p_IC.densityFraction*params->f_IC.ne*params->mesh.LX*params->mesh.LY)/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES);
         }
 
         // Print to the terminal:
@@ -797,8 +809,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
         SPECIES = stoi(parametersMap[name]);
         name.clear();
 
-                    cout<<"checkpoint 0"<<endl;
-
         if (SPECIES == 0 || SPECIES == 1)
         {
             // General:
@@ -860,7 +870,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
             // Density fraction relative to 1:
             name = "IC_densityFraction_" + ss.str();
-            ions.densityFraction = stod(parametersMap[name]);
+            //ions.densityFraction = stod(parametersMap[name]);
             ions.p_IC.densityFraction = stod(parametersMap[name]);
             name.clear();
 
@@ -912,11 +922,11 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
 
             // Derived quantities:
             // =================================================================
-            ions.Q = F_E*ions.Z;
-            ions.Wc = ions.Q*params->BGP.Bm/ions.M;
-            ions.Wp = sqrt( ions.densityFraction*params->BGP.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
-            ions.VTper = sqrt(2.0*F_KB*ions.Tper/ions.M);
-            ions.VTpar = sqrt(2.0*F_KB*ions.Tpar/ions.M);
+            ions.Q     = F_E*ions.Z;
+            ions.Wc    = ions.Q*params->CV.B/ions.M;
+            ions.Wp    = sqrt( ions.p_IC.densityFraction*params->CV.ne*ions.Q*ions.Q/(F_EPSILON*ions.M) );//Check the definition of the plasma freq for each species!
+            ions.VTper = sqrt(2.0*F_KB*params->CV.Tper/ions.M);
+            ions.VTpar = sqrt(2.0*F_KB*params->CV.Tpar/ions.M);
             ions.LarmorRadius = ions.VTper/ions.Wc;
 
             // Initializing the events counter:
@@ -950,8 +960,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
                 cout << "+ User-defined number of particles per MPI: " << ions.NSP << endl;
                 cout << "+ Atomic number: " << ions.Z << endl;
                 cout << "+ Mass: " << ions.M << " kg" << endl;
-                cout << "+ Parallel temperature: " << ions.Tpar*F_KB/F_E << " eV" << endl;
-                cout << "+ Perpendicular temperature: " << ions.Tper*F_KB/F_E << " eV" << endl;
+                cout << "+ Parallel temperature: " << params->CV.Tpar*F_KB/F_E << " eV" << endl;
+                cout << "+ Perpendicular temperature: " << params->CV.Tper*F_KB/F_E << " eV" << endl;
                 cout << "+ Cyclotron frequency: " << ions.Wc << " Hz" << endl;
                 cout << "+ Plasma frequency: " << ions.Wp << " Hz" << endl;
                 cout << "+ Parallel thermal velocity: " << ions.VTpar << " m/s" << endl;
@@ -1023,9 +1033,9 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
         //Rescale profiles:
         // ================
         //params->PP.ne   *= params->BGP.ne;
-        params->PP.Tpar *= IONS->at(0).Tpar;
-        params->PP.Tper *= IONS->at(0).Tper;
-        params->PP.Bx   *= params->BGP.Bo;
+        params->PP.Tpar *= IONS->at(0).p_IC.Tpar;
+        params->PP.Tper *= IONS->at(0).p_IC.Tper;
+        params->PP.Bx   *= params->em_IC.BX;
 
         //Interpolate at mesh points:
         // ==========================
@@ -1098,9 +1108,9 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     if (params->quietStart)
     {
         // From "params" and assumes uniform fields:
-        EB->B.Z.fill(params->BGP.Bz);
-        EB->B.Y.fill(params->BGP.By);
-        EB->B.X.fill(params->BGP.Bx);
+        EB->B.Z.fill(params->em_IC.BZ);
+        EB->B.Y.fill(params->em_IC.BY);
+        EB->B.X.fill(params->em_IC.BX);
     }
     else
     {
@@ -1111,8 +1121,9 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     }
 }
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB){
-    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
+template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(const simulationParameters * params, twoDimensional::fields * EB)
+{
+/*    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
     int NY(params->mesh.NY_IN_SIM + 2); // Ghost mesh points (+2) included
 
     EB->zeros(NX,NY);
@@ -1124,6 +1135,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
     EB->B.X.fill(params->BGP.Bx); // x
     EB->B.Y.fill(params->BGP.By); // y
     EB->B.Z.fill(params->BGP.Bz); // z
+    */
 }
 
 
@@ -1156,9 +1168,9 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(const sim
             if (params->mpi.MPI_DOMAIN_NUMBER == 0)
             {
                 cout << "Initializing electromagnetic fields within simulation" << endl;
-                cout << "+ Magnetic field along x-axis: " << scientific << params->BGP.Bx << fixed << " T" << endl;
-                cout << "+ Magnetic field along y-axis: " << scientific << params->BGP.By << fixed << " T" << endl;
-                cout << "+ Magnetic field along z-axis: " << scientific << params->BGP.Bz << fixed << " T" << endl;
+                cout << "+ Magnetic field along x-axis: " << scientific << params->em_IC.BX << fixed << " T" << endl;
+                cout << "+ Magnetic field along y-axis: " << scientific << params->em_IC.BY << fixed << " T" << endl;
+                cout << "+ Magnetic field along z-axis: " << scientific << params->em_IC.BZ << fixed << " T" << endl;
             }
 	}
 

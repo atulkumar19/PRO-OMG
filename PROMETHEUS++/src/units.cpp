@@ -47,11 +47,11 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
 	bool CFL_W(false);
 
 	// Time step given by user:
-        // ========================
+    // ========================
 	DT = params->DTc*params->ionGyroPeriod;
 
 	// Minimum time step defined by CFL condition for whistler waves:
-        // =============================================================
+    // =============================================================
 	DT_CFL_W = 0.5*pow(params->mesh.DX/params->ionSkinDepth, 2.0)*params->ionGyroPeriod/( M_PI*M_PI*sqrt((double)params->dimensionality) );
 
 	// CFL condition for ions:
@@ -94,9 +94,9 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
                         CFL_W = false;
                 }
 
-								//Assign final DT for the simulation
-								//==================================
-								params->DT = DT;
+				//Assign final DT for the simulation
+				//==================================
+				params->DT = DT;
 
                 // Whistler time step has been disable for electrostatic case and for faster simulation run
                 /*if (DT > DT_CFL_W)
@@ -136,7 +136,7 @@ template <class IT, class FT> void UNITS<IT,FT>::defineTimeStep(simulationParame
             else if (CFL_W)
                     cout << "+ Simulation time step defined by CFL condition for WHISTLER WAVES" << endl;
             else
-                    cout << "+ Simulation time step defined by USER" << endl;
+                    cout << "+ Simulation time step defined by USER: " <<  scientific << DT << fixed  << endl;
 
             cout << "+ Time step defined by CFL condition for ions: " << scientific << DT_CFL_I << fixed << endl;
             cout << "+ Time step defined by CFL condition for whistler waves: " << scientific << DT_CFL_W << fixed << endl;
@@ -165,7 +165,7 @@ template <class IT, class FT> void UNITS<IT,FT>::broadcastCharacteristicScales(s
 
     MPI_Bcast(&CS->length, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-		MPI_Bcast(&CS->volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&CS->volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(&CS->mass, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -228,9 +228,9 @@ template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScales(simu
     }
 	*/
 
-	FS->electronSkinDepth = F_C/sqrt( params->BGP.ne*F_E*F_E/(F_EPSILON*F_ME) );
-	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->BGP.Bm/F_ME);
-	FS->electronGyroRadius = sqrt(2.0*F_KB*params->BGP.Te/F_ME)/(F_E*params->BGP.Bm/F_ME);
+	FS->electronSkinDepth  = F_C/sqrt( params->CV.ne*F_E*F_E/(F_EPSILON*F_ME) );
+	FS->electronGyroPeriod = 2.0*M_PI/(F_E*params->CV.B/F_ME);
+	FS->electronGyroRadius = sqrt(2.0*F_KB*params->CV.Te/F_ME)/(F_E*params->CV.B/F_ME);
 
 	cout << " + Electron gyro-period: " << scientific << FS->electronGyroPeriod << fixed << " s" << endl;
 	cout << " + Electron skin depth: " << scientific << FS->electronSkinDepth << fixed << " m" << endl;
@@ -239,7 +239,7 @@ template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScales(simu
 
 	for(int ss=0; ss<params->numberOfParticleSpecies; ss++){
 		FS->ionGyroPeriod[ss] = 2.0*M_PI/IONS->at(ss).Wc;
-		FS->ionSkinDepth[ss] = F_C/IONS->at(ss).Wp;
+		FS->ionSkinDepth[ss]  = F_C/IONS->at(ss).Wp;
 		FS->ionGyroRadius[ss] = IONS->at(ss).LarmorRadius;
 
 		cout << "ION SPECIES: " << ss << endl;
@@ -289,14 +289,14 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 	cout << endl << "* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
 
 	for (int ii=0; ii<params->numberOfParticleSpecies; ii++)
-        {
-            CS->mass += IONS->at(ii).M;
-            CS->charge += fabs(IONS->at(ii).Q);
+    {
+	    CS->mass += IONS->at(ii).M;
+	    CS->charge += fabs(IONS->at(ii).Q);
 	}
 
 	CS->mass /= params->numberOfParticleSpecies;
 	CS->charge /= params->numberOfParticleSpecies;
-	CS->density = params->BGP.ne;
+	CS->density = params->CV.ne;
 
 	double characteristicPlasmaFrequency(0);//Background ion-plasma frequency.
 	characteristicPlasmaFrequency = sqrt( CS->density*CS->charge*CS->charge/(CS->mass*F_EPSILON) );
@@ -348,8 +348,10 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	F_C_DS /= CS->velocity; 				// Dimensionless speed of light
 
 	// Normalizing "params":
-        // =====================
+    // =====================
 	params->DT /= CS->time;
+
+	/*
 	params->BGP.ne /= CS->density;
 	params->BGP.Te /= CS->temperature;
 	params->BGP.Bo /= CS->bField;
@@ -357,11 +359,32 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->BGP.Bx /= CS->bField;
 	params->BGP.By /= CS->bField;
 	params->BGP.Bz /= CS->bField;
-  params->BGP.Rphi0 /= CS->length;
+	*/
+
+	params->CV.ne /= CS->density;
+	params->CV.Te /= CS->temperature;
+	params->CV.B /= CS->bField;
+	params->CV.Tpar /= CS->temperature;
+	params->CV.Tper /= CS->temperature;
+
+	params->f_IC.ne /= CS->density;
+	params->f_IC.ne_star /= CS->density;
+	params->f_IC.Te /= CS->temperature;
+
+	/*
+	params->BGP.Bo /= CS->bField;
+	params->BGP.Bm /= CS->bField;
+	*/
+
+	params->em_IC.BX 	 /= CS->bField;
+	params->em_IC.BX_max /= CS->bField;
+	params->em_IC.BY     /= CS->bField;
+	params->em_IC.BZ     /= CS->bField;
+  	params->BGP.Rphi0 /= CS->length;
 
 	params->PP.ne_i /= CS->density;
 	params->PP.Tpar_i /= CS->temperature;
-        params->PP.Tper_i /= CS->temperature;
+	params->PP.Tper_i /= CS->temperature;
 	params->PP.Bx_i /= CS->bField;
 	params->PP.Br_i /= CS->bField;
 	params->PP.dBrdx_i /= CS->bField/CS->length;
@@ -382,13 +405,13 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->mesh.LZ /= CS->length;
 
 	// Normalizing IONS:
-        // ================
+    // ================
 	for(int ii=0;ii<IONS->size();ii++)
         {
 		IONS->at(ii).Q /= CS->charge;
 		IONS->at(ii).M /= CS->mass;
-		IONS->at(ii).Tpar /= CS->temperature;
-		IONS->at(ii).Tper /= CS->temperature;
+		IONS->at(ii).p_IC.Tpar /= CS->temperature;
+		IONS->at(ii).p_IC.Tper /= CS->temperature;
 		IONS->at(ii).LarmorRadius /= CS->length;
 		IONS->at(ii).VTpar /= CS->velocity;
 		IONS->at(ii).VTper /= CS->velocity;
@@ -432,8 +455,9 @@ template <class IT, class FT> void UNITS<IT,FT>::calculateFundamentalScalesAndBc
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if(params->mpi.MPI_DOMAIN_NUMBER == 0){
-            calculateFundamentalScales(params, IONS, FS);
+    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+	{
+        calculateFundamentalScales(params, IONS, FS);
     }
 
     broadcastFundamentalScales(params, FS);

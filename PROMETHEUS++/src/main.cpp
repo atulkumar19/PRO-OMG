@@ -107,7 +107,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     /**************** All the quantities below are dimensionless ****************/
     // #########################################################################
 
-
     // Definition of variables for advancing in time particles and fields:
     // =========================================================================
     double t1 = 0.0;
@@ -116,12 +115,10 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     int outputIterator = 0;
     int numberOfIterationsForEstimator = 1000;
 
-
     // Create objects:
     // =========================================================================
     EMF_SOLVER fields_solver(&params, &CS); // Initializing the EMF_SOLVER class object.
     PIC ionsDynamics; // Initializing the PIC class object.
-
 
     // Run 3 dummy cycles to load "n" and "nv" at previous time steps:
     // =========================================================================
@@ -134,11 +131,9 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
     }
 
-
     // Save 1st output:
     // =========================================================================
     hdfObj.saveOutputs(&params, &IONS, &EB, &CS, 0, 0);
-
 
     // Start timing simulations:
     // =========================================================================
@@ -163,12 +158,13 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, params.DT);
         }
 
-
         // Advance position:
         // =====================================================================
-        // Advance ions' position in time to level X^(N+1).
-        ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT);
-
+        if (params.SW.advancePos == 1)
+        {
+            // Advance ions' position in time to level X^(N+1).
+            ionsDynamics.advanceIonsPosition(&params,&EB, &IONS, params.DT);
+        }
 
         // Check boundaries:
         // =====================================================================
@@ -197,22 +193,21 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Apply collision operator:
         // =====================================================================
-        FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
-
+        if (params.SW.Collisions == 1)
+        {
+            FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
+        }
 
         // Field solve:
         // =====================================================================
-        bool EfieldFlag = true;
-        bool BfieldFlag = false;
-
         // Magnetic field:
-        if (BfieldFlag)
+        if (params.SW.BfieldSolve == 1)
         {
             // Use Faraday's law to advance the magnetic field to level B^(N+1).
             fields_solver.advanceBField(&params, &EB, &IONS);
         }
 
-        if (EfieldFlag)
+        if (params.SW.EfieldSolve == 1)
         {
             // Electric field:
             if(tt > 2)
@@ -227,11 +222,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
                 fields_solver.advanceEField(&params, &EB, &IONS, true, false);
             }
         }
-        else
-        {
-            cout << " E field solve disabled" << endl;
-        }
-
 
         // Advance time:
         // =====================================================================

@@ -12,15 +12,25 @@ numberOfTracerSpecies       0
 // Characteristic values:
 // =============================================================================
 CV_ne                       5.0E19
-CV_Te                       250
+CV_Te                       25
 CV_B                        17
-CV_Tpar                     250
-CV_Tper                     250
+CV_Tpar                     25
+CV_Tper                     25
 
 // Simulation time:
 // =============================================================================
 DTc                         1.0E-2
 simulationTime              120.0
+
+// Switches:
+// =============================================================================
+SW_EfieldSolve               1
+SW_HallTermSolve             0
+SW_BfieldSolve               0
+SW_Collisions                1
+SW_RFheating                 0
+SW_advancePos                1
+SW_linearSolve               0
 
 // Magnetic field initial conditions:
 // =============================================================================
@@ -50,7 +60,7 @@ r2                          0.10
 // Electron initial conditions:
 // =============================================================================
 IC_ne                       5.0E19
-IC_Te                       250
+IC_Te                       25
 
 // Output variables:
 // =============================================================================

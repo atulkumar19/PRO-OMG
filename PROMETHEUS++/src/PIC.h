@@ -137,20 +137,20 @@ protected:
 
 
 	// PRO++ OMG:
-	void eim(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void eim(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
-	void eim(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+	void eim(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
 
-	void calculateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
+	void calculateIonMoments(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
-	void calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
+	void calculateIonMoments(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
 
 	void calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
 	void calculateDerivedIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
 
 	void interpolateScalarField(const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec field, arma::vec * F);
-	
+
 	void interpolateScalarField(const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::mat field, arma::mat * F);
 
   public:

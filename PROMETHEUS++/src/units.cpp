@@ -339,7 +339,7 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationParameters * params, vector<IT> * IONS, FT * EB, const characteristicScales * CS)
 {
 	// Normalizing physical constants:
-        // ===============================
+    // =========================================================================
 	F_E_DS /= CS->charge; 					// Dimensionless electron charge
 	F_ME_DS /= CS->mass; 					// Dimensionless electron charge
 	// F_MU_DS *= CS->density*pow(CS->charge*CS->velocity*CS->time,2)/CS->mass; 	// Dimensionless vacuum permittivity
@@ -348,7 +348,9 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	F_C_DS /= CS->velocity; 				// Dimensionless speed of light
 
 	// Normalizing "params":
-    // =====================
+    // =========================================================================
+	// time increment:
+	// ---------------
 	params->DT /= CS->time;
 
 	/*
@@ -361,27 +363,37 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->BGP.Bz /= CS->bField;
 	*/
 
+	// Characteristic values:
+	// ----------------------
 	params->CV.ne /= CS->density;
 	params->CV.Te /= CS->temperature;
 	params->CV.B /= CS->bField;
 	params->CV.Tpar /= CS->temperature;
 	params->CV.Tper /= CS->temperature;
 
+	// Fluid initial conditions:
+	// -------------------------
 	params->f_IC.ne /= CS->density;
-	params->f_IC.ne_star /= CS->density;
 	params->f_IC.Te /= CS->temperature;
 
-	/*
-	params->BGP.Bo /= CS->bField;
-	params->BGP.Bm /= CS->bField;
-	*/
+	// Electromagnetic fields initial conditions:
+	// -----------------------------------------
+	params->em_IC.BX 	 	 /= CS->bField;
+	params->em_IC.BY     	 /= CS->bField;
+	params->em_IC.BZ         /= CS->bField;
+	params->em_IC.Bx_profile /= CS->bField;
 
-	params->em_IC.BX 	 /= CS->bField;
-	params->em_IC.BX_max /= CS->bField;
-	params->em_IC.BY     /= CS->bField;
-	params->em_IC.BZ     /= CS->bField;
+	params->em_IC.EX 	 	 /= CS->eField;
+	params->em_IC.EY     	 /= CS->eField;
+	params->em_IC.EZ         /= CS->eField;
+	params->em_IC.Ex_profile /= CS->eField;
+
+	// Geometry:
+	// ---------
   	params->BGP.Rphi0 /= CS->length;
 
+	// Plasma profiles:
+	// ---------------
 	params->PP.ne_i /= CS->density;
 	params->PP.Tpar_i /= CS->temperature;
 	params->PP.Tper_i /= CS->temperature;
@@ -389,11 +401,14 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->PP.Br_i /= CS->bField;
 	params->PP.dBrdx_i /= CS->bField/CS->length;
 
+	// Fundamental scales:
+	// -------------------
 	params->ionLarmorRadius /= CS->length;
 	params->ionSkinDepth /= CS->length;
 	params->ionGyroPeriod /= CS->time;
 
-	//Normalizing the mesh:
+	// Mesh quantities:
+	// ----------------
 	params->mesh.nodes.X = params->mesh.nodes.X/CS->length;
 	params->mesh.nodes.Y = params->mesh.nodes.Y/CS->length;
 	params->mesh.nodes.Z = params->mesh.nodes.Z/CS->length;
@@ -405,7 +420,7 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->mesh.LZ /= CS->length;
 
 	// Normalizing IONS:
-    // ================
+    // =========================================================================
 	for(int ii=0;ii<IONS->size();ii++)
         {
 		IONS->at(ii).Q /= CS->charge;
@@ -431,8 +446,8 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 		}
 	}
 
-        // Normalizing "EB":
-        // =================
+    // Normalizing "EB":
+    // =====================================================================
 	EB->E /= CS->eField;
 	EB->B /= CS->bField;
 }

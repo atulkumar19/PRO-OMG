@@ -268,6 +268,16 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->DTc            = stod( parametersStringMap["DTc"] );
     params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
 
+    // Switches:
+    // -------------------------------------------------------------------------
+    params->SW.EfieldSolve   = stoi( parametersStringMap["SW_EfieldSolve"] );
+    params->SW.HallTermSolve = stoi( parametersStringMap["SW_HallTermSolve"] );
+    params->SW.BfieldSolve   = stoi( parametersStringMap["SW_BfieldSolve"] );
+    params->SW.Collisions    = stoi( parametersStringMap["SW_Collisions"] );
+    params->SW.RFheating     = stoi( parametersStringMap["SW_RFheating"] );
+    params->SW.advancePos    = stoi( parametersStringMap["SW_advancePos"] );
+    params->SW.linearSolve   = stoi( parametersStringMap["SW_linearSolve"] );
+
     // Magnetic field initial conditions:
     // -------------------------------------------------------------------------
     params->BGP.Bo    = stod( parametersStringMap["IC_B0"] );
@@ -1127,7 +1137,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         arma::vec yq(xq.size());
         // Sample points:
         int BX_NX  = params->em_IC.BX_NX;
-        int dBX_NX = params->mesh.LX/BX_NX;
+        double dX = params->mesh.LX/((double)BX_NX);
         arma::vec xt = linspace(0,params->mesh.LX,BX_NX); // x-vector from the table
         arma:: vec yt(xt.size());
 
@@ -1140,7 +1150,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         // By profile:
         // ===========
         arma::vec Br(BX_NX,1);
-        Br.subvec(0,BX_NX-2) = -0.5*(params->BGP.Rphi0)*diff(params->em_IC.Bx_profile)/dBX_NX;
+        Br.subvec(0,BX_NX-2) = -0.5*(params->BGP.Rphi0)*diff(params->em_IC.Bx_profile)/dX;
         Br(BX_NX-1) = Br(BX_NX-2);
 
         yt = Br;

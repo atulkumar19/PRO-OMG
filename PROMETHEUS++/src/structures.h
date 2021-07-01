@@ -202,7 +202,6 @@ struct plasmaProfiles
 struct fluid_IC
 {
 	double ne; 							// Intial reference density
-	double ne_star;         // Characteristic density
 	double Te;
 	string Te_fileName;
 	int Te_NX;
@@ -223,7 +222,6 @@ struct fluid_IC
 	fluid_IC()
 	{
 		ne 			= 0;
-		ne_star = 0;
 		Te      = 0;
 		Te_NX   = 0;
 	}
@@ -270,6 +268,8 @@ struct EM_IC
 	}
 };
 
+//  Define structure to store simulation geometry information:
+// =============================================================================
 struct GEOMETRY
 {
 	double r1;
@@ -284,6 +284,8 @@ struct GEOMETRY
 	}
 };
 
+//  Define structure to store characteristic values for the normalization:
+// =============================================================================
 struct CharactersticValues
 {
 	double ne;
@@ -300,6 +302,31 @@ struct CharactersticValues
 		Tpar = 0;
 		Tper = 0;
 	}
+};
+
+//  Define structure to store switches that control physics modules:
+// =============================================================================
+struct Switches
+{
+	int EfieldSolve;
+	int HallTermSolve;
+	int BfieldSolve;
+	int Collisions;
+	int RFheating;
+	int linearSolve;
+	int advancePos;
+
+	Switches()
+	{
+		EfieldSolve   = 0;
+		HallTermSolve = 0;
+		BfieldSolve   = 0;
+		Collisions    = 0;
+		RFheating     = 0;
+		linearSolve   = 0;
+		advancePos    = 0;
+	}
+
 };
 
 //  Define structure to store simulation parameters:
@@ -355,6 +382,9 @@ struct simulationParameters
 
 	// Simulation Characterstic values:
 	CharactersticValues CV;
+
+	// Simulation switches:
+	Switches SW;
 
 	// =============================================================================
 	backgroundPlasmaParameters BGP;

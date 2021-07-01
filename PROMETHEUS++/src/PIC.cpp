@@ -1241,7 +1241,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
             PIC::assignCell(params, EB, &IONS->at(ii));
 
             //Calculate partial moments:
-			calculateIonMoments(params, &IONS->at(ii));
+			calculateIonMoments(params, EB, &IONS->at(ii));
         }
 
         // Reduce IONS moments to PARTICLE ROOT:
@@ -1314,7 +1314,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensi
 
 // calculateIonMoments:
 
-void PIC::calculateIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+void PIC::calculateIonMoments(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
 	// Ion density:
 	IONS->n___ = IONS->n__;
@@ -1326,10 +1326,10 @@ void PIC::calculateIonMoments(const simulationParameters * params, oneDimensiona
 	IONS->nv_ = IONS->nv;
 
 	// Calculate ion moments:
-	eim(params, IONS);
+	eim(params, EB, IONS);
 }
 
-void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+void PIC::eim(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
@@ -1433,15 +1433,15 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 	}//End of the parallel region
 
 	// Calculate compression factor:
-	arma::vec compressionFactor = (params->PP.Bx_i.subvec(1,params->mesh.NX_IN_SIM)/params->BGP.Bo)/params->A_0;
+	arma::vec compressionFactor = (EB->B.X.subvec(1,params->mesh.NX_IN_SIM)/params->em_IC.BX)/params->A_0;
 
 	// Apply magnetic compression:
-	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
-	IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) %compressionFactor;
+	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM)% compressionFactor;
+	IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.X.subvec(1,params->mesh.NX_IN_SIM)%compressionFactor;
 	//IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Y.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
 	//IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) = IONS->nv.Z.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
-	IONS->P11.subvec(1,params->mesh.NX_IN_SIM) = IONS->P11.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
-	IONS->P22.subvec(1,params->mesh.NX_IN_SIM) = IONS->P22.subvec(1,params->mesh.NX_IN_SIM) % compressionFactor;
+	IONS->P11.subvec(1,params->mesh.NX_IN_SIM) = IONS->P11.subvec(1,params->mesh.NX_IN_SIM)% compressionFactor;
+	IONS->P22.subvec(1,params->mesh.NX_IN_SIM) = IONS->P22.subvec(1,params->mesh.NX_IN_SIM)% compressionFactor;
 
 	// Scale:
 	IONS->n *= IONS->NCP/params->mesh.DX;
@@ -1451,10 +1451,10 @@ void PIC::eim(const simulationParameters * params, oneDimensional::ionSpecies * 
 
 }
 
-void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
 {}
 
-void PIC::eim(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+void PIC::eim(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
 {}
 
 void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)

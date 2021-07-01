@@ -230,6 +230,7 @@ void PARTICLE_BC::applyParticleReinjection(const simulationParameters * params, 
 
 void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
+    /*
     // Particle weight:
     // =========================================================================
     IONS->a(ii) = IONS->p_BC.a_new;
@@ -276,6 +277,117 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
     phi = 2.0*M_PI*randu<vec>(1);
 
     arma::vec V1 = IONS->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
+    */
+
+    // Particle velocity:
+	// ===================
+    arma::vec V1;
+    arma::vec V2;
+    arma::vec V3;
+
+	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2)
+	{
+		double T;
+		double E;
+
+		if (IONS->p_BC.BC_type == 1)
+		{
+			T = IONS->p_BC.T;
+			E = 0;
+		}
+		if (IONS->p_BC.BC_type == 2)
+		{
+			T = IONS->p_BC.T;
+			E = IONS->p_BC.E;
+		}
+
+		// Mass of ion:
+		double Ma = IONS->M;
+
+		// Thermal velocity of source:
+		double vT = sqrt(2*F_E_DS*T/Ma);
+
+		// Pitch angle of source:
+		double xip = cos(IONS->p_BC.eta);
+
+		// Drift velocity of source:
+		double U  = sqrt(2*F_E_DS*E/Ma);
+		double Ux = U*xip;
+		double Uy = U*sqrt(1 - pow(xip,2));
+		double Uz = 0;
+
+		// Thermal spread:
+		double sigma_v = vT/sqrt(2);
+
+		// Random number generator:
+		std::default_random_engine gen(params->mpi.MPI_DOMAIN_NUMBER+1);
+		std::uniform_real_distribution<double> Rm(0.0, 1.0);
+
+		// Box muller:
+		double R_1 = sigma_v*sqrt(-2*log(Rm(gen)));
+		double t_2 = 2*M_PI*Rm(gen);
+		double R_3 = sigma_v*sqrt(-2*log(Rm(gen)));
+		double t_4 = 2*M_PI*Rm(gen);
+
+		// Thermal component:
+		double wx = R_3*cos(t_4);
+		double wy = R_1*cos(t_2);
+		double wz = R_1*sin(t_2);
+
+		// Total velocity components:
+		V1 = Ux + wx;
+	    V2 = Uy + wy;
+		V3 = Uz + wz;
+	}
+
+	// Particle position:
+	// ==================
+	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2) // Finite boundary condition
+	{
+		// Variables for random number generator:
+		arma::vec R = randu(1);
+		arma_rng::set_seed_random();
+		arma::vec phi = 2.0*M_PI*randu<vec>(1);
+
+		// Gaussian distribution in space:
+		double mean_x = IONS->p_BC.mean_x;
+		double sigma_x  =  IONS->p_BC.sigma_x;
+		double new_x = mean_x  + (sigma_x)*sqrt( -2*log(R(0)) )*cos(phi(0));
+		double dLX = abs(new_x - mean_x);
+
+		while(dLX > params->mesh.LX/2)
+		{
+			 std::cout<<"Out of bound X= "<< new_x;
+			 arma_rng::set_seed_random();
+			 R = randu(1);
+			 phi = 2.0*M_PI*randu<vec>(1);
+
+			 new_x = mean_x  + (sigma_x)*sqrt( -2*log(R(0)) )*cos(phi(0));
+			 dLX  = abs(new_x - mean_x);
+			 std::cout<< "Out of bound corrected X= " << new_x;
+		}
+
+		IONS->X(ii,0) = new_x;
+	}
+	if (IONS->p_BC.BC_type == 3) // Periodic boundary condition
+	{
+		if (IONS->X(ii,0) > params->mesh.LX)
+		{
+			IONS->X(ii,0) -= params->mesh.LX;
+		}
+
+		if (IONS->X(ii,0) < 0)
+		{
+			IONS->X(ii,0) += params->mesh.LX;
+		}
+	}
+
+	// Particle weight:
+    // ================
+	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2) // Finite boundary condition
+	{
+		IONS->a(ii) = IONS->p_BC.a_new;
+	}
 
     // Cartesian unit vectors:
     // ===========================

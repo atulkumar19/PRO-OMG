@@ -891,11 +891,11 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             name.clear();
 
             name = "BC_T_" + ss.str();
-            ions.p_BC.T = stod(parametersMap[name]);
+            ions.p_BC.T = stod(parametersMap[name])*F_E/F_KB;
             name.clear();
 
             name = "BC_E_" + ss.str();
-            ions.p_BC.E = stod(parametersMap[name]);
+            ions.p_BC.E = stod(parametersMap[name])*F_E/F_KB;
             name.clear();
 
             name = "BC_eta_" + ss.str();

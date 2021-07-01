@@ -422,22 +422,35 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	// Normalizing IONS:
     // =========================================================================
 	for(int ii=0;ii<IONS->size();ii++)
-        {
+    {
+		// Particle boundary conditions:
+		// ----------------------------
+		IONS->at(ii).p_BC.mean_x  /= CS->length;
+		IONS->at(ii).p_BC.sigma_x /= CS->length;
+		IONS->at(ii).p_BC.T /= CS->temperature;
+		IONS->at(ii).p_BC.E /= CS->temperature;
+
+		// Particle parameters:
+		// -------------------
 		IONS->at(ii).Q /= CS->charge;
 		IONS->at(ii).M /= CS->mass;
+
+		// Particle initial conditions:
+		// ----------------------------
 		IONS->at(ii).p_IC.Tpar /= CS->temperature;
 		IONS->at(ii).p_IC.Tper /= CS->temperature;
+
+		
 		IONS->at(ii).LarmorRadius /= CS->length;
 		IONS->at(ii).VTpar /= CS->velocity;
 		IONS->at(ii).VTper /= CS->velocity;
 		IONS->at(ii).Wc *= CS->time;
 		IONS->at(ii).Wp *= CS->time;
 		IONS->at(ii).avg_mu /= CS->magneticMoment;
-		IONS->at(ii).p_BC.mean_x  /= CS->length;
-		IONS->at(ii).p_BC.sigma_x /= CS->length;
+
 
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-                {
+    	{
                     IONS->at(ii).X = IONS->at(ii).X/CS->length;
                     IONS->at(ii).V = IONS->at(ii).V/CS->velocity;
                     IONS->at(ii).P = IONS->at(ii).P/CS->momentum;

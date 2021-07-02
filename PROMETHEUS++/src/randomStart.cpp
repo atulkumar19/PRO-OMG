@@ -120,25 +120,30 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution(const s
 	ions->avg_mu = mean(ions->mu);
 }
 
-template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * params, IT * ions, double X, double V3, double V2, double V1)
+template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * params,  IT * ions, double X, double V3, double V2, double V1)
 {
-    arma::vec S = linspace(0,params->mesh.LX,200);
+    // Sample points
+    int Tper_NX = ions->p_IC.Tper_NX;
+    int Tpar_NX = ions->p_IC.Tper_NX;
+    int ne_nx = ions->p_IC.densityFraction_NX;
+
+    arma::vec S = linspace(0,params->mesh.LX,Tper_NX);
     arma::vec xx(1,1);
     xx(0,0)= X;
 
     double T3=0.0;
     arma::vec TT3(1,1);
-    interp1(S,params->PP.Tper,xx,TT3);
+    interp1(S,ions->p_IC.Tpar_profile,xx,TT3);
     T3 = TT3(0,0);   //Temperature profile in x
 
     double T2=0.0;
     arma::vec TT2(1,1);
-    interp1(S,params->PP.Tper,xx,TT2);
+    interp1(S,ions->p_IC.Tper_profile,xx,TT2);
     T2 = TT2(0,0);   //Temperature profile in y
 
     double T1=0.0;
     arma::vec TT1(1,1);
-    interp1(S,params->PP.Tpar,xx,TT1);
+    interp1(S,ions->p_IC.Tper_profile,xx,TT1);
     T1 = TT1(0,0);   //Temperature profile in z
 
     double k3=sqrt((ions->M)/(2.0*M_PI*F_KB*T3));
@@ -153,7 +158,7 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
 
     double g=0.0;
     arma::vec gg(1,1);
-    interp1(S, (params->em_IC.BX/params->PP.Bx)%params->PP.ne,xx,gg); //Ne is multiplied with the compression factor
+    interp1(S, (params->em_IC.BX/params->em_IC.Bx_profile)%ions->p_IC.densityFraction_profile,xx,gg); //Ne is multiplied with the compression factor
     g = gg(0,0); //density profile
 
     return(g*h); //target 4-D Pdf

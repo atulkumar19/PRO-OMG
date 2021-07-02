@@ -299,7 +299,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     unsigned int NY   = (unsigned int)stoi( parametersStringMap["NY"] );
     unsigned int NZ   = (unsigned int)stoi( parametersStringMap["NZ"] );
     params->DrL       = stod( parametersStringMap["DrL"] );
-	params->dp        = stod( parametersStringMap["dp"] );
+	  params->dp        = stod( parametersStringMap["dp"] );
   	params->r1        = stod( parametersStringMap["r1"] );
     params->r2        = stod( parametersStringMap["r2"] );
 
@@ -314,7 +314,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // -------------------------------------------------------------------------
     params->outputCadence           = stod( parametersStringMap["outputCadence"] );
     string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
-	params->outputs_variables       = split(nonparsed_variables_list,",");
+	  params->outputs_variables       = split(nonparsed_variables_list,",");
 
     // Data smoothing:
     // -------------------------------------------------------------------------
@@ -853,6 +853,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.p_IC.Tper_fileName = parametersMap[name];
             name.clear();
 
+
+
             name = "IC_Tper_NX_" + ss.str();
             ions.p_IC.Tper_NX = stoi(parametersMap[name]);
             name.clear();
@@ -862,9 +864,12 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.p_IC.Tpar = stod(parametersMap[name])*F_E/F_KB; // Tpar in eV in input file
             name.clear();
 
+
             name = "IC_Tpar_fileName_" + ss.str();
             ions.p_IC.Tpar_fileName = parametersMap[name];
             name.clear();
+
+
 
             name = "IC_Tpar_NX_" + ss.str();
             ions.p_IC.Tpar_NX = stoi(parametersMap[name]);
@@ -879,6 +884,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             name = "IC_densityFraction_fileName_" + ss.str();
             ions.p_IC.densityFraction_fileName = parametersMap[name];
             name.clear();
+
 
             name = "IC_densityFraction_NX_" + ss.str();
             ions.p_IC.densityFraction_NX = stoi(parametersMap[name]);
@@ -1002,25 +1008,47 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulat
 
     // Define number of elements in external profiles:
     // ===============================================
-    int nTable = params->PP.nTable;
+    int nn = params->PATH.length();
+    std::string inputFilePath = params->PATH.substr(0,nn-13);
 
-    // Initialize variables:
-    // =====================
-    params->PP.ne.zeros(nTable);
-    params->PP.Tpar.zeros(nTable);
-    params->PP.Tper.zeros(nTable);
-    params->PP.Bx.zeros(nTable);
-    params->PP.Bx_i.zeros(NX);
-    params->PP.Br_i.zeros(NX);
-    params->PP.dBrdx_i.zeros(NX);
+    // Reading normalized plasma profile from external files
+    std::string fileName = params->PATH.substr(0,nn-13);
+    std::string fileName2 = fileName + "/inputFiles/" + IONS->at(0).p_IC.Tper_fileName;
+    std::string fileName3 = fileName + "/inputFiles/" + IONS->at(0).p_IC.Tpar_fileName;
+    std::string fileName4 = fileName + "/inputFiles/" + IONS->at(0).p_IC.densityFraction_fileName;
 
+
+    // Load data from external file:
+    // ============================
+    IONS->at(0).p_IC.Tper_profile.load(fileName2);
+    IONS->at(0).p_IC.Tpar_profile.load(fileName3);
+    IONS->at(0).p_IC.densityFraction_profile.load(fileName4);
+
+    // Rescale the plasma Profiles
+    // ================================
+    IONS->at(0).p_IC.Tper_profile *= IONS->at(0).p_IC.Tpar;
+    IONS->at(0).p_IC.Tpar_profile *= IONS->at(0).p_IC.Tpar;
+    IONS->at(0).p_IC.densityFraction_profile *= params->f_IC.ne;
+
+  /* Candidate for removal
+        
+        // Initialize variables:
+        // =====================
+        params->PP.ne.zeros(nTable);
+        params->PP.Tpar.zeros(nTable);
+        params->PP.Tper.zeros(nTable);
+        params->PP.Bx.zeros(nTable);
+        params->PP.Bx_i.zeros(NX);
+        params->PP.Br_i.zeros(NX);
+        params->PP.dBrdx_i.zeros(NX);
+        int nn = params->PATH.length();
 if (params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
         // Get file name containing initial condition plasma profiles:
         // ===========================================================
         int nn = params->PATH.length();
         std::string inputFilePath = params->PATH.substr(0,nn-13);
-        std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
+          std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
         std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
         std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
         std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
@@ -1039,7 +1067,6 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
         params->PP.Tper *= IONS->at(0).p_IC.Tper;
         params->PP.Bx   *= params->em_IC.BX;
 
-        /*
         //Interpolate at mesh points:
         // ==========================
         // Query points:
@@ -1075,7 +1102,7 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
         interp1(xt,yt,xq,yq);
         params->PP.dBrdx_i = yq;
 
-        */
+
 
         //interp1(xt,dBr,xq,params->PP.dBrdx_i);
     }
@@ -1097,7 +1124,7 @@ if (params->mpi.MPI_DOMAIN_NUMBER == 0)
     // Quantities interpolated at the mesh points:
     MPI_Bcast(params->PP.Bx_i.memptr()   ,params->PP.Bx_i.size()   , MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(params->PP.Br_i.memptr()   ,params->PP.Br_i.size()   , MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(params->PP.dBrdx_i.memptr(),params->PP.dBrdx_i.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(params->PP.dBrdx_i.memptr(),params->PP.dBrdx_i.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);*/
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(simulationParameters * params, oneDimensional::fields * EB)
@@ -1137,7 +1164,11 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         arma::vec yq(xq.size());
         // Sample points:
         int BX_NX  = params->em_IC.BX_NX;
+
         double dX = params->mesh.LX/((double)BX_NX);
+
+        double dBX_NX = params->mesh.LX/BX_NX;
+
         arma::vec xt = linspace(0,params->mesh.LX,BX_NX); // x-vector from the table
         arma:: vec yt(xt.size());
 

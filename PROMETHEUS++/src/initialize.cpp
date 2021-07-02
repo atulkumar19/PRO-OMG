@@ -722,8 +722,8 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 
         if (params->dimensionality == 1)
         {
-            double Ds = (params->mesh.LX)/(params->PP.ne.n_elem);
-            double NR = (IONS->at(ii).p_IC.densityFraction)*sum(((params->em_IC.BX*params->A_0)/(params->PP.Bx))*(params->f_IC.ne))*Ds;
+            double Ds = (params->mesh.LX)/(params->em_IC.BX_NX);
+            double NR = (IONS->at(ii).p_IC.densityFraction)*sum(((params->em_IC.BX*params->A_0)/(params->em_IC.Bx_profile))*(params->f_IC.ne))*Ds;
             IONS->at(ii).NCP = (NR/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
         }
         else
@@ -1011,27 +1011,30 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulat
     int nn = params->PATH.length();
     std::string inputFilePath = params->PATH.substr(0,nn-13);
 
-    // Reading normalized plasma profile from external files
-    std::string fileName = params->PATH.substr(0,nn-13);
-    std::string fileName2 = fileName + "/inputFiles/" + IONS->at(0).p_IC.Tper_fileName;
-    std::string fileName3 = fileName + "/inputFiles/" + IONS->at(0).p_IC.Tpar_fileName;
-    std::string fileName4 = fileName + "/inputFiles/" + IONS->at(0).p_IC.densityFraction_fileName;
+    for(int ii=0;ii<IONS->size();ii++)
+    {
+
+        // Assemble  external filenames
+        std::string fileName  = params->PATH.substr(0,nn-13);
+        std::string fileName2 = fileName + "/inputFiles/" + IONS->at(ii).p_IC.Tper_fileName;
+        std::string fileName3 = fileName + "/inputFiles/" + IONS->at(ii).p_IC.Tpar_fileName;
+        std::string fileName4 = fileName + "/inputFiles/" + IONS->at(ii).p_IC.densityFraction_fileName;
 
 
-    // Load data from external file:
-    // ============================
-    IONS->at(0).p_IC.Tper_profile.load(fileName2);
-    IONS->at(0).p_IC.Tpar_profile.load(fileName3);
-    IONS->at(0).p_IC.densityFraction_profile.load(fileName4);
+        // Load data from external file:
+        // ============================
+        IONS->at(ii).p_IC.Tper_profile.load(fileName2);
+        IONS->at(ii).p_IC.Tpar_profile.load(fileName3);
+        IONS->at(ii).p_IC.densityFraction_profile.load(fileName4);
 
-    // Rescale the plasma Profiles
-    // ================================
-    IONS->at(0).p_IC.Tper_profile *= IONS->at(0).p_IC.Tpar;
-    IONS->at(0).p_IC.Tpar_profile *= IONS->at(0).p_IC.Tpar;
-    IONS->at(0).p_IC.densityFraction_profile *= params->f_IC.ne;
-
+        // Rescale the plasma Profiles
+        // ================================
+        IONS->at(ii).p_IC.Tper_profile *= IONS->at(ii).p_IC.Tper;
+        IONS->at(ii).p_IC.Tpar_profile *= IONS->at(ii).p_IC.Tpar;
+        IONS->at(ii).p_IC.densityFraction_profile *= params->f_IC.ne;
+    }
   /* Candidate for removal
-        
+
         // Initialize variables:
         // =====================
         params->PP.ne.zeros(nTable);

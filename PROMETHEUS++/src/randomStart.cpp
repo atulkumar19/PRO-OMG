@@ -125,7 +125,7 @@ template <class IT> double RANDOMSTART<IT>::target(const simulationParameters * 
     // Sample points
     int Tper_NX = ions->p_IC.Tper_NX;
     int Tpar_NX = ions->p_IC.Tper_NX;
-    int ne_nx = ions->p_IC.densityFraction_NX;
+    int ne_nx   = ions->p_IC.densityFraction_NX;
 
     arma::vec S = linspace(0,params->mesh.LX,Tper_NX);
     arma::vec xx(1,1);

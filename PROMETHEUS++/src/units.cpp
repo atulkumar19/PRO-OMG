@@ -430,6 +430,7 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 		IONS->at(ii).p_BC.T /= CS->temperature;
 		IONS->at(ii).p_BC.E /= CS->temperature;
 
+
 		// Particle parameters:
 		// -------------------
 		IONS->at(ii).Q /= CS->charge;
@@ -439,8 +440,11 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 		// ----------------------------
 		IONS->at(ii).p_IC.Tpar /= CS->temperature;
 		IONS->at(ii).p_IC.Tper /= CS->temperature;
+		IONS->at(ii).p_IC.Tper_profile /= CS->temperature;
+		IONS->at(ii).p_IC.Tpar_profile /= CS->temperature;
+		IONS->at(ii).p_IC.densityFraction_profile /= CS->density;
 
-		
+
 		IONS->at(ii).LarmorRadius /= CS->length;
 		IONS->at(ii).VTpar /= CS->velocity;
 		IONS->at(ii).VTper /= CS->velocity;

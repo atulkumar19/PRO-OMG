@@ -26,9 +26,9 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
     unsigned int iIndex = params->mpi.iIndex;
 	unsigned int fIndex = params->mpi.fIndex;
 
-    arma::vec E_X = arma::pow(EB->B.X.subvec(iIndex,fIndex) - params->BGP.Bx, 2);
-    arma::vec E_Y = arma::pow(EB->B.Y.subvec(iIndex,fIndex) - params->BGP.By, 2);
-    arma::vec E_Z = arma::pow(EB->B.Z.subvec(iIndex,fIndex) - params->BGP.Bz, 2);
+    arma::vec E_X = arma::pow(EB->B.X.subvec(iIndex,fIndex) - params->em_IC.BX, 2);
+    arma::vec E_Y = arma::pow(EB->B.Y.subvec(iIndex,fIndex) - params->em_IC.BY, 2);
+    arma::vec E_Z = arma::pow(EB->B.Z.subvec(iIndex,fIndex) - params->em_IC.BZ, 2);
 
     magneticEnergyDensity(0) = 0.5*arma::sum( E_X )/F_MU_DS;
     magneticEnergyDensity(1) = 0.5*arma::sum( E_Y )/F_MU_DS;
@@ -55,9 +55,9 @@ template <class IT, class FT> void ENERGY_DIAGNOSTIC<IT, FT>::computeElectromagn
 	unsigned int icol = params->mpi.icol;
 	unsigned int fcol = params->mpi.fcol;
 
-    arma::mat E_X = arma::pow(EB->B.X.submat(irow,icol,frow,fcol) - params->BGP.Bx, 2);
-    arma::mat E_Y = arma::pow(EB->B.Y.submat(irow,icol,frow,fcol) - params->BGP.By, 2);
-    arma::mat E_Z = arma::pow(EB->B.Z.submat(irow,icol,frow,fcol) - params->BGP.Bz, 2);
+    arma::mat E_X = arma::pow(EB->B.X.submat(irow,icol,frow,fcol) - params->em_IC.BX, 2);
+    arma::mat E_Y = arma::pow(EB->B.Y.submat(irow,icol,frow,fcol) - params->em_IC.BY, 2);
+    arma::mat E_Z = arma::pow(EB->B.Z.submat(irow,icol,frow,fcol) - params->em_IC.BZ, 2);
 
     magneticEnergyDensity(0) = 0.5*arma::sum( arma::sum( E_X ) )/F_MU_DS;
     magneticEnergyDensity(1) = 0.5*arma::sum( arma::sum( E_Y ) )/F_MU_DS;

@@ -280,12 +280,6 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     // Magnetic field initial conditions:
     // -------------------------------------------------------------------------
-    params->BGP.Bo    = stod( parametersStringMap["IC_B0"] );
-    params->BGP.theta = stod( parametersStringMap["IC_theta"] );
-  	params->BGP.phi   = stod( parametersStringMap["IC_phi"] );
-    params->PP.nTable = stod( parametersStringMap["IC_B0_NX"] );
-    params->em_IC.B0_fileName = parametersStringMap["IC_B0_fileName"];
-
     params->em_IC.BX          = stod( parametersStringMap["IC_BX"] );
     params->em_IC.BY          = stod( parametersStringMap["IC_BY"] );
     params->em_IC.BZ          = stod( parametersStringMap["IC_BZ"] );
@@ -294,19 +288,19 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     // Geometry:
     // -------------------------------------------------------------------------
-    params->BGP.Rphi0 = stod( parametersStringMap["Rphi0"] );
-    unsigned int NX   = (unsigned int)stoi( parametersStringMap["NX"] );
-    unsigned int NY   = (unsigned int)stoi( parametersStringMap["NY"] );
-    unsigned int NZ   = (unsigned int)stoi( parametersStringMap["NZ"] );
-    params->DrL       = stod( parametersStringMap["DrL"] );
-	  params->dp        = stod( parametersStringMap["dp"] );
-  	params->r1        = stod( parametersStringMap["r1"] );
-    params->r2        = stod( parametersStringMap["r2"] );
+    //params->BGP.Rphi0 = stod( parametersStringMap["Rphi0"] );
+    unsigned int NX      = (unsigned int)stoi( parametersStringMap["NX"] );
+    unsigned int NY      = (unsigned int)stoi( parametersStringMap["NY"] );
+    unsigned int NZ      = (unsigned int)stoi( parametersStringMap["NZ"] );
+    params->DrL          = stod( parametersStringMap["DrL"] );
+	params->dp           = stod( parametersStringMap["dp"] );
+  	params->geometry.r1  = stod( parametersStringMap["r1"] );
+    params->geometry.r2  = stod( parametersStringMap["r2"] );
 
     // Electron initial conditions:
     // -------------------------------------------------------------------------
-    params->BGP.ne       = stod( parametersStringMap["IC_ne"] );
-    params->BGP.Te       = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
+    //params->BGP.ne       = stod( parametersStringMap["IC_ne"] );
+    //params->BGP.Te       = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
     params->f_IC.ne      = stod( parametersStringMap["IC_ne"] );
     params->f_IC.Te      = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
 
@@ -325,7 +319,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Derived parameters:
     // ===================
     params->mpi.MPIS_PARTICLES = params->mpi.NUMBER_MPI_DOMAINS - params->mpi.MPIS_FIELDS;
-    params->A_0 = M_PI*(pow(params->r2,2) -pow(params->r1,2));
+    params->geometry.A_0 = M_PI*(pow(params->geometry.r2,2) -pow(params->geometry.r1,2));
 
     // Sanity check: if NX and/or NY is not a multiple of 2, the simulation aborts
     if (params->dimensionality == 1)
@@ -386,14 +380,14 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     }
 
     // Magnetic field data:
-    params->em_IC.B0 = sqrt( pow(params->em_IC.BX,2.0) + pow(params->em_IC.BY,2.0) + pow(params->em_IC.BZ,2.0) );
-	params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
-	params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
-	params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
+    //params->em_IC.B0 = sqrt( pow(params->em_IC.BX,2.0) + pow(params->em_IC.BY,2.0) + pow(params->em_IC.BZ,2.0) );
+	//params->BGP.Bx = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*cos(params->BGP.phi*M_PI/180.0);
+	//params->BGP.By = params->BGP.Bo*sin(params->BGP.theta*M_PI/180.0)*sin(params->BGP.phi*M_PI/180.0);
+	//params->BGP.Bz = params->BGP.Bo*cos(params->BGP.theta*M_PI/180.0);
 
-    params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
-    params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
-    params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
+    //params->BGP.Bx = (abs(params->BGP.Bx) < PRO_ZERO) ? 0.0 : params->BGP.Bx;
+    //params->BGP.By = (abs(params->BGP.By) < PRO_ZERO) ? 0.0 : params->BGP.By;
+    //params->BGP.Bz = (abs(params->BGP.Bz) < PRO_ZERO) ? 0.0 : params->BGP.Bz;
 
 }
 
@@ -719,7 +713,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
         if (params->dimensionality == 1)
         {
             double Ds = (params->mesh.LX)/(params->em_IC.BX_NX);
-            double NR = (IONS->at(ii).p_IC.densityFraction)*sum(((params->em_IC.BX*params->A_0)/(params->em_IC.Bx_profile))*(params->f_IC.ne))*Ds;
+            double NR = (IONS->at(ii).p_IC.densityFraction)*sum(((params->em_IC.BX*params->geometry.A_0)/(params->em_IC.Bx_profile))*(params->f_IC.ne))*Ds;
             IONS->at(ii).NCP = (NR/(IONS->at(ii).NSP*params->mpi.MPIS_PARTICLES));
         }
         else
@@ -1086,7 +1080,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         // By profile:
         // ===========
         arma::vec Br(BX_NX,1);
-        Br.subvec(0,BX_NX-2) = -0.5*(params->BGP.Rphi0)*diff(params->em_IC.Bx_profile)/dX;
+        Br.subvec(0,BX_NX-2) = -0.5*(params->geometry.r2)*diff(params->em_IC.Bx_profile)/dX;
         Br(BX_NX-1) = Br(BX_NX-2);
 
         yt = Br;

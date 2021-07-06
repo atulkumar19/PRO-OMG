@@ -145,58 +145,6 @@ struct meshParams
 
 };
 
-
-
-
-
-
-// =============================================================================
-//  Candidate for deletion:
-// =============================================================================
-struct backgroundPlasmaParameters
-{
-	double ne;
-	double Te;
-	double Bo;
-	double Bm;
-	double Bx;
-	double By;
-	double Bz;
-  double Rphi0;
-
-
-	double theta; // Spherical polar angle (as measured from z-axis)
-	double phi; // Spherical azimuthal angle (as measured from x-axis)
-};
-
-struct plasmaProfiles
-{
-	//Plasma profiles from external files
-	arma::vec ne;
-	arma::vec Tpar;
-	arma::vec Tper;
-	arma::vec Bx;
-	arma::vec Rphi;
-	arma::vec Br;
-	arma::vec dBrdx;
-
-	//Interpolated Plasma profiles at mesh points
-	arma::vec ne_i;
-	arma::vec Tpar_i;
-	arma::vec Tper_i;
-	arma::vec Bx_i;
-	arma::vec Br_i;
-	arma::vec dBrdx_i;
-
-	int nTable; //Number of elements in external files
-};
-// =============================================================================
-//  Candidate for deletion:
-// =============================================================================
-
-
-
-
 //  Define structure to store fluid species initial condition parameters:
 // =============================================================================
 struct fluid_IC
@@ -231,15 +179,7 @@ struct fluid_IC
 // =============================================================================
 struct EM_IC
 {
-	double B0;
-	double Bm;
-	double phi;
-	double theta;
-	string B0_fileName;
-	int B0_NX;
-
 	double BX;
-	double BX_max;
 	double BY;
 	double BZ;
 	string BX_fileName;
@@ -256,7 +196,6 @@ struct EM_IC
 	EM_IC()
 	{
 			BX     = 0;
-			BX_max = 0;
 			BY     = 0;
 			BZ     = 0;
 			BX_NX  = 0;
@@ -359,9 +298,6 @@ struct simulationParameters
 	double outputCadence;//Save variables each "outputCadence" times the background ion cycloperiod.
 
 	// Geometric information:
-	double r1;  // Inner radius of the annulus
-	double r2;  // Outer radius of the annulus
-	double A_0;  // Area of the annulus
 	GEOMETRY geometry;
 
 	int outputCadenceIterations;
@@ -385,11 +321,6 @@ struct simulationParameters
 
 	// Simulation switches:
 	Switches SW;
-
-	// =============================================================================
-	backgroundPlasmaParameters BGP;
-	plasmaProfiles PP;
-	// =============================================================================
 
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;

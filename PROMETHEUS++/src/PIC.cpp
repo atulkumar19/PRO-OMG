@@ -678,7 +678,9 @@ void PIC::extrapolateIonVelocity(const simulationParameters * params, twoDimensi
 }
 
 
-void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
+void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
+{
+/*
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
 	// --------*------------*--------X---*--------
@@ -720,57 +722,12 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
           //Scaling the ion density with proper dimension
 	IONS->n *= IONS->NCP/params->mesh.DX;
 
-
+*/
 }
 
 
-void PIC::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
-	//		wxl		   wxc		wxr
-	// --------*------------*--------X---*--------
-	//				    0       x
-
-	//wxc = 0.75 - (x/H)^2
-	//wxr = 0.5*(1.5 - abs(x)/H)^2
-	//wxl = 0.5*(1.5 - abs(x)/H)^2
-
-	int NSP(IONS->NSP);
-
-	IONS->n.zeros(); // Setting to zero the ion density.
-
-	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
-	{
-		arma::mat n = zeros(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4); // Four ghosht cells considereds
-
-		#pragma omp for
-		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->mn(ii,0) + 2;
-			int iy = IONS->mn(ii,1) + 2;
-
-			n(ix-1,iy) 		+= IONS->wxl(ii)*IONS->wyc(ii);
-			n(ix,iy) 		+= IONS->wxc(ii)*IONS->wyc(ii);
-			n(ix+1,iy) 		+= IONS->wxr(ii)*IONS->wyc(ii);
-
-			n(ix,iy-1) 		+= IONS->wxc(ii)*IONS->wyl(ii);
-			n(ix,iy+1) 		+= IONS->wxc(ii)*IONS->wyr(ii);
-
-			n(ix+1,iy-1) 	+= IONS->wxr(ii)*IONS->wyl(ii);
-			n(ix+1,iy+1) 	+= IONS->wxr(ii)*IONS->wyr(ii);
-
-			n(ix-1,iy-1) 	+= IONS->wxl(ii)*IONS->wyl(ii);
-			n(ix-1,iy+1) 	+= IONS->wxl(ii)*IONS->wyr(ii);
-		}
-
-		include4GhostsContributions(&n);
-
-		#pragma omp critical (update_density)
-		{
-		IONS->n.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += n.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
-		}
-
-	}//End of the parallel region
-
-	IONS->n *= IONS->NCP/(params->mesh.DX*params->mesh.DY);
+void PIC::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{
 }
 
 
@@ -995,7 +952,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				//#pragma omp for
 				for(int ip=0;ip<NSP;ip++)
 				{
-					dBx = Bp(ip,1)/(-0.5*(params->BGP.Rphi0)); //for Phi_f = 0
+					dBx = Bp(ip,1)/(-0.5*(params->geometry.r2)); //for Phi_f = 0
 					Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
 					Vper = sqrt(Vpersq);
 					omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
@@ -1007,7 +964,7 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 					cosPhi = -(UUz/Vper);
 					sinPhi = +(UUy/Vper);
 
-					Bp(ip,1) = -0.5*(params->BGP.Rphi0*sqrt(params->em_IC.BX/Bp(ip,0))+rL_i*cosPhi)*dBx;
+					Bp(ip,1) = -0.5*(params->geometry.r2*sqrt(params->em_IC.BX/Bp(ip,0))+rL_i*cosPhi)*dBx;
 					Bp(ip,2) = -0.5*(rL_i*sinPhi)*dBx;
 
 					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
@@ -1433,7 +1390,7 @@ void PIC::eim(const simulationParameters * params, oneDimensional::fields * EB, 
 	}//End of the parallel region
 
 	// Calculate compression factor:
-	arma::vec compressionFactor = (EB->B.X.subvec(1,params->mesh.NX_IN_SIM)/params->em_IC.BX)/params->A_0;
+	arma::vec compressionFactor = (EB->B.X.subvec(1,params->mesh.NX_IN_SIM)/params->em_IC.BX)/params->geometry.A_0;
 
 	// Apply magnetic compression:
 	IONS->n.subvec(1,params->mesh.NX_IN_SIM) = IONS->n.subvec(1,params->mesh.NX_IN_SIM)% compressionFactor;

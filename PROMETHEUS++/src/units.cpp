@@ -390,16 +390,8 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 
 	// Geometry:
 	// ---------
-  	params->BGP.Rphi0 /= CS->length;
-
-	// Plasma profiles:
-	// ---------------
-	params->PP.ne_i /= CS->density;
-	params->PP.Tpar_i /= CS->temperature;
-	params->PP.Tper_i /= CS->temperature;
-	params->PP.Bx_i /= CS->bField;
-	params->PP.Br_i /= CS->bField;
-	params->PP.dBrdx_i /= CS->bField/CS->length;
+	params->geometry.r1 /= CS->length;
+	params->geometry.r2 /= CS->length;
 
 	// Fundamental scales:
 	// -------------------

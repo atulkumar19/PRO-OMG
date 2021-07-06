@@ -241,8 +241,6 @@ public:
 	double densityFraction;		//
 
 	double go;					// Initial relativistic gamma
-	double Tpar;				// Parallel temperature.
-	double Tper;				// Perpendicular temperature.
 	double LarmorRadius;		// Larmor radius.
 	double VTper;				// Thermal velocity.
 	double VTpar;				// Thermal velocity.

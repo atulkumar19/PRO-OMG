@@ -12,10 +12,10 @@ numberOfTracerSpecies       0
 // Characteristic values:
 // =============================================================================
 CV_ne                       5.0E19
-CV_Te                       25
-CV_B                        17
-CV_Tpar                     25
-CV_Tper                     25
+CV_Te                       250
+CV_B                        0.5
+CV_Tpar                     250
+CV_Tper                     250
 
 // Simulation time:
 // =============================================================================
@@ -34,13 +34,7 @@ SW_linearSolve               0
 
 // Magnetic field initial conditions:
 // =============================================================================
-IC_B0                       0.5
-IC_theta                    90.0
-IC_phi                      0.0
-IC_B0_NX                    200
-IC_B0_fileName              Bx_norm_profile.txt
-
-IC_BX                       0.5
+IC_BX                       0.05
 IC_BY                       0.0
 IC_BZ                       0.0
 IC_BX_NX                    200
@@ -48,7 +42,6 @@ IC_BX_fileName              Bx_norm_profile.txt
 
 // Geometry:
 // =============================================================================
-Rphi0                       0.10
 NX                          500
 NY                          1
 NZ                          1
@@ -59,12 +52,12 @@ r2                          0.10
 
 // Electron initial conditions:
 // =============================================================================
-IC_ne                       5.0E19
-IC_Te                       25
+IC_ne                       1.0E18
+IC_Te                       250
 
 // Output variables:
 // =============================================================================
-outputCadence               2
+outputCadence               12
 outputs_variables           {B,E,X,V,n,pCount,eCount,U,np,nvp,Tparp,Tperp,Tper,Tpar}
 
 // Data smoothing:

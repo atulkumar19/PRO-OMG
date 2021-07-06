@@ -22,7 +22,7 @@ template <class IT> RANDOMSTART<IT>::RANDOMSTART(const simulationParameters * pa
 {
     // Create unitary vector along B field:
     // ===================================
-    b1 = {params->BGP.Bx, params->BGP.By, params->BGP.Bz};
+    b1 = {params->em_IC.BX, params->em_IC.BY, params->em_IC.BZ};
     b1 = arma::normalise(b1);
 
     if (arma::dot(b1,y) < PRO_ZERO)
@@ -71,7 +71,7 @@ template <class IT> void RANDOMSTART<IT>::ringLikeVelocityDistribution(const sim
 		ions->V(pp,2) = V1(pp)*dot(b1,z) + V2(pp)*dot(b2,z) + V3(pp)*dot(b3,z);
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
-		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
+		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->em_IC.BX;
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 
@@ -113,7 +113,7 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution(const s
 		ions->V(pp,2) = V1(pp)*dot(b1,z) + V2(pp)*dot(b2,z) + V3(pp)*dot(b3,z);
 
 		ions->g(pp) = 1.0/sqrt( 1.0 - dot(ions->V.row(pp),ions->V.row(pp))/(F_C*F_C) );
-		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->BGP.Bo;
+		ions->mu(pp) = 0.5*ions->g(pp)*ions->g(pp)*ions->M*( V2(pp)*V2(pp) + V3(pp)*V3(pp) )/params->em_IC.BX;
 		ions->Ppar(pp) = ions->g(pp)*ions->M*V1(pp);
 	}
 

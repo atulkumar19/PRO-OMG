@@ -139,16 +139,6 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                 double GSUM  = IONS->at(ss).p_BC.GSUM;
                 double a_new = GSUM/uN_total;
 
-                /*
-                if (params->mpi.IS_PARTICLES_ROOT)
-                {
-                    cout << "S_total:" << S_total << endl;
-                    cout << "uN_total:" << uN_total << endl;
-                    cout << "a_new:" << a_new << endl;
-                    cout << "GSUM:" << GSUM << endl;
-                }
-                */
-
                 if (a_new > 100)
                 {
                     if (params->mpi.IS_PARTICLES_ROOT)
@@ -230,56 +220,7 @@ void PARTICLE_BC::applyParticleReinjection(const simulationParameters * params, 
 
 void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
-    /*
-    // Particle weight:
-    // =========================================================================
-    IONS->a(ii) = IONS->p_BC.a_new;
-
-    // Particle position:
-    // =========================================================================
-    // Variables for random number generator:
-    arma::vec R = randu(1);
-    arma_rng::set_seed_random();
-    arma::vec phi = 2.0*M_PI*randu<vec>(1);
-
-    // Gaussian distribution in space:
-    //double Xcenter = params->mesh.LX/2;
-    double Xcenter = IONS->p_BC.mean_x;
-    //double sigmaX  = params->mesh.LX/10;
-    double sigmaX  =  IONS->p_BC.sigma_x;
-    double Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
-    double dLX = abs(Xnew - Xcenter);
-
-    while(dLX > params->mesh.LX/2)
-    {
-         std::cout<<"Out of bound X= "<< Xnew;
-         arma_rng::set_seed_random();
-         R = randu(1);
-         phi = 2.0*M_PI*randu<vec>(1);
-
-         Xnew = Xcenter  + (sigmaX)*sqrt( -2*log(R(0)) )*cos(phi(0));
-         dLX  = abs(Xnew - Xcenter);
-         std::cout<< "Out of bound corrected X= " << Xnew;
-    }
-
-    IONS->X(ii,0) = Xnew;
-
-    // Particle velocity:
-    // =========================================================================
-    arma_rng::set_seed_random();
-    R = randu(1);
-    phi = 2.0*M_PI*randu<vec>(1);
-
-    arma::vec V2 = IONS->VTper*sqrt( -log(1.0 - R) ) % cos(phi);
-    arma::vec V3 = IONS->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
-
-    arma_rng::set_seed_random();
-    phi = 2.0*M_PI*randu<vec>(1);
-
-    arma::vec V1 = IONS->VTper*sqrt( -log(1.0 - R) ) % sin(phi);
-    */
-
-    // Particle velocity:
+  // Particle velocity:
 	// ===================
     arma::vec V1;
     arma::vec V2;

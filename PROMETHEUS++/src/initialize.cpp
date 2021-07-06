@@ -716,10 +716,6 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
         MPI_Bcast(&IONS->at(ii).NSP, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
         MPI_Bcast(&IONS->at(ii).nSupPartOutput, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
 
-        // Calculate NCP: conversion factor from number of TOTAL super-particles NSP*NPROC to total number of real-particles
-        // NCP = NR/(NSP*NPROC):
-        //double A_0 = M_PI*pow(params->BGP.Rphi0,2);
-
         if (params->dimensionality == 1)
         {
             double Ds = (params->mesh.LX)/(params->em_IC.BX_NX);
@@ -1033,101 +1029,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadPlasmaProfiles(simulat
         IONS->at(ii).p_IC.Tpar_profile *= IONS->at(ii).p_IC.Tpar;
         IONS->at(ii).p_IC.densityFraction_profile *= params->f_IC.ne;
     }
-  /* Candidate for removal
 
-        // Initialize variables:
-        // =====================
-        params->PP.ne.zeros(nTable);
-        params->PP.Tpar.zeros(nTable);
-        params->PP.Tper.zeros(nTable);
-        params->PP.Bx.zeros(nTable);
-        params->PP.Bx_i.zeros(NX);
-        params->PP.Br_i.zeros(NX);
-        params->PP.dBrdx_i.zeros(NX);
-        int nn = params->PATH.length();
-if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-        // Get file name containing initial condition plasma profiles:
-        // ===========================================================
-        int nn = params->PATH.length();
-        std::string inputFilePath = params->PATH.substr(0,nn-13);
-          std::string fileName1= inputFilePath + "/inputFiles/ne_norm_profile.txt"; //Path to load the external file
-        std::string fileName2= inputFilePath + "/inputFiles/Tpar_norm_profile.txt"; //Path to load the external file
-        std::string fileName3= inputFilePath + "/inputFiles/Tper_norm_profile.txt"; //Path to load the external file
-        std::string fileName4= inputFilePath + "/inputFiles/Bx_norm_profile.txt"; //Path to load the external file
-
-        // REad normalized plasma profiles from external files:
-        // =====================================================
-        params->PP.ne.load(fileName1);
-        params->PP.Tpar.load(fileName2);
-        params->PP.Tper.load(fileName3);
-        params->PP.Bx.load(fileName4);
-
-        //Rescale profiles:
-        // ================
-        //params->PP.ne   *= params->BGP.ne;
-        params->PP.Tpar *= IONS->at(0).p_IC.Tpar;
-        params->PP.Tper *= IONS->at(0).p_IC.Tper;
-        params->PP.Bx   *= params->em_IC.BX;
-
-        //Interpolate at mesh points:
-        // ==========================
-        // Query points:
-        arma::vec xq = linspace(0,params->mesh.LX,NX);
-        arma::vec yq(xq.size());
-        // Sample points:
-        arma::vec xt = linspace(0,params->mesh.LX,nTable); // x-vector from the table
-        arma:: vec yt(xt.size());
-
-        // Bx profile:
-        // ===========
-        yt = params->PP.Bx;
-        interp1(xt,yt,xq,yq);
-        params->PP.Bx_i = yq;
-
-        // Br profile:
-        // ===========
-        arma::vec Br(nTable,1);
-        Br.subvec(0,nTable-2) = -0.5*(params->BGP.Rphi0)*diff(params->PP.Bx)/(params->mesh.LX/nTable);
-        Br(nTable-1) = Br(nTable-2);
-
-        yt = Br;
-        interp1(xt,yt,xq,yq);
-        params->PP.Br_i = yq;
-
-        // dBr profile:
-        // ===========
-        arma::vec dBr(nTable,1);
-        dBr.subvec(0,nTable-2) = diff(Br)/(params->mesh.LX/nTable);
-        dBr(nTable-1) = dBr(nTable-2);
-
-        yt = dBr;
-        interp1(xt,yt,xq,yq);
-        params->PP.dBrdx_i = yq;
-
-
-
-        //interp1(xt,dBr,xq,params->PP.dBrdx_i);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    // Plasma density:
-    MPI_Bcast(params->PP.ne.memptr()  ,params->PP.ne.size() , MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // Parallel temperature:
-    MPI_Bcast(params->PP.Tpar.memptr(),params->PP.Tpar.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // Perpendicular temperature:
-    MPI_Bcast(params->PP.Tper.memptr(),params->PP.Tper.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // Magnetic field profile, X component:
-    MPI_Bcast(params->PP.Bx.memptr()  ,params->PP.Bx.size()  , MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // Quantities interpolated at the mesh points:
-    MPI_Bcast(params->PP.Bx_i.memptr()   ,params->PP.Bx_i.size()   , MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(params->PP.Br_i.memptr()   ,params->PP.Br_i.size()   , MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(params->PP.dBrdx_i.memptr(),params->PP.dBrdx_i.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);*/
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(simulationParameters * params, oneDimensional::fields * EB)
@@ -1198,21 +1100,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
 }
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndValue(simulationParameters * params, twoDimensional::fields * EB)
-{
-/*    int NX(params->mesh.NX_IN_SIM + 2); // Ghost mesh points (+2) included
-    int NY(params->mesh.NY_IN_SIM + 2); // Ghost mesh points (+2) included
-
-    EB->zeros(NX,NY);
-
-    EB->E.X.fill(0.0); // x
-    EB->E.Y.fill(0.0); // x
-    EB->E.Z.fill(0.0); // x
-
-    EB->B.X.fill(params->BGP.Bx); // x
-    EB->B.Y.fill(params->BGP.By); // y
-    EB->B.Z.fill(params->BGP.Bz); // z
-    */
-}
+{}
 
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFields(simulationParameters * params, FT * EB){

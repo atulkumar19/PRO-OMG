@@ -541,38 +541,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
 
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
-{
-    // Setting size and value to zero of arrays for ions' variables
-    IONS->mn.zeros(IONS->NSP, 2);
-
-    IONS->E.zeros(IONS->NSP,3);
-    IONS->B.zeros(IONS->NSP,3);
-
-    IONS->wxc.zeros(IONS->NSP);
-    IONS->wxl.zeros(IONS->NSP);
-    IONS->wxr.zeros(IONS->NSP);
-
-    IONS->wyc.zeros(IONS->NSP);
-    IONS->wyl.zeros(IONS->NSP);
-    IONS->wyr.zeros(IONS->NSP);
-
-    //Checking the integrity of the initial condition
-    if((int)IONS->V.n_elem != (int)(3*IONS->NSP)){
-        MPI_Barrier(params->mpi.MPI_TOPO);
-        MPI_Abort(params->mpi.MPI_TOPO,-106);
-        // The velocity array contains a number of elements that it should not have
-    }
-
-    if((int)IONS->X.n_elem != (int)(3*IONS->NSP)){
-        MPI_Barrier(params->mpi.MPI_TOPO);
-        MPI_Abort(params->mpi.MPI_TOPO,-107);
-        // The position array contains a number of elements that it should not have
-    }
-    //Checking integrity of the initial condition
-
-    PIC ionsDynamics;
-    ionsDynamics.assignCell(params, EB, IONS);
-}
+{}
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
 {
@@ -600,20 +569,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArr
 
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::initializeBulkVariablesArrays(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
-{
-    // Initialize plasma density:
-    // Include Ghost cells (+2)
-    IONS->n.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-    IONS->n_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-    IONS->n__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-    IONS->n___.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-
-    // Initialize plasma flux:
-    // Include Ghost cells (+2)
-    IONS->nv.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-    IONS->nv_.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-    IONS->nv__.zeros(params->mesh.NX_IN_SIM + 2, params->mesh.NY_IN_SIM + 2);
-}
+{}
 
 
 template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(const simulationParameters * params, const characteristicScales * CS, FT * EB, vector<IT> * IONS)

@@ -41,3 +41,9 @@ else
     echo "USING MODIFIED INPUT FILES"
     mpirun --use-hwthread-cpus -np $((NUM_MPI_PROCESSES)) -x LD_LIBRARY_PATH -x OMP_NUM_THREADS=$((NUM_OMP_PER_MPI)) bin/PROMETHEUS++ ${DIMENSIONALITY} ${LOC_OUTPUT_FOLDER} ${ID}
 fi
+
+cd   inputFiles/
+cp input_file.input ions_properties.ion  *.txt ../outputFiles/
+cd ..
+cd outputFiles/
+git log --oneline -1 > commitHash.txt

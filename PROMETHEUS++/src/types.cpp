@@ -363,7 +363,5 @@ void oneDimensional::fields::zeros(unsigned int N){
 	B.zeros(N);
 }
 
-void twoDimensional::fields::zeros(unsigned int N, unsigned int M){
-	E.zeros(N,M);
-	B.zeros(N,M);
-}
+void twoDimensional::fields::zeros(unsigned int N, unsigned int M)
+{}

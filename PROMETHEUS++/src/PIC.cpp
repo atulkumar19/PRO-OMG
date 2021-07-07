@@ -432,83 +432,7 @@ void PIC::assignCell(const simulationParameters * params,  oneDimensional::field
 
 
 void PIC::assignCell(const simulationParameters * params,  twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
-{
-	//This function assigns the particles to the closest mesh node depending in their position and
-	//calculate the weights for the charge extrapolation and force interpolation
-	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
-	//		wxl		   wxc		wxr
-	// --------*------------*--------X---*--------
-	//				    0       x
-	//wxc = 0.75 - (x/H)^2
-	//wxr = 0.5*(1.5 - abs(x)/H)^2
-	//wxl = 0.5*(1.5 - abs(x)/H)^2
-
-	int NSP(IONS->NSP);//number of superparticles
-
-	double X;
-	double Y;
-	bool LOGIC_X;
-	bool LOGIC_Y;
-
-	IONS->wxc.zeros();
-	IONS->wxl.zeros();
-	IONS->wxr.zeros();
-
-	IONS->wyc.zeros();
-	IONS->wyl.zeros();
-	IONS->wyr.zeros();
-
-	#pragma omp parallel for default(none) shared(IONS, params) private(X, Y, LOGIC_X, LOGIC_Y) firstprivate(NSP)
-	for(int ii=0; ii<NSP; ii++){
-		IONS->mn(ii,0) = floor((IONS->X(ii,0) + 0.5*params->mesh.DX)/params->mesh.DX);
-		IONS->mn(ii,1) = floor((IONS->X(ii,1) + 0.5*params->mesh.DY)/params->mesh.DY);
-
-		if(IONS->mn(ii,0) != params->mesh.NX_IN_SIM){
-			X = IONS->X(ii,0) - params->mesh.nodes.X(IONS->mn(ii,0));
-		}else{
-			X = IONS->X(ii,0) - params->mesh.LX;
-		}
-
-		if(IONS->mn(ii,1) != params->mesh.NY_IN_SIM){
-			Y = IONS->X(ii,1) - params->mesh.nodes.Y(IONS->mn(ii,1));
-		}else{
-			Y = IONS->X(ii,1) - params->mesh.LY;
-		}
-
-		LOGIC_X = X > 0;
-		// If X > 0, then the particle is on the right of the meshnode
-		X = abs(X);
-
-		// If Y > 0, then the particle is on the right of the meshnode
-		LOGIC_Y = Y > 0;
-		Y = abs(Y);
-
-		IONS->wxc(ii) = 0.75 - (X/params->mesh.DX)*(X/params->mesh.DX);
-		IONS->wyc(ii) = 0.75 - (Y/params->mesh.DY)*(Y/params->mesh.DY);
-
-		if(LOGIC_X){
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
-		}else{
-			IONS->wxl(ii) = 0.5*(1.5 - (params->mesh.DX - X)/params->mesh.DX)*(1.5 - (params->mesh.DX - X)/params->mesh.DX);
-			IONS->wxr(ii) = 0.5*(1.5 - (params->mesh.DX + X)/params->mesh.DX)*(1.5 - (params->mesh.DX + X)/params->mesh.DX);
-		}
-
-		if(LOGIC_Y){
-			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY + Y)/params->mesh.DY)*(1.5 - (params->mesh.DY + Y)/params->mesh.DY);
-			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY - Y)/params->mesh.DY)*(1.5 - (params->mesh.DY - Y)/params->mesh.DY);
-		}else{
-			IONS->wyl(ii) = 0.5*(1.5 - (params->mesh.DY - Y)/params->mesh.DY)*(1.5 - (params->mesh.DY - Y)/params->mesh.DY);
-			IONS->wyr(ii) = 0.5*(1.5 - (params->mesh.DY + Y)/params->mesh.DY)*(1.5 - (params->mesh.DY + Y)/params->mesh.DY);
-		}
-	}
-
-    #ifdef CHECKS_ON
-	if(!IONS->mn.is_finite()){
-		MPI_Abort(params->mpi.MPI_TOPO, -108);
-	}
-    #endif
-}
+{}
 
 
 void PIC::crossProduct(const arma::vec A, const arma::vec B, arma::vec * AxB){
@@ -587,95 +511,12 @@ void PIC::extrapolateIonVelocity(const simulationParameters * params, oneDimensi
 }
 
 
-void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
-	//		wxl		   wxc		wxr
-	// --------*------------*--------X---*--------
-	//				    0       x
-
-	//wxc = 0.75 - (x/H)^2
-	//wxr = 0.5*(1.5 - abs(x)/H)^2
-	//wxl = 0.5*(1.5 - abs(x)/H)^2
-
-	int NSP(IONS->NSP);
-	IONS->nv.zeros(); // Setting to zero the ions' bulk velocity
-
-	#pragma omp parallel default(none) shared(params, IONS) firstprivate(NSP)
-	{
-		vfield_mat nv(params->mesh.NX_IN_SIM + 4, params->mesh.NY_IN_SIM + 4);
-
-		#pragma omp for
-		for(int ii=0; ii<NSP; ii++){
-			int ix = IONS->mn(ii,0) + 2;
-			int iy = IONS->mn(ii,1) + 2;
-
-			// x component
-			nv.X(ix-1,iy) 	+= IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,0);
-			nv.X(ix,iy)   	+= IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,0);
-			nv.X(ix+1,iy) 	+= IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,0);
-
-			nv.X(ix,iy-1) 	+= IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,0);
-			nv.X(ix,iy+1) 	+= IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,0);
-
-			nv.X(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,0);
-			nv.X(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,0);
-
-			nv.X(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii)*IONS->V(ii,0);
-			nv.X(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,0);
-
-			// y component
-			nv.Y(ix-1,iy) 	+= IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,1);
-			nv.Y(ix,iy)   	+= IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,1);
-			nv.Y(ix+1,iy) 	+= IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,1);
-
-			nv.Y(ix,iy-1) 	+= IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,1);
-			nv.Y(ix,iy+1) 	+= IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,1);
-
-			nv.Y(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,1);
-			nv.Y(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,1);
-
-			nv.Y(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii)*IONS->V(ii,1);
-			nv.Y(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,1);
-
-			// z component
-			nv.Z(ix-1,iy) 	+= IONS->wxl(ii)*IONS->wyc(ii)*IONS->V(ii,2);
-			nv.Z(ix,iy) 	+= IONS->wxc(ii)*IONS->wyc(ii)*IONS->V(ii,2);
-			nv.Z(ix+1,iy) 	+= IONS->wxr(ii)*IONS->wyc(ii)*IONS->V(ii,2);
-
-			nv.Z(ix,iy-1) 	+= IONS->wxc(ii)*IONS->wyl(ii)*IONS->V(ii,2);
-			nv.Z(ix,iy+1) 	+= IONS->wxc(ii)*IONS->wyr(ii)*IONS->V(ii,2);
-
-			nv.Z(ix+1,iy-1) += IONS->wxr(ii)*IONS->wyl(ii)*IONS->V(ii,2);
-			nv.Z(ix+1,iy+1) += IONS->wxr(ii)*IONS->wyr(ii)*IONS->V(ii,2);
-
-			nv.Z(ix-1,iy-1) += IONS->wxl(ii)*IONS->wyl(ii)*IONS->V(ii,2);
-			nv.Z(ix-1,iy+1) += IONS->wxl(ii)*IONS->wyr(ii)*IONS->V(ii,2);
-		}
-
-		include4GhostsContributions(&nv.X);
-		include4GhostsContributions(&nv.Y);
-		include4GhostsContributions(&nv.Z);
-
-		#pragma omp critical (update_bulk_velocity)
-		{
-		IONS->nv.X.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += nv.X.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
-		IONS->nv.Y.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += nv.Y.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
-		IONS->nv.Z.submat(1,1,params->mesh.NX_IN_SIM,params->mesh.NY_IN_SIM) += nv.Z.submat(2,2,params->mesh.NX_IN_SIM+1,params->mesh.NY_IN_SIM+1);
-		}
-
-	}//End of the parallel region
-
-	IONS->nv *= IONS->NCP/(params->mesh.DX*params->mesh.DY);
-}
+void PIC::eiv(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{}
 
 
-void PIC::extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-
-	IONS->nv__ = IONS->nv_;
-	IONS->nv_ = IONS->nv;
-
-	eiv(params, IONS);
-}
+void PIC::extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{}
 
 
 void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
@@ -727,8 +568,7 @@ void PIC::eid(const simulationParameters * params, oneDimensional::ionSpecies * 
 
 
 void PIC::eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
-{
-}
+{}
 
 
 void PIC::extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS){
@@ -745,18 +585,8 @@ void PIC::extrapolateIonDensity(const simulationParameters * params, oneDimensio
 }
 
 
-void PIC::extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS){
-	// First, the particle density of time steps (it - 1) is kept in n_, (it - 2) is kept in n__,
-	// and at the time iteration (it - 3) in n___.
-
-	IONS->n___ = IONS->n__;
-	IONS->n__ = IONS->n_;
-	IONS->n_ = IONS->n;
-
-	// Then, the ions' properties are distributed in the grid following the charge deposition of the Triangular
-	// Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
-	eid(params, IONS);
-}
+void PIC::extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS)
+{}
 
 
 void PIC::interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * field, arma::mat * F){
@@ -811,89 +641,12 @@ void PIC::interpolateElectromagneticFields(const simulationParameters * params, 
 }
 
 
-void PIC::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * field, arma::mat * F){
-	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
-	//		wxl		   wxc		wxr
-	// --------*------------*--------X---*--------
-	//				    0       x
-
-	//wxc = 0.75 - (x/H)^2
-	//wxr = 0.5*(1.5 - abs(x)/H)^2
-	//wxl = 0.5*(1.5 - abs(x)/H)^2
-
-	int NX =  params->mesh.NX_IN_SIM + 4; // Mesh size along the X axis (considering 4 gosht cell)
-	int NY =  params->mesh.NY_IN_SIM + 4; // Mesh size along the Y axis (considering 4 gosht cell)
-	int NSP(IONS->NSP);
-
-	arma::mat field_X = zeros(NX,NY);
-	arma::mat field_Y = zeros(NX,NY);
-	arma::mat field_Z = zeros(NX,NY);
-
-	field_X.submat(1,1,NX-2,NY-2) = field->X;
-	field_Y.submat(1,1,NX-2,NY-2) = field->Y;
-	field_Z.submat(1,1,NX-2,NY-2) = field->Z;
-
-	fill4Ghosts(&field_X);
-	fill4Ghosts(&field_Y);
-	fill4Ghosts(&field_Z);
-
-	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
-	//that each position is accessed (read/written) by one thread at the time.
-	#pragma omp parallel for default(none) shared(params, IONS, F, field_X, field_Y, field_Z) firstprivate(NSP)
-	for(int ii=0; ii<NSP; ii++){
-		int ix = IONS->mn(ii,0) + 2;
-		int iy = IONS->mn(ii,1) + 2;
-
-		// x component
-		(*F)(ii,0) += IONS->wxl(ii)*IONS->wyc(ii)*field_X(ix-1,iy);
-		(*F)(ii,0) += IONS->wxc(ii)*IONS->wyc(ii)*field_X(ix,iy);
-		(*F)(ii,0) += IONS->wxr(ii)*IONS->wyc(ii)*field_X(ix+1,iy);
-
-		(*F)(ii,0) += IONS->wxc(ii)*IONS->wyl(ii)*field_X(ix,iy-1);
-		(*F)(ii,0) += IONS->wxc(ii)*IONS->wyr(ii)*field_X(ix,iy+1);
-
-		(*F)(ii,0) += IONS->wxr(ii)*IONS->wyl(ii)*field_X(ix+1,iy-1);
-		(*F)(ii,0) += IONS->wxr(ii)*IONS->wyr(ii)*field_X(ix+1,iy+1);
-
-		(*F)(ii,0) += IONS->wxl(ii)*IONS->wyl(ii)*field_X(ix-1,iy-1);
-		(*F)(ii,0) += IONS->wxl(ii)*IONS->wyr(ii)*field_X(ix-1,iy+1);
-
-		// y component
-		(*F)(ii,1) += IONS->wxl(ii)*IONS->wyc(ii)*field_Y(ix-1,iy);
-		(*F)(ii,1) += IONS->wxc(ii)*IONS->wyc(ii)*field_Y(ix,iy);
-		(*F)(ii,1) += IONS->wxr(ii)*IONS->wyc(ii)*field_Y(ix+1,iy);
-
-		(*F)(ii,1) += IONS->wxc(ii)*IONS->wyl(ii)*field_Y(ix,iy-1);
-		(*F)(ii,1) += IONS->wxc(ii)*IONS->wyr(ii)*field_Y(ix,iy+1);
-
-		(*F)(ii,1) += IONS->wxr(ii)*IONS->wyl(ii)*field_Y(ix+1,iy-1);
-		(*F)(ii,1) += IONS->wxr(ii)*IONS->wyr(ii)*field_Y(ix+1,iy+1);
-
-		(*F)(ii,1) += IONS->wxl(ii)*IONS->wyl(ii)*field_Y(ix-1,iy-1);
-		(*F)(ii,1) += IONS->wxl(ii)*IONS->wyr(ii)*field_Y(ix-1,iy+1);
-
-		// z component
-		(*F)(ii,2) += IONS->wxl(ii)*IONS->wyc(ii)*field_Z(ix-1,iy);
-		(*F)(ii,2) += IONS->wxc(ii)*IONS->wyc(ii)*field_Z(ix,iy);
-		(*F)(ii,2) += IONS->wxr(ii)*IONS->wyc(ii)*field_Z(ix+1,iy);
-
-		(*F)(ii,2) += IONS->wxc(ii)*IONS->wyl(ii)*field_Z(ix,iy-1);
-		(*F)(ii,2) += IONS->wxc(ii)*IONS->wyr(ii)*field_Z(ix,iy+1);
-
-		(*F)(ii,2) += IONS->wxr(ii)*IONS->wyl(ii)*field_Z(ix+1,iy-1);
-		(*F)(ii,2) += IONS->wxr(ii)*IONS->wyr(ii)*field_Z(ix+1,iy+1);
-
-		(*F)(ii,2) += IONS->wxl(ii)*IONS->wyl(ii)*field_Z(ix-1,iy-1);
-		(*F)(ii,2) += IONS->wxl(ii)*IONS->wyr(ii)*field_Z(ix-1,iy+1);
-	}//End of the parallel region
-
-}
+void PIC::interpolateVectorField(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, vfield_mat * field, arma::mat * F)
+{}
 
 
-void PIC::interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B){
-	interpolateVectorField(params, IONS, &EB->E, E);
-	interpolateVectorField(params, IONS, &EB->B, B);
-}
+void PIC::interpolateElectromagneticFields(const simulationParameters * params, const twoDimensional::ionSpecies * IONS, twoDimensional::fields * EB, arma::mat * E, arma::mat * B)
+{}
 
 
 void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS, const double DT)
@@ -1029,88 +782,8 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 }
 
 
-void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT){
-	MPI_Recvvfield_mat(params, &EB->E);
-	MPI_Recvvfield_mat(params, &EB->B);
-
-	fillGhosts(EB);
-
-	for(int ii=0; ii<IONS->size(); ii++){//structure to iterate over all the ion species.
-		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
-			arma::mat Ep = zeros(IONS->at(ii).NSP, 3);
-			arma::mat Bp = zeros(IONS->at(ii).NSP, 3);
-
-			interpolateElectromagneticFields(params, &IONS->at(ii), EB, &Ep, &Bp);
-
-			IONS->at(ii).E = Ep;
-			IONS->at(ii).B = Bp;
-
-			//Once the electric and magnetic fields have been interpolated to the ions' positions we advance the ions' velocities.
-			int NSP = IONS->at(ii).NSP;
-			double A = IONS->at(ii).Q*DT/IONS->at(ii).M; // A = \alpha in the dimensionless equation for the ions' velocity. (Q*NCP/M*NCP=Q/M)
-
-			#pragma omp parallel default(none) shared(IONS, Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
-			{
-				double gp;
-				double sigma;
-				double us;
-				double s;
-				arma::rowvec U = arma::zeros<rowvec>(3);
-				arma::rowvec VxB = arma::zeros<rowvec>(3);
-				arma::rowvec tau = arma::zeros<rowvec>(3);
-				arma::rowvec up = arma::zeros<rowvec>(3);
-				arma::rowvec t = arma::zeros<rowvec>(3);
-				arma::rowvec upxt = arma::zeros<rowvec>(3);
-
-				#pragma omp for
-				for(int ip=0;ip<NSP;ip++){
-					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
-
-					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
-					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
-
-					U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
-					tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
-					up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-					gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
-					sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
-					us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
-					IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
-					t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
-					s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
-
-					upxt = arma::cross(up, t);
-
-					U = s*( up + dot(up, t)*t+ upxt ); 	// U_L = s*(up + (up*t')*t + cross(up, t));
-					IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
-
-				}
-			} // End of parallel region
-
-			extrapolateIonVelocity(params, &IONS->at(ii));
-		}
-
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.X);
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).nv.Z);
-
-		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
-			smooth(&IONS->at(ii).nv, params->smoothingParameter);
-
-		// Densities at various time levels are sent to fields processes
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv.X);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv.Z);
-
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.X);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Y);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv_.Z);
-
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.X);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Y);
-		PIC::MPI_SendMat(params, &IONS->at(ii).nv__.Z);
-	}//structure to iterate over all the ion species.
-}
+void PIC::advanceIonsVelocity(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT)
+{}
 
 
 
@@ -1143,47 +816,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
 
 
 void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT)
-{
-	for(int ii=0;ii<IONS->size();ii++){//structure to iterate over all the ion species.
-		//X^(N+1) = X^(N) + DT*V^(N+1/2)
-		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
-			int NSP(IONS->at(ii).NSP);
-
-			#pragma omp parallel default(none) shared(params, IONS) firstprivate(DT, NSP, ii)
-			{
-				#pragma omp for
-				for(int ip=0; ip<NSP; ip++){
-					IONS->at(ii).X(ip,0) += DT*IONS->at(ii).V(ip,0); // x
-					IONS->at(ii).X(ip,1) += DT*IONS->at(ii).V(ip,1); // y
-
-	                IONS->at(ii).X(ip,0) = fmod(IONS->at(ii).X(ip,0), params->mesh.LX); // Periodic condition along x-axis
-					IONS->at(ii).X(ip,1) = fmod(IONS->at(ii).X(ip,1), params->mesh.LY); // Periodic condition along y-axis
-
-	                if(IONS->at(ii).X(ip,0) < 0)
-	        			IONS->at(ii).X(ip,0) += params->mesh.LX;
-
-					if(IONS->at(ii).X(ip,1) < 0)
-		        		IONS->at(ii).X(ip,1) += params->mesh.LY;
-				}
-			}//End of the parallel region
-
-			PIC::assignCell(params, EB, &IONS->at(ii));
-
-			extrapolateIonDensity(params, &IONS->at(ii));//Once the ions have been pushed,  we extrapolate the density at the node grids.
-		}
-
-		PIC::MPI_ReduceMat(params, &IONS->at(ii).n);
-
-		for (int jj=0; jj<params->filtersPerIterationIons; jj++)
-			smooth(&IONS->at(ii).n, params->smoothingParameter);
-
-		// Densities at various time levels are sent to fields processes
-		PIC::MPI_SendMat(params, &IONS->at(ii).n);
-		PIC::MPI_SendMat(params, &IONS->at(ii).n_);
-		PIC::MPI_SendMat(params, &IONS->at(ii).n__);
-		PIC::MPI_SendMat(params, &IONS->at(ii).n___);
-	}//structure to iterate over all the ion species.
-}
+{}
 
 void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {

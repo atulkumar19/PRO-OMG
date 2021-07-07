@@ -12,5 +12,6 @@ PROMETHEUS++/bin/
 PROMETHEUS++/inputFiles/
 PROMETHEUS++/outputFiles/
 PROMETHEUS++/nohup*
+PROMETHEUS++/m*
 *.fig
 PROMETHEUS++/*.csv

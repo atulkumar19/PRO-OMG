@@ -109,24 +109,6 @@ protected:
 	void crossProduct(const arma::mat * A, const arma::mat * B, arma::mat * AxB);
 
 
-	void eiv(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void extrapolateIonVelocity(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void eiv(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-	void extrapolateIonVelocity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-
-	void eid(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void eid(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-	void extrapolateIonDensity(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
-
-	void extrapolateIonDensity(const simulationParameters * params, twoDimensional::ionSpecies * IONS);
-
-
 	void interpolateVectorField(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, vfield_vec * field, arma::mat * F);
 
 	void interpolateElectromagneticFields(const simulationParameters * params, const oneDimensional::ionSpecies * IONS, oneDimensional::fields * EB, arma::mat * E, arma::mat * B);

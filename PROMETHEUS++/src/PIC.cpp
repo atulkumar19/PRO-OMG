@@ -539,26 +539,6 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 
 			//#pragma omp parallel default(none) shared(IONS, params,Ep, Bp) firstprivate(ii, A, NSP, F_C_DS)
 			{
-				double gp;
-				double sigma;
-				double us;
-				double s;
-                double omega_ci;
-                double rL_i;
-                double dBx;
-                double magMom;
-                double Vpersq;
-                double Vper;
-                double sinPhi;
-                double cosPhi;
-                double UUx;
-                double UUy;
-                double UUz;
-                double d1;
-                double d2;
-                double d3;
-                double Term;
-
 				arma::rowvec U = arma::zeros<rowvec>(3);
 				arma::rowvec VxB = arma::zeros<rowvec>(3);
 				arma::rowvec tau = arma::zeros<rowvec>(3);
@@ -569,47 +549,40 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 				//#pragma omp for
 				for(int ip=0;ip<NSP;ip++)
 				{
-					dBx = Bp(ip,1)/(-0.5*(params->geometry.r2)); //for Phi_f = 0
-					Vpersq = IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2);
-					Vper = sqrt(Vpersq);
-					omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
-					rL_i = fabs(Vper/omega_ci);
-					UUx = arma::as_scalar(IONS->at(ii).V(ip,0));
-					UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
-					UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
+					// Magnetic field gradient:
+					double dBx = Bp(ip,1)/(-0.5*(params->geometry.r2));
 
-					cosPhi = -(UUz/Vper);
-					sinPhi = +(UUy/Vper);
+					// Calculate larmour radius:
+					double Vper = sqrt(IONS->at(ii).V(ip,1)*IONS->at(ii).V(ip,1)+IONS->at(ii).V(ip,2)*IONS->at(ii).V(ip,2));
+					double omega_ci = (fabs(IONS->at(ii).Q)*Bp(ip,0)/IONS->at(ii).M);
+					double rL_i = fabs(Vper/omega_ci);
 
-					Bp(ip,1) = -0.5*(params->geometry.r2*sqrt(params->em_IC.BX/Bp(ip,0))+rL_i*cosPhi)*dBx;
+					// Calculate gyro-phase terms:
+					double UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
+					double UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
+					double cosPhi = -(UUz/Vper);
+					double sinPhi = +(UUy/Vper);
+
+					// Particle defined magnetic field:
+					Bp(ip,1) = -0.5*(params->geometry.r2*sqrt(params->em_IC.BX/Bp(ip,0)) + rL_i*cosPhi)*dBx;
 					Bp(ip,2) = -0.5*(rL_i*sinPhi)*dBx;
 
+					// VxB term:
 					VxB = arma::cross(IONS->at(ii).V.row(ip), Bp.row(ip));
 
-					//Overwriting the x-component of VxB to simulate mirror force
-					//magMom = 0.5*IONS->at(ii).M*Vpersq/Bp(ip,0);
-					//VxB(0) = -(magMom/(fabs(IONS->at(ii).Q)))*dBx;
-					//VxB(1) = -UUx*(-0.5*rL_i*sinPhi*dBx) + UUz*Bp(ip,0);
-					//VxB(2) = +UUx*(-0.5*rL_i*cosPhi*dBx) - UUy*Bp(ip,0);
-
-
-					//To check KE conservation
-					//Term = dot(VxB,IONS->at(ii).V.row(ip));
-					//Term *= CS->velocity*CS->velocity*CS->bField;
-					//cout<<"The change in KE is " <<Term<<endl;
-
+					// Calculate new V:
 					IONS->at(ii).g(ip) = 1.0/sqrt( 1.0 -  dot(IONS->at(ii).V.row(ip), IONS->at(ii).V.row(ip))/(F_C_DS*F_C_DS) );
 					U = IONS->at(ii).g(ip)*IONS->at(ii).V.row(ip);
 
 					U += 0.5*A*(Ep.row(ip) + VxB); // U_hs = U_L + 0.5*a*(E + cross(V, B)); % Half step for velocity
 					tau = 0.5*A*Bp.row(ip); // tau = 0.5*q*dt*B/m;
 					up = U + 0.5*A*Ep.row(ip); // up = U_hs + 0.5*a*E;
-					gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
-					sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
-					us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
+					double gp = sqrt( 1.0 + dot(up, up)/(F_C_DS*F_C_DS) ); // gammap = sqrt(1 + up*up');
+					double sigma = gp*gp - dot(tau, tau); // sigma = gammap^2 - tau*tau';
+					double us = dot(up, tau)/F_C_DS; // us = up*tau'; % variable 'u^*' in paper
 					IONS->at(ii).g(ip) = sqrt(0.5)*sqrt( sigma + sqrt( sigma*sigma + 4.0*( dot(tau, tau) + us*us ) ) );// gamma = sqrt(0.5)*sqrt( sigma + sqrt(sigma^2 + 4*(tau*tau' + us^2)) );
 					t = tau/IONS->at(ii).g(ip); 			// t = tau/gamma;
-					s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
+					double s = 1.0/( 1.0 + dot(t, t) ); // s = 1/(1 + t*t'); % variable 's' in paper
 
 					upxt = arma::cross(up, t);
 
@@ -617,32 +590,8 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 					IONS->at(ii).V.row(ip) = U/IONS->at(ii).g(ip);	// V = U_L/gamma;
 				}
 			} // End of parallel region
-
-			//extrapolateIonVelocity(params, &IONS->at(ii));
 		}
-
-		/* PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.X);
-		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_ReduceVec(params, &IONS->at(ii).nv.Z);
-
-		for (int jj=0;jj<params->filtersPerIterationIons;jj++)
-			smooth(&IONS->at(ii).nv, params->smoothingParameter);
-
-		// Densities at various time levels are sent to fields processes
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv.X);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv.Y);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv.Z);
-
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.X);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.Y);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv_.Z);
-
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.X);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Y);
-		PIC::MPI_SendVec(params, &IONS->at(ii).nv__.Z); */
-
 	}//structure to iterate over all the ion species.
-	// Ghosts cells might be set to zero if needed, but before saving to HDF5 ghost cells need to be filled again.
 }
 
 

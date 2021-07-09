@@ -139,7 +139,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                 double GSUM  = IONS->at(ss).p_BC.GSUM;
                 double a_new = GSUM/uN_total;
 
-                if (a_new > 100)
+                if (a_new > 1000)
                 {
                     if (params->mpi.IS_PARTICLES_ROOT)
                     {
@@ -148,7 +148,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                         cout << "a_new:" << a_new << endl;
                         cout << "GSUM:" << GSUM << endl;
                     }
-                    a_new = 1;
+                    a_new = 1000;
                 }
                 IONS->at(ss).p_BC.a_new = a_new;
 

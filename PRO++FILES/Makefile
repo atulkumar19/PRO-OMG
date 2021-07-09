@@ -54,6 +54,7 @@ randomStart.o			\
 quietStart.o			\
 energyDiagnostic.o              \
 collisionOperator.o             \
+rfOperator.o										\
 particleBoundaryConditions.o)
 
 all: $(BIN)/PROMETHEUS++

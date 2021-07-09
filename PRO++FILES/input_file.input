@@ -55,6 +55,18 @@ r2                          0.10
 IC_ne                       1.0E18
 IC_Te                       250
 
+// RF operator:
+// =============================================================================
+RF_Prf                      10E3
+RF_freq                     15E6
+RF_x1                       1.2
+RF_x2                       1.5
+RF_kpar                     20
+RF_kper                     100
+RF_handedness               0
+RF_Prf_fileName             Prf_profile.txt
+RF_Prf_NS                   200
+
 // Output variables:
 // =============================================================================
 outputCadence               12

@@ -218,6 +218,14 @@ struct particle_BC
 
 };
 
+// Structure to hold RF operator terms:
+// ====================================
+struct particle_RFterms
+{
+	arma::vec phase;
+	arma::vec udE3;
+};
+
 //  Define ION VARIABLES AND PARAMETERS DERIVED TYPES:
 // =============================================================================
 class oneDimensional::ionSpecies : public vfield_vec
@@ -309,6 +317,9 @@ public:
 
 	// Boundary conditions:
 	particle_BC p_BC;
+
+	// Particle Rf terms:
+	particle_RFterms p_RF;
 
 	// Constructor:
 	ionSpecies(){};

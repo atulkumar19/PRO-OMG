@@ -237,19 +237,16 @@ void PIC::MPI_Recvvfield_mat(const simulationParameters * params, vfield_mat * v
 
 
 // * * * Ghost contributions * * *
-void PIC::fill4Ghosts(arma::vec * v){
+void PIC::fill4Ghosts(arma::vec * v)
+{
 	//int N = v->n_elem;
 
 	//v->subvec(N-2,N-1) = v->subvec(2,3);
 	//v->subvec(0,1) = v->subvec(N-4,N-3);
 }
 
-void PIC::include4GhostsContributions(arma::vec * v){
-	//int N = v->n_elem;
-
-	//v->subvec(2,3) += v->subvec(N-2,N-1);
-	//v->subvec(N-4,N-3) += v->subvec(0,1);
-
+void PIC::include4GhostsContributions(arma::vec * v)
+{
 	int N = v->n_elem;
 
 	v->subvec(0,1)     = v->subvec(2,3);
@@ -257,7 +254,9 @@ void PIC::include4GhostsContributions(arma::vec * v){
 }
 
 
-void PIC::fill4Ghosts(arma::mat * m){
+void PIC::fill4Ghosts(arma::mat * m)
+{
+	/*
 	int NX = m->n_rows;
 	int NY = m->n_cols;
 
@@ -275,10 +274,13 @@ void PIC::fill4Ghosts(arma::mat * m){
 	m->submat(0,NY-2,1,NY-1) = m->submat(NX-4,2,NX-3,3); // right x-axis, left y-axis
 	m->submat(NX-2,0,NX-1,1) = m->submat(2,NY-4,3,NY-3); // left x-axis, right y-axis
 	m->submat(0,0,1,1) = m->submat(NX-4,NY-4,NX-3,NY-3); // right x-axis, right y-axis
+	*/
 }
 
 
-void PIC::include4GhostsContributions(arma::mat * m){
+void PIC::include4GhostsContributions(arma::mat * m)
+{
+/*
 	int NX = m->n_rows;
 	int NY = m->n_cols;
 
@@ -296,6 +298,7 @@ void PIC::include4GhostsContributions(arma::mat * m){
 	m->submat(NX-4,2,NX-3,3) += m->submat(0,NY-2,1,NY-1); // right x-axis, left y-axis
 	m->submat(2,NY-4,3,NY-3) += m->submat(NX-2,0,NX-1,1); // left x-axis, right y-axis
 	m->submat(NX-4,NY-4,NX-3,NY-3) += m->submat(0,0,1,1); // right x-axis, right y-axis
+*/
 }
 
 // * * * Ghost contributions * * *

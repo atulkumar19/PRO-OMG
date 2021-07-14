@@ -288,21 +288,31 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     // Geometry:
     // -------------------------------------------------------------------------
-    //params->BGP.Rphi0 = stod( parametersStringMap["Rphi0"] );
     unsigned int NX      = (unsigned int)stoi( parametersStringMap["NX"] );
     unsigned int NY      = (unsigned int)stoi( parametersStringMap["NY"] );
     unsigned int NZ      = (unsigned int)stoi( parametersStringMap["NZ"] );
     params->DrL          = stod( parametersStringMap["DrL"] );
-	params->dp           = stod( parametersStringMap["dp"] );
+	  params->dp           = stod( parametersStringMap["dp"] );
   	params->geometry.r1  = stod( parametersStringMap["r1"] );
     params->geometry.r2  = stod( parametersStringMap["r2"] );
 
     // Electron initial conditions:
     // -------------------------------------------------------------------------
-    //params->BGP.ne       = stod( parametersStringMap["IC_ne"] );
-    //params->BGP.Te       = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
     params->f_IC.ne      = stod( parametersStringMap["IC_ne"] );
     params->f_IC.Te      = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
+
+    // RF parameters
+    // -------------------------------------------------------------------------
+    params->RF.Prf       = stod( parametersStringMap["RF_Prf"] );
+    params->RF.freq      = stod( parametersStringMap["RF_freq"]);
+    params->RF.x1        = stod( parametersStringMap["RF_x1"]  );
+    params->RF.x2        = stod( parametersStringMap["RF_x2"]  );
+    params->RF.kpar      = stod( parametersStringMap["RF_kpar"]);
+    params->RF.kper      = stod( parametersStringMap["RF_kper"]);
+    params->RF.handedness= stoi( parametersStringMap["RF_handedness"]);
+    params->RF.Prf_NS    = stoi( parametersStringMap["RF_Prf_NS"] );
+    params->RF.Prf_fileName = parametersStringMap["RF_Prf_fileName"];
+
 
     // Output variables:
     // -------------------------------------------------------------------------

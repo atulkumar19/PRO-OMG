@@ -370,6 +370,9 @@ struct simulationParameters
 	// RF operator parameters:
 	rfParams RF;
 
+	// Current simulation time:
+	double currentTime;
+
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
 
@@ -393,6 +396,7 @@ struct simulationParameters
 
 	// Constructor
 	simulationParameters();
+
 };
 
 

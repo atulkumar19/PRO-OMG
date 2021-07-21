@@ -25,7 +25,8 @@ double F_MU_DS = F_MU;              // Dimensionless vacuum permeability
 double F_C_DS = F_C;                // Dimensionless speed of light
 
 
-simulationParameters::simulationParameters(){
+simulationParameters::simulationParameters()
+{
     oneDimensional::ionSpecies IONS_1D;
     typesInfo.ionSpecies_1D_type = &typeid(IONS_1D);
 
@@ -37,6 +38,8 @@ simulationParameters::simulationParameters(){
 
     twoDimensional::fields EB_2D;
     typesInfo.fields_2D_type = &typeid(EB_2D);
+
+    currentTime = 0;
 
     //std::cout << "1-D Ions Type: " << typesInfo.ionSpecies_1D_type->name() << std::endl;
 }

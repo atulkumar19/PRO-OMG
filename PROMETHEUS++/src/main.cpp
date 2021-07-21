@@ -111,7 +111,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     // =========================================================================
     double t1 = 0.0;
     double t2 = 0.0;
-    double currentTime = 0.0;
     int outputIterator = 0;
     int numberOfIterationsForEstimator = 1000;
 
@@ -225,7 +224,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Advance time:
         // =====================================================================
-        currentTime += params.DT*CS.time;
+        params.currentTime += params.DT;
 
 
         // Save data:
@@ -237,7 +236,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
             // The ions' velocity is advanced in time in order to obtain V^(N+1):
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS_OUT, 0.5*params.DT);
 
-            hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
+            hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1,params.currentTime*CS.time);
 
             outputIterator++;
         }

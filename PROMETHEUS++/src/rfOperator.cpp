@@ -82,7 +82,7 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
 
         // Current time:
         // ============
-        // double t = params->currentTime*CS->time;
+        double t = params->currentTime*CS->time;
 
         // Loop over all ion species:
         // ==========================

@@ -88,11 +88,11 @@ protected:
 
 	void include4GhostsContributions(arma::vec * v);
 
-	void include4GhostsContributions(arma::mat * m);
+	//void include4GhostsContributions(arma::mat * m);
 
-	void fill4Ghosts(arma::vec * v);
+	//void fill4Ghosts(arma::vec * v);
 
-	void fill4Ghosts(arma::mat * m);
+	//void fill4Ghosts(arma::mat * m);
 
 
 	void smooth(arma::vec * v, double as);

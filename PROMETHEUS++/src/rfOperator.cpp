@@ -66,14 +66,6 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
         // ======================
         double E_RF = 1/CS->eField;
 
-        // Radius of flux surface:
-        // =======================
-        double R0 = params->geometry.r2*CS->length;
-
-        // Reference magnetic field:
-        // =========================
-        double BX0 = params->em_IC.BX;
-
         // RF parameters:
         // ==============
         double kper = params->RF.kper;
@@ -82,7 +74,7 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
 
         // Current time:
         // ============
-        double t = params->currentTime*CS->time;
+        double t = params->currentTime;
 
         // Loop over all ion species:
         // ==========================
@@ -98,7 +90,7 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
 
             // Particle loop:
             // ==================================
-            #pragma omp parallel for default(none) shared(Ma, params, IONS, EB, aa, CS, std::cout) firstprivate(NSP)
+            #pragma omp parallel for default(none) shared(Ma, params, IONS, EB, aa, CS, t, kper, kpar, w, E_RF) firstprivate(NSP)
             for(int ii=0; ii<NSP; ii++)
             {
                 if ( IONS->at(aa).f3(ii) == 1 )
@@ -107,32 +99,43 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
                     // ================================================
                     // BX:
                     double BXp;
-                    // interpolateField(ii,&EB->B.X,&BXp); ******* need to be created in private function
+                    interpolateScalarField(ii,params,&IONS->at(aa),&EB->B.X,&BXp);
                     IONS->at(aa).B(ii,0) = BXp;
 
                     // BY:
                     double BYp;
-                    // interpolateField(ii,&EB->B.Y,&BYp);
+                    interpolateScalarField(ii,params,&IONS->at(aa),&EB->B.Y,&BYp);
                     IONS->at(aa).B(ii,1) = BYp;
 
-                    // RF phase term:
-                    // ==============
-                    // double cosPhi = ? see PIC.cpp
-                    // double rho = ?*CS->length; see PIC.cpp [m]
-                    // double r = R0*sqrt(BX0/BXp) + rho*cosPhi;  [m]
-                    // IONS->at(aa).p_RF.phase(ii) = kper*r + kpar*x - w*t;
+                    // Calculate RF term:
+                    // =================
+                    double vperp  = sqrt( pow(IONS->at(aa).V(ii,1),2) + pow(IONS->at(aa).V(ii,2),2) );
+                    double vy     = arma::as_scalar(IONS->at(aa).V(ii,1));
+                    double vz     = arma::as_scalar(IONS->at(aa).V(ii,2));
+                    double cosPhi = -(vz/vperp);
+                    double sinPhi = +(vy/vperp);
 
-                    // dont forget to initialize and RF.phase with NSP numner of particles
-                    // And to create RF.phase in IONS
+                    double w_ci = (fabs(IONS->at(aa).Q)*BXp/Ma);
+                    double rho  = fabs(vperp/w_ci);
+                    double r0   = params->geometry.r2;
+                    double BX0  = params->em_IC.BX;
+                    double ry   = r0*sqrt(BX0/BXp) + rho*cosPhi;
+                    double x    = IONS->at(aa).X(ii,0);
+
+                    // Store RF terms for next calculation cycle:
+                    IONS->at(aa).p_RF.rho(ii)    = rho;
+                    IONS->at(aa).p_RF.cosPhi(ii) = cosPhi;
+                    IONS->at(aa).p_RF.sinPhi(ii) = sinPhi;
+                    IONS->at(aa).p_RF.phase(ii)  = kper*ry + kpar*x - w*t;
 
                     // Advance ion velocity due to RF electric field:
                     // ==============================================
-                    // arma::vec V = zeros(1,3);
-                    // advanceVelocity(ii,params,&IONS->at(aa),&V,E_RF,params->DT);
+                    arma::vec V = arma::zeros(3);
+                    advanceVelocity(ii,params,&IONS->at(aa),&V,E_RF,params->DT);
 
                     // Calculate udE3:
                     // ===============
-                    // IONS->at(aa).RF.udE3(ii) = 0.5*Ma*dot(V)*CS->energy
+                    IONS->at(aa).p_RF.udE3(ii) = 0.5*Ma*dot(V,V);
 
                 } // f3 guard
 
@@ -144,13 +147,14 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
 
     // Calculate uE3:
     // ==============
+    double uE3_total = 0;
     if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
     {
     }
 
     // Calculate Erf:
     // ==============
-    // params->RF.Erf = sqrt(params->Prf/uE3_total) [V/m]
+    // params->RF.Erf = E_RF*sqrt(params->Prf/uE3_total);
 
 
     // Descroptopm of procedure:
@@ -207,6 +211,51 @@ void rfOperator::calculateErf(const simulationParameters * params, const charact
     // 6- Create interpolateField private method, single particle operations
     // 7 - RF.phase, udE3, uE3 needs to be initialized and given dimensions (1,NSP): IONS->RF.phase.zeros(IONS->NSP);
 
+}
+
+void rfOperator::fill4Ghosts(arma::vec * v)
+{
+	int N = v->n_elem;
+
+    v->subvec(N-2,N-1) = v->subvec(N-4,N-3);
+    v->subvec(0,1)     = v->subvec(2,3);
+}
+
+void rfOperator::interpolateScalarField(int ii,const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * F_m, double * F_p)
+{
+	// Total number of mesh grids + 4 ghost cells:
+	int NX =  params->mesh.NX_IN_SIM + 4;
+
+	// Create temporary storage for mesh-defined quantity:
+	arma::vec F = zeros(NX);
+
+	// Populate F:
+	F.subvec(1,NX-2) = *F_m;
+	fill4Ghosts(&F);
+
+	// Nearest grid point with ghost cells:
+	int ix = IONS->mn(ii) + 2;
+
+	// Interpolate mesh-defined quantity to iith particle:
+	*(F_p) = 0;
+	*(F_p) += IONS->wxl(ii)*F(ix-1);
+	*(F_p) += IONS->wxc(ii)*F(ix);
+	*(F_p) += IONS->wxr(ii)*F(ix+1);
+}
+
+void rfOperator::interpolateScalarField(int ii,const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::vec * F_m, double * F_p)
+{
+
+}
+
+void rfOperator::advanceVelocity(int ii, const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * V, double E_RF, double DT)
+{
+    //  (ii,params,&IONS->at(aa),&V,E_RF,params->DT)
+}
+
+void rfOperator::advanceVelocity(int ii, const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::vec * V, double E_RF, double DT)
+{
+    //  (ii,params,&IONS->at(aa),&V,E_RF,params->DT)
 }
 
 void rfOperator::calculateErf(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)

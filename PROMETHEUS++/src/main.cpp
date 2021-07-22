@@ -31,6 +31,7 @@
 #include "structures.h"
 #include "collisionOperator.h"
 #include "particleBoundaryConditions.h"
+#include "rfOperator.h"
 #include "initialize.h"
 #include "PIC.h"
 #include "fields.h"
@@ -67,6 +68,8 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     FT EB;
     // Collision operator object:
     collisionOperator FPCOLL;
+    // RF operator object:
+    rfOperator RFOP;
     // Particle boundary condition operator:
     PARTICLE_BC particleBC;
     // Initialize "params" based on input file:
@@ -195,6 +198,14 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         if (params.SW.Collisions == 1)
         {
             FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
+        }
+
+        // Apply RF operator:
+        // =====================================================================
+        if (params.SW.RFheating == 1)
+        {
+            RFOP.checkResonanceAndFlag(&params,&CS, &IONS);
+            RFOP.calculateErf(&params,&CS,&EB,&IONS);
         }
 
         // Field solve:

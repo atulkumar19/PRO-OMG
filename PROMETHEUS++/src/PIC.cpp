@@ -237,13 +237,6 @@ void PIC::MPI_Recvvfield_mat(const simulationParameters * params, vfield_mat * v
 
 
 // * * * Ghost contributions * * *
-void PIC::fill4Ghosts(arma::vec * v)
-{
-	//int N = v->n_elem;
-
-	//v->subvec(N-2,N-1) = v->subvec(2,3);
-	//v->subvec(0,1) = v->subvec(N-4,N-3);
-}
 
 void PIC::include4GhostsContributions(arma::vec * v)
 {
@@ -253,53 +246,11 @@ void PIC::include4GhostsContributions(arma::vec * v)
 	v->subvec(N-2,N-1) = v->subvec(N-4,N-3);
 }
 
-
-void PIC::fill4Ghosts(arma::mat * m)
-{
-	/*
-	int NX = m->n_rows;
-	int NY = m->n_cols;
-
-	// Sides
-
-	m->submat(NX-2,2,NX-1,NY-3) = m->submat(2,2,3,NY-3); // left size along x-axis
-	m->submat(0,2,1,NY-3) = m->submat(NX-4,2,NX-3,NY-3); // right size along x-axis
-
-	m->submat(2,NY-2,NX-3,NY-1) = m->submat(2,2,NX-3,3); // left size along y-axis
-	m->submat(2,0,NX-3,1) = m->submat(2,NY-4,NX-3,NY-3); // right size along y-axis
-
-	// Corners
-
-	m->submat(NX-2,NY-2,NX-1,NY-1) = m->submat(2,2,3,3); // left x-axis, left y-axis
-	m->submat(0,NY-2,1,NY-1) = m->submat(NX-4,2,NX-3,3); // right x-axis, left y-axis
-	m->submat(NX-2,0,NX-1,1) = m->submat(2,NY-4,3,NY-3); // left x-axis, right y-axis
-	m->submat(0,0,1,1) = m->submat(NX-4,NY-4,NX-3,NY-3); // right x-axis, right y-axis
-	*/
-}
-
-
+/*
 void PIC::include4GhostsContributions(arma::mat * m)
 {
-/*
-	int NX = m->n_rows;
-	int NY = m->n_cols;
-
-	// Sides
-
-	m->submat(2,2,3,NY-3) += m->submat(NX-2,2,NX-1,NY-3); // left size along x-axis
-	m->submat(NX-4,2,NX-3,NY-3) += m->submat(0,2,1,NY-3); // right size along x-axis
-
-	m->submat(2,2,NX-3,3) += m->submat(2,NY-2,NX-3,NY-1); // left size along y-axis
-	m->submat(2,NY-4,NX-3,NY-3) += m->submat(2,0,NX-3,1); // right size along y-axis
-
-	// Corners
-
-	m->submat(2,2,3,3) += m->submat(NX-2,NY-2,NX-1,NY-1); // left x-axis, left y-axis
-	m->submat(NX-4,2,NX-3,3) += m->submat(0,NY-2,1,NY-1); // right x-axis, left y-axis
-	m->submat(2,NY-4,3,NY-3) += m->submat(NX-2,0,NX-1,1); // left x-axis, right y-axis
-	m->submat(NX-4,NY-4,NX-3,NY-3) += m->submat(0,0,1,1); // right x-axis, right y-axis
-*/
 }
+*/
 
 // * * * Ghost contributions * * *
 
@@ -477,10 +428,6 @@ void PIC::interpolateVectorField(const simulationParameters * params, const oneD
 	field_Y.subvec(1,NX-2) = field->Y;
 	field_Z.subvec(1,NX-2) = field->Z;
 
-	fill4Ghosts(&field_X);
-	fill4Ghosts(&field_Y);
-	fill4Ghosts(&field_Z);
-
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
 	#pragma omp parallel for default(none) shared(params, IONS, F, field_X, field_Y, field_Z) firstprivate(NSP)
@@ -561,10 +508,10 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 					double rL_i = fabs(Vper/omega_ci);
 
 					// Calculate gyro-phase terms:
-					double UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
-					double UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
-					double cosPhi = -(UUz/Vper);
-					double sinPhi = +(UUy/Vper);
+					double vy = arma::as_scalar(IONS->at(ii).V(ip,1));
+					double vz = arma::as_scalar(IONS->at(ii).V(ip,2));
+					double cosPhi = -(vz/Vper);
+					double sinPhi = +(vy/Vper);
 
 					// Particle defined magnetic field:
 					Bp(ip,1) = -0.5*(params->geometry.r2*sqrt(params->em_IC.BX/Bp(ip,0)) + rL_i*cosPhi)*dBx;
@@ -896,8 +843,6 @@ void PIC::interpolateScalarField(const simulationParameters * params, oneDimensi
 	arma::vec field_X = zeros(NX);
 
 	field_X.subvec(1,NX-2) = field;
-
-	fill4Ghosts(&field_X);
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.

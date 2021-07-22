@@ -526,6 +526,14 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     // ===========================
     IONS->a.ones(IONS->NSP);
 
+    // Initialize RF terms:
+    // ====================
+    IONS->p_RF.rho.zeros(IONS->NSP);
+    IONS->p_RF.cosPhi.zeros(IONS->NSP);
+    IONS->p_RF.sinPhi.zeros(IONS->NSP);
+    IONS->p_RF.phase.zeros(IONS->NSP);
+    IONS->p_RF.udE3.zeros(IONS->NSP);
+
     // Check integrity of the initial condition:
     // ========================================
     if((int)IONS->V.n_elem != (int)(3*IONS->NSP))

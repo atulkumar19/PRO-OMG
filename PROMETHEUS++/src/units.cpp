@@ -288,20 +288,28 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 
 	cout << endl << "* * * * * * * * * * * * DEFINING CHARACTERISTIC SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
 
+	// Calculate mean value of mass and charge:
+	// =======================================
 	for (int ii=0; ii<params->numberOfParticleSpecies; ii++)
     {
 	    CS->mass += IONS->at(ii).M;
 	    CS->charge += fabs(IONS->at(ii).Q);
 	}
-
 	CS->mass /= params->numberOfParticleSpecies;
 	CS->charge /= params->numberOfParticleSpecies;
+
+	// Characterstic value of electron density:
+	// ========================================
 	CS->density = params->CV.ne;
 
+	// Define characteristic time:
+	// ============================
 	double characteristicPlasmaFrequency(0);//Background ion-plasma frequency.
 	characteristicPlasmaFrequency = sqrt( CS->density*CS->charge*CS->charge/(CS->mass*F_EPSILON) );
-
 	CS->time = 1/characteristicPlasmaFrequency;
+
+	// Define other characteristic quantities:
+	// =======================================
 	CS->velocity = F_C;
 	CS->momentum = CS->mass*CS->velocity;
 	CS->length = CS->velocity*CS->time;
@@ -353,16 +361,6 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	// ---------------
 	params->DT /= CS->time;
 
-	/*
-	params->BGP.ne /= CS->density;
-	params->BGP.Te /= CS->temperature;
-	params->BGP.Bo /= CS->bField;
-	params->BGP.Bm /= CS->bField;
-	params->BGP.Bx /= CS->bField;
-	params->BGP.By /= CS->bField;
-	params->BGP.Bz /= CS->bField;
-	*/
-
 	// Characteristic values:
 	// ----------------------
 	params->CV.ne /= CS->density;
@@ -370,6 +368,15 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 	params->CV.B /= CS->bField;
 	params->CV.Tpar /= CS->temperature;
 	params->CV.Tper /= CS->temperature;
+
+	// RF parameters:
+	// --------------
+	params->RF.Prf  /= (CS->pressure*CS->volume/CS->time);
+	params->RF.freq *= CS->time;
+	params->RF.x1   /= CS->length;
+	params->RF.x2   /= CS->length;
+	params->RF.kpar *= CS->length;
+	params->RF.kper *= CS->length;
 
 	// Fluid initial conditions:
 	// -------------------------

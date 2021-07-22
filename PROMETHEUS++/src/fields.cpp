@@ -693,7 +693,12 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 		MPI_Allgathervfield_vec(params, &EB->E);
 
-		smooth(&EB->E, params->smoothingParameter);
+		// Apply smoothing:
+        // ===============
+        for (int jj=0; jj<params->filtersPerIterationFields; jj++)
+        {
+			smooth(&EB->E, params->smoothingParameter);
+		}
 	}
 
 	// Extrapolation:

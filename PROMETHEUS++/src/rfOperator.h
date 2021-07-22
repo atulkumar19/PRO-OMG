@@ -8,6 +8,7 @@
 #include "armadillo"
 #include "structures.h"
 #include "types.h"
+#include "boundaryConditions.h"
 #include "mpi_main.h"
 #include "omp.h"
 
@@ -22,6 +23,14 @@ private:
 
   void calculateUnitPrf(const simulationParameters * params, const characteristicScales * CS, oneDimensional::ionSpecies * IONS);
   void calculateUnitPrf(const simulationParameters * params, const characteristicScales * CS, twoDimensional::ionSpecies * IONS);
+
+  void interpolateScalarField(int ii,const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * F_m, double * F_p);
+  void interpolateScalarField(int ii,const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::vec * F_m, double * F_p);
+
+  void advanceVelocity(int ii, const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * V, double E_RF, double DT);
+  void advanceVelocity(int ii, const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::vec * V, double E_RF, double DT);
+
+  void fill4Ghosts(arma::vec * v);
 
 public:
   rfOperator();

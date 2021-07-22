@@ -222,6 +222,9 @@ struct particle_BC
 // ====================================
 struct particle_RFterms
 {
+	arma::vec rho;
+	arma::vec cosPhi;
+	arma::vec sinPhi;	
 	arma::vec phase;
 	arma::vec udE3;
 };

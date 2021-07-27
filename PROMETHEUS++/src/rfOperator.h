@@ -27,18 +27,20 @@ private:
   void interpolateScalarField(int ii,const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * F_m, double * F_p);
   void interpolateScalarField(int ii,const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::vec * F_m, double * F_p);
 
-  void advanceVelocity(int ii, const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::vec * V, double E_RF, double DT);
-  void advanceVelocity(int ii, const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::vec * V, double E_RF, double DT);
+  void advanceVelocity(int ii, const simulationParameters * params, oneDimensional::ionSpecies * IONS, arma::rowvec * V, double E_RF, double DT);
+  void advanceVelocity(int ii, const simulationParameters * params, twoDimensional::ionSpecies * IONS, arma::rowvec * V, double E_RF, double DT);
 
   void fill4Ghosts(arma::vec * v);
+
+  void MPI_AllreduceDouble(const simulationParameters * params, double * v);
 
 public:
   rfOperator();
   void checkResonanceAndFlag(const simulationParameters * params, const characteristicScales * CS, vector<oneDimensional::ionSpecies> * IONS);
   void checkResonanceAndFlag(const simulationParameters * params, const characteristicScales * CS, vector<twoDimensional::ionSpecies> * IONS);
 
-  void calculateErf(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
-  void calculateErf(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
+  void calculateErf(simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
+  void calculateErf(simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
 
   void applyRfOperator(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
   void applyRfOperator(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);

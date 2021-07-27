@@ -281,6 +281,7 @@ struct rfParams
 	double kpar;
 	double kper;
 	int handedness;
+	int numit;
 
 	// Name and storage time-dependent RF power trace:
 	// ========================================
@@ -288,7 +289,7 @@ struct rfParams
 	int Prf_NS;
 	arma::vec Prf_profile;
 
-	// total RF power accumulated over all species:
+	// Total RF power accumulated over all species:
 	// ============================================
 	double E3;
 
@@ -310,6 +311,7 @@ struct rfParams
 		handedness = 0;
 		E3   = 0;
 		Erf  = 0;
+		numit = 1;
 	}
 };
 
@@ -420,6 +422,7 @@ struct characteristicScales
 	double resistivity;
 	double vacuumPermeability;
 	double vacuumPermittivity;
+	double energy;
 
 	// Constructor:
 	characteristicScales()
@@ -437,6 +440,7 @@ struct characteristicScales
 		magneticMoment = 0.0;
 		vacuumPermeability = 0.0;
 		vacuumPermittivity = 0.0;
+		energy = 0.0;
 	}
 };
 

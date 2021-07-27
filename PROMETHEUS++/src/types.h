@@ -224,7 +224,7 @@ struct particle_RFterms
 {
 	arma::vec rho;
 	arma::vec cosPhi;
-	arma::vec sinPhi;	
+	arma::vec sinPhi;
 	arma::vec phase;
 	arma::vec udE3;
 };
@@ -308,9 +308,9 @@ public:
 	arma::ivec f3;              // Flag for RF operator
 
 	// Particle kinetic energy at boundaries:
-	arma::ivec dE1;              // left boundary
-	arma::ivec dE2;              // Right boundary
-	arma::ivec dE3;              // RF operator
+	arma::vec dE1;              // left boundary
+	arma::vec dE2;              // Right boundary
+	arma::vec dE3;              // RF operator
 
 	// Particle weight:
 	arma::vec a;                // Computational particle weigth

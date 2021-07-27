@@ -188,6 +188,8 @@ template <class IT, class FT> void UNITS<IT,FT>::broadcastCharacteristicScales(s
     MPI_Bcast(&CS->vacuumPermeability, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(&CS->vacuumPermittivity, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+	MPI_Bcast(&CS->energy, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 
@@ -323,6 +325,8 @@ template <class IT, class FT> void UNITS<IT,FT>::defineCharacteristicScales(simu
 	CS->vacuumPermittivity = (pow(CS->length*CS->charge,2)*CS->density)/(CS->mass*pow(CS->velocity,2));
 	CS->vacuumPermeability = CS->mass/( CS->density*pow(CS->charge*CS->velocity*CS->time,2) );
 
+	CS->energy = CS->mass*pow(CS->length/CS->time,2);
+
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0){
 		cout << "+ Average mass: " << scientific << CS->mass << fixed << " kg" << endl;
 		cout << "+ Average charge: " << scientific << CS->charge << fixed << " C" << endl;
@@ -371,7 +375,7 @@ template <class IT, class FT> void UNITS<IT,FT>::normalizeVariables(simulationPa
 
 	// RF parameters:
 	// --------------
-	params->RF.Prf  /= (CS->pressure*CS->volume/CS->time);
+	params->RF.Prf  /= (CS->energy/CS->time);
 	params->RF.freq *= CS->time;
 	params->RF.x1   /= CS->length;
 	params->RF.x2   /= CS->length;

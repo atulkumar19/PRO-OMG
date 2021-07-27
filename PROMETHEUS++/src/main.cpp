@@ -205,7 +205,11 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         if (params.SW.RFheating == 1)
         {
             RFOP.checkResonanceAndFlag(&params,&CS, &IONS);
+            //cout << "checkpoint 1" << endl;
             RFOP.calculateErf(&params,&CS,&EB,&IONS);
+            //cout << "checkpoint 2" << endl;
+            RFOP.applyRfOperator(&params,&CS,&EB,&IONS);
+            //cout << "checkpoint 3" << endl;
         }
 
         // Field solve:
@@ -242,6 +246,11 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         // =====================================================================
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0)
         {
+            if (params.mpi.IS_PARTICLES_ROOT)
+            {
+                cout << "E_RF [V/M]" << params.RF.Erf*CS.eField << endl;
+            }
+
             vector<IT> IONS_OUT = IONS;
 
             // The ions' velocity is advanced in time in order to obtain V^(N+1):

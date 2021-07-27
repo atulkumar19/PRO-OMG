@@ -312,7 +312,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     params->RF.handedness= stoi( parametersStringMap["RF_handedness"]);
     params->RF.Prf_NS    = stoi( parametersStringMap["RF_Prf_NS"] );
     params->RF.Prf_fileName = parametersStringMap["RF_Prf_fileName"];
-
+    params->RF.numit     = stoi( parametersStringMap["RF_numit"]);
 
     // Output variables:
     // -------------------------------------------------------------------------

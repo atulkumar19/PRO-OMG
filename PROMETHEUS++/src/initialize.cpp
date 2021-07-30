@@ -170,7 +170,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Check number of MPI domains:
     // ============================
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 )
-    {
+    { 
         MPI_Barrier(MPI_COMM_WORLD);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0)

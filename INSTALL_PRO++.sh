@@ -3,10 +3,14 @@
 REPO_DIR=${PWD}
 
 # * * * * * Please change these variables as required * * * * *
-export CC=gcc
+#export CC=gcc
+#export CPP=cpp
+#export CXX=g++
+#export FC=gfortran
+export CC=icc
 export CPP=cpp
-export CXX=g++
-export FC=gfortran
+export CXX=icpc
+export FC=ifort
 
 MPICXX=mpic++
 
@@ -41,7 +45,7 @@ tar -xvf $ARMADILLO_VERSION$".tar.xz"
 cd $ARMADILLO_VERSION
 
 # Armadillo installation
-cmake -DCMAKE_INSTALL_PREFIX=$ARMADILLO_INSTALLATION_FOLDER -DDETECT_HDF5=false .
+cmake -DCMAKE_INSTALL_PREFIX=$ARMADILLO_INSTALLATION_FOLDER -DDETECT_HDF5=false -DBLA_VENDOR=Intel10_64ilp -DCMAKE_PREFIX_PATH=$MKLROOT .
 
 make
 

@@ -13,5 +13,7 @@ PROMETHEUS++/inputFiles/
 PROMETHEUS++/outputFiles/
 PROMETHEUS++/nohup*
 PROMETHEUS++/m*
+*/*.out
+*/*.txt
 *.fig
 PROMETHEUS++/*.csv

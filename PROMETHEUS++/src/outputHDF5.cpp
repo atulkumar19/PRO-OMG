@@ -715,6 +715,19 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 					#endif
 					name.clear();
 				 }
+				 if(params->outputs_variables.at(ov) == "a")
+ 				{
+ 					//Saving the x-axis coordinates
+ 					name = "a";
+ 					#ifdef HDF5_DOUBLE
+ 					vec_values = IONS->at(ii).a;
+ 					saveToHDF5(group_ionSpecies, name, &vec_values);
+ 					#elif defined HDF5_FLOAT
+ 					fvec_values = conv_to<fvec>::from(IONS->at(ii).a);
+ 					saveToHDF5(group_ionSpecies, name, &fvec_values);
+ 					#endif
+ 					name.clear();
+ 				 }
 				 else if(params->outputs_variables.at(ov) == "pCount")
 				 {
 					name = "pCount";

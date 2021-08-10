@@ -63,15 +63,15 @@ RF_x1                       1.2
 RF_x2                       1.5
 RF_kpar                     20
 RF_kper                     100
-RF_handedness               -1
+RF_handedness               +1
 RF_Prf_fileName             Prf_profile.txt
 RF_Prf_NS                   200
-RF_numit                    1000
+RF_numit                    1
 
 // Output variables:
 // =============================================================================
 outputCadence               10
-outputs_variables           {B,E,X,V,n,pCount,eCount,U,np,nvp,Tparp,Tperp,Tper,Tpar}
+outputs_variables           {B,E,a,X,V,n,pCount,eCount,U,np,nvp,Tparp,Tperp,Tper,Tpar}
 
 // Data smoothing:
 // =============================================================================

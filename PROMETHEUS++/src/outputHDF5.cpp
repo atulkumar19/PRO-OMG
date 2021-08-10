@@ -774,7 +774,7 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 				}
 				else if(params->outputs_variables.at(ov) == "Bp")
 				{
-					name = "B";
+					name = "Bp";
 					#ifdef HDF5_DOUBLE
 					mat_values = CS->bField*IONS->at(ii).B;
 					saveToHDF5(group_ionSpecies, name, &mat_values);

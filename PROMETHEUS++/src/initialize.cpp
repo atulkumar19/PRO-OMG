@@ -1054,8 +1054,10 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         // By profile:
         // ===========
         arma::vec Br(BX_NX,1);
-        Br.subvec(0,BX_NX-2) = -0.5*(params->geometry.r2)*diff(params->em_IC.Bx_profile)/dX;
+        arma::vec BX = params->em_IC.Bx_profile;
+        Br.subvec(1,BX_NX-2) = -0.5*(params->geometry.r2)*((BX.subvec(2,BX_NX-1) - BX.subvec(0,BX_NX-3))/(2*dX));
         Br(BX_NX-1) = Br(BX_NX-2);
+        Br(0) = Br(1);
 
         yt = Br;
         interp1(xt,yt,xq,yq);

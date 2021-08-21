@@ -581,7 +581,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
 void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT)
 {}
 
-void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
+void PIC::extrapolateIonsMoments(const simulationParameters * params, const characteristicScales * CS,oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {
 	// Iterate over all ion species:
     // =============================
@@ -594,7 +594,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
             PIC::assignCell(params, EB, &IONS->at(ii));
 
             //Calculate partial moments:
-			calculateIonMoments(params, EB, &IONS->at(ii));
+			calculateIonMoments(params, CS, EB, &IONS->at(ii));
         }
 
         // Reduce IONS moments to PARTICLE ROOT:
@@ -657,7 +657,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 	}
 }
 
-void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
+void PIC::extrapolateIonsMoments(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
 {}
 
 
@@ -667,7 +667,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensi
 
 // calculateIonMoments:
 
-void PIC::calculateIonMoments(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+void PIC::calculateIonMoments(const simulationParameters * params, const characteristicScales * CS,oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
 	// Ion density:
 	IONS->n___ = IONS->n__;
@@ -679,10 +679,10 @@ void PIC::calculateIonMoments(const simulationParameters * params, oneDimensiona
 	IONS->nv_ = IONS->nv;
 
 	// Calculate ion moments:
-	eim(params, EB, IONS);
+	eim(params, CS, EB, IONS);
 }
 
-void PIC::eim(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+void PIC::eim(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
@@ -802,12 +802,15 @@ void PIC::eim(const simulationParameters * params, oneDimensional::fields * EB, 
 	IONS->P11 *= IONS->NCP/params->mesh.DX;
 	IONS->P22 *= IONS->NCP/params->mesh.DX;
 
+	// Add finite number for density to avoid zero:
+	IONS->n += 1E14*CS->length;
+
 }
 
-void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+void PIC::calculateIonMoments(const simulationParameters * params, const characteristicScales * CS,twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
 {}
 
-void PIC::eim(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+void PIC::eim(const simulationParameters * params, const characteristicScales * CS,twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
 {}
 
 void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)

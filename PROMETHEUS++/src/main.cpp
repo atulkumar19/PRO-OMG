@@ -130,7 +130,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
 
-        ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
+        ionsDynamics.extrapolateIonsMoments(&params, &CS, &EB, &IONS);
     }
 
     // Save 1st output:
@@ -189,7 +189,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Calculate ion moments:
         // =====================================================================
-        ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
+        ionsDynamics.extrapolateIonsMoments(&params, &CS, &EB, &IONS);
         // - Apply the "a" on the extrapolation but not interpolation.
 
 

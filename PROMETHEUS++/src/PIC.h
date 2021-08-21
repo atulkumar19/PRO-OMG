@@ -119,13 +119,13 @@ protected:
 
 
 	// PRO++ OMG:
-	void eim(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
+	void eim(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
-	void eim(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
+	void eim(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
 
-	void calculateIonMoments(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
+	void calculateIonMoments(const simulationParameters * params, const characteristicScales * CS,oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS);
 
-	void calculateIonMoments(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
+	void calculateIonMoments(const simulationParameters * params, const characteristicScales * CS,twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS);
 
 	void calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS);
 
@@ -156,9 +156,9 @@ protected:
 
 	// PRO++ OMG additions:
 
-	void extrapolateIonsMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
+	void extrapolateIonsMoments(const simulationParameters * params, const characteristicScales * CS,oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS);
 
-	void extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
+	void extrapolateIonsMoments(const simulationParameters * params, const characteristicScales * CS,twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS);
 
 };
 

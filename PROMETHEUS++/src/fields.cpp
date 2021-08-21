@@ -496,6 +496,9 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		// Calculate the number density and bulk velocities at time level "l + 1/2":
 		// =========================================================================
 		V1D.n.zeros();
+		V1D.n_.zeros();
+		V1D.n__.zeros();
+
 		V1D.U.zeros();
 		for(int ii=0; ii<params->numberOfParticleSpecies; ii++)
 		{
@@ -506,7 +509,11 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 			// Ions density at time level "l + 1/2"
 			// n(l+1/2) = ( n(l+1) + n(l) )/2
-			V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
+			V1D.n   += IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1)   );
+			V1D.n_  += IONS->at(ii).Z*( IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1)  );
+			V1D.n__ += IONS->at(ii).Z*( IONS->at(ii).n__.subvec(iIndex - 1, fIndex + 1) );
+
+			V1D.n = (V1D.n + V1D.n + V1D.n + V1D.n)/3;
 
 			// Ions bulk velocity at time level "l + 1/2"
 			//sum_k[ Z_k*n_k*u_k ]

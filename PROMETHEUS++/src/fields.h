@@ -63,6 +63,7 @@ class EMF_SOLVER{
 		arma::vec n; 			// Total plasma density at time level "l + 1"
 		arma::vec n_; 			// Total plasma density at time level "l - 1/2"
 		arma::vec n__; 			// Total plasma density at time level "l - 3/2"
+		arma::vec n___; 			// Total plasma density at time level "l - 3/2"
 
 		vfield_vec V; 			// Extrapolated ions' bulk velocity at time level "l + 1"
 		vfield_vec U; 			// Ions' bulk velocity at time level "l + 1/2"

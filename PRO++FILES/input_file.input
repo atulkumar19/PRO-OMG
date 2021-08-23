@@ -12,7 +12,7 @@ numberOfTracerSpecies       0
 // Characteristic values:
 // =============================================================================
 CV_ne                       3.0E19
-CV_Te                       250
+CV_Te                       500
 CV_B                        1.5
 CV_Tpar                     250
 CV_Tper                     250
@@ -20,14 +20,14 @@ CV_Tper                     250
 // Simulation time:
 // =============================================================================
 DTc                         0.02
-simulationTime              500.0
+simulationTime              5000.0
 
 // Switches:
 // =============================================================================
 SW_EfieldSolve               1
 SW_HallTermSolve             0
 SW_BfieldSolve               0
-SW_Collisions                1
+SW_Collisions                0
 SW_RFheating                 0
 SW_advancePos                1
 SW_linearSolve               0
@@ -47,8 +47,8 @@ NY                          1
 NZ                          1
 DrL                         -1
 dp                          0.2
-r1                          0.01
-r2                          0.10
+r1                          0.03
+r2                          0.05
 
 // Electron initial conditions:
 // =============================================================================
@@ -70,8 +70,8 @@ RF_numit                    1
 
 // Output variables:
 // =============================================================================
-outputCadence               25
-outputs_variables           {B,E,Bp,a,X,V,n,pCount,eCount,U,np,nvp,Tparp,Tperp,Tper,Tpar}
+outputCadence               500
+outputs_variables           {B,E,Bp,a,X,V,n,pCount,eCount,U,Tper,Tpar}
 
 // Data smoothing:
 // =============================================================================

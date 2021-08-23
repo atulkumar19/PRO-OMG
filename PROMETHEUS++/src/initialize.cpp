@@ -413,7 +413,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
         cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
     }
 
-    // Select grid size: based on Larmour radius or ion skin depth:
+    // Select grid size: based on Larmour radius or  skin depth:
     // ============================================================
     if( (params->DrL > 0.0) && (params->dp < 0.0) )
     {
@@ -448,7 +448,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
     // ============================
     for(int ii=0; ii<params->mesh.NX_IN_SIM; ii++)
     {
-        params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX;
+        params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX + params->mesh.DX/2;
     }
 
     // Create mesh nodes: Y domain
@@ -725,7 +725,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS)
+template <class IT, class FT> void INITIALIZE<IT,FT>::nParameters(simulationParameters * params, vector<IT> * IONS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -791,6 +791,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.pctSupPartOutput = stod(parametersMap[name]);
             name.clear();
 
+
             // Charge state:
             name = "Z" + ss.str();
             ions.Z = stod(parametersMap[name]);
@@ -845,6 +846,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.p_IC.densityFraction = stod(parametersMap[name]);
             name.clear();
 
+
             name = "IC_densityFraction_fileName_" + ss.str();
             ions.p_IC.densityFraction_fileName = parametersMap[name];
             name.clear();
@@ -863,6 +865,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             name = "BC_T_" + ss.str();
             ions.p_BC.T = stod(parametersMap[name])*F_E/F_KB;
             name.clear();
+
 
             name = "BC_E_" + ss.str();
             ions.p_BC.E = stod(parametersMap[name])*F_E/F_KB;

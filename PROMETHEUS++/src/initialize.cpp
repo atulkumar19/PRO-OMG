@@ -725,7 +725,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::setupIonsInitialCondition(
 }
 
 
-template <class IT, class FT> void INITIALIZE<IT,FT>::nParameters(simulationParameters * params, vector<IT> * IONS)
+template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulationParameters * params, vector<IT> * IONS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 

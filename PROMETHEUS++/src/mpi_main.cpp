@@ -248,6 +248,7 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 	MPI_Finalized(&temp);
 
 	finalized = (bool)temp;
+
 	finalized = MPI_Is_finalized();
 
 	if(finalized)

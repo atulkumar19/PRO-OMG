@@ -139,7 +139,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
     // Start timing simulations:
     // =========================================================================
-    t1 = MPI::Wtime();
+    t1 = MPI_Wtime();
 
 
     // #########################################################################
@@ -265,7 +265,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         // =====================================================================
         if(tt == numberOfIterationsForEstimator)
         {
-            t2 = MPI::Wtime();
+            t2 = MPI_Wtime();
 
             double estimatedSimulationTime = ( (double)params.timeIterations*(t2 - t1)/(double)numberOfIterationsForEstimator )/60.0;
 

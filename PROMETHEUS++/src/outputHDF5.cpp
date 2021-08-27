@@ -667,7 +667,8 @@ template <class IT, class FT> HDF<IT,FT>::HDF(simulationParameters * params, fun
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS, const characteristicScales * CS, const Group * group_iteration){
+template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulationParameters * params, const vector<oneDimensional::ionSpecies> * IONS, const characteristicScales * CS, const Group * group_iteration)
+{
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
@@ -1006,7 +1007,8 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsVariables(const simulatio
 {}
 
 
-template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const Group * group_iteration){
+template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, oneDimensional::fields * EB, const characteristicScales * CS, const Group * group_iteration)
+{
 	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
@@ -1124,8 +1126,9 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulat
 template <class IT, class FT> void HDF<IT,FT>::saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const Group * group_iteration)
 {}
 
-
-template <class IT, class FT> void HDF<IT,FT>::saveIonsEnergy(const simulationParameters * params, const vector<IT> * IONS, const characteristicScales * CS, const Group * group_iteration){
+/*
+template <class IT, class FT> void HDF<IT,FT>::saveIonsEnergy(const simulationParameters * params, const vector<IT> * IONS, const characteristicScales * CS, const Group * group_iteration)
+{
 	ENERGY_DIAGNOSTIC<IT,FT> energyOutputs(params);
 
 	energyOutputs.computeKineticEnergyDensity(params, IONS);
@@ -1188,7 +1191,8 @@ template <class IT, class FT> void HDF<IT,FT>::saveIonsEnergy(const simulationPa
 }
 
 
-template <class IT, class FT> void HDF<IT,FT>::saveFieldsEnergy(const simulationParameters * params, FT * EB, const characteristicScales * CS, const Group * group_iteration){
+template <class IT, class FT> void HDF<IT,FT>::saveFieldsEnergy(const simulationParameters * params, FT * EB, const characteristicScales * CS, const Group * group_iteration)
+{
 	ENERGY_DIAGNOSTIC<IT,FT> energyOutputs(params);
 
 	energyOutputs.computeElectromagneticEnergyDensity(params, EB);
@@ -1285,9 +1289,10 @@ template <class IT, class FT> void HDF<IT,FT>::saveFieldsEnergy(const simulation
 	   }
 
 }
+*/
 
-
-template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it, double totalTime){
+template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParameters * params, const vector<IT> * IONS, FT * EB, const characteristicScales * CS, const int it, double totalTime)
+{
 
 	try{
 		stringstream iteration;
@@ -1336,11 +1341,11 @@ template <class IT, class FT> void HDF<IT,FT>::saveOutputs(const simulationParam
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR){
 			saveIonsVariables(params, IONS, CS, group_iteration);
 
-			saveIonsEnergy(params, IONS, CS, group_iteration);
+			//saveIonsEnergy(params, IONS, CS, group_iteration);
 		}else if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR){
 			saveFieldsVariables(params, EB, CS, group_iteration);
 
-			saveFieldsEnergy(params, EB, CS, group_iteration);
+			//saveFieldsEnergy(params, EB, CS, group_iteration);
 		}
 
 		delete group_iteration;

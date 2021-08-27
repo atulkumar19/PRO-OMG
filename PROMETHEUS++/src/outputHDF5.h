@@ -27,12 +27,11 @@
 
 #include <string>
 #include <cmath>
-
+#define ARMA_ALLOW_FAKE_GCC
 #include <armadillo>
 #include "structures.h"
 #include "boundaryConditions.h"
 #include "types.h"
-#include "energyDiagnostic.h"
 
 #include "H5Cpp.h"
 
@@ -101,9 +100,9 @@ template <class IT, class FT> class HDF{
 	void saveFieldsVariables(const simulationParameters * params, twoDimensional::fields * EB, const characteristicScales * CS, const Group * group_iteration);
 
 
-	void saveIonsEnergy(const simulationParameters * params, const vector<IT> * IONS, const characteristicScales * CS, const Group * group_iteration);
+	//void saveIonsEnergy(const simulationParameters * params, const vector<IT> * IONS, const characteristicScales * CS, const Group * group_iteration);
 
-	void saveFieldsEnergy(const simulationParameters * params, FT * EB, const characteristicScales * CS, const Group * group_iteration);
+	//void saveFieldsEnergy(const simulationParameters * params, FT * EB, const characteristicScales * CS, const Group * group_iteration);
 
 public:
 

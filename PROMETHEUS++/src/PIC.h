@@ -32,7 +32,7 @@
 #endif
 
 #include <omp.h>
-
+#define ARMA_ALLOW_FAKE_GCC
 #include "armadillo"
 #include "structures.h"
 #include "boundaryConditions.h"

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-
+#define ARMA_ALLOW_FAKE_GCC
 #include "armadillo"
 #include "structures.h"
 #include "types.h"

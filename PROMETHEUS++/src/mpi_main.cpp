@@ -249,7 +249,7 @@ void MPI_MAIN::finalizeCommunications(simulationParameters * params){
 
 	finalized = (bool)temp;
 
-	finalized = MPI_Is_finalized();
+	//finalized = MPI_Is_finalized();
 
 	if(finalized)
 		cout << "MPI process: " << params->mpi.MPI_DOMAIN_NUMBER << " FINALIZED" << endl;

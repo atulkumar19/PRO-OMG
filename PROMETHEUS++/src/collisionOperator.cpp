@@ -251,7 +251,7 @@ void collisionOperator::fill4Ghosts(arma::vec * v)
 
 	//v->subvec(N-2,N-1) = v->subvec(2,3);
 	//v->subvec(0,1) = v->subvec(N-4,N-3);
-    
+
     v->subvec(N-2,N-1) = v->subvec(N-4,N-3);
     v->subvec(0,1)     = v->subvec(2,3);
 }

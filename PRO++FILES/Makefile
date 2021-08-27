@@ -27,7 +27,6 @@ BIN=bin
 MPICXX=mpic++
 CCXXFLAGS=-std=c++11
 CCDEFINEFLAGS=-DHDF5_FLOAT	-DHDF5_SINGLE_FILE	-DCHECKS_ON
-#CCFLAGS=$(CCXXFLAGS)	-fopenmp	-O3
 CCFLAGS=$(CCXXFLAGS)	-qopenmp	-O3
 HDF5_INSTALL=
 ARMADILLO_INSTALL=
@@ -41,6 +40,7 @@ LIB=-lz	-ldl	-lm	-lhdf5_cpp	-larmadillo #-lgfortran
 #OMP_LIB_FLAGS=-lgomp
 OMP_LIB_FLAGS=-qopenmp
 
+
 BINARIES = $(addprefix $(OBJ)/,structures.o	\
 main.o					\
 PIC.o					\
@@ -53,8 +53,8 @@ outputHDF5.o			\
 mpi_main.o				\
 randomStart.o			\
 quietStart.o			\
-energyDiagnostic.o              \
 collisionOperator.o             \
+rfOperator.o										\
 particleBoundaryConditions.o)
 
 all: $(BIN)/PROMETHEUS++

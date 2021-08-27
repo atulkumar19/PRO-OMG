@@ -37,6 +37,7 @@ EMF_SOLVER::EMF_SOLVER(const simulationParameters * params, characteristicScales
             V1D.n.zeros(NX_S);
             V1D.n_.zeros(NX_S);
             V1D.n__.zeros(NX_S);
+						V1D.n___.zeros(NX_S);
 
             V1D.V.zeros(NX_S);
             V1D.U.zeros(NX_S);
@@ -496,6 +497,10 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 		// Calculate the number density and bulk velocities at time level "l + 1/2":
 		// =========================================================================
 		V1D.n.zeros();
+		V1D.n_.zeros();
+		V1D.n__.zeros();
+		V1D.n___.zeros();
+
 		V1D.U.zeros();
 		for(int ii=0; ii<params->numberOfParticleSpecies; ii++)
 		{
@@ -506,7 +511,12 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 			// Ions density at time level "l + 1/2"
 			// n(l+1/2) = ( n(l+1) + n(l) )/2
-			V1D.n += 0.5*IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1) + IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1) );
+			V1D.n   += IONS->at(ii).Z*( IONS->at(ii).n.subvec(iIndex - 1, fIndex + 1)   );
+			V1D.n_  += IONS->at(ii).Z*( IONS->at(ii).n_.subvec(iIndex - 1, fIndex + 1)  );
+			V1D.n__ += IONS->at(ii).Z*( IONS->at(ii).n__.subvec(iIndex - 1, fIndex + 1) );
+			V1D.n___ += IONS->at(ii).Z*( IONS->at(ii).n___.subvec(iIndex - 1, fIndex + 1) );
+
+			V1D.n = (V1D.n + V1D.n_ + V1D.n__ +V1D.n___)/4;
 
 			// Ions bulk velocity at time level "l + 1/2"
 			//sum_k[ Z_k*n_k*u_k ]
@@ -693,7 +703,12 @@ void EMF_SOLVER::advanceEField(const simulationParameters * params, oneDimension
 
 		MPI_Allgathervfield_vec(params, &EB->E);
 
-		smooth(&EB->E, params->smoothingParameter);
+		// Apply smoothing:
+        // ===============
+        for (int jj=0; jj<params->filtersPerIterationFields; jj++)
+        {
+			smooth(&EB->E, params->smoothingParameter);
+		}
 	}
 
 	// Extrapolation:

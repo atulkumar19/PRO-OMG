@@ -20,6 +20,7 @@
 // =============================================================================
 #include <iostream>
 #include <vector>
+#define ARMA_ALLOW_FAKE_GCC
 #include <armadillo>
 #include <cmath>
 #include <ctime>
@@ -31,6 +32,7 @@
 #include "structures.h"
 #include "collisionOperator.h"
 #include "particleBoundaryConditions.h"
+#include "rfOperator.h"
 #include "initialize.h"
 #include "PIC.h"
 #include "fields.h"
@@ -67,6 +69,8 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     FT EB;
     // Collision operator object:
     collisionOperator FPCOLL;
+    // RF operator object:
+    rfOperator RFOP;
     // Particle boundary condition operator:
     PARTICLE_BC particleBC;
     // Initialize "params" based on input file:
@@ -111,7 +115,6 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
     // =========================================================================
     double t1 = 0.0;
     double t2 = 0.0;
-    double currentTime = 0.0;
     int outputIterator = 0;
     int numberOfIterationsForEstimator = 1000;
 
@@ -128,7 +131,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS, 0);
 
-        ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
+        ionsDynamics.extrapolateIonsMoments(&params, &CS, &EB, &IONS);
     }
 
     // Save 1st output:
@@ -187,7 +190,7 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Calculate ion moments:
         // =====================================================================
-        ionsDynamics.extrapolateIonsMoments(&params, &EB, &IONS);
+        ionsDynamics.extrapolateIonsMoments(&params, &CS, &EB, &IONS);
         // - Apply the "a" on the extrapolation but not interpolation.
 
 
@@ -196,6 +199,18 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
         if (params.SW.Collisions == 1)
         {
             FPCOLL.ApplyCollisionOperator(&params,&CS,&IONS);
+        }
+
+        // Apply RF operator:
+        // =====================================================================
+        if (params.SW.RFheating == 1)
+        {
+            RFOP.checkResonanceAndFlag(&params,&CS, &IONS);
+            //cout << "checkpoint 1" << endl;
+            RFOP.calculateErf(&params,&CS,&EB,&IONS);
+            //cout << "checkpoint 2" << endl;
+            RFOP.applyRfOperator(&params,&CS,&EB,&IONS);
+            //cout << "checkpoint 3" << endl;
         }
 
         // Field solve:
@@ -225,19 +240,24 @@ template <class IT, class FT> void main_run_simulation(int argc, char* argv[])
 
         // Advance time:
         // =====================================================================
-        currentTime += params.DT*CS.time;
+        params.currentTime += params.DT;
 
 
         // Save data:
         // =====================================================================
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0)
         {
+            if (params.mpi.IS_PARTICLES_ROOT)
+            {
+                cout << "E_RF [V/M]" << params.RF.Erf*CS.eField << endl;
+            }
+
             vector<IT> IONS_OUT = IONS;
 
             // The ions' velocity is advanced in time in order to obtain V^(N+1):
             ionsDynamics.advanceIonsVelocity(&params, &CS, &EB, &IONS_OUT, 0.5*params.DT);
 
-            hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1, currentTime);
+            hdfObj.saveOutputs(&params, &IONS_OUT, &EB, &CS, outputIterator+1,params.currentTime*CS.time);
 
             outputIterator++;
         }

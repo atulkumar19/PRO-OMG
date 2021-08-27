@@ -21,6 +21,7 @@
 
 #include <typeinfo>
 #include <vector>
+#define ARMA_ALLOW_FAKE_GCC
 #include <armadillo>
 
 // Declare namespaces:
@@ -218,6 +219,17 @@ struct particle_BC
 
 };
 
+// Structure to hold RF operator terms:
+// ====================================
+struct particle_RFterms
+{
+	arma::vec rho;
+	arma::vec cosPhi;
+	arma::vec sinPhi;
+	arma::vec phase;
+	arma::vec udE3;
+};
+
 //  Define ION VARIABLES AND PARAMETERS DERIVED TYPES:
 // =============================================================================
 class oneDimensional::ionSpecies : public vfield_vec
@@ -297,9 +309,9 @@ public:
 	arma::ivec f3;              // Flag for RF operator
 
 	// Particle kinetic energy at boundaries:
-	arma::ivec dE1;              // left boundary
-	arma::ivec dE2;              // Right boundary
-	arma::ivec dE3;              // RF operator
+	arma::vec dE1;              // left boundary
+	arma::vec dE2;              // Right boundary
+	arma::vec dE3;              // RF operator
 
 	// Particle weight:
 	arma::vec a;                // Computational particle weigth
@@ -309,6 +321,9 @@ public:
 
 	// Boundary conditions:
 	particle_BC p_BC;
+
+	// Particle Rf terms:
+	particle_RFterms p_RF;
 
 	// Constructor:
 	ionSpecies(){};

@@ -288,21 +288,31 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
 
     // Geometry:
     // -------------------------------------------------------------------------
-    //params->BGP.Rphi0 = stod( parametersStringMap["Rphi0"] );
     unsigned int NX      = (unsigned int)stoi( parametersStringMap["NX"] );
     unsigned int NY      = (unsigned int)stoi( parametersStringMap["NY"] );
     unsigned int NZ      = (unsigned int)stoi( parametersStringMap["NZ"] );
     params->DrL          = stod( parametersStringMap["DrL"] );
-	params->dp           = stod( parametersStringMap["dp"] );
+	  params->dp           = stod( parametersStringMap["dp"] );
   	params->geometry.r1  = stod( parametersStringMap["r1"] );
     params->geometry.r2  = stod( parametersStringMap["r2"] );
 
     // Electron initial conditions:
     // -------------------------------------------------------------------------
-    //params->BGP.ne       = stod( parametersStringMap["IC_ne"] );
-    //params->BGP.Te       = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
     params->f_IC.ne      = stod( parametersStringMap["IC_ne"] );
     params->f_IC.Te      = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
+
+    // RF parameters
+    // -------------------------------------------------------------------------
+    params->RF.Prf       = stod( parametersStringMap["RF_Prf"] );
+    params->RF.freq      = stod( parametersStringMap["RF_freq"]);
+    params->RF.x1        = stod( parametersStringMap["RF_x1"]  );
+    params->RF.x2        = stod( parametersStringMap["RF_x2"]  );
+    params->RF.kpar      = stod( parametersStringMap["RF_kpar"]);
+    params->RF.kper      = stod( parametersStringMap["RF_kper"]);
+    params->RF.handedness= stoi( parametersStringMap["RF_handedness"]);
+    params->RF.Prf_NS    = stoi( parametersStringMap["RF_Prf_NS"] );
+    params->RF.Prf_fileName = parametersStringMap["RF_Prf_fileName"];
+    params->RF.numit     = stoi( parametersStringMap["RF_numit"]);
 
     // Output variables:
     // -------------------------------------------------------------------------
@@ -403,7 +413,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
         cout << endl << "* * * * * * * * * * * * LOADING/COMPUTING SIMULATION GRID * * * * * * * * * * * * * * * * * *\n";
     }
 
-    // Select grid size: based on Larmour radius or ion skin depth:
+    // Select grid size: based on Larmour radius or  skin depth:
     // ============================================================
     if( (params->DrL > 0.0) && (params->dp < 0.0) )
     {
@@ -438,7 +448,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadMeshGeometry(simulatio
     // ============================
     for(int ii=0; ii<params->mesh.NX_IN_SIM; ii++)
     {
-        params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX;
+        params->mesh.nodes.X(ii) = (double)ii*params->mesh.DX + params->mesh.DX/2;
     }
 
     // Create mesh nodes: Y domain
@@ -515,6 +525,14 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeParticlesArrays(
     // Initialize particle weight:
     // ===========================
     IONS->a.ones(IONS->NSP);
+
+    // Initialize RF terms:
+    // ====================
+    IONS->p_RF.rho.zeros(IONS->NSP);
+    IONS->p_RF.cosPhi.zeros(IONS->NSP);
+    IONS->p_RF.sinPhi.zeros(IONS->NSP);
+    IONS->p_RF.phase.zeros(IONS->NSP);
+    IONS->p_RF.udE3.zeros(IONS->NSP);
 
     // Check integrity of the initial condition:
     // ========================================
@@ -773,6 +791,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.pctSupPartOutput = stod(parametersMap[name]);
             name.clear();
 
+
             // Charge state:
             name = "Z" + ss.str();
             ions.Z = stod(parametersMap[name]);
@@ -827,6 +846,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             ions.p_IC.densityFraction = stod(parametersMap[name]);
             name.clear();
 
+
             name = "IC_densityFraction_fileName_" + ss.str();
             ions.p_IC.densityFraction_fileName = parametersMap[name];
             name.clear();
@@ -845,6 +865,7 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::loadIonParameters(simulati
             name = "BC_T_" + ss.str();
             ions.p_BC.T = stod(parametersMap[name])*F_E/F_KB;
             name.clear();
+
 
             name = "BC_E_" + ss.str();
             ions.p_BC.E = stod(parametersMap[name])*F_E/F_KB;
@@ -1036,8 +1057,10 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         // By profile:
         // ===========
         arma::vec Br(BX_NX,1);
-        Br.subvec(0,BX_NX-2) = -0.5*(params->geometry.r2)*diff(params->em_IC.Bx_profile)/dX;
+        arma::vec BX = params->em_IC.Bx_profile;
+        Br.subvec(1,BX_NX-2) = -0.5*(params->geometry.r2)*((BX.subvec(2,BX_NX-1) - BX.subvec(0,BX_NX-3))/(2*dX));
         Br(BX_NX-1) = Br(BX_NX-2);
+        Br(0) = Br(1);
 
         yt = Br;
         interp1(xt,yt,xq,yq);

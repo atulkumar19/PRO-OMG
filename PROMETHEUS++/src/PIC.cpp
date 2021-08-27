@@ -237,66 +237,20 @@ void PIC::MPI_Recvvfield_mat(const simulationParameters * params, vfield_mat * v
 
 
 // * * * Ghost contributions * * *
-void PIC::fill4Ghosts(arma::vec * v){
-	//int N = v->n_elem;
 
-	//v->subvec(N-2,N-1) = v->subvec(2,3);
-	//v->subvec(0,1) = v->subvec(N-4,N-3);
-}
-
-void PIC::include4GhostsContributions(arma::vec * v){
-	//int N = v->n_elem;
-
-	//v->subvec(2,3) += v->subvec(N-2,N-1);
-	//v->subvec(N-4,N-3) += v->subvec(0,1);
-
+void PIC::include4GhostsContributions(arma::vec * v)
+{
 	int N = v->n_elem;
 
 	v->subvec(0,1)     = v->subvec(2,3);
 	v->subvec(N-2,N-1) = v->subvec(N-4,N-3);
 }
 
-
-void PIC::fill4Ghosts(arma::mat * m){
-	int NX = m->n_rows;
-	int NY = m->n_cols;
-
-	// Sides
-
-	m->submat(NX-2,2,NX-1,NY-3) = m->submat(2,2,3,NY-3); // left size along x-axis
-	m->submat(0,2,1,NY-3) = m->submat(NX-4,2,NX-3,NY-3); // right size along x-axis
-
-	m->submat(2,NY-2,NX-3,NY-1) = m->submat(2,2,NX-3,3); // left size along y-axis
-	m->submat(2,0,NX-3,1) = m->submat(2,NY-4,NX-3,NY-3); // right size along y-axis
-
-	// Corners
-
-	m->submat(NX-2,NY-2,NX-1,NY-1) = m->submat(2,2,3,3); // left x-axis, left y-axis
-	m->submat(0,NY-2,1,NY-1) = m->submat(NX-4,2,NX-3,3); // right x-axis, left y-axis
-	m->submat(NX-2,0,NX-1,1) = m->submat(2,NY-4,3,NY-3); // left x-axis, right y-axis
-	m->submat(0,0,1,1) = m->submat(NX-4,NY-4,NX-3,NY-3); // right x-axis, right y-axis
+/*
+void PIC::include4GhostsContributions(arma::mat * m)
+{
 }
-
-
-void PIC::include4GhostsContributions(arma::mat * m){
-	int NX = m->n_rows;
-	int NY = m->n_cols;
-
-	// Sides
-
-	m->submat(2,2,3,NY-3) += m->submat(NX-2,2,NX-1,NY-3); // left size along x-axis
-	m->submat(NX-4,2,NX-3,NY-3) += m->submat(0,2,1,NY-3); // right size along x-axis
-
-	m->submat(2,2,NX-3,3) += m->submat(2,NY-2,NX-3,NY-1); // left size along y-axis
-	m->submat(2,NY-4,NX-3,NY-3) += m->submat(2,0,NX-3,1); // right size along y-axis
-
-	// Corners
-
-	m->submat(2,2,3,3) += m->submat(NX-2,NY-2,NX-1,NY-1); // left x-axis, left y-axis
-	m->submat(NX-4,2,NX-3,3) += m->submat(0,NY-2,1,NY-1); // right x-axis, left y-axis
-	m->submat(2,NY-4,3,NY-3) += m->submat(NX-2,0,NX-1,1); // left x-axis, right y-axis
-	m->submat(NX-4,NY-4,NX-3,NY-3) += m->submat(0,0,1,1); // right x-axis, right y-axis
-}
+*/
 
 // * * * Ghost contributions * * *
 
@@ -474,10 +428,6 @@ void PIC::interpolateVectorField(const simulationParameters * params, const oneD
 	field_Y.subvec(1,NX-2) = field->Y;
 	field_Z.subvec(1,NX-2) = field->Z;
 
-	fill4Ghosts(&field_X);
-	fill4Ghosts(&field_Y);
-	fill4Ghosts(&field_Z);
-
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.
 	#pragma omp parallel for default(none) shared(params, IONS, F, field_X, field_Y, field_Z) firstprivate(NSP)
@@ -558,10 +508,10 @@ void PIC::advanceIonsVelocity(const simulationParameters * params, const charact
 					double rL_i = fabs(Vper/omega_ci);
 
 					// Calculate gyro-phase terms:
-					double UUy = arma::as_scalar(IONS->at(ii).V(ip,1));
-					double UUz = arma::as_scalar(IONS->at(ii).V(ip,2));
-					double cosPhi = -(UUz/Vper);
-					double sinPhi = +(UUy/Vper);
+					double vy = arma::as_scalar(IONS->at(ii).V(ip,1));
+					double vz = arma::as_scalar(IONS->at(ii).V(ip,2));
+					double cosPhi = -(vz/Vper);
+					double sinPhi = +(vy/Vper);
 
 					// Particle defined magnetic field:
 					Bp(ip,1) = -0.5*(params->geometry.r2*sqrt(params->em_IC.BX/Bp(ip,0)) + rL_i*cosPhi)*dBx;
@@ -631,7 +581,7 @@ void PIC::advanceIonsPosition(const simulationParameters * params, oneDimensiona
 void PIC::advanceIonsPosition(const simulationParameters * params,  twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS, const double DT)
 {}
 
-void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
+void PIC::extrapolateIonsMoments(const simulationParameters * params, const characteristicScales * CS,oneDimensional::fields * EB, vector<oneDimensional::ionSpecies> * IONS)
 {
 	// Iterate over all ion species:
     // =============================
@@ -644,7 +594,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
             PIC::assignCell(params, EB, &IONS->at(ii));
 
             //Calculate partial moments:
-			calculateIonMoments(params, EB, &IONS->at(ii));
+			calculateIonMoments(params, CS, EB, &IONS->at(ii));
         }
 
         // Reduce IONS moments to PARTICLE ROOT:
@@ -707,7 +657,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, oneDimensi
 	}
 }
 
-void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
+void PIC::extrapolateIonsMoments(const simulationParameters * params, const characteristicScales * CS, twoDimensional::fields * EB, vector<twoDimensional::ionSpecies> * IONS)
 {}
 
 
@@ -717,7 +667,7 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, twoDimensi
 
 // calculateIonMoments:
 
-void PIC::calculateIonMoments(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+void PIC::calculateIonMoments(const simulationParameters * params, const characteristicScales * CS,oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
 	// Ion density:
 	IONS->n___ = IONS->n__;
@@ -729,10 +679,10 @@ void PIC::calculateIonMoments(const simulationParameters * params, oneDimensiona
 	IONS->nv_ = IONS->nv;
 
 	// Calculate ion moments:
-	eim(params, EB, IONS);
+	eim(params, CS, EB, IONS);
 }
 
-void PIC::eim(const simulationParameters * params, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
+void PIC::eim(const simulationParameters * params, const characteristicScales * CS, oneDimensional::fields * EB, oneDimensional::ionSpecies * IONS)
 {
 	// Triangular Shape Cloud (TSC) scheme. See Sec. 5-3-2 of R. Hockney and J. Eastwood, Computer Simulation Using Particles.
 	//		wxl		   wxc		wxr
@@ -852,12 +802,15 @@ void PIC::eim(const simulationParameters * params, oneDimensional::fields * EB, 
 	IONS->P11 *= IONS->NCP/params->mesh.DX;
 	IONS->P22 *= IONS->NCP/params->mesh.DX;
 
+	// Add finite number for density to avoid zero:
+	IONS->n += 1E14*CS->length;
+
 }
 
-void PIC::calculateIonMoments(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+void PIC::calculateIonMoments(const simulationParameters * params, const characteristicScales * CS,twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
 {}
 
-void PIC::eim(const simulationParameters * params, twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
+void PIC::eim(const simulationParameters * params, const characteristicScales * CS,twoDimensional::fields * EB, twoDimensional::ionSpecies * IONS)
 {}
 
 void PIC::calculateDerivedIonMoments(const simulationParameters * params, oneDimensional::ionSpecies * IONS)
@@ -893,8 +846,6 @@ void PIC::interpolateScalarField(const simulationParameters * params, oneDimensi
 	arma::vec field_X = zeros(NX);
 
 	field_X.subvec(1,NX-2) = field;
-
-	fill4Ghosts(&field_X);
 
 	//Contrary to what may be thought,F is declared as shared because the private index ii ensures
 	//that each position is accessed (read/written) by one thread at the time.

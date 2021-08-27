@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#define ARMA_ALLOW_FAKE_GCC
 #include "armadillo"
 #include "types.h"
 
@@ -268,6 +269,53 @@ struct Switches
 
 };
 
+// Define structure to hold RF operator parameters and global values:
+// =============================================================================
+struct rfParams
+{
+	// RF parameters:
+	// =============
+	double Prf;
+	double freq;
+	double x1;
+	double x2;
+	double kpar;
+	double kper;
+	int handedness;
+	int numit;
+
+	// Name and storage time-dependent RF power trace:
+	// ========================================
+	string Prf_fileName;
+	int Prf_NS;
+	arma::vec Prf_profile;
+
+	// Total RF power accumulated over all species:
+	// ============================================
+	double E3;
+
+	// Global RF electric field:
+	// =========================
+	double Erf;
+
+	// Constructor:
+	// ============
+	rfParams()
+	{
+		Prf  = 0;
+		freq = 0;
+		x1   = 0;
+		x2   = 0;
+		kpar = 0;
+		kper = 0;
+		Prf_NS = 0;
+		handedness = 0;
+		E3   = 0;
+		Erf  = 0;
+		numit = 1;
+	}
+};
+
 //  Define structure to store simulation parameters:
 // =============================================================================
 struct simulationParameters
@@ -322,6 +370,12 @@ struct simulationParameters
 	// Simulation switches:
 	Switches SW;
 
+	// RF operator parameters:
+	rfParams RF;
+
+	// Current simulation time:
+	double currentTime;
+
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
 
@@ -345,6 +399,7 @@ struct simulationParameters
 
 	// Constructor
 	simulationParameters();
+
 };
 
 
@@ -368,6 +423,7 @@ struct characteristicScales
 	double resistivity;
 	double vacuumPermeability;
 	double vacuumPermittivity;
+	double energy;
 
 	// Constructor:
 	characteristicScales()
@@ -385,6 +441,7 @@ struct characteristicScales
 		magneticMoment = 0.0;
 		vacuumPermeability = 0.0;
 		vacuumPermittivity = 0.0;
+		energy = 0.0;
 	}
 };
 

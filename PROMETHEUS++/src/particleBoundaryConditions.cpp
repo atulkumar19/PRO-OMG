@@ -139,7 +139,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                 double GSUM  = IONS->at(ss).p_BC.GSUM;
                 double a_new = GSUM/uN_total;
 
-                if (a_new > 100)
+                if (a_new > 1000)
                 {
                     if (params->mpi.IS_PARTICLES_ROOT)
                     {
@@ -148,7 +148,7 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                         cout << "a_new:" << a_new << endl;
                         cout << "GSUM:" << GSUM << endl;
                     }
-                    a_new = 1;
+                    a_new = 1000;
                 }
                 IONS->at(ss).p_BC.a_new = a_new;
 
@@ -226,7 +226,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
     arma::vec V2;
     arma::vec V3;
 
-	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2)
+	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2 ||  IONS->p_BC.BC_type == 4)
 	{
 		double T;
 		double E;
@@ -283,7 +283,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 
 	// Particle position:
 	// ==================
-	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2) // Finite boundary condition
+	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2 || IONS->p_BC.BC_type == 4) // Finite boundary condition
 	{
 		// Variables for random number generator:
 		arma::vec R = randu(1);
@@ -328,6 +328,11 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 	if (IONS->p_BC.BC_type == 1 || IONS->p_BC.BC_type == 2) // Finite boundary condition
 	{
 		IONS->a(ii) = IONS->p_BC.a_new;
+	}
+
+  if (IONS->p_BC.BC_type == 4) // Warm plasma source with unit particle weight
+	{
+		 // Do nothing
 	}
 
     // Cartesian unit vectors:

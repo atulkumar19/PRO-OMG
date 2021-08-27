@@ -25,7 +25,7 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
-
+#define ARMA_ALLOW_FAKE_GCC
 #include <armadillo>
 
 #include "structures.h"

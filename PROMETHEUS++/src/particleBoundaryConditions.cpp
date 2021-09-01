@@ -231,7 +231,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 		double T;
 		double E;
 
-		if (IONS->p_BC.BC_type == 1||4)
+		if (IONS->p_BC.BC_type == 1||IONS->p_BC.BC_type == 4)
 		{
 			T = IONS->p_BC.T;
 			E = 0;

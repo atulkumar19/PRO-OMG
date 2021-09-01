@@ -143,10 +143,10 @@ void PARTICLE_BC::calculateParticleWeight(const simulationParameters * params, c
                 {
                     if (params->mpi.IS_PARTICLES_ROOT)
                     {
-                        cout << "S_total:" << S_total << endl;
+                        /*cout << "S_total:" << S_total << endl;
                         cout << "uN_total:" << uN_total << endl;
                         cout << "a_new:" << a_new << endl;
-                        cout << "GSUM:" << GSUM << endl;
+                        cout << "GSUM:" << GSUM << endl;*/
                     }
                     a_new = 1000;
                 }
@@ -231,7 +231,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 		double T;
 		double E;
 
-		if (IONS->p_BC.BC_type == 1)
+		if (IONS->p_BC.BC_type == 1||4)
 		{
 			T = IONS->p_BC.T;
 			E = 0;

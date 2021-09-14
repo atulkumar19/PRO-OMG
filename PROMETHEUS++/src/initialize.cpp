@@ -170,7 +170,7 @@ template <class IT, class FT> INITIALIZE<IT,FT>::INITIALIZE(simulationParameters
     // Check number of MPI domains:
     // ============================
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 )
-    { 
+    {
         MPI_Barrier(MPI_COMM_WORLD);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0)
@@ -1036,8 +1036,15 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
         //Interpolate at mesh points:
         // ==========================
         // Query points:
-        arma::vec xq = linspace(0,params->mesh.LX,NX);
-        arma::vec yq(xq.size());
+        arma::vec xq = zeros(NX);
+        arma::vec yq = zeros(NX);
+
+          for(int ii=0; ii<NX; ii++)
+          {
+              xq(ii) = (double)ii*params->mesh.DX - (0.5*params->mesh.DX) ;
+          }
+        // arma::vec xq = linspace(dx,params->mesh.LX+dx,NX);
+        // yq(xq.size());
         // Sample points:
         int BX_NX  = params->em_IC.BX_NX;
 

@@ -261,7 +261,8 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 		double sigma_v = vT/sqrt(2);
 
 		// Random number generator:
-		std::default_random_engine gen(params->mpi.MPI_DOMAIN_NUMBER+1);
+    std::default_random_engine gen( (params->mpi.MPI_DOMAIN_NUMBER + 1 + time(NULL))*1000 );
+		// std::default_random_engine gen(params->mpi.MPI_DOMAIN_NUMBER+1);
 		std::uniform_real_distribution<double> Rm(0.0, 1.0);
 
 		// Box muller:
@@ -277,7 +278,7 @@ void PARTICLE_BC::particleReinjection(int ii, const simulationParameters * param
 
 		// Total velocity components:
 		V1 = Ux + wx;
-	    V2 = Uy + wy;
+	  V2 = Uy + wy;
 		V3 = Uz + wz;
 	}
 

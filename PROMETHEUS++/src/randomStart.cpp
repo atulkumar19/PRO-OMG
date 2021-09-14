@@ -191,7 +191,8 @@ template <class IT> void RANDOMSTART<IT>::maxwellianVelocityDistribution_nonhomo
 
     // Seed the random number generator:
     // ================================
-    std::default_random_engine generator(params->mpi.MPI_DOMAIN_NUMBER+1);
+
+    std::default_random_engine generator(params->mpi.MPI_DOMAIN_NUMBER+1+ time(NULL)*1000);
 
     // Create uniform random number generator in [0,1]:
     // ================================================

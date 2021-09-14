@@ -618,11 +618,14 @@ void PIC::extrapolateIonsMoments(const simulationParameters * params, const char
 			MPI_Bcast(IONS->at(ii).P22.memptr(), IONS->at(ii).P22.size(), MPI_DOUBLE, 0, params->mpi.COMM);
 		}
 
+		// Add finite number for density to avoid zero:
+		IONS->at(ii).n += 1E14*CS->length;
+
         // Apply smoothing:
         // ===============
         for (int jj=0; jj<params->filtersPerIterationIons; jj++)
         {
-          smooth(&IONS->at(ii).n, params->smoothingParameter);
+      smooth(&IONS->at(ii).n, params->smoothingParameter);
 		  smooth(&IONS->at(ii).nv, params->smoothingParameter);
 		  smooth(&IONS->at(ii).P11, params->smoothingParameter);
 		  smooth(&IONS->at(ii).P22, params->smoothingParameter);

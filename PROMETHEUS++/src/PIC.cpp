@@ -806,7 +806,7 @@ void PIC::eim(const simulationParameters * params, const characteristicScales * 
 	IONS->P22 *= IONS->NCP/params->mesh.DX;
 
 	// Add finite number for density to avoid zero:
-	IONS->n += 1E14*CS->length;
+	// IONS->n += 1E14*CS->length;
 
 }
 

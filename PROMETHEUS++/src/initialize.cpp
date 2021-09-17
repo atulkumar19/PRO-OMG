@@ -1043,23 +1043,41 @@ template <class IT, class FT> void INITIALIZE<IT,FT>::initializeFieldsSizeAndVal
           {
               xq(ii) = (double)ii*params->mesh.DX - (0.5*params->mesh.DX) ;
           }
-        // arma::vec xq = linspace(dx,params->mesh.LX+dx,NX);
-        // yq(xq.size());
+
+        // arma::vec xq = linspace(0,params->mesh.LX,NX);
+        // arma::vec yq(xq.size());
         // Sample points:
         int BX_NX  = params->em_IC.BX_NX;
 
-        double dX = params->mesh.LX/((double)BX_NX);
+        double dX = params->mesh.LX/((double)BX_NX-2);
 
-        double dBX_NX = params->mesh.LX/BX_NX;
+        arma::vec xt = zeros(BX_NX);
+        arma::vec yt = zeros(BX_NX);
 
-        arma::vec xt = linspace(0,params->mesh.LX,BX_NX); // x-vector from the table
-        arma:: vec yt(xt.size());
+        for(int ii=0; ii<BX_NX; ii++)
+        {
+            xt(ii) = (double)ii*dX - (0.5*dX) ;
+        }
+
+        // arma::vec xt = linspace(0,params->mesh.LX,BX_NX); // x-vector from the table
+        // arma:: vec yt(xt.size());
 
         // Bx profile:
         // ===========
         yt = params->em_IC.Bx_profile;
         interp1(xt,yt,xq,yq);
         EB->B.X = yq;
+
+        // MPI_Barrier(MPI_COMM_WORLD);
+        // if(params->mpi.IS_PARTICLES_ROOT)
+        // {
+        // cout<<"xq= " <<xq<<endl;
+        // cout<<"xt= " <<xt<<endl;
+        //
+        // cout<<"yq= " <<yq<<endl;
+        // cout<<"yt= " <<yt<<endl;
+        // }
+        // MPI_Barrier(MPI_COMM_WORLD);
 
         // By profile:
         // ===========
